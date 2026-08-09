@@ -13,7 +13,7 @@ from .exceptions import (
 )
 
 if TYPE_CHECKING:
-    from .api import optimize_project
+    from .api import convert_from_keras_model, optimize_project, refresh_model
     from .config import RavelConfig
     from .project import RavelProject, open_project
 
@@ -26,8 +26,10 @@ __all__ = [
     "RavelError",
     "RavelProject",
     "VerificationError",
+    "convert_from_keras_model",
     "open_project",
     "optimize_project",
+    "refresh_model",
 ]
 
 
@@ -35,8 +37,10 @@ def __getattr__(name: str) -> Any:
     lazy_exports = {
         "RavelConfig": (".config", "RavelConfig"),
         "RavelProject": (".project", "RavelProject"),
+        "convert_from_keras_model": (".api", "convert_from_keras_model"),
         "open_project": (".project", "open_project"),
         "optimize_project": (".api", "optimize_project"),
+        "refresh_model": (".api", "refresh_model"),
     }
     target = lazy_exports.get(name)
     if target is None:

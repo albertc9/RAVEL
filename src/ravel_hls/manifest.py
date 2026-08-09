@@ -34,6 +34,7 @@ def build_generation_manifest(
     implementation_plan: dict[str, Any],
     pass_records: list[dict[str, Any]],
     managed_paths: list[str],
+    verification_report: dict[str, Any],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
     normalized_configuration = {
@@ -108,16 +109,14 @@ def build_generation_manifest(
             },
             "rtl_interface": {"expected": None, "measured": None},
         },
-        "verification": {
-            "mode": ravel_config["Verification"]["Mode"],
-            "transformation_equivalence": "not_run",
-            "model_fidelity": "not_run",
-        },
+        "verification": verification_report,
         "status": {
             "generation": "complete",
             "dependency_qualification": dependency_report["dependency_qualification"],
-            "correctness_verification": "not_run",
-            "model_fidelity": "not_run",
+            "correctness_verification": verification_report[
+                "transformation_equivalence"
+            ],
+            "model_fidelity": verification_report["model_fidelity"],
             "source_integrity": "clean",
             "performance_qualification": "not_run",
         },

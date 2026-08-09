@@ -12,10 +12,101 @@ import uuid
 from .config import RavelConfig
 from .compatibility.model_profile import validate_aria_model_profile
 from .backends.vitis.renderer import render_aria_project
-from .exceptions import CompatibilityError, ProjectGenerationError, RavelError
+from .exceptions import (
+    CompatibilityError,
+    ConfigurationError,
+    ProjectGenerationError,
+    RavelError,
+    VerificationError,
+)
 from .manifest import build_generation_manifest
 from .profiles.aria.plan import build_implementation_plan, build_pass_records
 from .project import RavelProject, open_project
+from .verification.equivalence import (
+    predict_baseline,
+    predict_optimized,
+    prepare_stimuli,
+    report_model_fidelity,
+    require_bit_exact,
+)
+
+
+def refresh_model(
+    project: RavelProject | str | os.PathLike[str],
+    model: Any,
+    *,
+    output_dir: str | os.PathLike[str] | None = None,
+    verification_inputs: Any | None = None,
+    force_replace: bool = False,
+) -> RavelProject:
+    """Regenerate an existing RAVEL project with a complete compatible model."""
+
+    project_view = project if isinstance(project, RavelProject) else open_project(project)
+    hls_values = _load_hls4ml_config(project_view.path / "hls4ml_config.yml")
+    target = project_view.path if output_dir is None else Path(output_dir)
+    return convert_from_keras_model(
+        model,
+        output_dir=target,
+        project_name=hls_values["ProjectName"],
+        hls_config=hls_values["HLSConfig"],
+        ravel_config=project_view.config,
+        backend=hls_values["Backend"],
+        io_type=hls_values["IOType"],
+        part=hls_values.get("Part"),
+        clock_period=hls_values.get("ClockPeriod"),
+        force_replace=force_replace,
+        verification_inputs=verification_inputs,
+    )
+
+
+def convert_from_keras_model(
+    model: Any,
+    *,
+    output_dir: str | os.PathLike[str],
+    project_name: str,
+    hls_config: Mapping[str, Any],
+    ravel_config: RavelConfig | Mapping[str, Any] | None = None,
+    backend: str = "Vitis",
+    io_type: str = "io_stream",
+    part: str | None = None,
+    clock_period: float | None = None,
+    force_replace: bool = False,
+    verification_inputs: Any | None = None,
+) -> RavelProject:
+    """Convert a Keras/HGQ model and run the canonical Aria optimization engine."""
+
+    import hls4ml
+
+    normalized_model = model
+    if isinstance(model, (str, os.PathLike)):
+        import keras
+        from hgq.layers import QConv2D, QDense
+
+        model_path = Path(model)
+        if not model_path.is_file():
+            raise CompatibilityError(f"Keras model file does not exist: {model_path}")
+        normalized_model = keras.models.load_model(
+            model_path, custom_objects={"QConv2D": QConv2D, "QDense": QDense}
+        )
+    conversion_arguments: dict[str, Any] = {
+        "model": normalized_model,
+        "output_dir": str(output_dir),
+        "project_name": project_name,
+        "hls_config": dict(hls_config),
+        "backend": backend,
+        "io_type": io_type,
+    }
+    if part is not None:
+        conversion_arguments["part"] = part
+    if clock_period is not None:
+        conversion_arguments["clock_period"] = clock_period
+    hls_model = hls4ml.converters.convert_from_keras_model(**conversion_arguments)
+    return optimize_project(
+        hls_model,
+        ravel_config,
+        force_replace=force_replace,
+        verification_inputs=verification_inputs,
+    )
 
 
 def optimize_project(
@@ -23,10 +114,18 @@ def optimize_project(
     config: RavelConfig | Mapping[str, Any] | None = None,
     *,
     force_replace: bool = False,
+    verification_inputs: Any | None = None,
 ) -> RavelProject:
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
     ravel_config = RavelConfig(config) if not isinstance(config, RavelConfig) else config
+    if (
+        verification_inputs is not None
+        and ravel_config["Verification"]["Mode"] == "disabled"
+    ):
+        raise ConfigurationError(
+            "verification_inputs cannot be supplied when Verification.Mode is disabled"
+        )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
         raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.0")
@@ -48,7 +147,12 @@ def optimize_project(
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
     return _generate_project(
-        hls_model, hls_config, ravel_config, layers, force_replace=force_replace
+        hls_model,
+        hls_config,
+        ravel_config,
+        layers,
+        force_replace=force_replace,
+        verification_inputs=verification_inputs,
     )
 
 
@@ -67,6 +171,7 @@ def _generate_project(
     layers: list[Any],
     *,
     force_replace: bool,
+    verification_inputs: Any | None,
 ) -> RavelProject:
     output_value = hls_config.get("OutputDir")
     if not isinstance(output_value, (str, os.PathLike)):
@@ -91,7 +196,25 @@ def _generate_project(
     try:
         mutable_hls_config["OutputDir"] = str(staging_path)
         hls_model.write()
-        mutable_hls_config["OutputDir"] = original_output
+        verification_mode = ravel_config["Verification"]["Mode"]
+        stimuli = None
+        stimuli_record = None
+        baseline_predictions = None
+        verification_unavailable = None
+        if verification_mode != "disabled":
+            stimuli, stimuli_record = prepare_stimuli(
+                ravel_config, verification_inputs
+            )
+            verification_capable = callable(
+                getattr(hls_model, "compile", None)
+            ) and callable(getattr(hls_model, "predict", None))
+            if verification_capable:
+                baseline_predictions = predict_baseline(hls_model, stimuli)
+            else:
+                message = "Required hls4ml compile/predict capability is unavailable"
+                if verification_mode == "required":
+                    raise VerificationError(message)
+                verification_unavailable = message
         implementation_plan = build_implementation_plan()
         pass_records = build_pass_records()
         project_name = hls_config.get("ProjectName")
@@ -102,6 +225,27 @@ def _generate_project(
         managed_paths = render_aria_project(
             staging_path, project_name, layers
         )
+        verification_report: dict[str, Any] = {
+            "mode": verification_mode,
+            "transformation_equivalence": "not_run",
+            "model_fidelity": "not_run",
+        }
+        if stimuli_record is not None:
+            verification_report["stimuli"] = stimuli_record
+        if verification_unavailable is not None:
+            verification_report["unavailable_reason"] = verification_unavailable
+        if baseline_predictions is not None and stimuli is not None:
+            optimized_predictions = predict_optimized(staging_path, stimuli)
+            require_bit_exact(baseline_predictions, optimized_predictions)
+            verification_report["transformation_equivalence"] = "passed"
+            fidelity = report_model_fidelity(
+                hls_config.get("KerasModel"), stimuli, optimized_predictions
+            )
+            if fidelity is not None:
+                verification_report["model_fidelity"] = "reported"
+                verification_report["model_fidelity_report"] = fidelity
+        mutable_hls_config["OutputDir"] = original_output
+        _rewrite_published_hls_config(staging_path, output_path)
         ravel_config_path = staging_path / "ravel_config.yml"
         ravel_config_path.write_text(ravel_config.to_yaml(), encoding="utf-8")
         semantic_model = {
@@ -121,7 +265,8 @@ def _generate_project(
             semantic_model=semantic_model,
             implementation_plan=implementation_plan,
             pass_records=pass_records,
-            managed_paths=[*managed_paths, "ravel_config.yml"],
+            managed_paths=[*managed_paths, "hls4ml_config.yml", "ravel_config.yml"],
+            verification_report=verification_report,
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -189,3 +334,63 @@ def _normalized_hls_config(hls_config: Mapping[str, Any]) -> dict[str, Any]:
         "Strategy": model_config.get("Strategy", "Latency"),
         "ReuseFactor": model_config.get("ReuseFactor", 1),
     }
+
+
+class _KerasModelPath(str):
+    pass
+
+
+def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None:
+    import yaml
+
+    class Loader(yaml.SafeLoader):
+        pass
+
+    class Dumper(yaml.SafeDumper):
+        pass
+
+    Loader.add_constructor(
+        "!keras_model",
+        lambda loader, node: _KerasModelPath(loader.construct_scalar(node)),
+    )
+    Dumper.add_representer(
+        _KerasModelPath,
+        lambda dumper, value: dumper.represent_scalar(
+            "!keras_model", str(value), style="'"
+        ),
+    )
+    config_path = staging_path / "hls4ml_config.yml"
+    try:
+        values = yaml.load(config_path.read_text(encoding="utf-8"), Loader=Loader)
+    except (OSError, UnicodeError, yaml.YAMLError) as error:
+        raise ProjectGenerationError(
+            f"Cannot normalize hls4ml_config.yml for publication: {error}"
+        ) from error
+    if not isinstance(values, dict):
+        raise ProjectGenerationError("hls4ml_config.yml must contain a mapping")
+    values["OutputDir"] = str(output_path)
+    if isinstance(values.get("KerasModel"), _KerasModelPath):
+        values["KerasModel"] = _KerasModelPath("keras_model.keras")
+    config_path.write_text(
+        yaml.dump(values, Dumper=Dumper, sort_keys=False), encoding="utf-8"
+    )
+
+
+def _load_hls4ml_config(config_path: Path) -> dict[str, Any]:
+    import yaml
+
+    class Loader(yaml.SafeLoader):
+        pass
+
+    Loader.add_multi_constructor(
+        "!keras_model", lambda loader, suffix, node: loader.construct_scalar(node)
+    )
+    try:
+        values = yaml.load(config_path.read_text(encoding="utf-8"), Loader=Loader)
+    except (OSError, UnicodeError, yaml.YAMLError) as error:
+        raise ProjectGenerationError(
+            f"Cannot read recorded hls4ml configuration: {error}"
+        ) from error
+    if not isinstance(values, dict):
+        raise ProjectGenerationError("Recorded hls4ml configuration must be a mapping")
+    return values

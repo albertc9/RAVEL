@@ -36,6 +36,13 @@ class RavelProject:
                 status["correctness_verification"] = "stale"
         return status
 
+    def link_hls4ml(self) -> Any:
+        """Return hls4ml's restricted existing-project compile/predict/build view."""
+
+        from hls4ml.utils.link import FilesystemModelGraph
+
+        return FilesystemModelGraph(self.path)
+
 
 def open_project(path: str | Path) -> RavelProject:
     """Open an existing RAVEL project without modifying it."""
