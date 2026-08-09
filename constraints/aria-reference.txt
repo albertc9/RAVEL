@@ -1,0 +1,13 @@
+# Qualified CNN-for-Arianna Aria 1.0 reference stack.
+#
+# This stack passed dependency resolution, canonical model loading, RAVEL
+# generation, bit-exact baseline/optimized C++ equivalence, and the public
+# existing-project link flow on Linux with CPython 3.11.15.
+hls4ml==1.2.0
+hgq2==0.1.7
+keras==3.12.1
+tensorflow-cpu==2.20.0; platform_system == "Linux"
+numpy==1.26.4
+quantizers==1.2.2
+Jinja2==3.1.6
+PyYAML==6.0.3

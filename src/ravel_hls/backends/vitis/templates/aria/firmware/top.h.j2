@@ -1,0 +1,15 @@
+#ifndef {{ project_name | upper }}_H_
+#define {{ project_name | upper }}_H_
+
+#include "ap_fixed.h"
+#include "ap_int.h"
+#include "hls_stream.h"
+
+#include "defines.h"
+
+void {{ project_name }}(
+    hls::stream<{{ input_wide_type }}> &{{ input_name }},
+    hls::stream<{{ output_type }}> &{{ output_name }}
+);
+
+#endif
