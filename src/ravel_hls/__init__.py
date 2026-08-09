@@ -9,6 +9,7 @@ from .exceptions import (
     RavelError,
     VerificationError,
 )
+from .project import RavelProject, open_project
 
 __all__ = [
     "CompatibilityError",
@@ -17,5 +18,7 @@ __all__ = [
     "ProjectGenerationError",
     "RavelConfig",
     "RavelError",
+    "RavelProject",
     "VerificationError",
+    "open_project",
 ]
