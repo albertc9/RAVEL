@@ -85,6 +85,23 @@ def import_vitis_reports(
         raise ProjectGenerationError(
             f"Unsupported Vitis report version {tool_version}; qualified version is 2023.2"
         )
+    expected_hls = project_view.manifest.get("normalized_configuration", {}).get(
+        "hls4ml", {}
+    )
+    reported_top = _required_text(root, "./UserAssignments/TopModelName")
+    reported_part = _required_text(root, "./UserAssignments/Part")
+    reported_clock = float(
+        _required_text(root, "./UserAssignments/TargetClockPeriod")
+    )
+    for field, expected, measured in (
+        ("ProjectName", expected_hls.get("ProjectName"), reported_top),
+        ("Part", expected_hls.get("Part"), reported_part),
+        ("ClockPeriod", expected_hls.get("ClockPeriod"), reported_clock),
+    ):
+        if expected != measured:
+            raise ProjectGenerationError(
+                f"Vitis {field} expected {expected} but measured {measured}"
+            )
     manifest_path = project_view.path / "ravel_manifest.json"
     manifest_sha256 = _file_sha256(manifest_path)
     resources_node = root.find("./AreaEstimates/Resources")
@@ -106,24 +123,31 @@ def import_vitis_reports(
         .get("rtl_interface", {})
         .get("expected", {})
     )
-    for manifest_name, port_name in (
-        ("input_tdata_bits", "input_TDATA"),
-        ("output_tdata_bits", "output_TDATA"),
+    for bits_name, port_name_key, expected_direction in (
+        ("input_tdata_bits", "input_tdata_port", "in"),
+        ("output_tdata_bits", "output_tdata_port", "out"),
     ):
-        expected_bits = expected_rtl.get(manifest_name)
-        measured_bits = rtl_ports.get(port_name, {}).get("bits")
-        if not isinstance(expected_bits, int) or measured_bits != expected_bits:
+        expected_bits = expected_rtl.get(bits_name)
+        port_name = expected_rtl.get(port_name_key)
+        measured_port = rtl_ports.get(port_name, {})
+        measured_bits = measured_port.get("bits")
+        measured_direction = measured_port.get("direction")
+        if (
+            not isinstance(port_name, str)
+            or not isinstance(expected_bits, int)
+            or measured_bits != expected_bits
+            or measured_direction != expected_direction
+        ):
             raise ProjectGenerationError(
                 f"Vitis {port_name} expected {expected_bits} bits but measured "
-                f"{measured_bits}"
+                f"{measured_bits}; expected direction {expected_direction} but measured "
+                f"{measured_direction}"
             )
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         tool_version=tool_version,
-        part=_required_text(root, "./UserAssignments/Part"),
-        target_clock_ns=float(
-            _required_text(root, "./UserAssignments/TargetClockPeriod")
-        ),
+        part=reported_part,
+        target_clock_ns=reported_clock,
         estimated_clock_ns=float(
             _required_text(
                 root,

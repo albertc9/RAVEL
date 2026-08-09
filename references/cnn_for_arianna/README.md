@@ -23,3 +23,9 @@ Vitis synthesis is deliberately separate. After running the selected Vitis
 2023.2 flow, attach its reports with `ravel_hls.import_vitis_reports`; the
 importer checks the immutable manifest and expected RTL widths before recording
 measurements.
+
+With the standalone 2023.2 installation, invoke the generated
+`build_prj.tcl` through `vitis_hls`; hls4ml 1.2.0's `build()` adapter looks for
+the newer `vitis-run` executable, which that installation does not provide.
+Set `build_opt.tcl` explicitly so only the intended csim/synthesis/cosim stages
+run.

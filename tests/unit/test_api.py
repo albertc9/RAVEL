@@ -446,6 +446,8 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
             "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1",
             "input_tdata_bits": 128,
             "output_tdata_bits": 32,
+            "input_tdata_port": "input_TDATA",
+            "output_tdata_port": "layer9_out_TDATA",
             "input_scalar_bits": 9,
             "output_scalar_bits": 22,
         },

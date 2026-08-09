@@ -369,8 +369,10 @@ def _normalized_hls_config(hls_config: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _interface_contract(layers: list[Any]) -> dict[str, Any]:
-    input_precision = layers[0].get_output_variable().type.precision
-    output_precision = layers[-1].get_output_variable().type.precision
+    input_variable = layers[0].get_output_variable()
+    output_variable = layers[-1].get_output_variable()
+    input_precision = input_variable.type.precision
+    output_precision = output_variable.type.precision
     input_width = getattr(input_precision, "width", None)
     output_width = getattr(output_precision, "width", None)
     if not isinstance(input_width, int) or not isinstance(output_width, int):
@@ -402,6 +404,8 @@ def _interface_contract(layers: list[Any]) -> dict[str, Any]:
                 ),
                 "input_tdata_bits": 8 * input_slot_width,
                 "output_tdata_bits": output_slot_width,
+                "input_tdata_port": f"{input_variable.name}_TDATA",
+                "output_tdata_port": f"{output_variable.name}_TDATA",
                 "input_scalar_bits": input_width,
                 "output_scalar_bits": output_width,
             },

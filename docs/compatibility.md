@@ -45,6 +45,12 @@ supported.
 Vendor-backed work follows the selected Vitis installation's platform rules
 and is outside ordinary RAVEL conversion.
 
+hls4ml 1.2.0's Vitis backend currently invokes `vitis-run`, while a standalone
+Vitis HLS 2023.2 installation exposes the deprecated-but-supported
+`vitis_hls` launcher instead. The generated `build_prj.tcl` remains compatible
+with 2023.2 and can be run directly with that launcher after setting explicit
+build options. RAVEL does not create a fake `vitis-run` shim.
+
 ## Dependency policy
 
 RAVEL uses a project-specific virtual environment and never changes packages
@@ -70,8 +76,14 @@ On 2026-08-09, the clean Linux stack was qualified with CPython 3.11.15:
   from the clean hls4ml baseline;
 - the Keras/HGQ-to-HLS score fidelity on that run was `1.0000`.
 
-This qualifies dependencies, generation, source-level C++ compilation, and
-transformation correctness. It carries no current Vitis synthesis, timing,
-resource, measured RTL-interface, or initiation-interval claim. The preserved
-legacy Vitis report is historical comparison evidence and cannot qualify a new
-RAVEL manifest.
+This stage qualifies dependencies, generation, source-level C++ compilation,
+and transformation correctness; by itself it carries no vendor-performance
+claim. The preserved legacy Vitis report is historical comparison evidence and
+cannot qualify a new RAVEL manifest.
+
+The same date, a current RAVEL-generated project was synthesized independently
+with Vitis HLS 2023.2 for `xcku5p-ffvb676-2-e` at a 5 ns target. The report
+recorded II 178, latency 183 cycles, a 3.647 ns estimated clock, 4 DSP, 3483 FF,
+28922 LUT, no BRAM/URAM, and 128/32-bit input/output TDATA. These measurements
+qualify only the exact manifest linked by `ravel_qualification.json`; they are
+not a universal Aria performance guarantee.
