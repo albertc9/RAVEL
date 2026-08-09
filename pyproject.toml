@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm>=9,<10"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ravel-hls"
+description = "Rate-Aware Vectorized Engine for Low-latency FPGA inference"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dynamic = ["version"]
+dependencies = [
+    "hls4ml==1.2.0",
+    "hgq2==0.1.7",
+    "Jinja2==3.1.6",
+    "keras==3.12.1",
+    "numpy==1.26.4",
+    "PyYAML==6.0.3",
+]
+
+[project.optional-dependencies]
+reference = [
+    "tensorflow-cpu==2.20.0; platform_system == 'Linux'",
+]
+test = [
+    "pytest>=8,<10",
+]
+
+[project.urls]
+Repository = "https://github.com/albertc9/RAVEL"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+fallback_version = "1.0.0.dev0"
+version_file = "src/ravel_hls/_version.py"

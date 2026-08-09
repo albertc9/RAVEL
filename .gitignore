@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+/src/ravel_hls/_version.py
 build/
 develop-eggs/
 dist/
