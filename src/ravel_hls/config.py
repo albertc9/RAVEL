@@ -1,6 +1,7 @@
 """RAVEL-owned configuration."""
 
 from collections.abc import Iterator, Mapping
+from copy import deepcopy
 from typing import Any
 
 from .exceptions import ConfigurationError
@@ -41,3 +42,8 @@ class RavelConfig(Mapping[str, Any]):
 
     def __len__(self) -> int:
         return len(self._data)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return an independent dictionary representation."""
+
+        return deepcopy(self._data)
