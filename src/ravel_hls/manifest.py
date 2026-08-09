@@ -35,6 +35,7 @@ def build_generation_manifest(
     pass_records: list[dict[str, Any]],
     managed_paths: list[str],
     verification_report: dict[str, Any],
+    interface_contract: dict[str, Any],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
     normalized_configuration = {
@@ -94,21 +95,7 @@ def build_generation_manifest(
             ],
             "passes": pass_records,
         },
-        "interfaces": {
-            "logical_model_interface": {"input_shape": [256, 4], "output_shape": [1]},
-            "hls_stream_interface": {
-                "input_rows_per_word": 2,
-                "channels_per_row": 4,
-                "values_per_input_word": 8,
-                "input_words_per_inference": 128,
-                "output_words_per_inference": 1,
-                "ordering": "row-major; time before channel",
-                "protocol": "axis",
-                "block_control": "ap_ctrl_hs",
-                "optional_axis_sidebands": [],
-            },
-            "rtl_interface": {"expected": None, "measured": None},
-        },
+        "interfaces": interface_contract,
         "verification": verification_report,
         "status": {
             "generation": "complete",

@@ -267,6 +267,7 @@ def _generate_project(
             pass_records=pass_records,
             managed_paths=[*managed_paths, "hls4ml_config.yml", "ravel_config.yml"],
             verification_report=verification_report,
+            interface_contract=_interface_contract(layers),
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -333,6 +334,48 @@ def _normalized_hls_config(hls_config: Mapping[str, Any]) -> dict[str, Any]:
         "ClockPeriod": hls_config.get("ClockPeriod"),
         "Strategy": model_config.get("Strategy", "Latency"),
         "ReuseFactor": model_config.get("ReuseFactor", 1),
+    }
+
+
+def _interface_contract(layers: list[Any]) -> dict[str, Any]:
+    input_precision = layers[0].get_output_variable().type.precision
+    output_precision = layers[-1].get_output_variable().type.precision
+    input_width = getattr(input_precision, "width", None)
+    output_width = getattr(output_precision, "width", None)
+    if not isinstance(input_width, int) or not isinstance(output_width, int):
+        raise ProjectGenerationError("Unable to resolve Aria interface precision widths")
+    input_slot_width = max(8, 1 << (input_width - 1).bit_length())
+    output_slot_width = max(8, 1 << (output_width - 1).bit_length())
+    return {
+        "logical_model_interface": {
+            "input_shape": [256, 4],
+            "output_shape": [1],
+        },
+        "hls_stream_interface": {
+            "input_rows_per_word": 2,
+            "channels_per_row": 4,
+            "values_per_input_word": 8,
+            "input_words_per_inference": 128,
+            "output_words_per_inference": 1,
+            "input_scalar_bits": input_width,
+            "output_scalar_bits": output_width,
+            "ordering": "row-major; time before channel",
+            "protocol": "axis",
+            "block_control": "ap_ctrl_hs",
+            "optional_axis_sidebands": [],
+        },
+        "rtl_interface": {
+            "expected": {
+                "qualification_profile": (
+                    "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+                ),
+                "input_tdata_bits": 8 * input_slot_width,
+                "output_tdata_bits": output_slot_width,
+                "input_scalar_bits": input_width,
+                "output_scalar_bits": output_width,
+            },
+            "measured": None,
+        },
     }
 
 

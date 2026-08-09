@@ -26,6 +26,7 @@ class _FakeHlsConfig:
 class _FakePrecision:
     def __init__(self, cpp: str) -> None:
         self.cpp = cpp
+        self.width = int(cpp.split("<", 1)[1].split(",", 1)[0])
 
     def definition_cpp(self) -> str:
         return self.cpp
@@ -385,6 +386,16 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     assert "PRAGMA_DATA_PACK" not in testbench
     assert project.implementation_plan["temporal_pack"] == 2
     assert project.implementation_plan["width_lanes"] == 4
+    assert project.manifest["interfaces"]["rtl_interface"] == {
+        "expected": {
+            "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1",
+            "input_tdata_bits": 128,
+            "output_tdata_bits": 32,
+            "input_scalar_bits": 9,
+            "output_scalar_bits": 22,
+        },
+        "measured": None,
+    }
     assert [item["id"] for item in project.manifest["pipeline"]["passes"]] == [
         "PackTemporalInput2x",
         "FuseRepackReshapeIntoFirstConv",
@@ -393,6 +404,20 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "StreamFlattenIntoDense",
         "BindShallowInternalFifos",
     ]
+    assert all(
+        {
+            "id",
+            "version",
+            "order",
+            "legality",
+            "resolved_parameters",
+            "input_ir_sha256",
+            "output_ir_sha256",
+            "affected_artifacts",
+        }
+        <= item.keys()
+        for item in project.manifest["pipeline"]["passes"]
+    )
     assert project.status == {
         "generation": "complete",
         "dependency_qualification": "qualified",

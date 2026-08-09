@@ -34,6 +34,10 @@ class RavelProject:
             status["source_integrity"] = "modified"
             if status.get("correctness_verification") == "passed":
                 status["correctness_verification"] = "stale"
+            if (self.path / "ravel_qualification.json").is_file():
+                status["performance_qualification"] = "stale"
+        elif _qualification_matches_manifest(self.path):
+            status["performance_qualification"] = "recorded"
         return status
 
     def link_hls4ml(self) -> Any:
@@ -74,3 +78,16 @@ def _file_sha256(path: Path) -> str | None:
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _qualification_matches_manifest(project_path: Path) -> bool:
+    qualification_path = project_path / "ravel_qualification.json"
+    if not qualification_path.is_file():
+        return False
+    try:
+        qualification = json.loads(qualification_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return False
+    return qualification.get("manifest_sha256") == _file_sha256(
+        project_path / "ravel_manifest.json"
+    )

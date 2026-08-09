@@ -249,6 +249,27 @@ def test_doctor_rejects_legacy_hgq_namespace_conflict(tmp_path: Path) -> None:
     assert result.stderr == ""
 
 
+def test_doctor_reports_runtime_and_simulation_capabilities(tmp_path: Path) -> None:
+    repository = Path(__file__).resolve().parents[2]
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(repository / "src")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "ravel_hls.cli", "doctor", "--json"],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+
+    report = json.loads(result.stdout)
+    assert report["python"]["required"] == ">=3.10"
+    assert report["python"]["status"] == "qualified"
+    assert report["platform"]["status"] in {"full", "generation_only"}
+    assert report["compiler"]["status"] in {"available", "missing"}
+    assert report["hls_simulation_headers"]["status"] in {"available", "missing"}
+
+
 def _write_distribution(root: Path, name: str, package_version: str) -> None:
     distribution = root / f"{name.replace('-', '_')}-{package_version}.dist-info"
     distribution.mkdir(parents=True)

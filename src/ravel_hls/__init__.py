@@ -16,17 +16,20 @@ if TYPE_CHECKING:
     from .api import convert_from_keras_model, optimize_project, refresh_model
     from .config import RavelConfig
     from .project import RavelProject, open_project
+    from .qualification.vitis import QualificationRecord, import_vitis_reports
 
 __all__ = [
     "CompatibilityError",
     "ConfigurationError",
     "OptimizationError",
     "ProjectGenerationError",
+    "QualificationRecord",
     "RavelConfig",
     "RavelError",
     "RavelProject",
     "VerificationError",
     "convert_from_keras_model",
+    "import_vitis_reports",
     "open_project",
     "optimize_project",
     "refresh_model",
@@ -37,7 +40,9 @@ def __getattr__(name: str) -> Any:
     lazy_exports = {
         "RavelConfig": (".config", "RavelConfig"),
         "RavelProject": (".project", "RavelProject"),
+        "QualificationRecord": (".qualification.vitis", "QualificationRecord"),
         "convert_from_keras_model": (".api", "convert_from_keras_model"),
+        "import_vitis_reports": (".qualification.vitis", "import_vitis_reports"),
         "open_project": (".project", "open_project"),
         "optimize_project": (".api", "optimize_project"),
         "refresh_model": (".api", "refresh_model"),
