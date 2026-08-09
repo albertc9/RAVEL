@@ -4,11 +4,25 @@ from collections.abc import Iterator, Mapping
 from copy import deepcopy
 from typing import Any
 
+import yaml
+
 from .exceptions import ConfigurationError
 
 
 class RavelConfig(Mapping[str, Any]):
     """Typed, mapping-compatible configuration for a RAVEL run."""
+
+    @classmethod
+    def from_yaml(cls, text: str) -> "RavelConfig":
+        """Construct a validated configuration from YAML text."""
+
+        try:
+            values = yaml.safe_load(text)
+        except yaml.YAMLError as error:
+            raise ConfigurationError(f"Invalid RAVEL configuration YAML: {error}") from error
+        if values is not None and not isinstance(values, Mapping):
+            raise ConfigurationError("RAVEL configuration YAML must contain a mapping")
+        return cls(values)
 
     def __init__(self, values: Mapping[str, Any] | None = None) -> None:
         self._data: dict[str, Any] = dict(values or {})
@@ -32,6 +46,16 @@ class RavelConfig(Mapping[str, Any]):
             raise ConfigurationError(
                 "Verification.Mode must be one of: auto, required, disabled"
             )
+        samples = verification.get("Samples")
+        if samples is not None and (
+            not isinstance(samples, int) or isinstance(samples, bool) or samples < 1
+        ):
+            raise ConfigurationError("Verification.Samples must be a positive integer")
+        seed = verification.get("Seed")
+        if seed is not None and (
+            not isinstance(seed, int) or isinstance(seed, bool) or seed < 0
+        ):
+            raise ConfigurationError("Verification.Seed must be a nonnegative integer")
         self._data["Verification"] = verification
 
     def __getitem__(self, key: str) -> Any:
@@ -47,3 +71,8 @@ class RavelConfig(Mapping[str, Any]):
         """Return an independent dictionary representation."""
 
         return deepcopy(self._data)
+
+    def to_yaml(self) -> str:
+        """Serialize the configuration using stable field ordering."""
+
+        return yaml.safe_dump(self.to_dict(), sort_keys=False)
