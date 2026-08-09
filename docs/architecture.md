@@ -7,13 +7,11 @@ outside the RAVEL workflow.
 ## Aria scope
 
 Aria is the RAVEL 1.x generation. It automates the fixed CNN-Core-Generator
-pair-parallel, two-row streaming specialization. It does not perform design
-space search, schedule multiple inference contexts, or select replicated IP
-cores from a system throughput target.
+pair-parallel, two-row streaming specialization.
 
 The primary workflow is a Python API:
 
-1. Create an ordinary hls4ml model graph from a compatible Keras/HGQ model.
+1. Create an hls4ml model graph from a compatible Keras/HGQ model.
 2. Call `ravel_hls.optimize_project()` or the
    `ravel_hls.convert_from_keras_model()` convenience API.
 3. Generate a clean hls4ml baseline in a staging directory.

@@ -39,7 +39,7 @@ Aria profile.
 Linux supports generation and non-vendor C++ verification. macOS supports
 model parsing, project generation, post-processing, and inspection; automatic
 behavioral verification may be unavailable when a supported compiler cannot
-compile the required HLS simulation headers. Windows is not initially
+compile the required HLS simulation headers. Windows is not
 supported.
 
 Vendor-backed work follows the selected Vitis installation's platform rules
@@ -58,11 +58,8 @@ at runtime. Aria 1.0 metadata declares exact compatibility-sensitive pins. The
 CNN-for-Arianna reference uses exact compatibility-sensitive pins from
 `constraints/aria-reference.txt`.
 
-HGQ and HGQ2 distributions must not coexist in the reference environment:
-both provide the `hgq` import namespace and installation order can silently
-replace runtime files while leaving conflicting distribution metadata behind.
 The qualified stack uses HGQ2 alone because the canonical model is a
-Keras 3 artifact and loads successfully through HGQ2's `hgq` namespace.
+Keras 3 artifact.
 
 On 2026-08-09, the clean Linux stack was qualified with CPython 3.11.15:
 
