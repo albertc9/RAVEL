@@ -341,9 +341,11 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     bridge = (output_dir / "aria_top_bridge.cpp").read_text(encoding="utf-8")
     assert "hls::stream<input_x2_t>" in bridge
     assert "for (unsigned pair = 0; pair < 128; pair++)" in bridge
+    assert "PRAGMA_DATA_PACK" not in bridge
     testbench = (output_dir / "aria_top_test.cpp").read_text(encoding="utf-8")
     assert "pack_aria_test_input" in testbench
     assert "hls::stream<input_x2_t>" in testbench
+    assert "PRAGMA_DATA_PACK" not in testbench
     assert project.implementation_plan["temporal_pack"] == 2
     assert project.implementation_plan["width_lanes"] == 4
     assert [item["id"] for item in project.manifest["pipeline"]["passes"]] == [

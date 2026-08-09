@@ -17,7 +17,6 @@ template <typename scalar_T>
 void pack_aria_input(scalar_T *logical_input, hls::stream<{{ input_wide_type }}> &packed_input) {
     for (unsigned pair = 0; pair < 128; pair++) {
         {{ input_wide_type }} word;
-        PRAGMA_DATA_PACK(word)
         for (unsigned row = 0; row < 2; row++) {
             for (unsigned channel = 0; channel < 4; channel++) {
                 word[row * 4 + channel] = logical_input[(pair * 2 + row) * 4 + channel];
