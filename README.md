@@ -8,11 +8,17 @@ not a design-space explorer.
 ## Install
 
 Use a clean Python 3.11 environment on Linux for the fully qualified generation
-and C++ verification workflow:
+and C++ verification workflow. From PyPI:
 
 ```bash
-python -m pip install -c constraints/aria-reference.txt -e '.[reference]'
+python -m pip install ravel-hls
 ravel-hls doctor --json
+```
+
+For an editable source checkout, replace the install command with:
+
+```bash
+python -m pip install -c constraints/aria-reference.txt -e .
 ```
 
 The dependency profile is intentionally exact. Do not co-install the retired

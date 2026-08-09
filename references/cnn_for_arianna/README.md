@@ -9,7 +9,7 @@ Use a clean Python 3.11 virtual environment. Do not install the old `HGQ`
 distribution alongside `hgq2`: both provide the `hgq` import namespace.
 
 ```bash
-python -m pip install -c constraints/aria-reference.txt -e '.[reference]'
+python -m pip install -c constraints/aria-reference.txt -e .
 ravel-hls doctor --json
 python references/cnn_for_arianna/generate.py
 ```

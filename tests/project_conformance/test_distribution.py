@@ -28,9 +28,15 @@ def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     wheel = next(wheel_dir.glob("ravel_hls-*.whl"))
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
+        metadata_name = next(name for name in names if name.endswith(".dist-info/METADATA"))
+        metadata = archive.read(metadata_name).decode("utf-8")
     assert "ravel_hls/backends/vitis/templates/aria/firmware/top.cpp.j2" in names
     assert "ravel_hls/backends/vitis/templates/aria/bridge/bridge.cpp.j2" in names
     assert "ravel_hls/backends/vitis/templates/aria/testbench/test.cpp.j2" in names
     assert "ravel_hls/schemas/ravel_config.schema.json" in names
     assert "ravel_hls/schemas/ravel_manifest.schema.json" in names
     assert "ravel_hls/schemas/ravel_qualification.schema.json" in names
+    assert 'Requires-Dist: tensorflow-cpu==2.20.0; platform_system == "Linux"' in (
+        metadata.splitlines()
+    )
+    assert "Provides-Extra: reference" not in metadata

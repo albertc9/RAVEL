@@ -18,12 +18,10 @@ dependencies = [
     "numpy==1.26.4",
     "quantizers==1.2.2",
     "PyYAML==6.0.3",
+    "tensorflow-cpu==2.20.0; platform_system == 'Linux'",
 ]
 
 [project.optional-dependencies]
-reference = [
-    "tensorflow-cpu==2.20.0; platform_system == 'Linux'",
-]
 test = [
     "pytest>=8,<10",
 ]
