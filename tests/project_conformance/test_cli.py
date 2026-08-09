@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import shutil
@@ -62,4 +63,58 @@ def test_installed_cli_reports_package_version(tmp_path: Path) -> None:
 
     assert result.returncode == 0
     assert result.stdout == f"ravel-hls {package_version} (RAVEL Aria 1.0)\n"
+    assert result.stderr == ""
+
+
+def test_doctor_reports_missing_required_dependency(tmp_path: Path) -> None:
+    uv = shutil.which("uv")
+    if uv is None:
+        pytest.skip("uv is required for distribution conformance tests")
+
+    repository = Path(__file__).resolve().parents[2]
+    wheel_dir = tmp_path / "wheel"
+    isolated_environment = os.environ.copy()
+    isolated_environment.pop("PYTHONPATH", None)
+    isolated_environment["UV_CACHE_DIR"] = str(tmp_path / "uv-cache")
+    subprocess.run(
+        [uv, "build", "--wheel", "--out-dir", str(wheel_dir)],
+        cwd=repository,
+        env=isolated_environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    wheel = next(wheel_dir.glob("ravel_hls-*.whl"))
+    virtual_environment = tmp_path / "venv"
+    venv.EnvBuilder(with_pip=True).create(virtual_environment)
+    python = virtual_environment / "bin" / "python"
+    subprocess.run(
+        [python, "-m", "pip", "install", "--no-deps", wheel],
+        cwd=tmp_path,
+        env=isolated_environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    result = subprocess.run(
+        [virtual_environment / "bin" / "ravel-hls", "doctor", "--json"],
+        cwd=tmp_path,
+        env=isolated_environment,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout) == {
+        "dependencies": {
+            "hls4ml": {
+                "installed": None,
+                "required": "==1.2.0",
+                "status": "missing",
+            }
+        },
+        "dependency_qualification": "failed",
+    }
     assert result.stderr == ""
