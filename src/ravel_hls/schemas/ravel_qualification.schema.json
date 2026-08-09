@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_qualification.schema.json",
+  "title": "RAVEL Vitis qualification record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_sha256",
+    "tool",
+    "part",
+    "timing",
+    "performance",
+    "resources",
+    "rtl_ports",
+    "report_files",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"const": "Vitis HLS"},
+        "version": {"const": "2023.2"}
+      }
+    },
+    "part": {"type": "string", "minLength": 1},
+    "timing": {"type": "object"},
+    "performance": {"type": "object"},
+    "resources": {"type": "object"},
+    "rtl_ports": {"type": "object"},
+    "report_files": {"type": "object"},
+    "status": {"const": "recorded"}
+  }
+}

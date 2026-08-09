@@ -33,6 +33,7 @@ class RavelConfig(Mapping[str, Any]):
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
             raise ConfigurationError("Profile must be aria for RAVEL Aria 1.0")
+        self._data.setdefault("Profile", "aria")
         verification_values = self._data.get("Verification", {})
         if not isinstance(verification_values, Mapping):
             raise ConfigurationError("Verification must be a mapping")

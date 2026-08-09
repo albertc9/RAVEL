@@ -19,7 +19,9 @@ model, dependencies, normalized configuration, profile, implementation plan,
 pipeline, interfaces, verification, managed files, and generation identity.
 Paths are relative POSIX paths; local usernames, hostnames, absolute input
 paths, arbitrary environment variables, and complete shell commands are not
-recorded.
+recorded. JSON Schema documents for the RAVEL configuration, generation
+manifest, and qualification record ship in the installed `ravel_hls/schemas`
+package data.
 
 ## Fingerprints
 

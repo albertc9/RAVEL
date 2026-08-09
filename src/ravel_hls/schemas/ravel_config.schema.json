@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_config.schema.json",
+  "title": "RAVEL Aria 1.0 configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "Profile": {"const": "aria", "default": "aria"},
+    "Verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Mode": {
+          "enum": ["auto", "required", "disabled"],
+          "default": "auto"
+        },
+        "Samples": {"type": "integer", "minimum": 1},
+        "Seed": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

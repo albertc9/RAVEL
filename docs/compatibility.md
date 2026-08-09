@@ -48,26 +48,30 @@ and is outside ordinary RAVEL conversion.
 ## Dependency policy
 
 RAVEL uses a project-specific virtual environment and never changes packages
-at runtime. Published metadata will declare finite tested ranges. The
+at runtime. Aria 1.0 metadata declares exact compatibility-sensitive pins. The
 CNN-for-Arianna reference uses exact compatibility-sensitive pins from
 `constraints/aria-reference.txt`.
 
 HGQ and HGQ2 distributions must not coexist in the reference environment:
 both provide the `hgq` import namespace and installation order can silently
 replace runtime files while leaving conflicting distribution metadata behind.
-The current candidate stack uses HGQ2 alone because the canonical model is a
+The qualified stack uses HGQ2 alone because the canonical model is a
 Keras 3 artifact and loads successfully through HGQ2's `hgq` namespace.
 
-On 2026-08-09, the candidate Linux stack was checked with CPython 3.11.15:
+On 2026-08-09, the clean Linux stack was qualified with CPython 3.11.15:
 
 - all 45 installed distributions passed dependency consistency checking;
 - the canonical model loaded as input `[256, 4]` and output `[1]`;
 - hls4ml 1.2.0 recognized the expected HGQ layer sequence;
-- baseline project generation and C-simulation compilation passed;
-- the legacy 1000-sample run reported HLS accuracy `0.9840`, HLS/Keras
-  fidelity `1.0000`, and maximum absolute score difference `0`.
+- the public RAVEL conversion completed with required bit-exact transformation
+  equivalence;
+- the published project reopened through `RavelProject.link_hls4ml`, compiled,
+  and predicted 1000 supplied samples with maximum absolute difference `0`
+  from the clean hls4ml baseline;
+- the Keras/HGQ-to-HLS score fidelity on that run was `1.0000`.
 
-This is baseline dependency evidence only. The stack is not called qualified
-until RAVEL's own transformation-equivalence and project-conformance suites
-pass. It carries no Vitis synthesis, timing, resource, RTL-interface, or
-initiation-interval claim.
+This qualifies dependencies, generation, source-level C++ compilation, and
+transformation correctness. It carries no current Vitis synthesis, timing,
+resource, measured RTL-interface, or initiation-interval claim. The preserved
+legacy Vitis report is historical comparison evidence and cannot qualify a new
+RAVEL manifest.

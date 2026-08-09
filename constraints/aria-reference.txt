@@ -1,9 +1,8 @@
-# Candidate CNN-for-Arianna reference stack.
+# Qualified CNN-for-Arianna Aria 1.0 reference stack.
 #
-# This stack passed dependency resolution, model loading, hls4ml project
-# generation, C-simulation compilation, and the legacy 1000-sample fidelity
-# run on Linux with CPython 3.11.15. It is not a fully qualified RAVEL stack
-# until the RAVEL equivalence and project-conformance suites also pass.
+# This stack passed dependency resolution, canonical model loading, RAVEL
+# generation, bit-exact baseline/optimized C++ equivalence, and the public
+# existing-project link flow on Linux with CPython 3.11.15.
 hls4ml==1.2.0
 hgq2==0.1.7
 keras==3.12.1

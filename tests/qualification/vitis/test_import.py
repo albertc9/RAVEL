@@ -2,7 +2,9 @@ import hashlib
 import json
 from pathlib import Path
 
-from ravel_hls import import_vitis_reports, open_project
+import pytest
+
+from ravel_hls import ProjectGenerationError, import_vitis_reports, open_project
 
 
 def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
@@ -29,6 +31,23 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     assert open_project(project_path).status["performance_qualification"] == "recorded"
 
 
+def test_import_vitis_reports_rejects_an_rtl_width_mismatch(tmp_path: Path) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path)
+    report_dir = tmp_path / "reports"
+    report_path = report_dir / "aria_top_csynth.xml"
+    report_dir.mkdir()
+    report_path.write_text(
+        _CSYNTH_XML.replace("<Bits>128</Bits>", "<Bits>64</Bits>", 1),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ProjectGenerationError, match="input_TDATA.*128.*64"):
+        import_vitis_reports(project_path, report_dir=report_dir)
+
+    assert not (project_path / "ravel_qualification.json").exists()
+
+
 def _write_project(project_path: Path) -> None:
     source = "void aria_top() {}\n"
     source_hash = hashlib.sha256(source.encode()).hexdigest()
@@ -44,6 +63,12 @@ def _write_project(project_path: Path) -> None:
         "schema_version": 1,
         "ravel": {"product": "RAVEL", "generation": "Aria", "release": "1.0"},
         "implementation_plan": {"template_profile": "aria-2x-v1"},
+        "interfaces": {
+            "rtl_interface": {
+                "expected": {"input_tdata_bits": 128, "output_tdata_bits": 32},
+                "measured": None,
+            }
+        },
         "status": {
             "generation": "complete",
             "dependency_qualification": "qualified",

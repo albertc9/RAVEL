@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_manifest.schema.json",
+  "title": "RAVEL generation manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "ravel",
+    "source_model",
+    "dependencies",
+    "normalized_configuration",
+    "profile",
+    "implementation_plan",
+    "pipeline",
+    "interfaces",
+    "verification",
+    "status",
+    "managed_files",
+    "generation_fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "ravel": {
+      "type": "object",
+      "required": ["product", "generation", "release", "package_version"],
+      "properties": {
+        "product": {"const": "RAVEL"},
+        "generation": {"const": "Aria"},
+        "release": {"const": "1.0"}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {"id": {"const": "aria"}, "version": {"const": 1}}
+    },
+    "managed_files": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    },
+    "generation_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

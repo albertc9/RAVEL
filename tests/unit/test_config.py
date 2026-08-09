@@ -6,6 +6,7 @@ from ravel_hls import ConfigurationError, RavelConfig
 def test_verification_mode_defaults_to_auto() -> None:
     config = RavelConfig()
 
+    assert config["Profile"] == "aria"
     assert config["Verification"]["Mode"] == "auto"
 
 

@@ -101,6 +101,22 @@ def import_vitis_reports(
             "direction": _required_text(port, "./Dir"),
             "bits": int(_required_text(port, "./Bits")),
         }
+    expected_rtl = (
+        project_view.manifest.get("interfaces", {})
+        .get("rtl_interface", {})
+        .get("expected", {})
+    )
+    for manifest_name, port_name in (
+        ("input_tdata_bits", "input_TDATA"),
+        ("output_tdata_bits", "output_TDATA"),
+    ):
+        expected_bits = expected_rtl.get(manifest_name)
+        measured_bits = rtl_ports.get(port_name, {}).get("bits")
+        if not isinstance(expected_bits, int) or measured_bits != expected_bits:
+            raise ProjectGenerationError(
+                f"Vitis {port_name} expected {expected_bits} bits but measured "
+                f"{measured_bits}"
+            )
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         tool_version=tool_version,

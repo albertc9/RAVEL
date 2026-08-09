@@ -10,6 +10,7 @@ from typing import Any
 import uuid
 
 from .config import RavelConfig
+from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
 from .backends.vitis.renderer import render_aria_project
 from .exceptions import (
@@ -119,6 +120,16 @@ def optimize_project(
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
     ravel_config = RavelConfig(config) if not isinstance(config, RavelConfig) else config
+    dependency_report = inspect_dependencies()
+    if dependency_report["dependency_qualification"] != "qualified":
+        failures = [
+            name
+            for name, facts in dependency_report["dependencies"].items()
+            if facts["status"] != "qualified"
+        ]
+        raise CompatibilityError(
+            "Aria 1.0 dependency stack is not qualified: " + ", ".join(failures)
+        )
     if (
         verification_inputs is not None
         and ravel_config["Verification"]["Mode"] == "disabled"
@@ -151,6 +162,7 @@ def optimize_project(
         hls_config,
         ravel_config,
         layers,
+        dependency_report=dependency_report,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
     )
@@ -170,6 +182,7 @@ def _generate_project(
     ravel_config: RavelConfig,
     layers: list[Any],
     *,
+    dependency_report: Mapping[str, Any],
     force_replace: bool,
     verification_inputs: Any | None,
 ) -> RavelProject:
@@ -205,16 +218,14 @@ def _generate_project(
             stimuli, stimuli_record = prepare_stimuli(
                 ravel_config, verification_inputs
             )
-            verification_capable = callable(
-                getattr(hls_model, "compile", None)
-            ) and callable(getattr(hls_model, "predict", None))
-            if verification_capable:
+            verification_unavailable = _verification_unavailable_reason(
+                hls_model, dependency_report
+            )
+            if verification_unavailable is None:
                 baseline_predictions = predict_baseline(hls_model, stimuli)
             else:
-                message = "Required hls4ml compile/predict capability is unavailable"
                 if verification_mode == "required":
-                    raise VerificationError(message)
-                verification_unavailable = message
+                    raise VerificationError(verification_unavailable)
         implementation_plan = build_implementation_plan()
         pass_records = build_pass_records()
         project_name = hls_config.get("ProjectName")
@@ -291,6 +302,26 @@ def _generate_project(
             shutil.rmtree(staging_path)
         raise
     return open_project(output_path)
+
+
+def _verification_unavailable_reason(
+    hls_model: Any, dependency_report: Mapping[str, Any]
+) -> str | None:
+    missing = []
+    if not callable(getattr(hls_model, "compile", None)) or not callable(
+        getattr(hls_model, "predict", None)
+    ):
+        missing.append("hls4ml compile/predict capability")
+    if dependency_report.get("compiler", {}).get("status") != "available":
+        missing.append("C++ compiler")
+    if (
+        dependency_report.get("hls_simulation_headers", {}).get("status")
+        != "available"
+    ):
+        missing.append("HLS simulation headers")
+    if not missing:
+        return None
+    return "Required verification capability is unavailable: " + ", ".join(missing)
 
 
 def _semantic_attributes(layer: Any) -> dict[str, Any]:

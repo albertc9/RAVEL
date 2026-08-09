@@ -24,6 +24,22 @@ def validate_aria_model_profile(layers: Iterable[Any]) -> None:
         raise CompatibilityError(
             "Aria 1.0 layer sequence must be " + " -> ".join(expected_sequence)
         )
+    for layer in (layer_list[2], layer_list[-1]):
+        module = layer.get_attr("module")
+        if not isinstance(module, str) or not module.startswith("hgq.layers"):
+            raise CompatibilityError(
+                f"Aria {layer.class_name} must originate from an HGQ quantized layer"
+            )
+        if layer.get_attr("strategy") != "latency":
+            raise CompatibilityError(
+                f"Aria {layer.class_name}.strategy must be latency"
+            )
+    for layer in layer_list:
+        reuse_factor = layer.get_attr("reuse_factor")
+        if reuse_factor is not None and reuse_factor != 1:
+            raise CompatibilityError(
+                f"Aria {layer.class_name}.reuse_factor must be 1"
+            )
     required_attributes = [
         {"target_shape": [256, 4, 1]},
         {

@@ -125,6 +125,9 @@ class _FakeHlsModel:
                 output_name="layer4_out",
                 type_name="conv_t",
                 n_elem=7,
+                module="hgq.layers.conv",
+                reuse_factor=1,
+                strategy="latency",
                 weights=[_FakeWeight("w4", "conv_weight_t", 35), _FakeWeight("b4", "conv_bias_t", 7)],
                 index=4,
                 in_height=256,
@@ -192,6 +195,9 @@ class _FakeHlsModel:
                 output_name="layer9_out",
                 type_name="result_t",
                 precision="ap_fixed<22,11>",
+                module="hgq.layers.core.dense",
+                reuse_factor=1,
+                strategy="latency",
                 weights=[_FakeWeight("w9", "dense_weight_t", 1176), _FakeWeight("b9", "dense_bias_t", 1)],
                 n_in=1176,
                 n_out=1,
@@ -255,6 +261,33 @@ def test_optimize_project_rejects_unsupported_backend_before_generation(
     assert hls_model.write_called is False
 
 
+def test_optimize_project_rejects_an_unqualified_dependency_stack_before_generation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    hls_model = _FakeHlsModel(tmp_path / "project")
+    monkeypatch.setattr(
+        "ravel_hls.api.inspect_dependencies",
+        lambda: {
+            "dependency_qualification": "failed",
+            "dependencies": {
+                "HGQ": {
+                    "installed": "0.2.1",
+                    "required": "not installed",
+                    "status": "conflict",
+                }
+            },
+        },
+    )
+
+    with pytest.raises(CompatibilityError, match="dependency stack.*HGQ"):
+        optimize_project(
+            hls_model,
+            config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+        )
+
+    assert hls_model.write_called is False
+
+
 def test_optimize_project_rejects_parallel_io_before_generation(tmp_path: Path) -> None:
     hls_model = _FakeHlsModel(tmp_path / "project", IOType="io_parallel")
 
@@ -309,6 +342,28 @@ def test_optimize_project_rejects_incompatible_convolution_geometry(tmp_path: Pa
     hls_model.layers[2].attributes["n_filt"] = 8
 
     with pytest.raises(CompatibilityError, match="Conv2D.n_filt.*7"):
+        optimize_project(hls_model, config={"Profile": "aria"})
+
+    assert hls_model.write_called is False
+
+
+def test_optimize_project_requires_hgq_quantized_conv_and_dense_layers(
+    tmp_path: Path,
+) -> None:
+    hls_model = _FakeHlsModel(tmp_path / "project")
+    hls_model.layers[2].attributes["module"] = "keras.src.layers.convolutional.conv2d"
+
+    with pytest.raises(CompatibilityError, match="Conv2D.*HGQ"):
+        optimize_project(hls_model, config={"Profile": "aria"})
+
+    assert hls_model.write_called is False
+
+
+def test_optimize_project_rejects_a_per_layer_reuse_override(tmp_path: Path) -> None:
+    hls_model = _FakeHlsModel(tmp_path / "project")
+    hls_model.layers[-1].attributes["reuse_factor"] = 2
+
+    with pytest.raises(CompatibilityError, match="Dense.reuse_factor.*1"):
         optimize_project(hls_model, config={"Profile": "aria"})
 
     assert hls_model.write_called is False
@@ -692,6 +747,53 @@ def test_auto_mode_does_not_downgrade_an_attempted_compile_failure(tmp_path: Pat
         )
 
     assert not output_dir.exists()
+
+
+def test_auto_verification_records_a_missing_host_capability_without_compiling(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "ravel_hls.api.inspect_dependencies",
+        lambda: {
+            "dependency_qualification": "qualified",
+            "dependencies": {},
+            "compiler": {"command": None, "status": "missing"},
+            "hls_simulation_headers": {"path": "/headers/ap_fixed.h", "status": "available"},
+        },
+    )
+    hls_model = _VerifyingFakeHlsModel(tmp_path / "aria_project")
+
+    project = optimize_project(
+        hls_model,
+        config={"Profile": "aria", "Verification": {"Mode": "auto"}},
+    )
+
+    assert hls_model.compile_called is False
+    assert project.status["correctness_verification"] == "not_run"
+    assert "compiler" in project.manifest["verification"]["unavailable_reason"]
+
+
+def test_required_verification_rejects_a_missing_host_capability(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "ravel_hls.api.inspect_dependencies",
+        lambda: {
+            "dependency_qualification": "qualified",
+            "dependencies": {},
+            "compiler": {"command": None, "status": "missing"},
+            "hls_simulation_headers": {"path": None, "status": "missing"},
+        },
+    )
+    hls_model = _VerifyingFakeHlsModel(tmp_path / "aria_project")
+
+    with pytest.raises(VerificationError, match="compiler.*HLS simulation headers"):
+        optimize_project(
+            hls_model,
+            config={"Profile": "aria", "Verification": {"Mode": "required"}},
+        )
+
+    assert hls_model.compile_called is False
 
 
 def test_refresh_model_reuses_the_recorded_configs_through_clean_conversion(

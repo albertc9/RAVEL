@@ -1,0 +1,88 @@
+Backend: Vitis
+ClockPeriod: 5
+ClockUncertainty: 27%
+HLSConfig:
+  LayerName:
+    flatten:
+      Precision:
+        result: auto
+      Trace: false
+    input_layer:
+      Precision:
+        result: ap_fixed<12,6>
+      StreamDepth: 16
+      Trace: false
+    max_pooling2d:
+      ConvImplementation: LineBuffer
+      Precision:
+        accum: auto
+        result: auto
+      ReuseFactor: 1
+      Trace: false
+    q_conv2d:
+      ConvImplementation: LineBuffer
+      ParallelizationFactor: 1
+      Precision:
+        accum: auto
+        bias: auto
+        result: auto
+        weight: auto
+      ReuseFactor: 1
+      Trace: false
+    q_conv2d_iq:
+      Precision:
+        result: auto
+      Trace: false
+    q_conv2d_relu:
+      Precision:
+        result: auto
+        table: fixed<18,8,TRN,WRAP,0>
+      ReuseFactor: 1
+      TableSize: 1024
+      Trace: false
+    q_dense:
+      Precision:
+        accum: auto
+        bias: auto
+        result: auto
+        weight: auto
+      ReuseFactor: 1
+      Trace: false
+    q_dense_iq:
+      Precision:
+        result: auto
+      Trace: false
+    reshape:
+      Precision:
+        result: auto
+      Trace: false
+  Model:
+    BitExact: null
+    BramFactor: 1000000000
+    Precision:
+      default: ap_fixed<16,6>
+    ReuseFactor: 1
+    Strategy: Latency
+    TraceOutput: false
+IOType: io_stream
+InputData: null
+InputShapes:
+  input_layer:
+  - 256
+  - 4
+KerasModel: !keras_model '/home/work1/Works/CNN-Core-Generator/cnn_core_project/keras_model.keras'
+OutputDir: /home/work1/Works/CNN-Core-Generator/cnn_core_project
+OutputPredictions: null
+OutputShapes:
+  layer9_out:
+  - 1
+Part: xcku5p-ffvb676-2-e
+ProjectName: cnn_core
+Stamp: 21df3f39
+Version: 1.0.0
+WriterConfig:
+  Namespace: null
+  TBOutputStream: both
+  WriteEmulationConstants: false
+  WriteTar: false
+  WriteWeightsTxt: true
