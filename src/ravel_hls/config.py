@@ -4,8 +4,6 @@ from collections.abc import Iterator, Mapping
 from copy import deepcopy
 from typing import Any
 
-import yaml
-
 from .exceptions import ConfigurationError
 
 
@@ -15,6 +13,8 @@ class RavelConfig(Mapping[str, Any]):
     @classmethod
     def from_yaml(cls, text: str) -> "RavelConfig":
         """Construct a validated configuration from YAML text."""
+
+        import yaml
 
         try:
             values = yaml.safe_load(text)
@@ -31,6 +31,8 @@ class RavelConfig(Mapping[str, Any]):
             raise ConfigurationError(
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
+        if "Profile" in self._data and self._data["Profile"] != "aria":
+            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.0")
         verification_values = self._data.get("Verification", {})
         if not isinstance(verification_values, Mapping):
             raise ConfigurationError("Verification must be a mapping")
@@ -74,5 +76,7 @@ class RavelConfig(Mapping[str, Any]):
 
     def to_yaml(self) -> str:
         """Serialize the configuration using stable field ordering."""
+
+        import yaml
 
         return yaml.safe_dump(self.to_dict(), sort_keys=False)

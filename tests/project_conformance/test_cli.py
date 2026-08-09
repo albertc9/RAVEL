@@ -198,7 +198,7 @@ def test_doctor_requires_hgq2_alongside_hls4ml(tmp_path: Path) -> None:
     )
 
     result = subprocess.run(
-        [sys.executable, "-m", "ravel_hls.cli", "doctor", "--json"],
+        [sys.executable, "-S", "-m", "ravel_hls.cli", "doctor", "--json"],
         cwd=tmp_path,
         env=isolated_environment,
         capture_output=True,
@@ -230,7 +230,7 @@ def test_doctor_rejects_legacy_hgq_namespace_conflict(tmp_path: Path) -> None:
     )
 
     result = subprocess.run(
-        [sys.executable, "-m", "ravel_hls.cli", "doctor", "--json"],
+        [sys.executable, "-S", "-m", "ravel_hls.cli", "doctor", "--json"],
         cwd=tmp_path,
         env=isolated_environment,
         capture_output=True,

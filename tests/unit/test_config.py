@@ -97,3 +97,8 @@ def test_verification_seed_requires_a_nonnegative_integer(seed: object) -> None:
 def test_config_reports_invalid_yaml(text: str) -> None:
     with pytest.raises(ConfigurationError, match="YAML"):
         RavelConfig.from_yaml(text)
+
+
+def test_config_rejects_an_unknown_profile() -> None:
+    with pytest.raises(ConfigurationError, match="Profile"):
+        RavelConfig({"Profile": "future-profile"})
