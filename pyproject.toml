@@ -30,6 +30,9 @@ test = [
 [project.urls]
 Repository = "https://github.com/albertc9/RAVEL"
 
+[project.scripts]
+ravel-hls = "ravel_hls.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
