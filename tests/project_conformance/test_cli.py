@@ -118,3 +118,76 @@ def test_doctor_reports_missing_required_dependency(tmp_path: Path) -> None:
         "dependency_qualification": "failed",
     }
     assert result.stderr == ""
+
+
+def test_doctor_reports_incompatible_dependency_version(tmp_path: Path) -> None:
+    uv = shutil.which("uv")
+    if uv is None:
+        pytest.skip("uv is required for distribution conformance tests")
+
+    repository = Path(__file__).resolve().parents[2]
+    wheel_dir = tmp_path / "wheel"
+    isolated_environment = os.environ.copy()
+    isolated_environment.pop("PYTHONPATH", None)
+    isolated_environment["UV_CACHE_DIR"] = str(tmp_path / "uv-cache")
+    subprocess.run(
+        [uv, "build", "--wheel", "--out-dir", str(wheel_dir)],
+        cwd=repository,
+        env=isolated_environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    wheel = next(wheel_dir.glob("ravel_hls-*.whl"))
+    virtual_environment = tmp_path / "venv"
+    venv.EnvBuilder(with_pip=True).create(virtual_environment)
+    python = virtual_environment / "bin" / "python"
+    subprocess.run(
+        [python, "-m", "pip", "install", "--no-deps", wheel],
+        cwd=tmp_path,
+        env=isolated_environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    site_packages = Path(
+        subprocess.check_output(
+            [
+                python,
+                "-c",
+                "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+            ],
+            cwd=tmp_path,
+            env=isolated_environment,
+            text=True,
+        ).strip()
+    )
+    distribution = site_packages / "hls4ml-9.9.9.dist-info"
+    distribution.mkdir()
+    (distribution / "METADATA").write_text(
+        "Metadata-Version: 2.1\nName: hls4ml\nVersion: 9.9.9\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [virtual_environment / "bin" / "ravel-hls", "doctor", "--json"],
+        cwd=tmp_path,
+        env=isolated_environment,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout) == {
+        "dependencies": {
+            "hls4ml": {
+                "installed": "9.9.9",
+                "required": "==1.2.0",
+                "status": "incompatible",
+            }
+        },
+        "dependency_qualification": "failed",
+    }
+    assert result.stderr == ""

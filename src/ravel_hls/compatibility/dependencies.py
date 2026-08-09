@@ -13,7 +13,12 @@ def inspect_dependencies() -> dict[str, Any]:
     except PackageNotFoundError:
         installed_version = None
 
-    status = "missing" if installed_version is None else "qualified"
+    if installed_version is None:
+        status = "missing"
+    elif installed_version == required_version.removeprefix("=="):
+        status = "qualified"
+    else:
+        status = "incompatible"
     return {
         "dependencies": {
             "hls4ml": {
@@ -22,5 +27,5 @@ def inspect_dependencies() -> dict[str, Any]:
                 "status": status,
             }
         },
-        "dependency_qualification": "failed" if status == "missing" else "qualified",
+        "dependency_qualification": "qualified" if status == "qualified" else "failed",
     }
