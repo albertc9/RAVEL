@@ -107,16 +107,13 @@ def test_doctor_reports_missing_required_dependency(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 1
-    assert json.loads(result.stdout) == {
-        "dependencies": {
-            "hls4ml": {
-                "installed": None,
-                "required": "==1.2.0",
-                "status": "missing",
-            }
-        },
-        "dependency_qualification": "failed",
+    report = json.loads(result.stdout)
+    assert report["dependencies"]["hls4ml"] == {
+        "installed": None,
+        "required": "==1.2.0",
+        "status": "missing",
     }
+    assert report["dependency_qualification"] == "failed"
     assert result.stderr == ""
 
 
@@ -180,14 +177,82 @@ def test_doctor_reports_incompatible_dependency_version(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 1
-    assert json.loads(result.stdout) == {
-        "dependencies": {
-            "hls4ml": {
-                "installed": "9.9.9",
-                "required": "==1.2.0",
-                "status": "incompatible",
-            }
-        },
-        "dependency_qualification": "failed",
+    report = json.loads(result.stdout)
+    assert report["dependencies"]["hls4ml"] == {
+        "installed": "9.9.9",
+        "required": "==1.2.0",
+        "status": "incompatible",
     }
+    assert report["dependency_qualification"] == "failed"
     assert result.stderr == ""
+
+
+def test_doctor_requires_hgq2_alongside_hls4ml(tmp_path: Path) -> None:
+    repository = Path(__file__).resolve().parents[2]
+    distributions = tmp_path / "distributions"
+    _write_distribution(distributions, "ravel-hls", "1.0.0.dev0")
+    _write_distribution(distributions, "hls4ml", "1.2.0")
+    isolated_environment = os.environ.copy()
+    isolated_environment["PYTHONPATH"] = os.pathsep.join(
+        [str(repository / "src"), str(distributions)]
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-m", "ravel_hls.cli", "doctor", "--json"],
+        cwd=tmp_path,
+        env=isolated_environment,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    report = json.loads(result.stdout)
+    assert report["dependencies"]["hgq2"] == {
+        "installed": None,
+        "required": "==0.1.7",
+        "status": "missing",
+    }
+    assert report["dependencies"]["hls4ml"]["status"] == "qualified"
+    assert report["dependency_qualification"] == "failed"
+    assert result.stderr == ""
+
+
+def test_doctor_rejects_legacy_hgq_namespace_conflict(tmp_path: Path) -> None:
+    repository = Path(__file__).resolve().parents[2]
+    distributions = tmp_path / "distributions"
+    _write_distribution(distributions, "ravel-hls", "1.0.0.dev0")
+    _write_distribution(distributions, "hls4ml", "1.2.0")
+    _write_distribution(distributions, "hgq2", "0.1.7")
+    _write_distribution(distributions, "HGQ", "0.2.6")
+    isolated_environment = os.environ.copy()
+    isolated_environment["PYTHONPATH"] = os.pathsep.join(
+        [str(repository / "src"), str(distributions)]
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-m", "ravel_hls.cli", "doctor", "--json"],
+        cwd=tmp_path,
+        env=isolated_environment,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    report = json.loads(result.stdout)
+    assert report["dependencies"]["hgq"] == {
+        "installed": "0.2.6",
+        "required": "not installed",
+        "status": "conflict",
+    }
+    assert report["dependencies"]["hgq2"]["status"] == "qualified"
+    assert report["dependency_qualification"] == "failed"
+    assert result.stderr == ""
+
+
+def _write_distribution(root: Path, name: str, package_version: str) -> None:
+    distribution = root / f"{name.replace('-', '_')}-{package_version}.dist-info"
+    distribution.mkdir(parents=True)
+    (distribution / "METADATA").write_text(
+        f"Metadata-Version: 2.1\nName: {name}\nVersion: {package_version}\n",
+        encoding="utf-8",
+    )
