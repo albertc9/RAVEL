@@ -87,3 +87,9 @@ recorded II 178, latency 183 cycles, a 3.647 ns estimated clock, 4 DSP, 3483 FF,
 28922 LUT, no BRAM/URAM, and 128/32-bit input/output TDATA. These measurements
 qualify only the exact manifest linked by `ravel_qualification.json`; they are
 not a universal Aria performance guarantee.
+
+A one-transaction zero-input XSim RTL co-simulation also completed with
+Verilog status `Pass`, and the generated validation step reported identical C
+and RTL result files. This exercises one complete stream transaction without
+backpressure; it is not multi-transaction, randomized-stall, IP-export,
+implementation, or board validation.
