@@ -3,12 +3,35 @@
 from collections.abc import Iterator, Mapping
 from typing import Any
 
+from .exceptions import ConfigurationError
+
 
 class RavelConfig(Mapping[str, Any]):
     """Typed, mapping-compatible configuration for a RAVEL run."""
 
-    def __init__(self) -> None:
-        self._data: dict[str, Any] = {"Verification": {"Mode": "auto"}}
+    def __init__(self, values: Mapping[str, Any] | None = None) -> None:
+        self._data: dict[str, Any] = dict(values or {})
+        unknown_fields = sorted(self._data.keys() - {"Profile", "Verification"})
+        if unknown_fields:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
+            )
+        verification_values = self._data.get("Verification", {})
+        if not isinstance(verification_values, Mapping):
+            raise ConfigurationError("Verification must be a mapping")
+        unknown_verification_fields = sorted(
+            verification_values.keys() - {"Mode", "Samples", "Seed"}
+        )
+        if unknown_verification_fields:
+            field = unknown_verification_fields[0]
+            raise ConfigurationError(f"Unknown RAVEL configuration field: Verification.{field}")
+        verification = {"Mode": "auto"}
+        verification.update(verification_values)
+        if verification["Mode"] not in {"auto", "required", "disabled"}:
+            raise ConfigurationError(
+                "Verification.Mode must be one of: auto, required, disabled"
+            )
+        self._data["Verification"] = verification
 
     def __getitem__(self, key: str) -> Any:
         return self._data[key]

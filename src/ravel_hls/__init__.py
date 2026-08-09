@@ -1,5 +1,6 @@
 """Public Python API for RAVEL."""
 
 from .config import RavelConfig
+from .exceptions import ConfigurationError
 
-__all__ = ["RavelConfig"]
+__all__ = ["ConfigurationError", "RavelConfig"]
