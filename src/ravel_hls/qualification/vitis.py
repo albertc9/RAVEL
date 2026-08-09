@@ -60,8 +60,16 @@ def import_vitis_reports(
         raise VerificationError(
             "Cannot qualify a modified RAVEL project; regenerate or restore managed files"
         )
+    expected_hls = project_view.manifest.get("normalized_configuration", {}).get(
+        "hls4ml", {}
+    )
+    expected_top = expected_hls.get("ProjectName")
+    if not isinstance(expected_top, str) or not expected_top.isidentifier():
+        raise ProjectGenerationError(
+            "RAVEL manifest does not contain a valid hls4ml ProjectName"
+        )
     report_root = Path(report_dir)
-    candidates = sorted(report_root.rglob("*_csynth.xml"))
+    candidates = sorted(report_root.rglob(f"{expected_top}_csynth.xml"))
     if not candidates:
         raise ProjectGenerationError(
             f"No Vitis top-level csynth XML report found under {report_root}"
@@ -73,7 +81,7 @@ def import_vitis_reports(
         except (OSError, ET.ParseError):
             continue
         top_name = root.findtext("./UserAssignments/TopModelName")
-        if top_name and candidate.name == f"{top_name}_csynth.xml":
+        if top_name == expected_top:
             parsed.append((candidate, root))
     if len(parsed) != 1:
         raise ProjectGenerationError(
@@ -85,9 +93,6 @@ def import_vitis_reports(
         raise ProjectGenerationError(
             f"Unsupported Vitis report version {tool_version}; qualified version is 2023.2"
         )
-    expected_hls = project_view.manifest.get("normalized_configuration", {}).get(
-        "hls4ml", {}
-    )
     reported_top = _required_text(root, "./UserAssignments/TopModelName")
     reported_part = _required_text(root, "./UserAssignments/Part")
     reported_clock = float(

@@ -17,6 +17,9 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     report_path = report_dir / "solution1" / "syn" / "report" / "aria_top_csynth.xml"
     report_path.parent.mkdir(parents=True)
     report_path.write_text(_CSYNTH_XML, encoding="utf-8")
+    (report_path.parent / "conv_kernel_csynth.xml").write_text(
+        _CSYNTH_XML.replace("aria_top", "conv_kernel"), encoding="utf-8"
+    )
 
     record = import_vitis_reports(project_path, report_dir=report_dir)
 
