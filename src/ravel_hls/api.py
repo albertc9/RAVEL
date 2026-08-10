@@ -300,8 +300,11 @@ def _generate_project(
                 verification_report["model_fidelity_report"] = fidelity
         mutable_hls_config["OutputDir"] = original_output
         _rewrite_published_hls_config(staging_path, output_path)
+        published_ravel_config = _published_ravel_config(ravel_config)
         ravel_config_path = staging_path / "ravel_config.yml"
-        ravel_config_path.write_text(ravel_config.to_yaml(), encoding="utf-8")
+        ravel_config_path.write_text(
+            published_ravel_config.to_yaml(), encoding="utf-8"
+        )
         semantic_model = {
             "layers": [
                 {
@@ -318,7 +321,7 @@ def _generate_project(
         manifest = build_generation_manifest(
             project_path=staging_path,
             hls_config=normalized_hls_config,
-            ravel_config=ravel_config,
+            ravel_config=published_ravel_config,
             semantic_model=semantic_model,
             implementation_plan=implementation_plan,
             pass_records=pass_records,
@@ -529,3 +532,12 @@ def _load_hls4ml_config(config_path: Path) -> dict[str, Any]:
     if not isinstance(values, dict):
         raise ProjectGenerationError("Recorded hls4ml configuration must be a mapping")
     return values
+
+
+def _published_ravel_config(config: RavelConfig) -> RavelConfig:
+    values = config.to_dict()
+    project = values.get("Project")
+    if isinstance(project, dict):
+        project["OutputDir"] = "."
+        return RavelConfig(values)
+    return config

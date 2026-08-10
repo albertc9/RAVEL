@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -592,7 +593,11 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
 
     project = optimize_project(
         hls_model,
-        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+        config={
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        },
     )
 
     assert project.path == output_dir
@@ -624,6 +629,12 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     assert str(output_dir) not in published_hls_config
     assert "KerasModel: !keras_model 'keras_model.keras'" in published_hls_config
     assert ".ravel-" not in published_hls_config
+    published_ravel_config = (output_dir / "ravel_config.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "OutputDir: .\n" in published_ravel_config
+    assert str(output_dir) not in published_ravel_config
+    assert str(output_dir) not in json.dumps(project.manifest, sort_keys=True)
     optimized_source = (output_dir / "firmware" / "aria_top.cpp").read_text(
         encoding="utf-8"
     )
@@ -880,6 +891,28 @@ def test_generation_identity_changes_when_model_parameters_change(
         first.manifest["generation_fingerprint"]
         != second.manifest["generation_fingerprint"]
     )
+
+
+def test_published_project_can_move_without_revealing_its_generation_path(
+    tmp_path: Path,
+) -> None:
+    original_path = tmp_path / "private-user" / "aria_project"
+    project = optimize_project(
+        _FakeHlsModel(original_path),
+        config={
+            "Project": {"Name": "aria_top", "OutputDir": original_path},
+            "HLS": {"Config": {}},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+    moved_path = tmp_path / "recipient" / "portable_project"
+    shutil.copytree(project.path, moved_path)
+
+    moved = Project.open(moved_path)
+
+    assert moved.config["Project"]["OutputDir"] == "."
+    assert moved.status["source_integrity"] == "clean"
+    assert callable(moved.link().compile)
 
 
 def test_generation_identity_excludes_the_output_location(
