@@ -75,6 +75,13 @@ class Project:
 
         return refresh_model(self, model)
 
+    def record(self, report_dir: str | Path) -> Any:
+        """Attach measured Vitis HLS evidence without launching the tool."""
+
+        from .qualification.vitis import import_vitis_reports
+
+        return import_vitis_reports(self, report_dir=report_dir)
+
 
 RavelProject = Project
 

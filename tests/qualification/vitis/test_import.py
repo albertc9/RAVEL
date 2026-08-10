@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from ravel_hls import ProjectGenerationError
+from ravel_hls import Project, ProjectGenerationError
 from ravel_hls.project import open_project
 from ravel_hls.qualification.vitis import import_vitis_reports
 
@@ -23,7 +23,7 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
         _CSYNTH_XML.replace("aria_top", "conv_kernel"), encoding="utf-8"
     )
 
-    record = import_vitis_reports(project_path, report_dir=report_dir)
+    record = Project.open(project_path).record(report_dir)
 
     assert record.tool_version == "2023.2"
     assert record.initiation_interval == 178
@@ -32,6 +32,15 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     assert record.rtl_ports["input_layer_TDATA"] == {"direction": "in", "bits": 128}
     assert record.rtl_ports["layer9_out_TDATA"] == {"direction": "out", "bits": 32}
     assert (project_path / "ravel_qualification.json").is_file()
+    qualification = json.loads(
+        (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
+    )
+    assert qualification["schema_version"] == 2
+    assert qualification["generation_fingerprint"] == "1" * 64
+    assert qualification["source_closure_sha256"] == json.loads(
+        (project_path / "ravel_manifest.json").read_text(encoding="utf-8")
+    )["source_closure_sha256"]
+    assert qualification["top"] == "aria_top"
     assert (project_path / "ravel_manifest.json").read_bytes() == manifest_before
     assert open_project(project_path).status["performance_qualification"] == "recorded"
 
@@ -74,18 +83,29 @@ def test_import_vitis_reports_rejects_a_different_target_part(tmp_path: Path) ->
 
 def _write_project(project_path: Path) -> None:
     source = "void aria_top() {}\n"
-    source_hash = hashlib.sha256(source.encode()).hexdigest()
     (project_path / "firmware").mkdir(parents=True)
     (project_path / "firmware" / "aria_top.cpp").write_text(source, encoding="utf-8")
+    hls_config = "Backend: Vitis\nIOType: io_stream\n"
+    ravel_config = "Profile: aria\nVerification:\n  Mode: required\n"
     (project_path / "hls4ml_config.yml").write_text(
-        "Backend: Vitis\nIOType: io_stream\n", encoding="utf-8"
+        hls_config, encoding="utf-8"
     )
     (project_path / "ravel_config.yml").write_text(
-        "Profile: aria\nVerification:\n  Mode: required\n", encoding="utf-8"
+        ravel_config, encoding="utf-8"
     )
+    source_closure = [
+        _closure_entry("firmware/aria_top.cpp", "firmware", source.encode()),
+        _closure_entry("hls4ml_config.yml", "configuration", hls_config.encode()),
+        _closure_entry("ravel_config.yml", "configuration", ravel_config.encode()),
+    ]
+    source_closure_sha256 = hashlib.sha256(
+        json.dumps(
+            source_closure, ensure_ascii=True, separators=(",", ":"), sort_keys=True
+        ).encode()
+    ).hexdigest()
     manifest = {
-        "schema_version": 1,
-        "ravel": {"product": "RAVEL", "generation": "Aria", "release": "1.0"},
+        "schema_version": 2,
+        "ravel": {"product": "RAVEL", "generation": "Aria", "release": "1.1"},
         "implementation_plan": {"template_profile": "aria-2x-v1"},
         "normalized_configuration": {
             "hls4ml": {
@@ -114,11 +134,22 @@ def _write_project(project_path: Path) -> None:
             "source_integrity": "clean",
             "performance_qualification": "not_run",
         },
-        "managed_files": {"firmware/aria_top.cpp": source_hash},
+        "source_closure": source_closure,
+        "source_closure_sha256": source_closure_sha256,
+        "generation_fingerprint": "1" * 64,
     }
     (project_path / "ravel_manifest.json").write_text(
         json.dumps(manifest, sort_keys=True), encoding="utf-8"
     )
+
+
+def _closure_entry(path: str, role: str, payload: bytes) -> dict[str, object]:
+    return {
+        "role": role,
+        "path": path,
+        "size": len(payload),
+        "sha256": hashlib.sha256(payload).hexdigest(),
+    }
 
 
 _CSYNTH_XML = """\

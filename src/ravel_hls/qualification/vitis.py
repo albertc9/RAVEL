@@ -17,6 +17,9 @@ class QualificationRecord:
     """Typed view of one imported Vitis synthesis report."""
 
     manifest_sha256: str
+    generation_fingerprint: str
+    source_closure_sha256: str
+    top: str
     tool_version: str
     part: str
     target_clock_ns: float
@@ -29,8 +32,11 @@ class QualificationRecord:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "manifest_sha256": self.manifest_sha256,
+            "generation_fingerprint": self.generation_fingerprint,
+            "source_closure_sha256": self.source_closure_sha256,
+            "top": self.top,
             "tool": {"name": "Vitis HLS", "version": self.tool_version},
             "part": self.part,
             "timing": {
@@ -56,6 +62,10 @@ def import_vitis_reports(
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
+    if project_view.manifest.get("schema_version") != 2:
+        raise ProjectGenerationError(
+            "Vitis evidence can only be recorded for a schema-v2 project"
+        )
     if project_view.status.get("source_integrity") != "clean":
         raise VerificationError(
             "Cannot qualify a modified RAVEL project; regenerate or restore managed files"
@@ -150,6 +160,13 @@ def import_vitis_reports(
             )
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
+        generation_fingerprint=_required_manifest_sha256(
+            project_view.manifest, "generation_fingerprint"
+        ),
+        source_closure_sha256=_required_manifest_sha256(
+            project_view.manifest, "source_closure_sha256"
+        ),
+        top=reported_top,
         tool_version=tool_version,
         part=reported_part,
         target_clock_ns=reported_clock,
@@ -200,3 +217,10 @@ def _file_sha256(path: Path) -> str:
         for block in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _required_manifest_sha256(manifest: dict[str, Any], key: str) -> str:
+    value = manifest.get(key)
+    if not isinstance(value, str) or len(value) != 64:
+        raise ProjectGenerationError(f"RAVEL manifest has no valid {key}")
+    return value

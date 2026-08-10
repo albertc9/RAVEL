@@ -7,6 +7,9 @@
   "required": [
     "schema_version",
     "manifest_sha256",
+    "generation_fingerprint",
+    "source_closure_sha256",
+    "top",
     "tool",
     "part",
     "timing",
@@ -17,10 +20,14 @@
     "status"
   ],
   "properties": {
-    "schema_version": {"const": 1},
-    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "schema_version": {"const": 2},
+    "manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "generation_fingerprint": {"$ref": "#/$defs/sha256"},
+    "source_closure_sha256": {"$ref": "#/$defs/sha256"},
+    "top": {"type": "string", "minLength": 1},
     "tool": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["name", "version"],
       "properties": {
         "name": {"const": "Vitis HLS"},
@@ -28,11 +35,47 @@
       }
     },
     "part": {"type": "string", "minLength": 1},
-    "timing": {"type": "object"},
-    "performance": {"type": "object"},
-    "resources": {"type": "object"},
-    "rtl_ports": {"type": "object"},
-    "report_files": {"type": "object"},
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_clock_ns", "estimated_clock_ns"],
+      "properties": {
+        "target_clock_ns": {"type": "number", "exclusiveMinimum": 0},
+        "estimated_clock_ns": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["initiation_interval", "latency_cycles"],
+      "properties": {
+        "initiation_interval": {"type": "integer", "minimum": 0},
+        "latency_cycles": {"type": "integer", "minimum": 0}
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "rtl_ports": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["direction", "bits"],
+        "properties": {
+          "direction": {"enum": ["in", "out", "inout"]},
+          "bits": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "report_files": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/sha256"}
+    },
     "status": {"const": "recorded"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
   }
 }

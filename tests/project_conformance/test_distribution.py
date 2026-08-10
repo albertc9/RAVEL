@@ -76,6 +76,24 @@ def test_parameter_package_schema_describes_portable_inference_state() -> None:
     } <= set(schema["required"])
 
 
+def test_qualification_schema_binds_v2_evidence_identity() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_qualification.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert {
+        "manifest_sha256",
+        "generation_fingerprint",
+        "source_closure_sha256",
+        "top",
+    } <= set(schema["required"])
+    assert schema["properties"]["status"] == {"const": "recorded"}
+
+
 def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     uv = shutil.which("uv")
     if uv is None:
