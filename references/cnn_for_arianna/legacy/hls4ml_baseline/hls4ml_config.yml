@@ -70,8 +70,8 @@ InputShapes:
   input_layer:
   - 256
   - 4
-KerasModel: !keras_model '/home/work1/Works/CNN-Core-Generator/cnn_core_project/keras_model.keras'
-OutputDir: /home/work1/Works/CNN-Core-Generator/cnn_core_project
+KerasModel: !keras_model 'keras_model.keras'
+OutputDir: .
 OutputPredictions: null
 OutputShapes:
   layer9_out:

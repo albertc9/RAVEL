@@ -1,78 +1,70 @@
 # RAVEL project format
 
-A RAVEL project is an hls4ml-style project directory whose generated source and
-configuration already contain the selected RAVEL specialization. Vendor tools
-have not necessarily run.
+A RAVEL project is an hls4ml-style project directory containing a complete Aria
+specialization. Vendor tools may or may not have run.
 
-## Configuration and evidence
+## Root records
 
-Three root files have separate ownership:
+- `hls4ml_config.yml` is the portable hls4ml configuration. `OutputDir` is `.`
+  and the project-local Keras snapshot uses a relative path.
+- `ravel_config.yml` is the normalized four-section RAVEL configuration. Its
+  published output directory is also `.`.
+- `ravel_manifest.json` is the immutable schema-v2 generation record.
+- `ravel_qualification.json` is optional schema-v2 measured Vitis evidence.
+- `build_opt.tcl` contains explicit Vitis stage booleans.
 
-- `hls4ml_config.yml` contains hls4ml-owned baseline and downstream-tool
-  configuration.
-- `ravel_config.yml` contains only RAVEL-owned user intent plus hashes linking
-  it to the source model and hls4ml configuration.
-- `ravel_manifest.json` is the immutable generation record.
+Published records contain no original source filename, username, hostname, or
+generation-machine directory. Moving the complete project preserves source
+integrity and the ability to open, refresh, link, and build it.
 
-The schema-version-1 manifest has stable sections for RAVEL identity, source
-model, dependencies, normalized configuration, profile, implementation plan,
-pipeline, interfaces, verification, managed files, and generation identity.
-Paths are relative POSIX paths; local usernames, hostnames, absolute input
-paths, arbitrary environment variables, and complete shell commands are not
-recorded. JSON Schema documents for the RAVEL configuration, generation
-manifest, and qualification record ship in the installed `ravel_hls/schemas`
-package data.
+## Generation identities
 
-## Fingerprints
-
-SHA-256 identities remain distinct:
-
-- `source_artifact_sha256` identifies the exact project-local serialized model.
-- `semantic_model_sha256` identifies canonical topology, parameters, and
-  quantization without paths, archive metadata, or non-semantic names.
+- `source_artifact_sha256` identifies the project-local serialized model as a
+  representation-provenance fact.
+- `semantic_model_sha256` identifies canonical topology, parameters, learned
+  quantizer state, and static quantization semantics.
 - `configuration_sha256` identifies normalized generation-affecting settings.
-- `implementation_sha256` identifies the resolved plan, pass versions,
-  template profile, and compatibility profile.
-- managed-file hashes identify each RAVEL-owned generated file.
-- `generation_fingerprint` combines normalized inputs that affect generated
-  results.
+- `implementation_sha256` identifies the resolved plan, passes, templates, and
+  compatibility profile.
+- `generation_fingerprint` combines the semantic, configuration, and
+  implementation identities.
+- `source_closure_sha256` identifies the bounded list of published source,
+  parameter, model, configuration, simulation, and vendor-script files.
 
-Timestamps and qualification results do not participate in generation
-identity. A separate qualification record links to the SHA-256 of the complete
-immutable manifest.
+Output directory, verification selection, Vitis invocation, timestamps, and
+qualification results do not participate in generation identity.
 
-## Independent status axes
+## Status and qualification
 
-RAVEL reports generation, dependency qualification, correctness verification,
-model fidelity, source integrity, and performance qualification independently.
-A staged failure is not published as a failed project.
+Generation, dependency qualification, correctness verification, model fidelity,
+source integrity, and performance qualification are independent. Full opening
+or inspection recomputes the source closure; fast inspection skips payload
+hashing and never claims the source is clean.
 
-Opening a project recomputes managed-file integrity without modifying the
-manifest. Manual changes produce an in-memory `modified` status and make prior
-correctness evidence stale. Vendor measurements are stored separately in
-`ravel_qualification.json` and never rewrite generation-time facts.
+Qualification is separate so vendor execution cannot rewrite generation facts.
+It binds the manifest hash, generation fingerprint, source-closure hash, top,
+tool version, part, target clock, measured timing/performance/resources, RTL
+ports, and report-file hashes. Foreign or edited evidence is `stale`. Recorded
+measurements have no universal pass/fail threshold.
 
-## Interface contracts
+## Parameter package schema
 
-The manifest distinguishes:
+`.ravelparams` is a deterministic ZIP container with
+`parameter_package.json` and ordered `arrays/*.npy` payloads. Schema version 1
+defines:
 
-- `logical_model_interface`: tensor shapes and numeric semantics;
-- `hls_stream_interface`: packing, ordering, word counts, handshake, and
-  source-level control;
-- `rtl_interface.expected`: only rules derived from a qualified tool profile;
-- `rtl_interface.measured`: only facts read from an actual vendor result.
+- `frontend_contract` for the Keras/HGQ2 adapter;
+- canonical topology and static quantizer contracts;
+- entries with canonical slot, kind, shape, dtype, relative storage, and SHA-256;
+- `compatibility_sha256`, `parameter_state_sha256`, and
+  `package_content_sha256` as separate identities.
 
-For the canonical reference, the HLS stream carries two chronological rows and
-four lanes per input word, producing 128 input words per inference. The current
-wrapper expects eight 9-bit values in eight 16-bit RTL slots for 128-bit input
-TDATA, and one 22-bit result in 32-bit output TDATA. Those RTL widths are a
-reference-configuration contract, not a universal inference from C++ payload
-widths.
+Packages include only generation-relevant inference state. They exclude
+optimizer, training history, loss/metrics, beta/EBOPS counters, data, labels,
+random state, absolute paths, RAVEL/hls4ml configuration, generated sources,
+reports, and application thresholds. Applying a package reconstructs a complete
+temporary model and runs the normal staged refresh pipeline; it never patches
+generated weight headers in place.
 
-## Replacement behavior
-
-Generated projects are reproducible derived artifacts. Reusing the path of a
-recognized RAVEL project fully regenerates, validates, and atomically replaces
-it even when its fingerprint is unchanged. Corrupt or non-RAVEL targets require
-an explicit force-replacement operation. Failure during staging preserves the
-previous published directory.
+The JSON Schemas for configuration, manifest, qualification, and parameter
+packages ship under `ravel_hls/schemas` in the installed distribution.

@@ -40,6 +40,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Optional NumPy .npy verification tensor with shape [samples, 256, 4]",
     )
     parser.add_argument("--force-replace", action="store_true")
+    parser.add_argument(
+        "--vitis",
+        action="store_true",
+        help="Run Vitis HLS 2023.2 and record synthesis measurements",
+    )
     return parser
 
 
@@ -50,7 +55,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     import keras
     import numpy as np
     from hgq.layers import QConv2D, QDense
-    from ravel_hls import RavelConfig, convert_from_keras_model
+    import ravel_hls as ravel
 
     model = keras.models.load_model(
         args.model, custom_objects={"QConv2D": QConv2D, "QDense": QDense}
@@ -62,25 +67,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         {"Strategy": "Latency", "ReuseFactor": 1}
     )
     verification_inputs = np.load(args.inputs) if args.inputs is not None else None
-    project = convert_from_keras_model(
+    config = {
+        "Project": {
+            "Name": args.project_name,
+            "OutputDir": args.output,
+            "ForceReplace": args.force_replace,
+        },
+        "HLS": {
+            "Backend": "Vitis",
+            "IOType": "io_stream",
+            "Part": args.part,
+            "ClockPeriod": args.clock_period,
+            "Config": hls_config,
+        },
+        "Verification": {
+            "Mode": args.verification,
+            "Samples": args.samples,
+            "Seed": args.seed,
+        },
+        "Vitis": {"Run": args.vitis},
+    }
+    project = ravel.convert(
         model,
-        output_dir=args.output,
-        project_name=args.project_name,
-        hls_config=hls_config,
-        ravel_config=RavelConfig(
-            {
-                "Profile": "aria",
-                "Verification": {
-                    "Mode": args.verification,
-                    "Samples": args.samples,
-                    "Seed": args.seed,
-                },
-            }
-        ),
-        part=args.part,
-        clock_period=args.clock_period,
-        force_replace=args.force_replace,
-        verification_inputs=verification_inputs,
+        config,
+        inputs=verification_inputs,
     )
     print(
         json.dumps(

@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator, Mapping
 from copy import deepcopy
+import os
 from typing import Any
 
 from .exceptions import ConfigurationError
@@ -26,13 +27,16 @@ class RavelConfig(Mapping[str, Any]):
 
     def __init__(self, values: Mapping[str, Any] | None = None) -> None:
         self._data: dict[str, Any] = dict(values or {})
+        if self._data.keys() & {"Project", "HLS", "Vitis"}:
+            self._init_run_config()
+            return
         unknown_fields = sorted(self._data.keys() - {"Profile", "Verification"})
         if unknown_fields:
             raise ConfigurationError(
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
-            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.0")
+            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.1.0")
         self._data.setdefault("Profile", "aria")
         verification_values = self._data.get("Verification", {})
         if not isinstance(verification_values, Mapping):
@@ -60,6 +64,138 @@ class RavelConfig(Mapping[str, Any]):
         ):
             raise ConfigurationError("Verification.Seed must be a nonnegative integer")
         self._data["Verification"] = verification
+
+    def _init_run_config(self) -> None:
+        unknown_fields = sorted(
+            self._data.keys() - {"Project", "HLS", "Verification", "Vitis"}
+        )
+        if unknown_fields:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: {unknown_fields[0]}"
+            )
+        project = self._data.get("Project")
+        hls = self._data.get("HLS")
+        if not isinstance(project, Mapping):
+            raise ConfigurationError("Project must be a mapping")
+        if not isinstance(hls, Mapping):
+            raise ConfigurationError("HLS must be a mapping")
+        unknown_project_fields = sorted(
+            project.keys() - {"Name", "OutputDir", "ForceReplace"}
+        )
+        if unknown_project_fields:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: Project.{unknown_project_fields[0]}"
+            )
+        for required in ("Name", "OutputDir"):
+            if required not in project:
+                raise ConfigurationError(f"Project.{required} is required")
+        project_name = project["Name"]
+        if not isinstance(project_name, str) or not project_name:
+            raise ConfigurationError("Project.Name must be a nonempty string")
+        output_dir = project["OutputDir"]
+        if not isinstance(output_dir, (str, os.PathLike)):
+            raise ConfigurationError("Project.OutputDir must be a path")
+        force_replace = project.get("ForceReplace", False)
+        if not isinstance(force_replace, bool):
+            raise ConfigurationError("Project.ForceReplace must be a boolean")
+        unknown_hls_fields = sorted(
+            hls.keys()
+            - {"Backend", "IOType", "Part", "ClockPeriod", "Config"}
+        )
+        if unknown_hls_fields:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: HLS.{unknown_hls_fields[0]}"
+            )
+        if "Config" not in hls or not isinstance(hls["Config"], Mapping):
+            raise ConfigurationError("HLS.Config must be a mapping")
+        backend = hls.get("Backend", "Vitis")
+        if backend != "Vitis":
+            raise ConfigurationError("HLS.Backend must be Vitis")
+        io_type = hls.get("IOType", "io_stream")
+        if io_type != "io_stream":
+            raise ConfigurationError("HLS.IOType must be io_stream")
+        part = hls.get("Part")
+        if part is not None and (not isinstance(part, str) or not part):
+            raise ConfigurationError("HLS.Part must be a nonempty string or null")
+        clock_period = hls.get("ClockPeriod")
+        if clock_period is not None and (
+            not isinstance(clock_period, (int, float))
+            or isinstance(clock_period, bool)
+            or clock_period <= 0
+        ):
+            raise ConfigurationError("HLS.ClockPeriod must be a positive number or null")
+        verification = self._data.get("Verification", {})
+        if not isinstance(verification, Mapping):
+            raise ConfigurationError("Verification must be a mapping")
+        unknown_verification_fields = sorted(
+            verification.keys() - {"Mode", "Samples", "Seed"}
+        )
+        if unknown_verification_fields:
+            raise ConfigurationError(
+                "Unknown RAVEL configuration field: "
+                f"Verification.{unknown_verification_fields[0]}"
+            )
+        normalized_verification = {"Mode": "auto", **verification}
+        if normalized_verification["Mode"] not in {"auto", "required", "disabled"}:
+            raise ConfigurationError(
+                "Verification.Mode must be one of: auto, required, disabled"
+            )
+        samples = normalized_verification.get("Samples")
+        if samples is not None and (
+            not isinstance(samples, int) or isinstance(samples, bool) or samples < 1
+        ):
+            raise ConfigurationError("Verification.Samples must be a positive integer")
+        seed = normalized_verification.get("Seed")
+        if seed is not None and (
+            not isinstance(seed, int) or isinstance(seed, bool) or seed < 0
+        ):
+            raise ConfigurationError("Verification.Seed must be a nonnegative integer")
+        vitis = self._data.get("Vitis", {})
+        if not isinstance(vitis, Mapping):
+            raise ConfigurationError("Vitis must be a mapping")
+        run_vitis = vitis.get("Run", False)
+        if not isinstance(run_vitis, bool):
+            raise ConfigurationError("Vitis.Run must be a boolean")
+        stage_defaults = {
+            "Reset": True,
+            "CSim": False,
+            "Synth": True,
+            "CoSim": False,
+            "Validation": False,
+            "Export": False,
+            "VSynth": False,
+        }
+        stages = vitis.get("Stages", {})
+        if not isinstance(stages, Mapping):
+            raise ConfigurationError("Vitis.Stages must be a mapping")
+        unknown_stages = sorted(stages.keys() - stage_defaults.keys())
+        if unknown_stages:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: Vitis.Stages.{unknown_stages[0]}"
+            )
+        for stage, enabled in stages.items():
+            if not isinstance(enabled, bool):
+                raise ConfigurationError(f"Vitis.Stages.{stage} must be a boolean")
+        stage_defaults.update(stages)
+        self._data = {
+            "Project": {
+                "Name": project_name,
+                "OutputDir": str(output_dir),
+                "ForceReplace": force_replace,
+            },
+            "HLS": {
+                "Backend": backend,
+                "IOType": io_type,
+                "Part": part,
+                "ClockPeriod": clock_period,
+                "Config": deepcopy(dict(hls["Config"])),
+            },
+            "Verification": normalized_verification,
+            "Vitis": {
+                "Run": run_vitis,
+                "Stages": stage_defaults,
+            },
+        }
 
     def __getitem__(self, key: str) -> Any:
         return self._data[key]

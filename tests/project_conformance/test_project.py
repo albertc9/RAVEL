@@ -7,7 +7,8 @@ import sys
 
 import pytest
 
-from ravel_hls import ProjectGenerationError, open_project
+from ravel_hls import ProjectGenerationError
+from ravel_hls.project import open_project
 
 
 def test_open_project_rejects_an_unmanaged_directory(tmp_path: Path) -> None:
@@ -44,6 +45,31 @@ def test_open_project_marks_modified_managed_sources_and_stale_evidence(
     assert (tmp_path / "ravel_manifest.json").read_bytes() == manifest_before
 
 
+def test_schema_v2_integrity_detects_an_unrecorded_source_file(tmp_path: Path) -> None:
+    manifest = _write_valid_project(tmp_path)
+    source_hash = manifest["managed_files"]["firmware/aria_top.cpp"]
+    manifest["schema_version"] = 2
+    manifest["source_closure"] = [
+        {
+            "role": "firmware",
+            "path": "firmware/aria_top.cpp",
+            "size": len("void aria_top() {}\n"),
+            "sha256": source_hash,
+        }
+    ]
+    manifest.pop("managed_files")
+    (tmp_path / "ravel_manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+    (tmp_path / "firmware" / "injected.h").write_text(
+        "// unrecorded\n", encoding="utf-8"
+    )
+
+    project = open_project(tmp_path)
+
+    assert project.status["source_integrity"] == "modified"
+
+
 def test_open_project_reports_a_corrupt_manifest_as_a_project_error(tmp_path: Path) -> None:
     (tmp_path / "ravel_manifest.json").write_text("{", encoding="utf-8")
 
@@ -78,6 +104,38 @@ def test_inspect_cli_reports_project_status_as_json(tmp_path: Path) -> None:
     report = json.loads(result.stdout)
     assert report["ravel"] == {"product": "RAVEL", "generation": "Aria", "release": "1.0"}
     assert report["status"]["source_integrity"] == "clean"
+    assert result.stderr == ""
+
+
+def test_inspect_cli_fast_mode_does_not_claim_clean_source_integrity(
+    tmp_path: Path,
+) -> None:
+    _write_valid_project(tmp_path)
+    (tmp_path / "firmware" / "aria_top.cpp").write_text(
+        "void modified() {}\n", encoding="utf-8"
+    )
+    repository = Path(__file__).resolve().parents[2]
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(repository / "src")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "ravel_hls.cli",
+            "inspect",
+            str(tmp_path),
+            "--fast",
+            "--json",
+        ],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert json.loads(result.stdout)["status"]["source_integrity"] == "not_checked"
     assert result.stderr == ""
 
 

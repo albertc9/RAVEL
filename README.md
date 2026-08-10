@@ -1,17 +1,18 @@
 # RAVEL
 
 RAVEL (Rate-Aware Vectorized Engine for Low-latency) generates a specialized,
-hls4ml-compatible FPGA inference project for the fixed CNN-for-Arianna model
-family. Aria 1.0 implements the pair-parallel, two-row wide-stream design; it is
-not a design-space explorer.
+hls4ml-compatible FPGA inference project. Aria 1.1.0 implements the qualified
+pair-parallel, two-row wide-stream profile for the CNN-for-Arianna model family;
+it is not a design-space explorer and it does not impose application-specific
+performance targets.
 
 ## Install
 
-Use a clean Python 3.11 environment on Linux for the fully qualified generation
-and C++ verification workflow. From PyPI:
+Use a clean Python 3.11 environment on Linux for the fully qualified generation,
+C++ verification, and Vitis HLS workflow:
 
 ```bash
-python -m pip install ravel-hls
+python -m pip install ravel-hls==1.1.0
 ravel-hls doctor --json
 ```
 
@@ -21,9 +22,8 @@ For an editable source checkout, replace the install command with:
 python -m pip install -c constraints/aria-reference.txt -e .
 ```
 
-The dependency profile is intentionally exact. Do not co-install the retired
-`HGQ` distribution with `hgq2`; both own the `hgq` Python namespace and RAVEL
-will reject the conflict before generation.
+Do not co-install the retired `HGQ` distribution with `hgq2`; both own the
+`hgq` Python namespace and RAVEL rejects that conflict before generation.
 
 ## Python API
 
@@ -31,49 +31,72 @@ will reject the conflict before generation.
 import hls4ml
 import keras
 from hgq.layers import QConv2D, QDense
-from ravel_hls import RavelConfig, convert_from_keras_model
+import ravel_hls as ravel
 
 model = keras.models.load_model(
     "model.keras", custom_objects={"QConv2D": QConv2D, "QDense": QDense}
 )
-hls_config = hls4ml.utils.config_from_keras_model(
+hls = hls4ml.utils.config_from_keras_model(
     model, granularity="name", backend="Vitis"
 )
-hls_config["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
+hls["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
 
-project = convert_from_keras_model(
-    model,
-    output_dir="cnn_core",
-    project_name="cnn_core",
-    hls_config=hls_config,
-    ravel_config=RavelConfig(
-        {"Verification": {"Mode": "required", "Samples": 32, "Seed": 19}}
-    ),
-    part="xcku5p-ffvb676-2-e",
-    clock_period=5.0,
-)
+config = {
+    "Project": {"Name": "cnn_core", "OutputDir": "cnn_core"},
+    "HLS": {
+        "Backend": "Vitis",
+        "IOType": "io_stream",
+        "Part": "xcku5p-ffvb676-2-e",
+        "ClockPeriod": 5.0,
+        "Config": hls,
+    },
+    "Verification": {"Mode": "required", "Samples": 32, "Seed": 19},
+    "Vitis": {"Run": False},
+}
+
+project = ravel.convert(model, config)
 print(project.status)
 ```
 
-The public lifecycle also provides `optimize_project`, `open_project`,
-`refresh_model`, `RavelProject.link_hls4ml`, and `import_vitis_reports`.
-Generated projects are staged and atomically published only after enabled
-checks pass. `ravel-hls inspect PROJECT --json` recomputes managed-source
-integrity without modifying the project.
+`Vitis.Run` defaults to `False`. Set it to `True` to run
+`vitis_hls -f build_prj.tcl` after atomic project publication and automatically
+record the synthesis report. The default Vitis stages are reset and synthesis;
+CSim, CoSim, validation, export, and Vivado synthesis remain disabled unless
+their booleans under `Vitis.Stages` are enabled explicitly. The same operation
+can be requested later with `project.build()`.
 
-## Reference and evidence boundary
+The concise project lifecycle is `Project.open(path)`, `project.refresh(model)`,
+`project.build()`, `project.record(report_dir)`, and `project.link()`. The CLI
+command `ravel-hls inspect PROJECT --json` performs full source-integrity
+checking; add `--fast` when payload hashing should be skipped.
 
-[`references/cnn_for_arianna`](references/cnn_for_arianna/README.md) contains
-the canonical model and executable reference workflow. Its `legacy/` directory
-preserves selected retired-generator sources and a historical Vitis report for
-comparison only; production code never imports them.
+## Parameter packages
 
-Aria generation and bit-exact baseline/optimized C++ equivalence are qualified
-on the pinned Linux stack. Vitis synthesis, initiation interval, timing,
-resources, and measured RTL ports are separate evidence. A report is recorded
-only when `import_vitis_reports` links Vitis 2023.2 results to the exact current
-manifest and its expected stream widths.
+`Parameters` stores portable generation-relevant inference state without
+generated HLS sources or executable Python objects:
 
-See [architecture](docs/architecture.md),
-[compatibility](docs/compatibility.md), and
-[project format](docs/project-format.md) for the precise contracts.
+```python
+parameters = ravel.Parameters.extract(model)
+parameters.save("trained.ravelparams")
+
+project = ravel.Project.open("cnn_core")
+project.refresh(ravel.Parameters.load("trained.ravelparams"))
+```
+
+The deterministic archive contains JSON plus NPY arrays for kernel, bias, and
+learned K/I/F quantizer state. Static quantizer contracts and slot schemas are
+compatibility-checked before a complete staged regeneration. A parameter
+package is not encrypted; treat it as sensitive model IP.
+
+## Evidence boundary
+
+Generation, correctness, model fidelity, source integrity, and vendor
+measurements are independent status axes. Qualification records measured II,
+latency, timing, resources, and RTL ports for one exact generation fingerprint;
+it does not compare those measurements with an application threshold. A high II
+or an estimated clock above the requested clock remains recorded evidence, not
+a failed RAVEL project.
+
+See the executable [CNN-for-Arianna reference](references/cnn_for_arianna/README.md),
+[architecture](docs/architecture.md), [compatibility](docs/compatibility.md), and
+[project format](docs/project-format.md) for the full contracts.

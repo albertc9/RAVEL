@@ -1,6 +1,7 @@
 """Primary public generation workflows."""
 
 from collections.abc import Mapping
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
 from .backends.vitis.renderer import render_aria_project
+from .backends.vitis.build import normalize_build_script, write_build_options
 from .exceptions import (
     CompatibilityError,
     ConfigurationError,
@@ -21,6 +23,7 @@ from .exceptions import (
     VerificationError,
 )
 from .manifest import build_generation_manifest
+from .parameters import Parameters
 from .profiles.aria.plan import build_implementation_plan, build_pass_records
 from .project import RavelProject, open_project
 from .verification.equivalence import (
@@ -30,6 +33,39 @@ from .verification.equivalence import (
     report_model_fidelity,
     require_bit_exact,
 )
+
+
+def convert(
+    model: Any, config: Mapping[str, Any], *, inputs: Any | None = None
+) -> RavelProject:
+    """Convert a compatible model using the Aria 1.1 public configuration."""
+
+    unknown_fields = sorted(
+        config.keys() - {"Project", "HLS", "Verification", "Vitis"}
+    )
+    if unknown_fields:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: {unknown_fields[0]}"
+        )
+    normalized = RavelConfig(config)
+    project = normalized["Project"]
+    hls = normalized["HLS"]
+    generated = convert_from_keras_model(
+        model,
+        output_dir=project["OutputDir"],
+        project_name=project["Name"],
+        hls_config=hls["Config"],
+        ravel_config=normalized,
+        backend=hls.get("Backend", "Vitis"),
+        io_type=hls.get("IOType", "io_stream"),
+        part=hls.get("Part"),
+        clock_period=hls.get("ClockPeriod"),
+        force_replace=project["ForceReplace"],
+        verification_inputs=inputs,
+    )
+    if normalized["Vitis"]["Run"]:
+        generated.build()
+    return generated
 
 
 def refresh_model(
@@ -43,6 +79,15 @@ def refresh_model(
     """Regenerate an existing RAVEL project with a complete compatible model."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
+    if isinstance(model, Parameters):
+        import keras
+        from hgq.layers import QConv2D, QDense
+
+        template = keras.models.load_model(
+            project_view.path / "keras_model.keras",
+            custom_objects={"QConv2D": QConv2D, "QDense": QDense},
+        )
+        model = model._apply(template)
     hls_values = _load_hls4ml_config(project_view.path / "hls4ml_config.yml")
     target = project_view.path if output_dir is None else Path(output_dir)
     return convert_from_keras_model(
@@ -128,7 +173,7 @@ def optimize_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.0 dependency stack is not qualified: " + ", ".join(failures)
+            "Aria 1.1.0 dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -139,22 +184,22 @@ def optimize_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.0")
+        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.1.0")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.0")
+        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.1.0")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.0")
+        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.1.0")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.0")
+        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.1.0")
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     if input_shapes != [[256, 4]]:
         raise CompatibilityError(
-            "Aria 1.0 requires one logical input shape [256, 4]"
+            "Aria 1.1.0 requires one logical input shape [256, 4]"
         )
     output_shapes = list(hls_config.get("OutputShapes", {}).values())
     if output_shapes != [[1]]:
-        raise CompatibilityError("Aria 1.0 requires one logical output shape [1]")
+        raise CompatibilityError("Aria 1.1.0 requires one logical output shape [1]")
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
     return _generate_project(
@@ -236,6 +281,8 @@ def _generate_project(
         managed_paths = render_aria_project(
             staging_path, project_name, layers
         )
+        normalize_build_script(staging_path)
+        write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
             "mode": verification_mode,
             "transformation_equivalence": "not_run",
@@ -257,13 +304,19 @@ def _generate_project(
                 verification_report["model_fidelity_report"] = fidelity
         mutable_hls_config["OutputDir"] = original_output
         _rewrite_published_hls_config(staging_path, output_path)
+        published_ravel_config = _published_ravel_config(ravel_config)
         ravel_config_path = staging_path / "ravel_config.yml"
-        ravel_config_path.write_text(ravel_config.to_yaml(), encoding="utf-8")
+        ravel_config_path.write_text(
+            published_ravel_config.to_yaml(), encoding="utf-8"
+        )
         semantic_model = {
             "layers": [
                 {
                     "class_name": layer.class_name,
                     "attributes": _semantic_attributes(layer),
+                    "parameters": [
+                        _semantic_parameter(weight) for weight in layer.get_weights()
+                    ],
                 }
                 for layer in layers
             ]
@@ -272,11 +325,10 @@ def _generate_project(
         manifest = build_generation_manifest(
             project_path=staging_path,
             hls_config=normalized_hls_config,
-            ravel_config=ravel_config,
+            ravel_config=published_ravel_config,
             semantic_model=semantic_model,
             implementation_plan=implementation_plan,
             pass_records=pass_records,
-            managed_paths=[*managed_paths, "hls4ml_config.yml", "ravel_config.yml"],
             verification_report=verification_report,
             interface_contract=_interface_contract(layers),
         )
@@ -352,6 +404,18 @@ def _semantic_attributes(layer: Any) -> dict[str, Any]:
         name: layer.get_attr(name)
         for name in names
         if layer.get_attr(name) is not None
+    }
+
+
+def _semantic_parameter(weight: Any) -> dict[str, Any]:
+    import numpy as np
+
+    values = np.ascontiguousarray(weight.data)
+    return {
+        "shape": list(values.shape),
+        "dtype": values.dtype.str,
+        "values_sha256": hashlib.sha256(values.tobytes(order="C")).hexdigest(),
+        "precision": weight.type.precision.definition_cpp(),
     }
 
 
@@ -446,7 +510,7 @@ def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None
         ) from error
     if not isinstance(values, dict):
         raise ProjectGenerationError("hls4ml_config.yml must contain a mapping")
-    values["OutputDir"] = str(output_path)
+    values["OutputDir"] = "."
     if isinstance(values.get("KerasModel"), _KerasModelPath):
         values["KerasModel"] = _KerasModelPath("keras_model.keras")
     config_path.write_text(
@@ -472,3 +536,12 @@ def _load_hls4ml_config(config_path: Path) -> dict[str, Any]:
     if not isinstance(values, dict):
         raise ProjectGenerationError("Recorded hls4ml configuration must be a mapping")
     return values
+
+
+def _published_ravel_config(config: RavelConfig) -> RavelConfig:
+    values = config.to_dict()
+    project = values.get("Project")
+    if isinstance(project, dict):
+        project["OutputDir"] = "."
+        return RavelConfig(values)
+    return config

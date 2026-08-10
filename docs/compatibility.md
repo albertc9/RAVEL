@@ -2,7 +2,7 @@
 
 ## Model profile
 
-Aria 1.0 accepts a single-input, single-output homogeneous HGQ model with this
+Aria 1.1.0 accepts a single-input, single-output homogeneous HGQ model with this
 semantic sequence:
 
 ```text
@@ -14,79 +14,52 @@ Input [256, 4]
   -> QDense(1, linear)
 ```
 
-Weights, biases, sparsity, legal homogeneous precision parameters, and layer
-names may vary. Geometry, connectivity, data format, input/output count, and
-homogeneous quantization are compatibility requirements. A mathematically
-similar but differently serialized topology is unsupported until separately
-qualified.
+Weights, biases, legal learned K/I/F values, sparsity, and layer names may vary.
+Geometry, connectivity, data format, input/output count, and the static
+quantizer contract are compatibility requirements. This model profile is a
+generation-legality contract, not a performance target.
 
-## hls4ml project profile
+## hls4ml and host profile
 
-The canonical optimized path requires:
+The optimized path requires the Vitis backend, `io_stream`, latency strategy,
+and reuse factor 1. Project name, output path, FPGA part, clock period, model
+parameters, verification inputs, and Vitis invocation remain user-selected.
 
-- Vitis backend
-- `io_stream`
-- `Latency` strategy
-- reuse factor 1
+Linux supports the complete qualified workflow. macOS supports model parsing,
+generation, post-processing, package handling, and inspection; automatic C++
+verification may be unavailable when the HLS simulation headers cannot be
+compiled. Windows is not supported.
 
-Output directory, project name, FPGA part, clock period, compatible precision,
-model parameters, and verification settings remain selectable through their
-owning APIs. Expressible hls4ml values are not automatically supported by the
-Aria profile.
+The compatibility-sensitive Python stack is pinned in
+`constraints/aria-reference.txt`. Use HGQ2 alone; the retired `HGQ` distribution
+conflicts on the same Python namespace.
 
-## Host support
+## Vitis HLS 2023.2
 
-Linux supports generation and non-vendor C++ verification. macOS supports
-model parsing, project generation, post-processing, and inspection; automatic
-behavioral verification may be unavailable when a supported compiler cannot
-compile the required HLS simulation headers. Windows is not
-supported.
+`Project.build()` invokes the standalone `vitis_hls` launcher directly with the
+generated `build_prj.tcl`; it does not depend on hls4ml's newer `vitis-run`
+adapter. RAVEL removes hls4ml's unsupported
+`config_array_partition -maximum_size` command before publication. The default
+stage profile resets the HLS project and runs synthesis only.
 
-Vendor-backed work follows the selected Vitis installation's platform rules
-and is outside ordinary RAVEL conversion.
+Successful synthesis is imported automatically. A report is accepted only when
+its tool version, top, part, target clock, and expected stream port widths match
+the immutable project identity. II, latency, estimated clock, and resources are
+measurements: RAVEL does not require a particular II, does not require estimated
+clock to beat the target, and does not define matrix-specific release gates.
 
-hls4ml 1.2.0's Vitis backend currently invokes `vitis-run`, while a standalone
-Vitis HLS 2023.2 installation exposes the deprecated-but-supported
-`vitis_hls` launcher instead. The generated `build_prj.tcl` remains compatible
-with 2023.2 and can be run directly with that launcher after setting explicit
-build options. RAVEL does not create a fake `vitis-run` shim.
+This support does not strengthen the RTL proof boundary. CoSim, validation,
+export, Vivado synthesis, implementation, and board tests run only when selected
+by the user and retain their own evidence semantics.
 
-## Dependency policy
+## Parameter-package compatibility
 
-RAVEL uses a project-specific virtual environment and never changes packages
-at runtime. Aria 1.0 metadata declares exact compatibility-sensitive pins. The
-CNN-for-Arianna reference uses exact compatibility-sensitive pins from
-`constraints/aria-reference.txt`.
+A `.ravelparams` package may update kernel, bias, and learned K/I/F state. Its
+topology, canonical slot schema, shapes, dtypes, frontend contract, and static
+quantizer type/rounding/overflow/axis/granularity must match the project-local
+model template exactly. Static-contract changes require a complete model
+refresh.
 
-The qualified stack uses HGQ2 alone because the canonical model is a
-Keras 3 artifact.
-
-On 2026-08-09, the clean Linux stack was qualified with CPython 3.11.15:
-
-- all 45 installed distributions passed dependency consistency checking;
-- the canonical model loaded as input `[256, 4]` and output `[1]`;
-- hls4ml 1.2.0 recognized the expected HGQ layer sequence;
-- the public RAVEL conversion completed with required bit-exact transformation
-  equivalence;
-- the published project reopened through `RavelProject.link_hls4ml`, compiled,
-  and predicted 1000 supplied samples with maximum absolute difference `0`
-  from the clean hls4ml baseline;
-- the Keras/HGQ-to-HLS score fidelity on that run was `1.0000`.
-
-This stage qualifies dependencies, generation, source-level C++ compilation,
-and transformation correctness; by itself it carries no vendor-performance
-claim. The preserved legacy Vitis report is historical comparison evidence and
-cannot qualify a new RAVEL manifest.
-
-The same date, a current RAVEL-generated project was synthesized independently
-with Vitis HLS 2023.2 for `xcku5p-ffvb676-2-e` at a 5 ns target. The report
-recorded II 178, latency 183 cycles, a 3.647 ns estimated clock, 4 DSP, 3483 FF,
-28922 LUT, no BRAM/URAM, and 128/32-bit input/output TDATA. These measurements
-qualify only the exact manifest linked by `ravel_qualification.json`; they are
-not a universal Aria performance guarantee.
-
-A one-transaction zero-input XSim RTL co-simulation also completed with
-Verilog status `Pass`, and the generated validation step reported identical C
-and RTL result files. This exercises one complete stream transaction without
-backpressure; it is not multi-transaction, randomized-stall, IP-export,
-implementation, or board validation.
+Packages contain no pickle or custom executable objects and reject traversal,
+absolute paths, symlinks, duplicate entries, object arrays, invalid digests, and
+oversized payloads. The archive is portable but unencrypted.

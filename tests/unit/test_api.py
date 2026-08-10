@@ -1,5 +1,8 @@
 import hashlib
+import json
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 from types import ModuleType, SimpleNamespace
 from typing import Any
@@ -8,14 +11,16 @@ import numpy as np
 import pytest
 
 from ravel_hls import (
+    BuildError,
     CompatibilityError,
     ConfigurationError,
+    Project,
     ProjectGenerationError,
     VerificationError,
-    convert_from_keras_model,
-    optimize_project,
-    refresh_model,
+    convert,
+    Parameters,
 )
+from ravel_hls.api import convert_from_keras_model, optimize_project, refresh_model
 
 
 class _FakeHlsConfig:
@@ -60,6 +65,7 @@ class _FakeWeight:
         self.name = name
         self.type = _FakeType(type_name, "ap_fixed<8,2>")
         self.data_length = length
+        self.data = np.zeros(length, dtype=np.float32)
 
 
 class _FakeLayer:
@@ -233,6 +239,12 @@ class _FakeHlsModel:
             encoding="utf-8",
         )
         (output_dir / "keras_model.keras").write_bytes(b"fake keras model")
+        (output_dir / "build_prj.tcl").write_text(
+            "source build_opt.tcl\n"
+            "catch {config_array_partition -maximum_size $maximum_size}\n"
+            "csynth_design\n",
+            encoding="utf-8",
+        )
 
     def get_layers(self) -> list[_FakeLayer]:
         return self.layers
@@ -248,6 +260,232 @@ class _VerifyingFakeHlsModel(_FakeHlsModel):
 
     def predict(self, inputs: np.ndarray) -> np.ndarray:
         return np.sum(inputs, axis=(1, 2), dtype=np.float32).reshape(-1, 1)
+
+
+class _AssignableVariable:
+    def __init__(self, path: str, values: list[float]) -> None:
+        self.path = path
+        self.name = path.rsplit("/", 1)[-1]
+        self.values = np.asarray(values, dtype=np.float32)
+
+    def numpy(self) -> np.ndarray:
+        return self.values.copy()
+
+    def assign(self, values: np.ndarray) -> None:
+        self.values = np.asarray(values, dtype=np.float32)
+
+
+class _ParameterLayer:
+    def __init__(self, values: list[float], round_mode: str) -> None:
+        self.name = "private_dense"
+        self._class_name = "QDense"
+        self.round_mode = round_mode
+        self.weights = [
+            _AssignableVariable("private_dense/kernel", values),
+            _AssignableVariable("private_dense/bias", [0.0]),
+            _AssignableVariable("private_dense/private_dense_kq/k", [1.0]),
+            _AssignableVariable("private_dense/private_dense_kq/i", [2.0]),
+            _AssignableVariable("private_dense/private_dense_kq/f", [3.0]),
+        ]
+
+    def get_config(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "kq_conf": {
+                "q_type": "kif",
+                "round_mode": self.round_mode,
+                "overflow_mode": "SAT_SYM",
+                "homogeneous_axis": [0],
+                "heterogeneous_axis": None,
+            },
+        }
+
+
+class _ParameterModel:
+    def __init__(self, values: list[float], round_mode: str = "RND") -> None:
+        self.layers = [_ParameterLayer(values, round_mode)]
+
+
+def test_convert_accepts_one_public_configuration_mapping(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    converted_model = _FakeHlsModel(output_dir)
+    conversion_call: dict[str, Any] = {}
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        conversion_call.update(kwargs)
+        return converted_model
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    model = object()
+
+    project = convert(
+        model,
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {
+                "Backend": "Vitis",
+                "IOType": "io_stream",
+                "Part": "xcku5p-ffvb676-2-e",
+                "ClockPeriod": 5,
+                "Config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}},
+            },
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    assert project.path == output_dir
+    assert isinstance(project, Project)
+    assert Project.open(output_dir).path == output_dir
+    assert conversion_call == {
+        "model": model,
+        "output_dir": str(output_dir),
+        "project_name": "aria_top",
+        "hls_config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}},
+        "backend": "Vitis",
+        "io_type": "io_stream",
+        "part": "xcku5p-ffvb676-2-e",
+        "clock_period": 5,
+    }
+    assert project.config["Vitis"] == {
+        "Run": False,
+        "Stages": {
+            "Reset": True,
+            "CSim": False,
+            "Synth": True,
+            "CoSim": False,
+            "Validation": False,
+            "Export": False,
+            "VSynth": False,
+        },
+    }
+
+
+def test_convert_runs_vitis_when_the_configuration_enables_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(
+        convert_from_keras_model=lambda **kwargs: _FakeHlsModel(output_dir)
+    )
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    built: list[Path] = []
+    monkeypatch.setattr(Project, "build", lambda self: built.append(self.path))
+
+    project = convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+            "Vitis": {"Run": True},
+        },
+    )
+
+    assert project.path == output_dir
+    assert built == [output_dir]
+
+
+def test_convert_forwards_inputs_and_force_replacement_as_invocation_options(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    inputs = np.zeros((2, 256, 4), dtype=np.float32)
+    converted = SimpleNamespace(path=tmp_path / "aria_project")
+    invocation: dict[str, Any] = {}
+
+    def fake_convert(model: Any, **kwargs: Any) -> Any:
+        invocation.update({"model": model, **kwargs})
+        return converted
+
+    monkeypatch.setattr("ravel_hls.api.convert_from_keras_model", fake_convert)
+    model = object()
+
+    result = convert(
+        model,
+        {
+            "Project": {
+                "Name": "aria_top",
+                "OutputDir": tmp_path / "aria_project",
+                "ForceReplace": True,
+            },
+            "HLS": {"Config": {}},
+            "Verification": {"Mode": "required"},
+        },
+        inputs=inputs,
+    )
+
+    assert result is converted
+    assert invocation["model"] is model
+    assert invocation["verification_inputs"] is inputs
+    assert invocation["force_replace"] is True
+
+
+@pytest.mark.parametrize(
+    ("section", "values", "message"),
+    [
+        ("Project", {"Unknown": True}, "Project.Unknown"),
+        ("Project", {"ForceReplace": "yes"}, "Project.ForceReplace"),
+        ("HLS", {"Unknown": True}, "HLS.Unknown"),
+        ("Verification", {"Unknown": True}, "Verification.Unknown"),
+        ("Verification", {"Samples": 0}, "Verification.Samples"),
+    ],
+)
+def test_convert_validates_all_public_configuration_sections(
+    tmp_path: Path, section: str, values: dict[str, Any], message: str
+) -> None:
+    config: dict[str, Any] = {
+        "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+        "HLS": {"Config": {}},
+    }
+    config.setdefault(section, {}).update(values)
+
+    with pytest.raises(ConfigurationError, match=message):
+        convert(object(), config)
+
+
+def test_convert_rejects_an_unknown_top_level_configuration_field() -> None:
+    with pytest.raises(ConfigurationError, match="UnknownField"):
+        convert(object(), {"UnknownField": True})
+
+
+def test_convert_rejects_a_non_boolean_vitis_run_value(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="Vitis.Run"):
+        convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+                "HLS": {"Config": {}},
+                "Vitis": {"Run": "yes"},
+            },
+        )
+
+
+def test_convert_rejects_an_unknown_vitis_stage(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="Vitis.Stages.Unknown"):
+        convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+                "HLS": {"Config": {}},
+                "Vitis": {"Stages": {"Unknown": True}},
+            },
+        )
+
+
+def test_convert_rejects_a_non_boolean_vitis_stage(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="Vitis.Stages.Synth"):
+        convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+                "HLS": {"Config": {}},
+                "Vitis": {"Stages": {"Synth": 1}},
+            },
+        )
 
 
 def test_optimize_project_rejects_unsupported_backend_before_generation(
@@ -412,7 +650,11 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
 
     project = optimize_project(
         hls_model,
-        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+        config={
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        },
     )
 
     assert project.path == output_dir
@@ -420,10 +662,36 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     assert (output_dir / "hls4ml_config.yml").is_file()
     assert (output_dir / "ravel_config.yml").is_file()
     assert (output_dir / "ravel_manifest.json").is_file()
+    assert (output_dir / "build_opt.tcl").read_text(encoding="utf-8") == (
+        "array set opt {\n"
+        "    reset      1\n"
+        "    csim       0\n"
+        "    synth      1\n"
+        "    cosim      0\n"
+        "    validation 0\n"
+        "    export     0\n"
+        "    vsynth     0\n"
+        "    fifo_opt   0\n"
+        "}\n"
+    )
+    published_build_script = (output_dir / "build_prj.tcl").read_text(
+        encoding="utf-8"
+    )
+    assert "config_array_partition -maximum_size" not in published_build_script
+    assert "csynth_design" in published_build_script
+    assert project.manifest["schema_version"] == 2
+    assert project.manifest["ravel"]["release"] == "1.1.0"
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")
-    assert f"OutputDir: {output_dir}\n" in published_hls_config
+    assert "OutputDir: .\n" in published_hls_config
+    assert str(output_dir) not in published_hls_config
     assert "KerasModel: !keras_model 'keras_model.keras'" in published_hls_config
     assert ".ravel-" not in published_hls_config
+    published_ravel_config = (output_dir / "ravel_config.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "OutputDir: .\n" in published_ravel_config
+    assert str(output_dir) not in published_ravel_config
+    assert str(output_dir) not in json.dumps(project.manifest, sort_keys=True)
     optimized_source = (output_dir / "firmware" / "aria_top.cpp").read_text(
         encoding="utf-8"
     )
@@ -453,6 +721,24 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         },
         "measured": None,
     }
+    source_closure = {
+        entry["path"]: entry for entry in project.manifest["source_closure"]
+    }
+    assert {
+        "keras_model.keras",
+        "hls4ml_config.yml",
+        "ravel_config.yml",
+        "firmware/parameters.h",
+        "firmware/aria_top.cpp",
+        "firmware/nnet_utils/nnet_aria.h",
+    } <= set(source_closure)
+    assert source_closure["keras_model.keras"] == {
+        "role": "model",
+        "path": "keras_model.keras",
+        "size": 16,
+        "sha256": hashlib.sha256(b"fake keras model").hexdigest(),
+    }
+    assert len(project.manifest["source_closure_sha256"]) == 64
     assert [item["id"] for item in project.manifest["pipeline"]["passes"]] == [
         "PackTemporalInput2x",
         "FuseRepackReshapeIntoFirstConv",
@@ -483,6 +769,235 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "source_integrity": "clean",
         "performance_qualification": "not_run",
     }
+
+
+def test_project_build_runs_vitis_in_place_and_records_the_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    invocation: dict[str, Any] = {}
+    record = object()
+
+    monkeypatch.setattr(
+        shutil,
+        "which",
+        lambda command: "/opt/Xilinx/Vitis_HLS/2023.2/bin/vitis_hls",
+    )
+
+    def fake_run(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        invocation.update({"args": args, **kwargs})
+        return subprocess.CompletedProcess(args, 0, "synthesis complete\n", "")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(Project, "record", lambda self, report_dir: record)
+
+    result = project.build()
+
+    assert result is record
+    assert invocation == {
+        "args": [
+            "/opt/Xilinx/Vitis_HLS/2023.2/bin/vitis_hls",
+            "-f",
+            "build_prj.tcl",
+        ],
+        "cwd": project.path,
+        "check": False,
+        "capture_output": True,
+        "text": True,
+        "shell": False,
+    }
+    assert (project.path / "ravel_vitis.log").read_text(encoding="utf-8") == (
+        "synthesis complete\n"
+    )
+
+
+def test_project_build_failure_keeps_the_log_without_recording_qualification(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    monkeypatch.setattr(shutil, "which", lambda command: "/tools/vitis_hls")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda args, **kwargs: subprocess.CompletedProcess(
+            args, 1, "starting\n", "synthesis failed\n"
+        ),
+    )
+    recorded: list[Path] = []
+    monkeypatch.setattr(Project, "record", lambda self, path: recorded.append(path))
+
+    with pytest.raises(BuildError, match="exit code 1"):
+        project.build()
+
+    assert (project.path / "ravel_vitis.log").read_text(encoding="utf-8") == (
+        "starting\nsynthesis failed\n"
+    )
+    assert recorded == []
+    assert not (project.path / "ravel_qualification.json").exists()
+
+
+def test_project_build_reports_a_missing_vitis_launcher(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    monkeypatch.setattr(shutil, "which", lambda command: None)
+
+    with pytest.raises(BuildError, match="vitis_hls"):
+        project.build()
+
+    assert not (project.path / "ravel_vitis.log").exists()
+    assert not (project.path / "ravel_qualification.json").exists()
+
+
+def test_project_build_rejects_modified_sources_before_launch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    (project.path / "firmware" / "aria_top.cpp").write_text(
+        "void modified() {}\n", encoding="utf-8"
+    )
+    launched: list[str] = []
+    monkeypatch.setattr(shutil, "which", lambda command: launched.append(command))
+
+    with pytest.raises(VerificationError, match="modified RAVEL project"):
+        project.build()
+
+    assert launched == []
+
+
+def test_generation_writes_the_selected_vitis_stages(tmp_path: Path) -> None:
+    output_dir = tmp_path / "aria_project"
+
+    optimize_project(
+        _FakeHlsModel(output_dir),
+        config={
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {}},
+            "Verification": {"Mode": "disabled"},
+            "Vitis": {
+                "Run": False,
+                "Stages": {"Reset": False, "CSim": True, "CoSim": True},
+            },
+        },
+    )
+
+    options = (output_dir / "build_opt.tcl").read_text(encoding="utf-8")
+    assert "    reset      0\n" in options
+    assert "    csim       1\n" in options
+    assert "    synth      1\n" in options
+    assert "    cosim      1\n" in options
+    assert "    export     0\n" in options
+    assert "    vsynth     0\n" in options
+
+
+def test_source_integrity_prunes_the_vendor_build_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    vendor_file = project.path / "aria_top_prj" / "solution1" / "syn" / "report.xml"
+    vendor_file.parent.mkdir(parents=True)
+    vendor_file.write_text("large vendor artifact\n", encoding="utf-8")
+    original_stat = Path.stat
+
+    def guarded_stat(path: Path, *args: Any, **kwargs: Any) -> Any:
+        if any(part.endswith("_prj") for part in path.parts):
+            raise AssertionError("source integrity entered the vendor build tree")
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", guarded_stat)
+
+    assert project.status["source_integrity"] == "clean"
+
+
+def test_generation_identity_changes_when_model_parameters_change(
+    tmp_path: Path,
+) -> None:
+    first_model = _FakeHlsModel(tmp_path / "first")
+    second_model = _FakeHlsModel(tmp_path / "second")
+    second_model.layers[2].get_weights()[0].data[0] = 1.0
+
+    first = optimize_project(
+        first_model,
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    second = optimize_project(
+        second_model,
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+
+    assert (
+        first.manifest["source_model"]["semantic_model_sha256"]
+        != second.manifest["source_model"]["semantic_model_sha256"]
+    )
+    assert (
+        first.manifest["generation_fingerprint"]
+        != second.manifest["generation_fingerprint"]
+    )
+
+
+def test_published_project_can_move_without_revealing_its_generation_path(
+    tmp_path: Path,
+) -> None:
+    original_path = tmp_path / "private-user" / "aria_project"
+    project = optimize_project(
+        _FakeHlsModel(original_path),
+        config={
+            "Project": {"Name": "aria_top", "OutputDir": original_path},
+            "HLS": {"Config": {}},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+    moved_path = tmp_path / "recipient" / "portable_project"
+    shutil.copytree(project.path, moved_path)
+
+    moved = Project.open(moved_path)
+
+    assert moved.config["Project"]["OutputDir"] == "."
+    assert moved.status["source_integrity"] == "clean"
+    assert callable(moved.link().compile)
+
+
+def test_generation_identity_excludes_the_output_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    def config(output_dir: Path) -> dict[str, Any]:
+        return {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}}},
+            "Verification": {"Mode": "disabled"},
+        }
+
+    first = convert(object(), config(tmp_path / "first"))
+    second = convert(object(), config(tmp_path / "second"))
+
+    assert first.manifest["configuration_sha256"] == second.manifest[
+        "configuration_sha256"
+    ]
+    assert first.manifest["generation_fingerprint"] == second.manifest[
+        "generation_fingerprint"
+    ]
 
 
 def test_optimize_project_cleanly_replaces_a_recognized_ravel_project(
@@ -530,7 +1045,7 @@ def test_optimize_project_requires_force_to_replace_an_unrecognized_target(
     assert not (output_dir / "unmanaged.txt").exists()
 
 
-def test_ravel_project_links_a_restricted_hls4ml_existing_project(
+def test_project_links_a_restricted_hls4ml_existing_project(
     tmp_path: Path,
 ) -> None:
     project = optimize_project(
@@ -538,7 +1053,7 @@ def test_ravel_project_links_a_restricted_hls4ml_existing_project(
         config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
     )
 
-    linked = project.link_hls4ml()
+    linked = project.link()
 
     assert callable(linked.compile)
     assert callable(linked.predict)
@@ -828,3 +1343,93 @@ def test_refresh_model_reuses_the_recorded_configs_through_clean_conversion(
         "Strategy": "Latency",
         "ReuseFactor": 1,
     }
+
+
+def test_project_refreshes_with_a_new_complete_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    conversion_call: dict[str, Any] = {}
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        conversion_call.update(kwargs)
+        return _FakeHlsModel(output_dir)
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    new_model = object()
+
+    refreshed = original.refresh(new_model)
+
+    assert refreshed.path == output_dir
+    assert conversion_call["model"] is new_model
+
+
+def test_project_refreshes_from_parameters_through_the_complete_model_pipeline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    parameters = Parameters.extract(_ParameterModel([4.0, 5.0]))
+    template = _ParameterModel([0.0, 0.0])
+    conversion_call: dict[str, Any] = {}
+
+    def fake_load(path: Path, **kwargs: Any) -> _ParameterModel:
+        assert path == output_dir / "keras_model.keras"
+        return template
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        conversion_call.update(kwargs)
+        return _FakeHlsModel(output_dir)
+
+    fake_keras = ModuleType("keras")
+    fake_keras.models = SimpleNamespace(load_model=fake_load)
+    fake_hgq = ModuleType("hgq")
+    fake_hgq_layers = ModuleType("hgq.layers")
+    fake_hgq_layers.QConv2D = object()
+    fake_hgq_layers.QDense = object()
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "keras", fake_keras)
+    monkeypatch.setitem(sys.modules, "hgq", fake_hgq)
+    monkeypatch.setitem(sys.modules, "hgq.layers", fake_hgq_layers)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    refreshed = original.refresh(parameters)
+
+    assert refreshed.path == output_dir
+    assert conversion_call["model"] is template
+    assert template.layers[0].weights[0].numpy().tolist() == [4.0, 5.0]
+
+
+def test_project_rejects_parameters_with_a_different_quantizer_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    parameters = Parameters.extract(_ParameterModel([4.0, 5.0], "RND"))
+    template = _ParameterModel([0.0, 0.0], "TRN")
+
+    fake_keras = ModuleType("keras")
+    fake_keras.models = SimpleNamespace(load_model=lambda *args, **kwargs: template)
+    fake_hgq = ModuleType("hgq")
+    fake_hgq_layers = ModuleType("hgq.layers")
+    fake_hgq_layers.QConv2D = object()
+    fake_hgq_layers.QDense = object()
+    monkeypatch.setitem(sys.modules, "keras", fake_keras)
+    monkeypatch.setitem(sys.modules, "hgq", fake_hgq)
+    monkeypatch.setitem(sys.modules, "hgq.layers", fake_hgq_layers)
+
+    with pytest.raises(ConfigurationError, match="incompatible"):
+        original.refresh(parameters)

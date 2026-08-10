@@ -62,7 +62,7 @@ def test_installed_cli_reports_package_version(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0
-    assert result.stdout == f"ravel-hls {package_version} (RAVEL Aria 1.0)\n"
+    assert result.stdout == f"ravel-hls {package_version} (RAVEL Aria 1.1.0)\n"
     assert result.stderr == ""
 
 

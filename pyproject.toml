@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=80", "setuptools-scm>=9,<10"]
+requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-dynamic = ["version"]
+version = "1.1.0"
 dependencies = [
     "hls4ml==1.2.0",
     "hgq2==0.1.7",
@@ -42,7 +42,3 @@ ravel_hls = [
     "backends/vitis/templates/aria/testbench/*.j2",
     "schemas/*.json",
 ]
-
-[tool.setuptools_scm]
-fallback_version = "1.0.0.dev0"
-version_file = "src/ravel_hls/_version.py"

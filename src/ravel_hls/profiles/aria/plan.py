@@ -1,4 +1,4 @@
-"""Resolved implementation plan for the fixed Aria 1.0 profile."""
+"""Resolved implementation plan for the fixed Aria 1.1.0 profile."""
 
 import hashlib
 import json
@@ -16,7 +16,7 @@ PASS_IDS = (
 
 
 def build_implementation_plan() -> dict[str, Any]:
-    """Return the deterministic P2 wide-stream plan selected by Aria 1.0."""
+    """Return the deterministic P2 wide-stream plan selected by Aria 1.1.0."""
 
     return {
         "template_profile": "aria-2x-v1",

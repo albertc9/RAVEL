@@ -1,10 +1,141 @@
 from pathlib import Path
+import json
 import os
 import shutil
 import subprocess
+import tomllib
 import zipfile
 
 import pytest
+
+
+def test_distribution_version_is_1_1_0() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    metadata = tomllib.loads((repository / "pyproject.toml").read_text(encoding="utf-8"))
+
+    assert metadata["project"]["version"] == "1.1.0"
+    assert "version" not in metadata["project"].get("dynamic", [])
+
+
+def test_public_docs_use_the_aria_1_1_0_api_and_evidence_boundary() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    readme = (repository / "README.md").read_text(encoding="utf-8")
+    public_docs = "\n".join(
+        (repository / path).read_text(encoding="utf-8")
+        for path in (
+            "README.md",
+            "docs/architecture.md",
+            "docs/compatibility.md",
+            "docs/project-format.md",
+            "references/cnn_for_arianna/README.md",
+        )
+    )
+
+    assert "import ravel_hls as ravel" in readme
+    assert "ravel.convert(model, config)" in readme
+    assert "Vitis.Run" in public_docs
+    assert "ravel.Parameters" in readme
+    assert "RavelConfig" not in public_docs
+    assert "convert_from_keras_model" not in public_docs
+    assert "II <= 178" not in public_docs
+
+
+def test_committed_hls4ml_configs_do_not_expose_generation_machine_paths() -> None:
+    repository = Path(__file__).resolve().parents[2]
+
+    for config_path in repository.rglob("hls4ml_config.yml"):
+        config = config_path.read_text(encoding="utf-8")
+        assert "/home/" not in config
+        assert "/Users/" not in config
+
+
+def test_public_namespace_exposes_only_the_aria_1_1_lifecycle() -> None:
+    import ravel_hls
+
+    assert {"convert", "Project"} <= set(ravel_hls.__all__)
+    for removed_name in (
+        "RavelConfig",
+        "RavelProject",
+        "convert_from_keras_model",
+        "optimize_project",
+        "refresh_model",
+        "open_project",
+        "import_vitis_reports",
+    ):
+        assert removed_name not in ravel_hls.__all__
+        assert not hasattr(ravel_hls, removed_name)
+
+
+def test_config_schema_describes_the_unified_aria_1_1_mapping() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_config.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["title"] == "RAVEL Aria 1.1.0 configuration"
+    assert schema["required"] == ["Project", "HLS"]
+    assert set(schema["properties"]) == {
+        "Project",
+        "HLS",
+        "Verification",
+        "Vitis",
+    }
+    assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
+
+
+def test_manifest_schema_describes_the_v2_source_closure() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_manifest.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert schema["properties"]["ravel"]["properties"]["release"] == {
+        "const": "1.1.0"
+    }
+    assert "source_closure" in schema["required"]
+    assert "source_closure_sha256" in schema["required"]
+    assert "managed_files" not in schema["properties"]
+
+
+def test_parameter_package_schema_describes_portable_inference_state() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_parameters.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["schema_version"] == {"const": 1}
+    assert {
+        "frontend_contract",
+        "entries",
+        "compatibility_sha256",
+        "parameter_state_sha256",
+        "package_content_sha256",
+    } <= set(schema["required"])
+
+
+def test_qualification_schema_binds_v2_evidence_identity() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_qualification.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert {
+        "manifest_sha256",
+        "generation_fingerprint",
+        "source_closure_sha256",
+        "top",
+    } <= set(schema["required"])
+    assert schema["properties"]["status"] == {"const": "recorded"}
 
 
 def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
@@ -35,6 +166,7 @@ def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     assert "ravel_hls/backends/vitis/templates/aria/testbench/test.cpp.j2" in names
     assert "ravel_hls/schemas/ravel_config.schema.json" in names
     assert "ravel_hls/schemas/ravel_manifest.schema.json" in names
+    assert "ravel_hls/schemas/ravel_parameters.schema.json" in names
     assert "ravel_hls/schemas/ravel_qualification.schema.json" in names
     assert 'Requires-Dist: tensorflow-cpu==2.20.0; platform_system == "Linux"' in (
         metadata.splitlines()

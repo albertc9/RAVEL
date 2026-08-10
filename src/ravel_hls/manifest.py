@@ -3,6 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -33,16 +34,19 @@ def build_generation_manifest(
     semantic_model: dict[str, Any],
     implementation_plan: dict[str, Any],
     pass_records: list[dict[str, Any]],
-    managed_paths: list[str],
     verification_report: dict[str, Any],
     interface_contract: dict[str, Any],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
-    normalized_configuration = {
+    recorded_configuration = {
         "hls4ml": hls_config,
         "ravel": ravel_config.to_dict(),
     }
-    configuration_sha256 = canonical_sha256(normalized_configuration)
+    generation_configuration = {
+        "hls4ml": hls_config,
+        "ravel": {"Profile": "aria"},
+    }
+    configuration_sha256 = canonical_sha256(generation_configuration)
     semantic_model_sha256 = canonical_sha256(semantic_model)
     implementation_sha256 = canonical_sha256(
         {
@@ -59,16 +63,17 @@ def build_generation_manifest(
         }
     )
     source_artifact = project_path / "keras_model.keras"
+    source_closure = _build_source_closure(project_path)
     try:
         package_version = version("ravel-hls")
     except PackageNotFoundError:
         package_version = "unknown"
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.0",
+            "release": "1.1.0",
             "package_version": package_version,
         },
         "source_model": {
@@ -78,7 +83,8 @@ def build_generation_manifest(
             "semantic_model_sha256": semantic_model_sha256,
         },
         "dependencies": dependency_report["dependencies"],
-        "normalized_configuration": normalized_configuration,
+        "normalized_configuration": recorded_configuration,
+        "generation_configuration": generation_configuration,
         "configuration_sha256": configuration_sha256,
         "profile": {"id": "aria", "version": 1},
         "implementation_plan": implementation_plan,
@@ -107,9 +113,67 @@ def build_generation_manifest(
             "source_integrity": "clean",
             "performance_qualification": "not_run",
         },
-        "managed_files": {
-            relative_path: file_sha256(project_path / relative_path)
-            for relative_path in sorted(managed_paths)
-        },
+        "source_closure": source_closure,
+        "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,
     }
+
+
+def _build_source_closure(project_path: Path) -> list[dict[str, Any]]:
+    entries = []
+    for path in _iter_source_files(project_path):
+        relative = path.relative_to(project_path).as_posix()
+        entries.append(
+            {
+                "role": _source_role(relative),
+                "path": relative,
+                "size": path.stat().st_size,
+                "sha256": file_sha256(path),
+            }
+        )
+    return entries
+
+
+def _iter_source_files(project_path: Path) -> list[Path]:
+    paths = []
+    for directory, child_directories, filenames in os.walk(
+        project_path, topdown=True, followlinks=False
+    ):
+        child_directories[:] = sorted(
+            name
+            for name in child_directories
+            if not name.startswith(".") and not name.endswith("_prj")
+        )
+        root = Path(directory)
+        for filename in sorted(filenames):
+            path = root / filename
+            relative = path.relative_to(project_path).as_posix()
+            if not _excluded_from_source_closure(relative) and path.is_file():
+                paths.append(path)
+    return sorted(paths)
+
+
+def _excluded_from_source_closure(relative_path: str) -> bool:
+    parts = relative_path.split("/")
+    return (
+        relative_path in {"ravel_manifest.json", "ravel_qualification.json"}
+        or relative_path.endswith(".log")
+        or any(part.endswith("_prj") for part in parts)
+        or any(part.startswith(".") for part in parts)
+    )
+
+
+def _source_role(relative_path: str) -> str:
+    if relative_path == "keras_model.keras":
+        return "model"
+    if relative_path.endswith((".yml", ".yaml", ".json")):
+        return "configuration"
+    if relative_path.endswith(".tcl"):
+        return "vendor_script"
+    if relative_path.startswith("firmware/weights/"):
+        return "parameter"
+    if relative_path.startswith("firmware/"):
+        return "firmware"
+    if relative_path.endswith((".cpp", ".h")):
+        return "simulation"
+    return "project"

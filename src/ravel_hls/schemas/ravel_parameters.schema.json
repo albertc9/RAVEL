@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_parameters.schema.json",
+  "title": "RAVEL parameter package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "frontend_contract",
+    "topology",
+    "entries",
+    "compatibility_sha256",
+    "parameter_state_sha256",
+    "package_content_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "frontend_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {"const": "keras-hgq2"},
+        "version": {"const": 1}
+      }
+    },
+    "topology": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["class_name", "quantizer_contract"],
+        "properties": {
+          "class_name": {"type": "string", "minLength": 1},
+          "quantizer_contract": {"type": "object"}
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slot", "kind", "shape", "dtype", "storage", "sha256"],
+        "properties": {
+          "slot": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["kernel", "bias", "k", "i", "f"]},
+          "shape": {
+            "type": "array",
+            "items": {"type": "integer", "minimum": 0}
+          },
+          "dtype": {"type": "string", "minLength": 1},
+          "storage": {"type": "string", "pattern": "^arrays/[0-9]{4}\\.npy$"},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "compatibility_sha256": {"$ref": "#/$defs/sha256"},
+    "parameter_state_sha256": {"$ref": "#/$defs/sha256"},
+    "package_content_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -30,3 +30,14 @@ def test_reference_generator_exposes_a_lightweight_help_entrypoint() -> None:
     assert "Generate the CNN-for-Arianna Aria project" in result.stdout
     assert "--verification" in result.stdout
     assert "--part" in result.stdout
+    assert "--vitis" in result.stdout
+
+
+def test_reference_generator_uses_only_the_canonical_public_api() -> None:
+    source = (REFERENCE_ROOT / "generate.py").read_text(encoding="utf-8")
+
+    assert "import ravel_hls as ravel" in source
+    assert "ravel.convert(" in source
+    assert '"Vitis": {"Run": args.vitis}' in source
+    assert "RavelConfig" not in source
+    assert "convert_from_keras_model" not in source

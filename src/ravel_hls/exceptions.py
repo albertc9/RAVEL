@@ -17,6 +17,10 @@ class ProjectGenerationError(RavelError):
     """Raised when a project cannot be generated or opened safely."""
 
 
+class BuildError(RavelError):
+    """Raised when an explicitly requested vendor build cannot complete."""
+
+
 class OptimizationError(RavelError):
     """Raised when an Aria transformation cannot be applied."""
 
