@@ -24,3 +24,30 @@ The qualification records the measured result for that exact project. It does
 not require II 178 or any other application-specific performance number. Enable
 additional `Vitis.Stages` only when their separate CSim, CoSim, validation,
 export, or Vivado-synthesis evidence is wanted.
+
+## Vanilla hls4ml baseline
+
+Use the companion baseline to measure what hls4ml produces before RAVEL applies
+the Aria transformation:
+
+```bash
+export PATH="$PWD/references/cnn_for_arianna/tools:$PATH"
+python references/cnn_for_arianna/baseline.py --vitis
+```
+
+The script calls hls4ml's public conversion, writer, and build APIs. The output
+directory must not already exist, and no generated C++, headers, Tcl, or YAML
+are edited after hls4ml writes them. The small external `vitis-run` adapter only
+translates hls4ml 1.2.0's launcher command to the `vitis_hls -f` command provided
+by Vitis HLS 2023.2; it never writes into the generated project.
+
+This baseline descends from CNN-Core-Generator commit
+`6e16cd474bcf45e41b173734b59e70ddd6ed6323`, the first direct homogeneous
+IOStream conversion of the low-BOP model. The reference copy and that historical
+model are byte-identical, with SHA-256
+`65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978`.
+Both comparison flows use hls4ml's generated per-layer precision, `IOStream`,
+`Latency`, reuse factor 1, `xcku5p-ffvb676-2-e`, and a 5 ns target. Unlike the
+historical script, this baseline does not add a separate input-precision or FIFO
+depth override, so the only source-level difference in the comparison is the
+RAVEL transformation.

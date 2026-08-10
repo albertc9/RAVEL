@@ -1,0 +1,42 @@
+#!/bin/sh
+set -eu
+
+tcl_file=""
+mode=""
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --tcl)
+            shift
+            [ "$#" -gt 0 ] || {
+                echo "vitis-run: --tcl requires a path" >&2
+                exit 2
+            }
+            tcl_file=$1
+            ;;
+        --mode)
+            shift
+            [ "$#" -gt 0 ] || {
+                echo "vitis-run: --mode requires a value" >&2
+                exit 2
+            }
+            mode=$1
+            ;;
+        *)
+            echo "vitis-run: unsupported argument: $1" >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+[ -n "$tcl_file" ] || {
+    echo "vitis-run: --tcl is required" >&2
+    exit 2
+}
+[ "$mode" = "hls" ] || {
+    echo "vitis-run: only --mode hls is supported" >&2
+    exit 2
+}
+
+exec vitis_hls -f "$tcl_file"
