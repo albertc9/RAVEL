@@ -1,5 +1,7 @@
 import hashlib
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 from types import ModuleType, SimpleNamespace
 from typing import Any
@@ -8,6 +10,7 @@ import numpy as np
 import pytest
 
 from ravel_hls import (
+    BuildError,
     CompatibilityError,
     ConfigurationError,
     Project,
@@ -235,6 +238,9 @@ class _FakeHlsModel:
             encoding="utf-8",
         )
         (output_dir / "keras_model.keras").write_bytes(b"fake keras model")
+        (output_dir / "build_prj.tcl").write_text(
+            "source build_opt.tcl\n", encoding="utf-8"
+        )
 
     def get_layers(self) -> list[_FakeLayer]:
         return self.layers
@@ -352,6 +358,32 @@ def test_convert_accepts_one_public_configuration_mapping(
             "VSynth": False,
         },
     }
+
+
+def test_convert_runs_vitis_when_the_configuration_enables_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(
+        convert_from_keras_model=lambda **kwargs: _FakeHlsModel(output_dir)
+    )
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    built: list[Path] = []
+    monkeypatch.setattr(Project, "build", lambda self: built.append(self.path))
+
+    project = convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+            "Vitis": {"Run": True},
+        },
+    )
+
+    assert project.path == output_dir
+    assert built == [output_dir]
 
 
 def test_convert_rejects_an_unknown_top_level_configuration_field() -> None:
@@ -565,6 +597,18 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     assert (output_dir / "hls4ml_config.yml").is_file()
     assert (output_dir / "ravel_config.yml").is_file()
     assert (output_dir / "ravel_manifest.json").is_file()
+    assert (output_dir / "build_opt.tcl").read_text(encoding="utf-8") == (
+        "array set opt {\n"
+        "    reset      1\n"
+        "    csim       0\n"
+        "    synth      1\n"
+        "    cosim      0\n"
+        "    validation 0\n"
+        "    export     0\n"
+        "    vsynth     0\n"
+        "    fifo_opt   0\n"
+        "}\n"
+    )
     assert project.manifest["schema_version"] == 2
     assert project.manifest["ravel"]["release"] == "1.1"
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")
@@ -649,6 +693,137 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "source_integrity": "clean",
         "performance_qualification": "not_run",
     }
+
+
+def test_project_build_runs_vitis_in_place_and_records_the_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    invocation: dict[str, Any] = {}
+    record = object()
+
+    monkeypatch.setattr(
+        shutil,
+        "which",
+        lambda command: "/opt/Xilinx/Vitis_HLS/2023.2/bin/vitis_hls",
+    )
+
+    def fake_run(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        invocation.update({"args": args, **kwargs})
+        return subprocess.CompletedProcess(args, 0, "synthesis complete\n", "")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(Project, "record", lambda self, report_dir: record)
+
+    result = project.build()
+
+    assert result is record
+    assert invocation == {
+        "args": [
+            "/opt/Xilinx/Vitis_HLS/2023.2/bin/vitis_hls",
+            "-f",
+            "build_prj.tcl",
+        ],
+        "cwd": project.path,
+        "check": False,
+        "capture_output": True,
+        "text": True,
+        "shell": False,
+    }
+    assert (project.path / "ravel_vitis.log").read_text(encoding="utf-8") == (
+        "synthesis complete\n"
+    )
+
+
+def test_project_build_failure_keeps_the_log_without_recording_qualification(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    monkeypatch.setattr(shutil, "which", lambda command: "/tools/vitis_hls")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda args, **kwargs: subprocess.CompletedProcess(
+            args, 1, "starting\n", "synthesis failed\n"
+        ),
+    )
+    recorded: list[Path] = []
+    monkeypatch.setattr(Project, "record", lambda self, path: recorded.append(path))
+
+    with pytest.raises(BuildError, match="exit code 1"):
+        project.build()
+
+    assert (project.path / "ravel_vitis.log").read_text(encoding="utf-8") == (
+        "starting\nsynthesis failed\n"
+    )
+    assert recorded == []
+    assert not (project.path / "ravel_qualification.json").exists()
+
+
+def test_project_build_reports_a_missing_vitis_launcher(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    monkeypatch.setattr(shutil, "which", lambda command: None)
+
+    with pytest.raises(BuildError, match="vitis_hls"):
+        project.build()
+
+    assert not (project.path / "ravel_vitis.log").exists()
+    assert not (project.path / "ravel_qualification.json").exists()
+
+
+def test_project_build_rejects_modified_sources_before_launch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    (project.path / "firmware" / "aria_top.cpp").write_text(
+        "void modified() {}\n", encoding="utf-8"
+    )
+    launched: list[str] = []
+    monkeypatch.setattr(shutil, "which", lambda command: launched.append(command))
+
+    with pytest.raises(VerificationError, match="modified RAVEL project"):
+        project.build()
+
+    assert launched == []
+
+
+def test_generation_writes_the_selected_vitis_stages(tmp_path: Path) -> None:
+    output_dir = tmp_path / "aria_project"
+
+    optimize_project(
+        _FakeHlsModel(output_dir),
+        config={
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {}},
+            "Verification": {"Mode": "disabled"},
+            "Vitis": {
+                "Run": False,
+                "Stages": {"Reset": False, "CSim": True, "CoSim": True},
+            },
+        },
+    )
+
+    options = (output_dir / "build_opt.tcl").read_text(encoding="utf-8")
+    assert "    reset      0\n" in options
+    assert "    csim       1\n" in options
+    assert "    synth      1\n" in options
+    assert "    cosim      1\n" in options
+    assert "    export     0\n" in options
+    assert "    vsynth     0\n" in options
 
 
 def test_generation_identity_changes_when_model_parameters_change(

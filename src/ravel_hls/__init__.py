@@ -4,6 +4,7 @@ from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
 from .exceptions import (
+    BuildError,
     CompatibilityError,
     ConfigurationError,
     OptimizationError,
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
     from .qualification.vitis import QualificationRecord
 
 __all__ = [
+    "BuildError",
     "CompatibilityError",
     "ConfigurationError",
     "OptimizationError",

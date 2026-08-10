@@ -4,10 +4,12 @@ from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
+import shutil
+import subprocess
 from typing import Any
 
 from .config import RavelConfig
-from .exceptions import ProjectGenerationError
+from .exceptions import BuildError, ProjectGenerationError, VerificationError
 from .manifest import _build_source_closure
 
 
@@ -81,6 +83,42 @@ class Project:
         from .qualification.vitis import import_vitis_reports
 
         return import_vitis_reports(self, report_dir=report_dir)
+
+    def build(self) -> Any:
+        """Run Vitis HLS for this project and attach its synthesis measurements."""
+
+        if self.manifest.get("schema_version") != 2:
+            raise BuildError("Vitis builds require a schema-v2 RAVEL project")
+        if self.status.get("source_integrity") != "clean":
+            raise VerificationError(
+                "Cannot build a modified RAVEL project; regenerate or restore sources"
+            )
+        build_script = self.path / "build_prj.tcl"
+        if not build_script.is_file():
+            raise BuildError(f"Vitis build script does not exist: {build_script}")
+        launcher = shutil.which("vitis_hls")
+        if launcher is None:
+            raise BuildError("Cannot find the Vitis HLS 2023.2 launcher: vitis_hls")
+        command = [launcher, "-f", "build_prj.tcl"]
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=self.path,
+                check=False,
+                capture_output=True,
+                text=True,
+                shell=False,
+            )
+        except OSError as error:
+            raise BuildError(f"Cannot launch Vitis HLS: {error}") from error
+        log_path = self.path / "ravel_vitis.log"
+        log_path.write_text(completed.stdout + completed.stderr, encoding="utf-8")
+        if completed.returncode != 0:
+            raise BuildError(
+                f"Vitis HLS failed with exit code {completed.returncode}; "
+                f"see {log_path}"
+            )
+        return self.record(self.path)
 
 
 RavelProject = Project

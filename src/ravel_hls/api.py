@@ -14,6 +14,7 @@ from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
 from .backends.vitis.renderer import render_aria_project
+from .backends.vitis.build import write_build_options
 from .exceptions import (
     CompatibilityError,
     ConfigurationError,
@@ -47,7 +48,7 @@ def convert(model: Any, config: Mapping[str, Any]) -> RavelProject:
     normalized = RavelConfig(config)
     project = normalized["Project"]
     hls = normalized["HLS"]
-    return convert_from_keras_model(
+    generated = convert_from_keras_model(
         model,
         output_dir=project["OutputDir"],
         project_name=project["Name"],
@@ -58,6 +59,9 @@ def convert(model: Any, config: Mapping[str, Any]) -> RavelProject:
         part=hls.get("Part"),
         clock_period=hls.get("ClockPeriod"),
     )
+    if normalized["Vitis"]["Run"]:
+        generated.build()
+    return generated
 
 
 def refresh_model(
@@ -273,6 +277,7 @@ def _generate_project(
         managed_paths = render_aria_project(
             staging_path, project_name, layers
         )
+        write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
             "mode": verification_mode,
             "transformation_equivalence": "not_run",
