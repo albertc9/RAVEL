@@ -32,10 +32,14 @@ def _wheel(tmp_path: Path, version: str) -> Path:
 def _sdist(tmp_path: Path, version: str) -> Path:
     sdist = tmp_path / f"ravel_hls-{version}.tar.gz"
     payload = _metadata(version)
-    info = tarfile.TarInfo(f"ravel_hls-{version}/PKG-INFO")
-    info.size = len(payload)
     with tarfile.open(sdist, "w:gz") as archive:
-        archive.addfile(info, BytesIO(payload))
+        for member_name in (
+            f"ravel_hls-{version}/PKG-INFO",
+            f"ravel_hls-{version}/src/ravel_hls.egg-info/PKG-INFO",
+        ):
+            info = tarfile.TarInfo(member_name)
+            info.size = len(payload)
+            archive.addfile(info, BytesIO(payload))
     return sdist
 
 
