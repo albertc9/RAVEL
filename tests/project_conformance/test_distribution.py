@@ -9,12 +9,20 @@ import zipfile
 import pytest
 
 
-def test_distribution_version_is_1_1_0() -> None:
+def test_distribution_version_is_derived_from_git_tags() -> None:
     repository = Path(__file__).resolve().parents[2]
     metadata = tomllib.loads((repository / "pyproject.toml").read_text(encoding="utf-8"))
 
-    assert metadata["project"]["version"] == "1.1.0"
-    assert "version" not in metadata["project"].get("dynamic", [])
+    assert "version" not in metadata["project"]
+    assert "version" in metadata["project"]["dynamic"]
+    assert any(
+        requirement.startswith("setuptools-scm")
+        for requirement in metadata["build-system"]["requires"]
+    )
+    assert metadata["tool"]["setuptools_scm"]["version_scheme"] == "guess-next-dev"
+    assert metadata["tool"]["setuptools_scm"]["version_file"] == (
+        "src/ravel_hls/_version.py"
+    )
 
 
 def test_committed_hls4ml_configs_do_not_expose_generation_machine_paths() -> None:
