@@ -14,6 +14,7 @@ from .exceptions import (
 
 if TYPE_CHECKING:
     from .api import convert
+    from .parameters import Parameters
     from .project import Project
     from .qualification.vitis import QualificationRecord
 
@@ -21,6 +22,7 @@ __all__ = [
     "CompatibilityError",
     "ConfigurationError",
     "OptimizationError",
+    "Parameters",
     "Project",
     "ProjectGenerationError",
     "QualificationRecord",
@@ -32,6 +34,7 @@ __all__ = [
 
 def __getattr__(name: str) -> Any:
     lazy_exports = {
+        "Parameters": (".parameters", "Parameters"),
         "Project": (".project", "Project"),
         "QualificationRecord": (".qualification.vitis", "QualificationRecord"),
         "convert": (".api", "convert"),

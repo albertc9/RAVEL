@@ -58,6 +58,24 @@ def test_manifest_schema_describes_the_v2_source_closure() -> None:
     assert "managed_files" not in schema["properties"]
 
 
+def test_parameter_package_schema_describes_portable_inference_state() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_parameters.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["schema_version"] == {"const": 1}
+    assert {
+        "frontend_contract",
+        "entries",
+        "compatibility_sha256",
+        "parameter_state_sha256",
+        "package_content_sha256",
+    } <= set(schema["required"])
+
+
 def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     uv = shutil.which("uv")
     if uv is None:
@@ -86,6 +104,7 @@ def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     assert "ravel_hls/backends/vitis/templates/aria/testbench/test.cpp.j2" in names
     assert "ravel_hls/schemas/ravel_config.schema.json" in names
     assert "ravel_hls/schemas/ravel_manifest.schema.json" in names
+    assert "ravel_hls/schemas/ravel_parameters.schema.json" in names
     assert "ravel_hls/schemas/ravel_qualification.schema.json" in names
     assert 'Requires-Dist: tensorflow-cpu==2.20.0; platform_system == "Linux"' in (
         metadata.splitlines()

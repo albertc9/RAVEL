@@ -14,6 +14,7 @@ from ravel_hls import (
     ProjectGenerationError,
     VerificationError,
     convert,
+    Parameters,
 )
 from ravel_hls.api import convert_from_keras_model, optimize_project, refresh_model
 
@@ -249,6 +250,50 @@ class _VerifyingFakeHlsModel(_FakeHlsModel):
 
     def predict(self, inputs: np.ndarray) -> np.ndarray:
         return np.sum(inputs, axis=(1, 2), dtype=np.float32).reshape(-1, 1)
+
+
+class _AssignableVariable:
+    def __init__(self, path: str, values: list[float]) -> None:
+        self.path = path
+        self.name = path.rsplit("/", 1)[-1]
+        self.values = np.asarray(values, dtype=np.float32)
+
+    def numpy(self) -> np.ndarray:
+        return self.values.copy()
+
+    def assign(self, values: np.ndarray) -> None:
+        self.values = np.asarray(values, dtype=np.float32)
+
+
+class _ParameterLayer:
+    def __init__(self, values: list[float], round_mode: str) -> None:
+        self.name = "private_dense"
+        self._class_name = "QDense"
+        self.round_mode = round_mode
+        self.weights = [
+            _AssignableVariable("private_dense/kernel", values),
+            _AssignableVariable("private_dense/bias", [0.0]),
+            _AssignableVariable("private_dense/private_dense_kq/k", [1.0]),
+            _AssignableVariable("private_dense/private_dense_kq/i", [2.0]),
+            _AssignableVariable("private_dense/private_dense_kq/f", [3.0]),
+        ]
+
+    def get_config(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "kq_conf": {
+                "q_type": "kif",
+                "round_mode": self.round_mode,
+                "overflow_mode": "SAT_SYM",
+                "homogeneous_axis": [0],
+                "heterogeneous_axis": None,
+            },
+        }
+
+
+class _ParameterModel:
+    def __init__(self, values: list[float], round_mode: str = "RND") -> None:
+        self.layers = [_ParameterLayer(values, round_mode)]
 
 
 def test_convert_accepts_one_public_configuration_mapping(
@@ -1028,3 +1073,68 @@ def test_project_refreshes_with_a_new_complete_model(
 
     assert refreshed.path == output_dir
     assert conversion_call["model"] is new_model
+
+
+def test_project_refreshes_from_parameters_through_the_complete_model_pipeline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    parameters = Parameters.extract(_ParameterModel([4.0, 5.0]))
+    template = _ParameterModel([0.0, 0.0])
+    conversion_call: dict[str, Any] = {}
+
+    def fake_load(path: Path, **kwargs: Any) -> _ParameterModel:
+        assert path == output_dir / "keras_model.keras"
+        return template
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        conversion_call.update(kwargs)
+        return _FakeHlsModel(output_dir)
+
+    fake_keras = ModuleType("keras")
+    fake_keras.models = SimpleNamespace(load_model=fake_load)
+    fake_hgq = ModuleType("hgq")
+    fake_hgq_layers = ModuleType("hgq.layers")
+    fake_hgq_layers.QConv2D = object()
+    fake_hgq_layers.QDense = object()
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "keras", fake_keras)
+    monkeypatch.setitem(sys.modules, "hgq", fake_hgq)
+    monkeypatch.setitem(sys.modules, "hgq.layers", fake_hgq_layers)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    refreshed = original.refresh(parameters)
+
+    assert refreshed.path == output_dir
+    assert conversion_call["model"] is template
+    assert template.layers[0].weights[0].numpy().tolist() == [4.0, 5.0]
+
+
+def test_project_rejects_parameters_with_a_different_quantizer_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    parameters = Parameters.extract(_ParameterModel([4.0, 5.0], "RND"))
+    template = _ParameterModel([0.0, 0.0], "TRN")
+
+    fake_keras = ModuleType("keras")
+    fake_keras.models = SimpleNamespace(load_model=lambda *args, **kwargs: template)
+    fake_hgq = ModuleType("hgq")
+    fake_hgq_layers = ModuleType("hgq.layers")
+    fake_hgq_layers.QConv2D = object()
+    fake_hgq_layers.QDense = object()
+    monkeypatch.setitem(sys.modules, "keras", fake_keras)
+    monkeypatch.setitem(sys.modules, "hgq", fake_hgq)
+    monkeypatch.setitem(sys.modules, "hgq.layers", fake_hgq_layers)
+
+    with pytest.raises(ConfigurationError, match="incompatible"):
+        original.refresh(parameters)

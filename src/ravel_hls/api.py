@@ -22,6 +22,7 @@ from .exceptions import (
     VerificationError,
 )
 from .manifest import build_generation_manifest
+from .parameters import Parameters
 from .profiles.aria.plan import build_implementation_plan, build_pass_records
 from .project import RavelProject, open_project
 from .verification.equivalence import (
@@ -70,6 +71,15 @@ def refresh_model(
     """Regenerate an existing RAVEL project with a complete compatible model."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
+    if isinstance(model, Parameters):
+        import keras
+        from hgq.layers import QConv2D, QDense
+
+        template = keras.models.load_model(
+            project_view.path / "keras_model.keras",
+            custom_objects={"QConv2D": QConv2D, "QDense": QDense},
+        )
+        model = model._apply(template)
     hls_values = _load_hls4ml_config(project_view.path / "hls4ml_config.yml")
     target = project_view.path if output_dir is None else Path(output_dir)
     return convert_from_keras_model(
