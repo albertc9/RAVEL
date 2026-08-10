@@ -472,7 +472,7 @@ def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None
         ) from error
     if not isinstance(values, dict):
         raise ProjectGenerationError("hls4ml_config.yml must contain a mapping")
-    values["OutputDir"] = str(output_path)
+    values["OutputDir"] = "."
     if isinstance(values.get("KerasModel"), _KerasModelPath):
         values["KerasModel"] = _KerasModelPath("keras_model.keras")
     config_path.write_text(

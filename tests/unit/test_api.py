@@ -520,7 +520,8 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     assert (output_dir / "ravel_config.yml").is_file()
     assert (output_dir / "ravel_manifest.json").is_file()
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")
-    assert f"OutputDir: {output_dir}\n" in published_hls_config
+    assert "OutputDir: .\n" in published_hls_config
+    assert str(output_dir) not in published_hls_config
     assert "KerasModel: !keras_model 'keras_model.keras'" in published_hls_config
     assert ".ravel-" not in published_hls_config
     optimized_source = (output_dir / "firmware" / "aria_top.cpp").read_text(
