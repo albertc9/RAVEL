@@ -44,6 +44,20 @@ def test_config_schema_describes_the_unified_aria_1_1_mapping() -> None:
     assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
 
 
+def test_manifest_schema_describes_the_v2_source_closure() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_manifest.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert "source_closure" in schema["required"]
+    assert "source_closure_sha256" in schema["required"]
+    assert "managed_files" not in schema["properties"]
+
+
 def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     uv = shutil.which("uv")
     if uv is None:

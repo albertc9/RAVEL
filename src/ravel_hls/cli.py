@@ -26,6 +26,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     inspect_parser = subparsers.add_parser("inspect")
     inspect_parser.add_argument("project_directory")
     inspect_parser.add_argument("--json", action="store_true")
+    inspect_parser.add_argument("--fast", action="store_true")
     arguments = parser.parse_args(argv)
     if arguments.command == "doctor":
         report = inspect_dependencies()
@@ -40,10 +41,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         except RavelError as error:
             print(f"ravel-hls: error: {error}", file=sys.stderr)
             return 2
+        status = project._status(check_integrity=not arguments.fast)
         report = {
             "project": str(project.path),
             "ravel": project.manifest["ravel"],
-            "status": project.status,
+            "status": status,
         }
         if arguments.json:
             print(json.dumps(report, sort_keys=True))
@@ -56,7 +58,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 ("Source integrity", "source_integrity"),
                 ("Performance qualification", "performance_qualification"),
             ):
-                print(f"{label}: {project.status[key]}")
+                print(f"{label}: {status[key]}")
         return 0
     return 0
 

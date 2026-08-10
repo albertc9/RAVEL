@@ -1,6 +1,7 @@
 """Primary public generation workflows."""
 
 from collections.abc import Mapping
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -290,6 +291,9 @@ def _generate_project(
                 {
                     "class_name": layer.class_name,
                     "attributes": _semantic_attributes(layer),
+                    "parameters": [
+                        _semantic_parameter(weight) for weight in layer.get_weights()
+                    ],
                 }
                 for layer in layers
             ]
@@ -302,7 +306,6 @@ def _generate_project(
             semantic_model=semantic_model,
             implementation_plan=implementation_plan,
             pass_records=pass_records,
-            managed_paths=[*managed_paths, "hls4ml_config.yml", "ravel_config.yml"],
             verification_report=verification_report,
             interface_contract=_interface_contract(layers),
         )
@@ -378,6 +381,18 @@ def _semantic_attributes(layer: Any) -> dict[str, Any]:
         name: layer.get_attr(name)
         for name in names
         if layer.get_attr(name) is not None
+    }
+
+
+def _semantic_parameter(weight: Any) -> dict[str, Any]:
+    import numpy as np
+
+    values = np.ascontiguousarray(weight.data)
+    return {
+        "shape": list(values.shape),
+        "dtype": values.dtype.str,
+        "values_sha256": hashlib.sha256(values.tobytes(order="C")).hexdigest(),
+        "precision": weight.type.precision.definition_cpp(),
     }
 
 

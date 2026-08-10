@@ -1,44 +1,98 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_manifest.schema.json",
-  "title": "RAVEL generation manifest",
+  "title": "RAVEL Aria 1.1 generation manifest",
   "type": "object",
-  "additionalProperties": true,
+  "additionalProperties": false,
   "required": [
     "schema_version",
     "ravel",
     "source_model",
     "dependencies",
     "normalized_configuration",
+    "generation_configuration",
+    "configuration_sha256",
     "profile",
     "implementation_plan",
+    "implementation_sha256",
     "pipeline",
     "interfaces",
     "verification",
     "status",
-    "managed_files",
+    "source_closure",
+    "source_closure_sha256",
     "generation_fingerprint"
   ],
   "properties": {
-    "schema_version": {"const": 1},
+    "schema_version": {"const": 2},
     "ravel": {
       "type": "object",
       "required": ["product", "generation", "release", "package_version"],
       "properties": {
         "product": {"const": "RAVEL"},
         "generation": {"const": "Aria"},
-        "release": {"const": "1.0"}
+        "release": {"const": "1.1"},
+        "package_version": {"type": "string"}
       }
     },
+    "source_model": {
+      "type": "object",
+      "required": ["source_artifact_sha256", "semantic_model_sha256"],
+      "properties": {
+        "source_artifact_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "semantic_model_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "dependencies": {"type": "object"},
+    "normalized_configuration": {"type": "object"},
+    "generation_configuration": {"type": "object"},
+    "configuration_sha256": {"$ref": "#/$defs/sha256"},
     "profile": {
       "type": "object",
       "required": ["id", "version"],
       "properties": {"id": {"const": "aria"}, "version": {"const": 1}}
     },
-    "managed_files": {
-      "type": "object",
-      "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    "implementation_plan": {"type": "object"},
+    "implementation_sha256": {"$ref": "#/$defs/sha256"},
+    "pipeline": {"type": "object"},
+    "interfaces": {"type": "object"},
+    "verification": {"type": "object"},
+    "status": {"type": "object"},
+    "source_closure": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "size", "sha256"],
+        "properties": {
+          "role": {
+            "enum": [
+              "model",
+              "configuration",
+              "vendor_script",
+              "parameter",
+              "firmware",
+              "simulation",
+              "project"
+            ]
+          },
+          "path": {"type": "string", "minLength": 1},
+          "size": {"type": "integer", "minimum": 0},
+          "sha256": {"$ref": "#/$defs/sha256"}
+        }
+      }
     },
-    "generation_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    "source_closure_sha256": {"$ref": "#/$defs/sha256"},
+    "generation_fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
   }
 }

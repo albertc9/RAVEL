@@ -8,6 +8,7 @@ from typing import Any
 
 from .config import RavelConfig
 from .exceptions import ProjectGenerationError
+from .manifest import _build_source_closure
 
 
 @dataclass(frozen=True)
@@ -30,12 +31,24 @@ class Project:
 
     @property
     def status(self) -> dict[str, str]:
+        return self._status(check_integrity=True)
+
+    def _status(self, *, check_integrity: bool) -> dict[str, str]:
         status = dict(self.manifest.get("status", {}))
-        managed_files = self.manifest.get("managed_files", {})
-        integrity_clean = all(
-            _file_sha256(self.path / relative_path) == expected_sha256
-            for relative_path, expected_sha256 in managed_files.items()
-        )
+        if not check_integrity:
+            status["source_integrity"] = "not_checked"
+            if _qualification_matches_manifest(self.path):
+                status["performance_qualification"] = "recorded"
+            return status
+        source_closure = self.manifest.get("source_closure")
+        if isinstance(source_closure, list):
+            integrity_clean = _build_source_closure(self.path) == source_closure
+        else:
+            managed_files = self.manifest.get("managed_files", {})
+            integrity_clean = all(
+                _file_sha256(self.path / relative_path) == expected_sha256
+                for relative_path, expected_sha256 in managed_files.items()
+            )
         if not integrity_clean:
             status["source_integrity"] = "modified"
             if status.get("correctness_verification") == "passed":
@@ -79,9 +92,9 @@ def open_project(path: str | Path) -> RavelProject:
         raise ProjectGenerationError(
             f"Cannot read RAVEL project manifest at {manifest_path}: {error}"
         ) from error
-    if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
+    if not isinstance(manifest, dict) or manifest.get("schema_version") not in {1, 2}:
         raise ProjectGenerationError(
-            "RAVEL project manifest schema_version must be 1"
+            "RAVEL project manifest schema_version must be 1 or 2"
         )
     config_path = project_path / "ravel_config.yml"
     config = RavelConfig.from_yaml(config_path.read_text(encoding="utf-8"))

@@ -60,6 +60,7 @@ class _FakeWeight:
         self.name = name
         self.type = _FakeType(type_name, "ap_fixed<8,2>")
         self.data_length = length
+        self.data = np.zeros(length, dtype=np.float32)
 
 
 class _FakeLayer:
@@ -519,6 +520,8 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     assert (output_dir / "hls4ml_config.yml").is_file()
     assert (output_dir / "ravel_config.yml").is_file()
     assert (output_dir / "ravel_manifest.json").is_file()
+    assert project.manifest["schema_version"] == 2
+    assert project.manifest["ravel"]["release"] == "1.1"
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")
     assert "OutputDir: .\n" in published_hls_config
     assert str(output_dir) not in published_hls_config
@@ -553,6 +556,24 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         },
         "measured": None,
     }
+    source_closure = {
+        entry["path"]: entry for entry in project.manifest["source_closure"]
+    }
+    assert {
+        "keras_model.keras",
+        "hls4ml_config.yml",
+        "ravel_config.yml",
+        "firmware/parameters.h",
+        "firmware/aria_top.cpp",
+        "firmware/nnet_utils/nnet_aria.h",
+    } <= set(source_closure)
+    assert source_closure["keras_model.keras"] == {
+        "role": "model",
+        "path": "keras_model.keras",
+        "size": 16,
+        "sha256": hashlib.sha256(b"fake keras model").hexdigest(),
+    }
+    assert len(project.manifest["source_closure_sha256"]) == 64
     assert [item["id"] for item in project.manifest["pipeline"]["passes"]] == [
         "PackTemporalInput2x",
         "FuseRepackReshapeIntoFirstConv",
@@ -583,6 +604,60 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "source_integrity": "clean",
         "performance_qualification": "not_run",
     }
+
+
+def test_generation_identity_changes_when_model_parameters_change(
+    tmp_path: Path,
+) -> None:
+    first_model = _FakeHlsModel(tmp_path / "first")
+    second_model = _FakeHlsModel(tmp_path / "second")
+    second_model.layers[2].get_weights()[0].data[0] = 1.0
+
+    first = optimize_project(
+        first_model,
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    second = optimize_project(
+        second_model,
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+
+    assert (
+        first.manifest["source_model"]["semantic_model_sha256"]
+        != second.manifest["source_model"]["semantic_model_sha256"]
+    )
+    assert (
+        first.manifest["generation_fingerprint"]
+        != second.manifest["generation_fingerprint"]
+    )
+
+
+def test_generation_identity_excludes_the_output_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    def config(output_dir: Path) -> dict[str, Any]:
+        return {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}}},
+            "Verification": {"Mode": "disabled"},
+        }
+
+    first = convert(object(), config(tmp_path / "first"))
+    second = convert(object(), config(tmp_path / "second"))
+
+    assert first.manifest["configuration_sha256"] == second.manifest[
+        "configuration_sha256"
+    ]
+    assert first.manifest["generation_fingerprint"] == second.manifest[
+        "generation_fingerprint"
+    ]
 
 
 def test_optimize_project_cleanly_replaces_a_recognized_ravel_project(
