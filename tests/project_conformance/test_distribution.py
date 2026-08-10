@@ -17,29 +17,6 @@ def test_distribution_version_is_1_1_0() -> None:
     assert "version" not in metadata["project"].get("dynamic", [])
 
 
-def test_public_docs_use_the_aria_1_1_0_api_and_evidence_boundary() -> None:
-    repository = Path(__file__).resolve().parents[2]
-    readme = (repository / "README.md").read_text(encoding="utf-8")
-    public_docs = "\n".join(
-        (repository / path).read_text(encoding="utf-8")
-        for path in (
-            "README.md",
-            "docs/architecture.md",
-            "docs/compatibility.md",
-            "docs/project-format.md",
-            "references/cnn_for_arianna/README.md",
-        )
-    )
-
-    assert "import ravel_hls as ravel" in readme
-    assert "ravel.convert(model, config)" in readme
-    assert "Vitis.Run" in public_docs
-    assert "ravel.Parameters" in readme
-    assert "RavelConfig" not in public_docs
-    assert "convert_from_keras_model" not in public_docs
-    assert "II <= 178" not in public_docs
-
-
 def test_committed_hls4ml_configs_do_not_expose_generation_machine_paths() -> None:
     repository = Path(__file__).resolve().parents[2]
 

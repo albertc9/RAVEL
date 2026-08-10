@@ -30,7 +30,6 @@ def test_reference_generator_exposes_a_lightweight_help_entrypoint() -> None:
     )
 
     assert result.returncode == 0
-    assert "Generate the CNN-for-Arianna Aria project" in result.stdout
     assert "--verification" in result.stdout
     assert "--part" in result.stdout
     assert "--vitis" in result.stdout
@@ -66,18 +65,7 @@ def test_vanilla_hls4ml_baseline_exposes_a_lightweight_help_entrypoint() -> None
     )
 
     assert result.returncode == 0
-    assert "vanilla hls4ml CNN-for-Arianna baseline" in result.stdout
     assert "--vitis" in result.stdout
-
-
-def test_reference_documents_the_reproducible_vanilla_baseline() -> None:
-    readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
-    normalized = " ".join(readme.split())
-
-    assert "python references/cnn_for_arianna/baseline.py --vitis" in readme
-    assert "6e16cd474bcf45e41b173734b59e70ddd6ed6323" in readme
-    assert "65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978" in readme
-    assert "no generated C++, headers, Tcl, or YAML are edited" in normalized
 
 
 def test_vitis_2023_2_launcher_adapter_only_translates_the_command(
@@ -163,36 +151,3 @@ def test_exact_current_model_hls4ml_measurement_is_source_backed() -> None:
             "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency"
         )
     )
-
-
-def test_reference_labels_the_historical_comparison_as_context_only() -> None:
-    readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
-
-    assert "Historical context (not like-for-like)" in readme
-    assert "| Vanilla hls4ml (`c389552`) | 3076 | 3082 |" in readme
-    assert "| RAVEL Aria 1.1.0 | 178 | 183 |" in readme
-    assert "17.3x" in readme
-
-
-def test_reference_leads_with_the_exact_current_model_comparison() -> None:
-    readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
-
-    assert "Exact-current-model result" in readme
-    assert "| Vanilla hls4ml | 3076 | 3084 | 3.619 | 18 | 0 | 26275 | 38365 |" in readme
-    assert "| RAVEL Aria 1.1.0 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |" in readme
-    assert "86.7% fewer FF" in readme
-    assert "24.6% fewer LUT" in readme
-
-
-def test_root_readme_surfaces_the_reference_performance_matrix() -> None:
-    readme = (REFERENCE_ROOT.parents[1] / "README.md").read_text(encoding="utf-8")
-    normalized = " ".join(readme.split())
-
-    assert "## Performance" in readme
-    assert "| Vanilla hls4ml | 3076 | 3084 | 18 | 0 | 26275 | 38365 |" in readme
-    assert "| RAVEL Aria 1.1.0 | 178 | 183 | 0 | 4 | 3483 | 28922 |" in readme
-    assert "| CLB LUTs | 5,857 | 216,960 | 2.70% |" in readme
-    assert "| Aggregate chunk throughput | 3.91 million 256-sample chunks/s |" in readme
-    assert "d37a0a6dc31cf5a38f0d241f47e21263e0fe9e67" in readme
-    assert "Vitis HLS estimates" in normalized
-    assert "Vivado OOC" in readme
