@@ -35,7 +35,9 @@ from .verification.equivalence import (
 )
 
 
-def convert(model: Any, config: Mapping[str, Any]) -> RavelProject:
+def convert(
+    model: Any, config: Mapping[str, Any], *, inputs: Any | None = None
+) -> RavelProject:
     """Convert a compatible model using the Aria 1.1 public configuration."""
 
     unknown_fields = sorted(
@@ -58,6 +60,8 @@ def convert(model: Any, config: Mapping[str, Any]) -> RavelProject:
         io_type=hls.get("IOType", "io_stream"),
         part=hls.get("Part"),
         clock_period=hls.get("ClockPeriod"),
+        force_replace=project["ForceReplace"],
+        verification_inputs=inputs,
     )
     if normalized["Vitis"]["Run"]:
         generated.build()

@@ -390,6 +390,63 @@ def test_convert_runs_vitis_when_the_configuration_enables_it(
     assert built == [output_dir]
 
 
+def test_convert_forwards_inputs_and_force_replacement_as_invocation_options(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    inputs = np.zeros((2, 256, 4), dtype=np.float32)
+    converted = SimpleNamespace(path=tmp_path / "aria_project")
+    invocation: dict[str, Any] = {}
+
+    def fake_convert(model: Any, **kwargs: Any) -> Any:
+        invocation.update({"model": model, **kwargs})
+        return converted
+
+    monkeypatch.setattr("ravel_hls.api.convert_from_keras_model", fake_convert)
+    model = object()
+
+    result = convert(
+        model,
+        {
+            "Project": {
+                "Name": "aria_top",
+                "OutputDir": tmp_path / "aria_project",
+                "ForceReplace": True,
+            },
+            "HLS": {"Config": {}},
+            "Verification": {"Mode": "required"},
+        },
+        inputs=inputs,
+    )
+
+    assert result is converted
+    assert invocation["model"] is model
+    assert invocation["verification_inputs"] is inputs
+    assert invocation["force_replace"] is True
+
+
+@pytest.mark.parametrize(
+    ("section", "values", "message"),
+    [
+        ("Project", {"Unknown": True}, "Project.Unknown"),
+        ("Project", {"ForceReplace": "yes"}, "Project.ForceReplace"),
+        ("HLS", {"Unknown": True}, "HLS.Unknown"),
+        ("Verification", {"Unknown": True}, "Verification.Unknown"),
+        ("Verification", {"Samples": 0}, "Verification.Samples"),
+    ],
+)
+def test_convert_validates_all_public_configuration_sections(
+    tmp_path: Path, section: str, values: dict[str, Any], message: str
+) -> None:
+    config: dict[str, Any] = {
+        "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+        "HLS": {"Config": {}},
+    }
+    config.setdefault(section, {}).update(values)
+
+    with pytest.raises(ConfigurationError, match=message):
+        convert(object(), config)
+
+
 def test_convert_rejects_an_unknown_top_level_configuration_field() -> None:
     with pytest.raises(ConfigurationError, match="UnknownField"):
         convert(object(), {"UnknownField": True})
