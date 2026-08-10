@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import os
 import shutil
 import subprocess
@@ -22,6 +23,25 @@ def test_public_namespace_exposes_only_the_aria_1_1_lifecycle() -> None:
     ):
         assert removed_name not in ravel_hls.__all__
         assert not hasattr(ravel_hls, removed_name)
+
+
+def test_config_schema_describes_the_unified_aria_1_1_mapping() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    schema = json.loads(
+        (repository / "src/ravel_hls/schemas/ravel_config.schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert schema["title"] == "RAVEL Aria 1.1 configuration"
+    assert schema["required"] == ["Project", "HLS"]
+    assert set(schema["properties"]) == {
+        "Project",
+        "HLS",
+        "Verification",
+        "Vitis",
+    }
+    assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
 
 
 def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:

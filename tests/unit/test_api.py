@@ -313,6 +313,42 @@ def test_convert_rejects_an_unknown_top_level_configuration_field() -> None:
         convert(object(), {"UnknownField": True})
 
 
+def test_convert_rejects_a_non_boolean_vitis_run_value(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="Vitis.Run"):
+        convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+                "HLS": {"Config": {}},
+                "Vitis": {"Run": "yes"},
+            },
+        )
+
+
+def test_convert_rejects_an_unknown_vitis_stage(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="Vitis.Stages.Unknown"):
+        convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+                "HLS": {"Config": {}},
+                "Vitis": {"Stages": {"Unknown": True}},
+            },
+        )
+
+
+def test_convert_rejects_a_non_boolean_vitis_stage(tmp_path: Path) -> None:
+    with pytest.raises(ConfigurationError, match="Vitis.Stages.Synth"):
+        convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": tmp_path / "project"},
+                "HLS": {"Config": {}},
+                "Vitis": {"Stages": {"Synth": 1}},
+            },
+        )
+
+
 def test_optimize_project_rejects_unsupported_backend_before_generation(
     tmp_path: Path,
 ) -> None:

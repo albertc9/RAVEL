@@ -84,6 +84,9 @@ class RavelConfig(Mapping[str, Any]):
         vitis = self._data.get("Vitis", {})
         if not isinstance(vitis, Mapping):
             raise ConfigurationError("Vitis must be a mapping")
+        run_vitis = vitis.get("Run", False)
+        if not isinstance(run_vitis, bool):
+            raise ConfigurationError("Vitis.Run must be a boolean")
         stage_defaults = {
             "Reset": True,
             "CSim": False,
@@ -93,13 +96,24 @@ class RavelConfig(Mapping[str, Any]):
             "Export": False,
             "VSynth": False,
         }
-        stage_defaults.update(vitis.get("Stages", {}))
+        stages = vitis.get("Stages", {})
+        if not isinstance(stages, Mapping):
+            raise ConfigurationError("Vitis.Stages must be a mapping")
+        unknown_stages = sorted(stages.keys() - stage_defaults.keys())
+        if unknown_stages:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: Vitis.Stages.{unknown_stages[0]}"
+            )
+        for stage, enabled in stages.items():
+            if not isinstance(enabled, bool):
+                raise ConfigurationError(f"Vitis.Stages.{stage} must be a boolean")
+        stage_defaults.update(stages)
         self._data = {
             "Project": {**project, "OutputDir": str(project["OutputDir"])},
             "HLS": deepcopy(dict(hls)),
             "Verification": {"Mode": "auto", **verification},
             "Vitis": {
-                "Run": vitis.get("Run", False),
+                "Run": run_vitis,
                 "Stages": stage_defaults,
             },
         }

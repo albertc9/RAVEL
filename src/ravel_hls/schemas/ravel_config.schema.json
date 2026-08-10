@@ -1,11 +1,33 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_config.schema.json",
-  "title": "RAVEL Aria 1.0 configuration",
+  "title": "RAVEL Aria 1.1 configuration",
   "type": "object",
   "additionalProperties": false,
+  "required": ["Project", "HLS"],
   "properties": {
-    "Profile": {"const": "aria", "default": "aria"},
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Name", "OutputDir"],
+      "properties": {
+        "Name": {"type": "string", "minLength": 1},
+        "OutputDir": {"type": "string", "minLength": 1},
+        "ForceReplace": {"type": "boolean", "default": false}
+      }
+    },
+    "HLS": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Config"],
+      "properties": {
+        "Backend": {"const": "Vitis", "default": "Vitis"},
+        "IOType": {"const": "io_stream", "default": "io_stream"},
+        "Part": {"type": ["string", "null"]},
+        "ClockPeriod": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "Config": {"type": "object"}
+      }
+    },
     "Verification": {
       "type": "object",
       "additionalProperties": false,
@@ -16,6 +38,26 @@
         },
         "Samples": {"type": "integer", "minimum": 1},
         "Seed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "Vitis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Run": {"type": "boolean", "default": false},
+        "Stages": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "Reset": {"type": "boolean", "default": true},
+            "CSim": {"type": "boolean", "default": false},
+            "Synth": {"type": "boolean", "default": true},
+            "CoSim": {"type": "boolean", "default": false},
+            "Validation": {"type": "boolean", "default": false},
+            "Export": {"type": "boolean", "default": false},
+            "VSynth": {"type": "boolean", "default": false}
+          }
+        }
       }
     }
   }
