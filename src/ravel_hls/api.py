@@ -42,17 +42,15 @@ def convert(model: Any, config: Mapping[str, Any]) -> RavelProject:
         raise ConfigurationError(
             f"Unknown RAVEL configuration field: {unknown_fields[0]}"
         )
-    project = config["Project"]
-    hls = config["HLS"]
+    normalized = RavelConfig(config)
+    project = normalized["Project"]
+    hls = normalized["HLS"]
     return convert_from_keras_model(
         model,
         output_dir=project["OutputDir"],
         project_name=project["Name"],
         hls_config=hls["Config"],
-        ravel_config={
-            "Profile": "aria",
-            "Verification": config.get("Verification", {}),
-        },
+        ravel_config=normalized,
         backend=hls.get("Backend", "Vitis"),
         io_type=hls.get("IOType", "io_stream"),
         part=hls.get("Part"),

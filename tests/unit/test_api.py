@@ -279,7 +279,6 @@ def test_convert_accepts_one_public_configuration_mapping(
                 "Config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}},
             },
             "Verification": {"Mode": "disabled"},
-            "Vitis": {"Run": False},
         },
     )
 
@@ -293,6 +292,18 @@ def test_convert_accepts_one_public_configuration_mapping(
         "io_type": "io_stream",
         "part": "xcku5p-ffvb676-2-e",
         "clock_period": 5,
+    }
+    assert project.config["Vitis"] == {
+        "Run": False,
+        "Stages": {
+            "Reset": True,
+            "CSim": False,
+            "Synth": True,
+            "CoSim": False,
+            "Validation": False,
+            "Export": False,
+            "VSynth": False,
+        },
     }
 
 

@@ -26,6 +26,9 @@ class RavelConfig(Mapping[str, Any]):
 
     def __init__(self, values: Mapping[str, Any] | None = None) -> None:
         self._data: dict[str, Any] = dict(values or {})
+        if self._data.keys() & {"Project", "HLS", "Vitis"}:
+            self._init_run_config()
+            return
         unknown_fields = sorted(self._data.keys() - {"Profile", "Verification"})
         if unknown_fields:
             raise ConfigurationError(
@@ -60,6 +63,46 @@ class RavelConfig(Mapping[str, Any]):
         ):
             raise ConfigurationError("Verification.Seed must be a nonnegative integer")
         self._data["Verification"] = verification
+
+    def _init_run_config(self) -> None:
+        unknown_fields = sorted(
+            self._data.keys() - {"Project", "HLS", "Verification", "Vitis"}
+        )
+        if unknown_fields:
+            raise ConfigurationError(
+                f"Unknown RAVEL configuration field: {unknown_fields[0]}"
+            )
+        project = self._data.get("Project")
+        hls = self._data.get("HLS")
+        if not isinstance(project, Mapping):
+            raise ConfigurationError("Project must be a mapping")
+        if not isinstance(hls, Mapping):
+            raise ConfigurationError("HLS must be a mapping")
+        verification = self._data.get("Verification", {})
+        if not isinstance(verification, Mapping):
+            raise ConfigurationError("Verification must be a mapping")
+        vitis = self._data.get("Vitis", {})
+        if not isinstance(vitis, Mapping):
+            raise ConfigurationError("Vitis must be a mapping")
+        stage_defaults = {
+            "Reset": True,
+            "CSim": False,
+            "Synth": True,
+            "CoSim": False,
+            "Validation": False,
+            "Export": False,
+            "VSynth": False,
+        }
+        stage_defaults.update(vitis.get("Stages", {}))
+        self._data = {
+            "Project": {**project, "OutputDir": str(project["OutputDir"])},
+            "HLS": deepcopy(dict(hls)),
+            "Verification": {"Mode": "auto", **verification},
+            "Vitis": {
+                "Run": vitis.get("Run", False),
+                "Stages": stage_defaults,
+            },
+        }
 
     def __getitem__(self, key: str) -> Any:
         return self._data[key]
