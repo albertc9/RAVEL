@@ -2,7 +2,7 @@
 """Verify that release artifacts use the version in the triggering Git tag."""
 
 from email.parser import BytesParser
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import sys
 import tarfile
 import zipfile
@@ -35,7 +35,9 @@ def _sdist_version(artifact: Path) -> str:
         metadata_files = [
             member
             for member in archive.getmembers()
-            if member.name.endswith("/PKG-INFO") and member.isfile()
+            if PurePosixPath(member.name).parts[-1:] == ("PKG-INFO",)
+            and len(PurePosixPath(member.name).parts) == 2
+            and member.isfile()
         ]
         if len(metadata_files) != 1:
             raise ValueError(f"{artifact}: expected exactly one top-level PKG-INFO")
