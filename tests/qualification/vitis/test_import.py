@@ -144,7 +144,7 @@ def _write_project(project_path: Path) -> None:
     ).hexdigest()
     manifest = {
         "schema_version": 2,
-        "ravel": {"product": "RAVEL", "generation": "Aria", "release": "1.1"},
+        "ravel": {"product": "RAVEL", "generation": "Aria", "release": "1.1.0"},
         "implementation_plan": {"template_profile": "aria-2x-v1"},
         "normalized_configuration": {
             "hls4ml": {

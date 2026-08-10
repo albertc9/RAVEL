@@ -36,7 +36,7 @@ class RavelConfig(Mapping[str, Any]):
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
-            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.0")
+            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.1.0")
         self._data.setdefault("Profile", "aria")
         verification_values = self._data.get("Verification", {})
         if not isinstance(verification_values, Mapping):
