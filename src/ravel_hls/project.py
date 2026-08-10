@@ -39,8 +39,10 @@ class Project:
         status = dict(self.manifest.get("status", {}))
         if not check_integrity:
             status["source_integrity"] = "not_checked"
-            if _qualification_matches_manifest(self.path):
+            if _qualification_matches_manifest(self.path, self.manifest):
                 status["performance_qualification"] = "recorded"
+            elif (self.path / "ravel_qualification.json").is_file():
+                status["performance_qualification"] = "stale"
             return status
         source_closure = self.manifest.get("source_closure")
         if isinstance(source_closure, list):
@@ -57,8 +59,10 @@ class Project:
                 status["correctness_verification"] = "stale"
             if (self.path / "ravel_qualification.json").is_file():
                 status["performance_qualification"] = "stale"
-        elif _qualification_matches_manifest(self.path):
+        elif _qualification_matches_manifest(self.path, self.manifest):
             status["performance_qualification"] = "recorded"
+        elif (self.path / "ravel_qualification.json").is_file():
+            status["performance_qualification"] = "stale"
         return status
 
     def link(self) -> Any:
@@ -156,7 +160,9 @@ def _file_sha256(path: Path) -> str | None:
     return digest.hexdigest()
 
 
-def _qualification_matches_manifest(project_path: Path) -> bool:
+def _qualification_matches_manifest(
+    project_path: Path, manifest: dict[str, Any]
+) -> bool:
     qualification_path = project_path / "ravel_qualification.json"
     if not qualification_path.is_file():
         return False
@@ -164,6 +170,19 @@ def _qualification_matches_manifest(project_path: Path) -> bool:
         qualification = json.loads(qualification_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
         return False
-    return qualification.get("manifest_sha256") == _file_sha256(
-        project_path / "ravel_manifest.json"
+    expected_top = (
+        manifest.get("normalized_configuration", {})
+        .get("hls4ml", {})
+        .get("ProjectName")
+    )
+    return (
+        qualification.get("schema_version") == 2
+        and qualification.get("status") == "recorded"
+        and qualification.get("manifest_sha256")
+        == _file_sha256(project_path / "ravel_manifest.json")
+        and qualification.get("generation_fingerprint")
+        == manifest.get("generation_fingerprint")
+        and qualification.get("source_closure_sha256")
+        == manifest.get("source_closure_sha256")
+        and qualification.get("top") == expected_top
     )

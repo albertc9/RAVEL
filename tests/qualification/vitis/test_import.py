@@ -81,6 +81,45 @@ def test_import_vitis_reports_rejects_a_different_target_part(tmp_path: Path) ->
     assert not (project_path / "ravel_qualification.json").exists()
 
 
+def test_import_records_performance_without_target_thresholds(tmp_path: Path) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path)
+    report_dir = tmp_path / "reports"
+    report_path = report_dir / "aria_top_csynth.xml"
+    report_dir.mkdir()
+    report_path.write_text(
+        _CSYNTH_XML.replace(
+            "<EstimatedClockPeriod>3.647</EstimatedClockPeriod>",
+            "<EstimatedClockPeriod>7.500</EstimatedClockPeriod>",
+        ).replace("<Interval-min>178</Interval-min>", "<Interval-min>999</Interval-min>"),
+        encoding="utf-8",
+    )
+
+    record = Project.open(project_path).record(report_dir)
+
+    assert record.estimated_clock_ns == 7.5
+    assert record.initiation_interval == 999
+    assert Project.open(project_path).status["performance_qualification"] == "recorded"
+
+
+def test_project_marks_qualification_with_a_foreign_fingerprint_as_stale(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path)
+    report_dir = tmp_path / "reports"
+    report_path = report_dir / "aria_top_csynth.xml"
+    report_dir.mkdir()
+    report_path.write_text(_CSYNTH_XML, encoding="utf-8")
+    Project.open(project_path).record(report_dir)
+    qualification_path = project_path / "ravel_qualification.json"
+    qualification = json.loads(qualification_path.read_text(encoding="utf-8"))
+    qualification["generation_fingerprint"] = "2" * 64
+    qualification_path.write_text(json.dumps(qualification), encoding="utf-8")
+
+    assert Project.open(project_path).status["performance_qualification"] == "stale"
+
+
 def _write_project(project_path: Path) -> None:
     source = "void aria_top() {}\n"
     (project_path / "firmware").mkdir(parents=True)
