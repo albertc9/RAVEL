@@ -834,6 +834,28 @@ def test_generation_writes_the_selected_vitis_stages(tmp_path: Path) -> None:
     assert "    vsynth     0\n" in options
 
 
+def test_source_integrity_prunes_the_vendor_build_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = optimize_project(
+        _FakeHlsModel(tmp_path / "aria_project"),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    vendor_file = project.path / "aria_top_prj" / "solution1" / "syn" / "report.xml"
+    vendor_file.parent.mkdir(parents=True)
+    vendor_file.write_text("large vendor artifact\n", encoding="utf-8")
+    original_stat = Path.stat
+
+    def guarded_stat(path: Path, *args: Any, **kwargs: Any) -> Any:
+        if any(part.endswith("_prj") for part in path.parts):
+            raise AssertionError("source integrity entered the vendor build tree")
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", guarded_stat)
+
+    assert project.status["source_integrity"] == "clean"
+
+
 def test_generation_identity_changes_when_model_parameters_change(
     tmp_path: Path,
 ) -> None:

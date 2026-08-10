@@ -3,6 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -120,10 +121,8 @@ def build_generation_manifest(
 
 def _build_source_closure(project_path: Path) -> list[dict[str, Any]]:
     entries = []
-    for path in sorted(candidate for candidate in project_path.rglob("*") if candidate.is_file()):
+    for path in _iter_source_files(project_path):
         relative = path.relative_to(project_path).as_posix()
-        if _excluded_from_source_closure(relative):
-            continue
         entries.append(
             {
                 "role": _source_role(relative),
@@ -133,6 +132,25 @@ def _build_source_closure(project_path: Path) -> list[dict[str, Any]]:
             }
         )
     return entries
+
+
+def _iter_source_files(project_path: Path) -> list[Path]:
+    paths = []
+    for directory, child_directories, filenames in os.walk(
+        project_path, topdown=True, followlinks=False
+    ):
+        child_directories[:] = sorted(
+            name
+            for name in child_directories
+            if not name.startswith(".") and not name.endswith("_prj")
+        )
+        root = Path(directory)
+        for filename in sorted(filenames):
+            path = root / filename
+            relative = path.relative_to(project_path).as_posix()
+            if not _excluded_from_source_closure(relative) and path.is_file():
+                paths.append(path)
+    return sorted(paths)
 
 
 def _excluded_from_source_closure(relative_path: str) -> bool:
