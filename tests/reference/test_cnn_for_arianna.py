@@ -136,6 +136,35 @@ def test_historical_vanilla_hls4ml_measurement_is_source_backed() -> None:
     )
 
 
+def test_exact_current_model_hls4ml_measurement_is_source_backed() -> None:
+    evidence_path = REFERENCE_ROOT / "legacy" / "reports" / "hls4ml_exact_current.json"
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    report_path = evidence_path.parent / evidence["provenance"]["report_file"]
+    report_bytes = report_path.read_bytes()
+    report = ET.fromstring(report_bytes)
+
+    assert evidence["classification"] == "exact_current_model_comparison"
+    assert evidence["flow"] == "hls4ml-vanilla"
+    assert evidence["provenance"]["model_sha256"] == (
+        "65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978"
+    )
+    assert evidence["generated_project"]["generated_source_edits"] is False
+    assert evidence["generated_project"]["control_regeneration"][
+        "firmware_tree_byte_identical"
+    ] is True
+    assert evidence["provenance"]["report_sha256"] == hashlib.sha256(
+        report_bytes
+    ).hexdigest()
+    assert evidence["measurement"]["initiation_interval"] == int(
+        report.findtext("./PerformanceEstimates/SummaryOfOverallLatency/Interval-min")
+    )
+    assert evidence["measurement"]["latency_cycles"] == int(
+        report.findtext(
+            "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency"
+        )
+    )
+
+
 def test_reference_labels_the_historical_comparison_as_context_only() -> None:
     readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
 
@@ -143,3 +172,13 @@ def test_reference_labels_the_historical_comparison_as_context_only() -> None:
     assert "| Vanilla hls4ml (`c389552`) | 3076 | 3082 |" in readme
     assert "| RAVEL Aria 1.1.0 | 178 | 183 |" in readme
     assert "17.3x" in readme
+
+
+def test_reference_leads_with_the_exact_current_model_comparison() -> None:
+    readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "Exact-current-model result" in readme
+    assert "| Vanilla hls4ml | 3076 | 3084 | 3.619 | 18 | 0 | 26275 | 38365 |" in readme
+    assert "| RAVEL Aria 1.1.0 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |" in readme
+    assert "86.7% fewer FF" in readme
+    assert "24.6% fewer LUT" in readme

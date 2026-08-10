@@ -18,6 +18,11 @@ evidence copied from CNN-Core-Generator commit
 project with the same topology but a different model identity and therefore are
 explicitly not a like-for-like qualification result.
 
+`reports/hls4ml_exact_current_csynth.xml` and its JSON sidecar are the primary
+like-for-like comparison. They were produced from the byte-identical current
+reference model by `baseline.py`, with an independently regenerated control
+project used to confirm that no generated source was edited for synthesis.
+
 These files are comparison evidence, not runtime dependencies. In particular,
 the historical report must not be imported as qualification for a newly
 generated RAVEL manifest; source identity and generated-file hashes differ.

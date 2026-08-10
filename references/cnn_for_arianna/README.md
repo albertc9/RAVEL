@@ -52,6 +52,31 @@ historical script, this baseline does not add a separate input-precision or FIFO
 depth override, so the only source-level difference in the comparison is the
 RAVEL transformation.
 
+### Exact-current-model result
+
+The reproducible baseline was synthesized on Vitis HLS 2023.2 from RAVEL commit
+`103f55e`. It used the exact reference model SHA-256 above and the same part,
+clock target, hls4ml version, strategy, reuse factor, and generated precision
+configuration as the RAVEL flow.
+
+| Flow | II | Latency (cycles) | Est. clock (ns) | BRAM_18K | DSP | FF | LUT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Vanilla hls4ml | 3076 | 3084 | 3.619 | 18 | 0 | 26275 | 38365 |
+| RAVEL Aria 1.1.0 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |
+
+RAVEL reduces the measured initiation interval by 17.3x and cycle latency by
+16.9x. It also uses 86.7% fewer FF, 24.6% fewer LUT, and no BRAM_18K. The tradeoff
+is four DSPs instead of zero and a 0.028 ns higher estimated clock period; both
+flows remain below the 5 ns target. These are measurements, not performance
+gates for the general-purpose RAVEL API.
+
+To audit the no-edit condition, the baseline was generated a second time into a
+control directory without synthesis. Its complete firmware tree, bridge,
+testbench, and build script were byte-identical to the synthesized project. The
+only YAML differences were the output-specific paths and hls4ml's random stamp.
+The report, hashes, environment, build stages, and comparison ratios are stored
+in `legacy/reports/hls4ml_exact_current.json` with the adjacent original XML.
+
 ### Historical context (not like-for-like)
 
 CNN-Core-Generator commit `c389552` contains a Vitis HLS 2023.2 report for an
@@ -72,4 +97,5 @@ not a qualification gate or a strict speedup claim: the historical project uses
 an older parameter set, materialized `Conv2D`/`Dense` layers, and a 64-bit input
 port, while the current HGQ2 reference retains `QConv2D`/`QDense` and produces a
 128-bit RAVEL input port. Run the exact-current-model baseline above before using
-the comparison as a like-for-like result.
+the historical comparison as a like-for-like result; the exact result above is
+the primary comparison.

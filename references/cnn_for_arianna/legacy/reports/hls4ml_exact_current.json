@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "classification": "exact_current_model_comparison",
+  "flow": "hls4ml-vanilla",
+  "provenance": {
+    "ravel_source_commit": "103f55e",
+    "historical_origin_repository": "git@github.com:NuDAQ/CNN-Core-Generator.git",
+    "historical_origin_commit": "6e16cd474bcf45e41b173734b59e70ddd6ed6323",
+    "model_sha256": "65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978",
+    "project_model_sha256": "24393b5386c9e4b84dc62c785dc8dd096d86b3c34f68a353a6e2053d2bd011c7",
+    "report_file": "hls4ml_exact_current_csynth.xml",
+    "report_sha256": "51fde37c48f944c26d31d3c72aaf255427e6646df15b1d81ad5a8413862154cc"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "hls4ml": "1.2.0",
+    "hgq2": "0.1.7",
+    "keras": "3.12.1",
+    "vitis_hls": "2023.2"
+  },
+  "conversion": {
+    "backend": "Vitis",
+    "io_type": "io_stream",
+    "strategy": "Latency",
+    "reuse_factor": 1,
+    "part": "xcku5p-ffvb676-2-e",
+    "clock_period_ns": 5.0,
+    "manual_precision_overrides": false,
+    "manual_stream_depth_overrides": false
+  },
+  "generated_project": {
+    "generated_source_edits": false,
+    "firmware_tree_sha256": "06162090cc8b85ac6ffa00df2b96229d500ff1c4504c8eb1bdb45a603d72c2b9",
+    "top_source_sha256": "99757f4dc72cc4714d8437ad71d7241c6e7478d78664085da9b1898fd9c1b72d",
+    "bridge_sha256": "14daf00953c5c6590883eacab180996bf9ef1d6a186da646ccbfd1398d5c2c0c",
+    "testbench_sha256": "89c215a433dbfdb041fd6100d41113fdafe713b5d660c1eaa9331f243fed1095",
+    "build_script_sha256": "38b2e84e1ff22ad950e14c806d23e7e95b845cd672b8d1861d063649dde11783",
+    "hls4ml_config_sha256": "9048d04bc59516b2b5a5569b03936456679b61128bdd94d272b9f6cf607332ec",
+    "build_stages": {
+      "reset": true,
+      "csim": false,
+      "synth": true,
+      "cosim": false,
+      "validation": false,
+      "export": false,
+      "vsynth": false,
+      "fifo_opt": false
+    },
+    "launcher_adapter": "vitis-run arguments translated to vitis_hls -f only",
+    "control_regeneration": {
+      "firmware_tree_byte_identical": true,
+      "bridge_byte_identical": true,
+      "testbench_byte_identical": true,
+      "build_script_byte_identical": true,
+      "yaml_differences": [
+        "KerasModel output path",
+        "OutputDir",
+        "random hls4ml Stamp"
+      ]
+    }
+  },
+  "measurement": {
+    "tool": "Vitis HLS",
+    "tool_version": "2023.2",
+    "part": "xcku5p-ffvb676-2-e",
+    "target_clock_ns": 5.0,
+    "estimated_clock_ns": 3.619,
+    "initiation_interval": 3076,
+    "latency_cycles": 3084,
+    "resources": {
+      "BRAM_18K": 18,
+      "DSP": 0,
+      "FF": 26275,
+      "LUT": 38365,
+      "URAM": 0
+    },
+    "rtl_ports": {
+      "input_layer_TDATA": 64,
+      "layer9_out_TDATA": 32
+    }
+  },
+  "ravel_comparison": {
+    "report_file": "cnn_core_csynth.xml",
+    "report_sha256": "1b900d64fcebb759e7625889934289d1896719946376b761315b81dbc35b65fb",
+    "initiation_interval": 178,
+    "latency_cycles": 183,
+    "estimated_clock_ns": 3.647,
+    "resources": {
+      "BRAM_18K": 0,
+      "DSP": 4,
+      "FF": 3483,
+      "LUT": 28922,
+      "URAM": 0
+    },
+    "ratios": {
+      "initiation_interval": 17.280899,
+      "latency_cycles": 16.852459,
+      "ff_reduction_percent": 86.74,
+      "lut_reduction_percent": 24.61
+    }
+  },
+  "comparison_policy": {
+    "performance_gate": false,
+    "qualification_evidence": false,
+    "use": "like-for-like reference performance comparison"
+  }
+}
