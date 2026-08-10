@@ -51,3 +51,25 @@ Both comparison flows use hls4ml's generated per-layer precision, `IOStream`,
 historical script, this baseline does not add a separate input-precision or FIFO
 depth override, so the only source-level difference in the comparison is the
 RAVEL transformation.
+
+### Historical context (not like-for-like)
+
+CNN-Core-Generator commit `c389552` contains a Vitis HLS 2023.2 report for an
+older, topologically equivalent direct-hls4ml project. No generated C++, header,
+or hls4ml YAML changed between its generation commit (`2b01843`) and the report
+commit. The report commit enabled `fifo_opt` and `vsynth`, but Vitis emitted the
+listed C-synthesis result before FIFO optimization. The source-backed evidence
+is preserved in `legacy/reports/hls4ml_c389552.json` and its adjacent XML.
+
+| Flow | II | Latency (cycles) | BRAM_18K | DSP | FF | LUT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Vanilla hls4ml (`c389552`) | 3076 | 3082 | 19 | 14 | 30061 | 34994 |
+| RAVEL Aria 1.1.0 | 178 | 183 | 0 | 4 | 3483 | 28922 |
+
+The historical observation is a 17.3x lower initiation interval and a 16.8x
+lower cycle latency for RAVEL, with fewer reported resources. This is context,
+not a qualification gate or a strict speedup claim: the historical project uses
+an older parameter set, materialized `Conv2D`/`Dense` layers, and a 64-bit input
+port, while the current HGQ2 reference retains `QConv2D`/`QDense` and produces a
+128-bit RAVEL input port. Run the exact-current-model baseline above before using
+the comparison as a like-for-like result.

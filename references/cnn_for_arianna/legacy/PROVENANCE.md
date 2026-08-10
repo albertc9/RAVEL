@@ -12,6 +12,12 @@ The files below are immutable migration evidence from:
 wide-stream implementation. `reports/` contains a historical Vitis 2023.2 XML
 report from that legacy source.
 
+`reports/hls4ml_c389552_csynth.xml` and its JSON sidecar are older contextual
+evidence copied from CNN-Core-Generator commit
+`c389552068f32e5ab18067b33c19dd7fdc5dc132`. They measure a direct hls4ml
+project with the same topology but a different model identity and therefore are
+explicitly not a like-for-like qualification result.
+
 These files are comparison evidence, not runtime dependencies. In particular,
 the historical report must not be imported as qualification for a newly
 generated RAVEL manifest; source identity and generated-file hashes differ.

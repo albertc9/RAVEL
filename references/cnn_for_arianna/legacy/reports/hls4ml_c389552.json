@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "classification": "similar_model_context_only",
+  "flow": "hls4ml-vanilla",
+  "provenance": {
+    "repository": "git@github.com:NuDAQ/CNN-Core-Generator.git",
+    "commit": "c389552068f32e5ab18067b33c19dd7fdc5dc132",
+    "report_path_at_commit": "cnn_core_project/cnn_core_prj/solution1/syn/report/cnn_core_csynth.xml",
+    "report_file": "hls4ml_c389552_csynth.xml",
+    "report_sha256": "988100cded0b99d72db5db28ca5e478c823b49a2ab76de65e4da934f1220d5f6",
+    "source_model_path_at_commit": "models/hgq_config_beta7_gamma6_p1_cl_best_v3.keras",
+    "source_model_sha256": "e9fdbba840f385fa10dfbb519d62c8923e4c1a7daa65d23db1be3172e7a0af18",
+    "project_model_sha256": "c65275e6ed9bcf49256e84478145cf164b70704adfb2a97ec0bb1502bda8ea6b"
+  },
+  "model_relation": {
+    "current_reference_model_sha256": "65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978",
+    "same_parameter_identity": false,
+    "same_topology": true,
+    "historical_layers": [
+      "InputLayer",
+      "Reshape",
+      "Conv2D",
+      "MaxPooling2D",
+      "Flatten",
+      "Dense"
+    ],
+    "current_layers": [
+      "InputLayer",
+      "Reshape",
+      "QConv2D",
+      "MaxPooling2D",
+      "Flatten",
+      "QDense"
+    ]
+  },
+  "generated_project": {
+    "generation_commit": "2b01843da4220b693e11eba015a8ef2fbbd3e032",
+    "generated_source_edits": false,
+    "source_diff_to_measurement_commit": "none",
+    "build_option_changes_at_measurement_commit": {
+      "fifo_opt": [
+        0,
+        1
+      ],
+      "vsynth": [
+        0,
+        1
+      ]
+    },
+    "csynth_precedes_fifo_optimization": true
+  },
+  "measurement": {
+    "tool": "Vitis HLS",
+    "tool_version": "2023.2",
+    "part": "xcku5p-ffvb676-2-e",
+    "target_clock_ns": 5.0,
+    "estimated_clock_ns": 3.236,
+    "initiation_interval": 3076,
+    "latency_cycles": 3082,
+    "resources": {
+      "BRAM_18K": 19,
+      "DSP": 14,
+      "FF": 30061,
+      "LUT": 34994,
+      "URAM": 0
+    }
+  },
+  "comparison_policy": {
+    "performance_gate": false,
+    "qualification_evidence": false,
+    "use": "historical context until the exact-current-model baseline is synthesized"
+  }
+}

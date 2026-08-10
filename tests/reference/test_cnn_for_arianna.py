@@ -1,8 +1,10 @@
 import hashlib
+import json
 import os
 from pathlib import Path
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 
 
 REFERENCE_ROOT = (
@@ -106,3 +108,38 @@ def test_vitis_2023_2_launcher_adapter_only_translates_the_command(
 
     assert result.returncode == 0
     assert result.stdout.splitlines() == ["-f", "build_prj.tcl"]
+
+
+def test_historical_vanilla_hls4ml_measurement_is_source_backed() -> None:
+    evidence_path = REFERENCE_ROOT / "legacy" / "reports" / "hls4ml_c389552.json"
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    report_path = evidence_path.parent / evidence["provenance"]["report_file"]
+    report_bytes = report_path.read_bytes()
+    report = ET.fromstring(report_bytes)
+
+    assert evidence["classification"] == "similar_model_context_only"
+    assert evidence["flow"] == "hls4ml-vanilla"
+    assert evidence["provenance"]["commit"] == (
+        "c389552068f32e5ab18067b33c19dd7fdc5dc132"
+    )
+    assert evidence["generated_project"]["generated_source_edits"] is False
+    assert evidence["provenance"]["report_sha256"] == hashlib.sha256(
+        report_bytes
+    ).hexdigest()
+    assert evidence["measurement"]["initiation_interval"] == int(
+        report.findtext("./PerformanceEstimates/SummaryOfOverallLatency/Interval-min")
+    )
+    assert evidence["measurement"]["latency_cycles"] == int(
+        report.findtext(
+            "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency"
+        )
+    )
+
+
+def test_reference_labels_the_historical_comparison_as_context_only() -> None:
+    readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert "Historical context (not like-for-like)" in readme
+    assert "| Vanilla hls4ml (`c389552`) | 3076 | 3082 |" in readme
+    assert "| RAVEL Aria 1.1.0 | 178 | 183 |" in readme
+    assert "17.3x" in readme
