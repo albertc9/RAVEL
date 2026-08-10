@@ -12,6 +12,7 @@ from ravel_hls import (
     ConfigurationError,
     ProjectGenerationError,
     VerificationError,
+    convert,
     convert_from_keras_model,
     optimize_project,
     refresh_model,
@@ -248,6 +249,56 @@ class _VerifyingFakeHlsModel(_FakeHlsModel):
 
     def predict(self, inputs: np.ndarray) -> np.ndarray:
         return np.sum(inputs, axis=(1, 2), dtype=np.float32).reshape(-1, 1)
+
+
+def test_convert_accepts_one_public_configuration_mapping(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    converted_model = _FakeHlsModel(output_dir)
+    conversion_call: dict[str, Any] = {}
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        conversion_call.update(kwargs)
+        return converted_model
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    model = object()
+
+    project = convert(
+        model,
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {
+                "Backend": "Vitis",
+                "IOType": "io_stream",
+                "Part": "xcku5p-ffvb676-2-e",
+                "ClockPeriod": 5,
+                "Config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}},
+            },
+            "Verification": {"Mode": "disabled"},
+            "Vitis": {"Run": False},
+        },
+    )
+
+    assert project.path == output_dir
+    assert conversion_call == {
+        "model": model,
+        "output_dir": str(output_dir),
+        "project_name": "aria_top",
+        "hls_config": {"Model": {"Strategy": "Latency", "ReuseFactor": 1}},
+        "backend": "Vitis",
+        "io_type": "io_stream",
+        "part": "xcku5p-ffvb676-2-e",
+        "clock_period": 5,
+    }
+
+
+def test_convert_rejects_an_unknown_top_level_configuration_field() -> None:
+    with pytest.raises(ConfigurationError, match="UnknownField"):
+        convert(object(), {"UnknownField": True})
 
 
 def test_optimize_project_rejects_unsupported_backend_before_generation(

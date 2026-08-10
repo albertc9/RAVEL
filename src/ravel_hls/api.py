@@ -32,6 +32,34 @@ from .verification.equivalence import (
 )
 
 
+def convert(model: Any, config: Mapping[str, Any]) -> RavelProject:
+    """Convert a compatible model using the Aria 1.1 public configuration."""
+
+    unknown_fields = sorted(
+        config.keys() - {"Project", "HLS", "Verification", "Vitis"}
+    )
+    if unknown_fields:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: {unknown_fields[0]}"
+        )
+    project = config["Project"]
+    hls = config["HLS"]
+    return convert_from_keras_model(
+        model,
+        output_dir=project["OutputDir"],
+        project_name=project["Name"],
+        hls_config=hls["Config"],
+        ravel_config={
+            "Profile": "aria",
+            "Verification": config.get("Verification", {}),
+        },
+        backend=hls.get("Backend", "Vitis"),
+        io_type=hls.get("IOType", "io_stream"),
+        part=hls.get("Part"),
+        clock_period=hls.get("ClockPeriod"),
+    )
+
+
 def refresh_model(
     project: RavelProject | str | os.PathLike[str],
     model: Any,
