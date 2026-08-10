@@ -239,7 +239,10 @@ class _FakeHlsModel:
         )
         (output_dir / "keras_model.keras").write_bytes(b"fake keras model")
         (output_dir / "build_prj.tcl").write_text(
-            "source build_opt.tcl\n", encoding="utf-8"
+            "source build_opt.tcl\n"
+            "catch {config_array_partition -maximum_size $maximum_size}\n"
+            "csynth_design\n",
+            encoding="utf-8",
         )
 
     def get_layers(self) -> list[_FakeLayer]:
@@ -609,6 +612,11 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "    fifo_opt   0\n"
         "}\n"
     )
+    published_build_script = (output_dir / "build_prj.tcl").read_text(
+        encoding="utf-8"
+    )
+    assert "config_array_partition -maximum_size" not in published_build_script
+    assert "csynth_design" in published_build_script
     assert project.manifest["schema_version"] == 2
     assert project.manifest["ravel"]["release"] == "1.1"
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")

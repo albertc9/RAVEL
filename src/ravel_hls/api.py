@@ -14,7 +14,7 @@ from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
 from .backends.vitis.renderer import render_aria_project
-from .backends.vitis.build import write_build_options
+from .backends.vitis.build import normalize_build_script, write_build_options
 from .exceptions import (
     CompatibilityError,
     ConfigurationError,
@@ -277,6 +277,7 @@ def _generate_project(
         managed_paths = render_aria_project(
             staging_path, project_name, layers
         )
+        normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
             "mode": verification_mode,
