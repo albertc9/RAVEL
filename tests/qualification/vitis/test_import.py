@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from ravel_hls import ProjectGenerationError, import_vitis_reports, open_project
+from ravel_hls import ProjectGenerationError
+from ravel_hls.project import open_project
+from ravel_hls.qualification.vitis import import_vitis_reports
 
 
 def test_import_vitis_reports_links_measured_evidence_to_the_manifest(

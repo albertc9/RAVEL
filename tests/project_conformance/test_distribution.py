@@ -7,6 +7,23 @@ import zipfile
 import pytest
 
 
+def test_public_namespace_exposes_only_the_aria_1_1_lifecycle() -> None:
+    import ravel_hls
+
+    assert {"convert", "Project"} <= set(ravel_hls.__all__)
+    for removed_name in (
+        "RavelConfig",
+        "RavelProject",
+        "convert_from_keras_model",
+        "optimize_project",
+        "refresh_model",
+        "open_project",
+        "import_vitis_reports",
+    ):
+        assert removed_name not in ravel_hls.__all__
+        assert not hasattr(ravel_hls, removed_name)
+
+
 def test_wheel_contains_aria_rendering_templates(tmp_path: Path) -> None:
     uv = shutil.which("uv")
     if uv is None:

@@ -7,7 +7,8 @@ import sys
 
 import pytest
 
-from ravel_hls import ProjectGenerationError, open_project
+from ravel_hls import ProjectGenerationError
+from ravel_hls.project import open_project
 
 
 def test_open_project_rejects_an_unmanaged_directory(tmp_path: Path) -> None:

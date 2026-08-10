@@ -13,10 +13,9 @@ from .exceptions import (
 )
 
 if TYPE_CHECKING:
-    from .api import convert, convert_from_keras_model, optimize_project, refresh_model
-    from .config import RavelConfig
-    from .project import Project, RavelProject, open_project
-    from .qualification.vitis import QualificationRecord, import_vitis_reports
+    from .api import convert
+    from .project import Project
+    from .qualification.vitis import QualificationRecord
 
 __all__ = [
     "CompatibilityError",
@@ -25,31 +24,17 @@ __all__ = [
     "Project",
     "ProjectGenerationError",
     "QualificationRecord",
-    "RavelConfig",
     "RavelError",
-    "RavelProject",
     "VerificationError",
     "convert",
-    "convert_from_keras_model",
-    "import_vitis_reports",
-    "open_project",
-    "optimize_project",
-    "refresh_model",
 ]
 
 
 def __getattr__(name: str) -> Any:
     lazy_exports = {
-        "RavelConfig": (".config", "RavelConfig"),
         "Project": (".project", "Project"),
-        "RavelProject": (".project", "RavelProject"),
         "QualificationRecord": (".qualification.vitis", "QualificationRecord"),
         "convert": (".api", "convert"),
-        "convert_from_keras_model": (".api", "convert_from_keras_model"),
-        "import_vitis_reports": (".qualification.vitis", "import_vitis_reports"),
-        "open_project": (".project", "open_project"),
-        "optimize_project": (".api", "optimize_project"),
-        "refresh_model": (".api", "refresh_model"),
     }
     target = lazy_exports.get(name)
     if target is None:

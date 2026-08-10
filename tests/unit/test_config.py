@@ -1,6 +1,7 @@
 import pytest
 
-from ravel_hls import ConfigurationError, RavelConfig
+from ravel_hls import ConfigurationError
+from ravel_hls.config import RavelConfig
 
 
 def test_verification_mode_defaults_to_auto() -> None:

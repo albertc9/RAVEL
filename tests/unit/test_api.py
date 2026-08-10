@@ -14,10 +14,8 @@ from ravel_hls import (
     ProjectGenerationError,
     VerificationError,
     convert,
-    convert_from_keras_model,
-    optimize_project,
-    refresh_model,
 )
+from ravel_hls.api import convert_from_keras_model, optimize_project, refresh_model
 
 
 class _FakeHlsConfig:
