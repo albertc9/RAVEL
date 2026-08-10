@@ -182,3 +182,17 @@ def test_reference_leads_with_the_exact_current_model_comparison() -> None:
     assert "| RAVEL Aria 1.1.0 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |" in readme
     assert "86.7% fewer FF" in readme
     assert "24.6% fewer LUT" in readme
+
+
+def test_root_readme_surfaces_the_reference_performance_matrix() -> None:
+    readme = (REFERENCE_ROOT.parents[1] / "README.md").read_text(encoding="utf-8")
+    normalized = " ".join(readme.split())
+
+    assert "## Performance" in readme
+    assert "| Vanilla hls4ml | 3076 | 3084 | 18 | 0 | 26275 | 38365 |" in readme
+    assert "| RAVEL Aria 1.1.0 | 178 | 183 | 0 | 4 | 3483 | 28922 |" in readme
+    assert "| CLB LUTs | 5,857 | 216,960 | 2.70% |" in readme
+    assert "| Aggregate chunk throughput | 3.91 million 256-sample chunks/s |" in readme
+    assert "d37a0a6dc31cf5a38f0d241f47e21263e0fe9e67" in readme
+    assert "Vitis HLS estimates" in normalized
+    assert "Vivado OOC" in readme
