@@ -41,3 +41,27 @@ def test_reference_generator_uses_only_the_canonical_public_api() -> None:
     assert '"Vitis": {"Run": args.vitis}' in source
     assert "RavelConfig" not in source
     assert "convert_from_keras_model" not in source
+
+
+def test_vanilla_hls4ml_baseline_has_no_generated_source_edit_path() -> None:
+    source = (REFERENCE_ROOT / "baseline.py").read_text(encoding="utf-8")
+
+    assert "hls4ml.converters.convert_from_keras_model(" in source
+    assert "hls_model.write()" in source
+    assert "hls_model.build(" in source
+    assert "source_policy\": \"no generated source edits" in source
+    for forbidden in ("write_text(", "write_bytes(", "subprocess", "ravel_hls"):
+        assert forbidden not in source
+
+
+def test_vanilla_hls4ml_baseline_exposes_a_lightweight_help_entrypoint() -> None:
+    result = subprocess.run(
+        [sys.executable, str(REFERENCE_ROOT / "baseline.py"), "--help"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "vanilla hls4ml CNN-for-Arianna baseline" in result.stdout
+    assert "--vitis" in result.stdout
