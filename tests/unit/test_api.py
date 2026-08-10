@@ -10,6 +10,7 @@ import pytest
 from ravel_hls import (
     CompatibilityError,
     ConfigurationError,
+    Project,
     ProjectGenerationError,
     VerificationError,
     convert,
@@ -283,6 +284,8 @@ def test_convert_accepts_one_public_configuration_mapping(
     )
 
     assert project.path == output_dir
+    assert isinstance(project, Project)
+    assert Project.open(output_dir).path == output_dir
     assert conversion_call == {
         "model": model,
         "output_dir": str(output_dir),
@@ -592,7 +595,7 @@ def test_optimize_project_requires_force_to_replace_an_unrecognized_target(
     assert not (output_dir / "unmanaged.txt").exists()
 
 
-def test_ravel_project_links_a_restricted_hls4ml_existing_project(
+def test_project_links_a_restricted_hls4ml_existing_project(
     tmp_path: Path,
 ) -> None:
     project = optimize_project(
@@ -600,7 +603,7 @@ def test_ravel_project_links_a_restricted_hls4ml_existing_project(
         config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
     )
 
-    linked = project.link_hls4ml()
+    linked = project.link()
 
     assert callable(linked.compile)
     assert callable(linked.predict)
@@ -890,3 +893,28 @@ def test_refresh_model_reuses_the_recorded_configs_through_clean_conversion(
         "Strategy": "Latency",
         "ReuseFactor": 1,
     }
+
+
+def test_project_refreshes_with_a_new_complete_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+    conversion_call: dict[str, Any] = {}
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        conversion_call.update(kwargs)
+        return _FakeHlsModel(output_dir)
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    new_model = object()
+
+    refreshed = original.refresh(new_model)
+
+    assert refreshed.path == output_dir
+    assert conversion_call["model"] is new_model

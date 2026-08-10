@@ -15,13 +15,14 @@ from .exceptions import (
 if TYPE_CHECKING:
     from .api import convert, convert_from_keras_model, optimize_project, refresh_model
     from .config import RavelConfig
-    from .project import RavelProject, open_project
+    from .project import Project, RavelProject, open_project
     from .qualification.vitis import QualificationRecord, import_vitis_reports
 
 __all__ = [
     "CompatibilityError",
     "ConfigurationError",
     "OptimizationError",
+    "Project",
     "ProjectGenerationError",
     "QualificationRecord",
     "RavelConfig",
@@ -40,6 +41,7 @@ __all__ = [
 def __getattr__(name: str) -> Any:
     lazy_exports = {
         "RavelConfig": (".config", "RavelConfig"),
+        "Project": (".project", "Project"),
         "RavelProject": (".project", "RavelProject"),
         "QualificationRecord": (".qualification.vitis", "QualificationRecord"),
         "convert": (".api", "convert"),

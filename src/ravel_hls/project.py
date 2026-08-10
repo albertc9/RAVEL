@@ -11,12 +11,18 @@ from .exceptions import ProjectGenerationError
 
 
 @dataclass(frozen=True)
-class RavelProject:
+class Project:
     """Read-only view of a generated RAVEL project."""
 
     path: Path
     config: RavelConfig
     manifest: dict[str, Any]
+
+    @classmethod
+    def open(cls, path: str | Path) -> "Project":
+        """Open an existing RAVEL project without modifying it."""
+
+        return open_project(path)
 
     @property
     def implementation_plan(self) -> dict[str, Any]:
@@ -40,12 +46,24 @@ class RavelProject:
             status["performance_qualification"] = "recorded"
         return status
 
-    def link_hls4ml(self) -> Any:
+    def link(self) -> Any:
         """Return hls4ml's restricted existing-project compile/predict/build view."""
 
         from hls4ml.utils.link import FilesystemModelGraph
 
         return FilesystemModelGraph(self.path)
+
+    link_hls4ml = link
+
+    def refresh(self, model: Any) -> "Project":
+        """Regenerate this project with a new compatible model."""
+
+        from .api import refresh_model
+
+        return refresh_model(self, model)
+
+
+RavelProject = Project
 
 
 def open_project(path: str | Path) -> RavelProject:
