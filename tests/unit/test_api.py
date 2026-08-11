@@ -31,7 +31,14 @@ class _FakeHlsConfig:
 class _FakePrecision:
     def __init__(self, cpp: str) -> None:
         self.cpp = cpp
-        self.width = int(cpp.split("<", 1)[1].split(",", 1)[0])
+        arguments = cpp.split("<", 1)[1].rsplit(">", 1)[0].split(",")
+        self.width = int(arguments[0])
+        self.integer = int(arguments[1])
+        self.fractional = self.width - self.integer
+        self.signed = not cpp.startswith("ap_ufixed")
+        self.rounding_mode = arguments[2] if len(arguments) > 2 else "TRN"
+        self.saturation_mode = arguments[3] if len(arguments) > 3 else "WRAP"
+        self.saturation_bits = int(arguments[4]) if len(arguments) > 4 else 0
 
     def definition_cpp(self) -> str:
         return self.cpp
@@ -80,14 +87,26 @@ class _FakeLayer:
             output_name, _FakeType(type_name, precision, n_elem)
         )
         self.types = {"result_t": self._output_variable.type}
+        accum_precision = attributes.pop("accum_precision", None)
+        if accum_precision is not None:
+            self.attributes = {
+                "accum_t": _FakeType(f"{self.name}_accum_t", accum_precision)
+            }
+        else:
+            self.attributes = {}
         self._weights = attributes.pop("weights", [])
-        self.attributes = attributes
+        self.attributes.update(attributes)
+        self._input_variable: _FakeVariable | None = None
 
     def get_attr(self, key: str, default: Any = None) -> Any:
         return self.attributes.get(key, default)
 
     def get_output_variable(self) -> _FakeVariable:
         return self._output_variable
+
+    def get_input_variable(self) -> _FakeVariable:
+        assert self._input_variable is not None
+        return self._input_variable
 
     def get_weights(self) -> list[_FakeWeight]:
         return self._weights
@@ -201,6 +220,7 @@ class _FakeHlsModel:
                 output_name="layer9_out",
                 type_name="result_t",
                 precision="ap_fixed<22,11>",
+                accum_precision="ap_fixed<22,11>",
                 module="hgq.layers.core.dense",
                 reuse_factor=1,
                 strategy="latency",
@@ -210,6 +230,8 @@ class _FakeHlsModel:
                 index=9,
             ),
         ]
+        for previous, current in zip(self.layers, self.layers[1:]):
+            current._input_variable = previous.get_output_variable()
 
     def write(self) -> None:
         self.write_called = True
@@ -427,6 +449,58 @@ def test_convert_records_dense_shape_and_coefficient_facts(
                 },
             },
             "bias": {"shape": [1], "elements": 1},
+            "numeric": {
+                "input": {
+                    "kind": "fixed",
+                    "width": 9,
+                    "integer": 4,
+                    "fractional": 5,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "output": {
+                    "kind": "fixed",
+                    "width": 22,
+                    "integer": 11,
+                    "fractional": 11,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "weight": {
+                    "kind": "fixed",
+                    "width": 8,
+                    "integer": 2,
+                    "fractional": 6,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "bias": {
+                    "kind": "fixed",
+                    "width": 8,
+                    "integer": 2,
+                    "fractional": 6,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "accumulator": {
+                    "kind": "fixed",
+                    "width": 22,
+                    "integer": 11,
+                    "fractional": 11,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+            },
         }
     ]
 

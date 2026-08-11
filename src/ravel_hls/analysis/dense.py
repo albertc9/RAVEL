@@ -38,6 +38,27 @@ def analyze_dense_facts(layers: Iterable[Any]) -> list[dict[str, Any]]:
                     "shape": list(bias_values.shape),
                     "elements": int(bias_values.size),
                 },
+                "numeric": {
+                    "input": _precision_facts(layer.get_input_variable().type),
+                    "output": _precision_facts(layer.get_output_variable().type),
+                    "weight": _precision_facts(kernel.type),
+                    "bias": _precision_facts(bias.type),
+                    "accumulator": _precision_facts(layer.get_attr("accum_t")),
+                },
             }
         )
     return facts
+
+
+def _precision_facts(type_value: Any) -> dict[str, Any]:
+    precision = type_value.precision
+    return {
+        "kind": "fixed",
+        "width": int(precision.width),
+        "integer": int(precision.integer),
+        "fractional": int(precision.fractional),
+        "signed": bool(precision.signed),
+        "rounding": str(precision.rounding_mode).removeprefix("AP_"),
+        "overflow": str(precision.saturation_mode).removeprefix("AP_"),
+        "saturation_bits": int(precision.saturation_bits),
+    }
