@@ -8,6 +8,24 @@ from typing import Any
 from .exceptions import ConfigurationError
 
 
+_AGGRESSIVE_SPECIALIZATION = {
+    "TemporalPacking": 4,
+    "DenseParallelism": 2,
+}
+
+
+def _resolve_optimization(values: Any) -> dict[str, int]:
+    if values is None:
+        return dict(_AGGRESSIVE_SPECIALIZATION)
+    if not isinstance(values, Mapping):
+        raise ConfigurationError("Optimization must be a mapping")
+    if dict(values) != _AGGRESSIVE_SPECIALIZATION:
+        raise ConfigurationError(
+            "Only the default Aria optimization is currently supported"
+        )
+    return dict(_AGGRESSIVE_SPECIALIZATION)
+
+
 class RavelConfig(Mapping[str, Any]):
     """Typed, mapping-compatible configuration for a RAVEL run."""
 
@@ -67,7 +85,8 @@ class RavelConfig(Mapping[str, Any]):
 
     def _init_run_config(self) -> None:
         unknown_fields = sorted(
-            self._data.keys() - {"Project", "HLS", "Verification", "Vitis"}
+            self._data.keys()
+            - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
         )
         if unknown_fields:
             raise ConfigurationError(
@@ -190,6 +209,7 @@ class RavelConfig(Mapping[str, Any]):
                 "ClockPeriod": clock_period,
                 "Config": deepcopy(dict(hls["Config"])),
             },
+            "Optimization": _resolve_optimization(self._data.get("Optimization")),
             "Verification": normalized_verification,
             "Vitis": {
                 "Run": run_vitis,

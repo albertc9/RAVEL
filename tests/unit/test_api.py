@@ -364,6 +364,31 @@ def test_convert_accepts_one_public_configuration_mapping(
     }
 
 
+def test_convert_defaults_to_the_aggressive_specialization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(
+        convert_from_keras_model=lambda **kwargs: _FakeHlsModel(output_dir)
+    )
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    project = convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    assert project.config["Optimization"] == {
+        "TemporalPacking": 4,
+        "DenseParallelism": 2,
+    }
+
+
 def test_convert_runs_vitis_when_the_configuration_enables_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
