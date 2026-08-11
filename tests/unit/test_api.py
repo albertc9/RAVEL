@@ -441,6 +441,7 @@ def test_convert_records_dense_shape_and_coefficient_facts(
             "role": "output",
             "n_in": 1176,
             "n_out": 1,
+            "input_group_size": 7,
             "kernel": {
                 "shape": [1176],
                 "elements": 1176,

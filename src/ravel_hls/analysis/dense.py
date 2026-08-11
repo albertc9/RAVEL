@@ -34,6 +34,9 @@ def analyze_dense_facts(layers: Iterable[Any]) -> list[dict[str, Any]]:
                 "role": "output",
                 "n_in": layer.get_attr("n_in"),
                 "n_out": layer.get_attr("n_out"),
+                "input_group_size": int(
+                    getattr(layer.get_input_variable().type, "n_elem", 1)
+                ),
                 "kernel": {
                     "shape": list(kernel_values.shape),
                     "elements": int(kernel_values.size),
