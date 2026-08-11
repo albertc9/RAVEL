@@ -1,5 +1,6 @@
 """Strict rendering of the Aria Vitis project specialization."""
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,11 @@ _TEMPLATE_ROOT = Path(__file__).with_name("templates")
 
 
 def render_aria_project(
-    project_path: Path, project_name: str, layers: list[Any]
+    project_path: Path,
+    project_name: str,
+    layers: list[Any],
+    *,
+    optimization: Mapping[str, int],
 ) -> list[str]:
     """Render all Aria-owned firmware files from a typed model context."""
 
@@ -55,6 +60,7 @@ def render_aria_project(
         "activation_config": f"relu_config{activation.get_attr('index')}",
         "pool_config": f"config{pooling.get_attr('index')}",
         "dense_config": f"config{dense.get_attr('index')}",
+        "dense_parallelism": optimization["DenseParallelism"],
         "conv_stream": f"{convolution_variable.name}_x4",
         "activation_stream": f"{activation_variable.name}_x4",
         "pool_stream": f"{pooling_variable.name}_x4",

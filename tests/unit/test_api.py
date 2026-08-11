@@ -454,6 +454,49 @@ def test_convert_defaults_only_the_omitted_specialization_axis(
     assert project.config["Optimization"] == expected
 
 
+def test_convert_renders_the_selected_dense_schedule_and_control_cleanup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    def generate(output_dir: Path, dense_parallelism: int) -> Project:
+        return convert(
+            object(),
+            {
+                "Project": {"Name": "aria_top", "OutputDir": output_dir},
+                "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+                "Optimization": {
+                    "TemporalPacking": 2,
+                    "DenseParallelism": dense_parallelism,
+                },
+                "Verification": {"Mode": "disabled"},
+            },
+        )
+
+    dense1 = generate(tmp_path / "dense1", 1)
+    dense2 = generate(tmp_path / "dense2", 2)
+
+    dense1_header = (
+        dense1.path / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    dense2_header = (
+        dense2.path / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "constexpr unsigned DENSE_PARALLELISM = 1;" in dense1_header
+    assert "constexpr unsigned DENSE_PARALLELISM = 2;" in dense2_header
+    assert "parallel_group < DENSE_PARALLELISM" in dense2_header
+    for project in (dense1, dense2):
+        source = (project.path / "firmware" / "aria_top.cpp").read_text(
+            encoding="utf-8"
+        )
+        assert "#pragma HLS DATAFLOW disable_start_propagation" in source
+
+
 def test_convert_runs_vitis_when_the_configuration_enables_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

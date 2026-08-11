@@ -9,7 +9,7 @@ void {{ project_name }}(
     hls::stream<{{ output_type }}> &{{ output_name }}
 ) {
     #pragma HLS INTERFACE axis port={{ input_name }},{{ output_name }}
-    #pragma HLS DATAFLOW
+    #pragma HLS DATAFLOW disable_start_propagation
 
 #ifndef __SYNTHESIS__
     static bool loaded_weights = false;

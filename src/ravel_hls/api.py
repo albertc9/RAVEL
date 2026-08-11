@@ -279,7 +279,10 @@ def _generate_project(
                 "hls4ml ProjectName must be a valid C++ identifier"
             )
         managed_paths = render_aria_project(
-            staging_path, project_name, layers
+            staging_path,
+            project_name,
+            layers,
+            optimization=ravel_config["Optimization"],
         )
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
