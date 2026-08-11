@@ -271,8 +271,9 @@ def _generate_project(
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
-        implementation_plan = build_implementation_plan()
-        pass_records = build_pass_records()
+        optimization = ravel_config["Optimization"]
+        implementation_plan = build_implementation_plan(optimization)
+        pass_records = build_pass_records(optimization)
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
             raise ProjectGenerationError(
@@ -333,7 +334,7 @@ def _generate_project(
             implementation_plan=implementation_plan,
             pass_records=pass_records,
             verification_report=verification_report,
-            interface_contract=_interface_contract(layers),
+            interface_contract=_interface_contract(layers, implementation_plan),
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -435,7 +436,9 @@ def _normalized_hls_config(hls_config: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _interface_contract(layers: list[Any]) -> dict[str, Any]:
+def _interface_contract(
+    layers: list[Any], implementation_plan: Mapping[str, Any]
+) -> dict[str, Any]:
     input_variable = layers[0].get_output_variable()
     output_variable = layers[-1].get_output_variable()
     input_precision = input_variable.type.precision
@@ -452,10 +455,12 @@ def _interface_contract(layers: list[Any]) -> dict[str, Any]:
             "output_shape": [1],
         },
         "hls_stream_interface": {
-            "input_rows_per_word": 2,
+            "input_rows_per_word": implementation_plan["temporal_pack"],
             "channels_per_row": 4,
-            "values_per_input_word": 8,
-            "input_words_per_inference": 128,
+            "values_per_input_word": implementation_plan["values_per_input_word"],
+            "input_words_per_inference": implementation_plan[
+                "input_words_per_inference"
+            ],
             "output_words_per_inference": 1,
             "input_scalar_bits": input_width,
             "output_scalar_bits": output_width,
@@ -469,7 +474,9 @@ def _interface_contract(layers: list[Any]) -> dict[str, Any]:
                 "qualification_profile": (
                     "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
                 ),
-                "input_tdata_bits": 8 * input_slot_width,
+                "input_tdata_bits": (
+                    implementation_plan["values_per_input_word"] * input_slot_width
+                ),
                 "output_tdata_bits": output_slot_width,
                 "input_tdata_port": f"{input_variable.name}_TDATA",
                 "output_tdata_port": f"{output_variable.name}_TDATA",

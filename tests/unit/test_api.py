@@ -497,6 +497,70 @@ def test_convert_renders_the_selected_dense_schedule_and_control_cleanup(
         assert "#pragma HLS DATAFLOW disable_start_propagation" in source
 
 
+def test_convert_renders_the_selected_temporal_packing_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    def generate(output_dir: Path, temporal_packing: int | None) -> Project:
+        config: dict[str, Any] = {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        }
+        if temporal_packing is not None:
+            config["Optimization"] = {
+                "TemporalPacking": temporal_packing,
+                "DenseParallelism": 1,
+            }
+        return convert(object(), config)
+
+    packed4 = generate(tmp_path / "packed4", None)
+    packed2 = generate(tmp_path / "packed2", 2)
+
+    packed4_source = (packed4.path / "firmware" / "aria_top.cpp").read_text(
+        encoding="utf-8"
+    )
+    packed2_source = (packed2.path / "firmware" / "aria_top.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert "first_conv_4row_4lane_temporal_wide_cl" in packed4_source
+    assert "first_conv_2row_4lane_temporal_wide_cl" in packed2_source
+    packed4_bridge = (packed4.path / "aria_top_bridge.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert "hls::stream<input_x4_t>" in packed4_bridge
+    assert "word_index < 64" in packed4_bridge
+    assert "row < 4" in packed4_bridge
+    assert packed4.implementation_plan["template_profile"] == "aria-p4-d2-v1"
+    assert packed4.implementation_plan["input_words_per_inference"] == 64
+    assert packed4.implementation_plan["dense_steps"] == 84
+    assert packed2.implementation_plan["template_profile"] == "aria-p2-d1-v1"
+    assert packed2.implementation_plan["input_words_per_inference"] == 128
+    assert packed2.implementation_plan["dense_steps"] == 168
+    assert packed4.manifest["interfaces"]["hls_stream_interface"] == {
+        "input_rows_per_word": 4,
+        "channels_per_row": 4,
+        "values_per_input_word": 16,
+        "input_words_per_inference": 64,
+        "output_words_per_inference": 1,
+        "input_scalar_bits": 9,
+        "output_scalar_bits": 22,
+        "ordering": "row-major; time before channel",
+        "protocol": "axis",
+        "block_control": "ap_ctrl_hs",
+        "optional_axis_sidebands": [],
+    }
+    assert packed4.manifest["interfaces"]["rtl_interface"]["expected"][
+        "input_tdata_bits"
+    ] == 256
+
+
 def test_convert_runs_vitis_when_the_configuration_enables_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -828,24 +892,25 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     optimized_source = (output_dir / "firmware" / "aria_top.cpp").read_text(
         encoding="utf-8"
     )
-    assert "first_conv_2row_4lane_temporal_wide_cl" in optimized_source
+    assert "first_conv_4row_4lane_temporal_wide_cl" in optimized_source
     assert "maxpool2d_wide_nonoverlap_cl" in optimized_source
     assert "dense_wide_stream" in optimized_source
     assert "nnet::repack_stream" not in optimized_source
     bridge = (output_dir / "aria_top_bridge.cpp").read_text(encoding="utf-8")
-    assert "hls::stream<input_x2_t>" in bridge
-    assert "for (unsigned pair = 0; pair < 128; pair++)" in bridge
+    assert "hls::stream<input_x4_t>" in bridge
+    assert "word_index < 64" in bridge
     assert "PRAGMA_DATA_PACK" not in bridge
     testbench = (output_dir / "aria_top_test.cpp").read_text(encoding="utf-8")
     assert "pack_aria_test_input" in testbench
-    assert "hls::stream<input_x2_t>" in testbench
+    assert "hls::stream<input_x4_t>" in testbench
     assert "PRAGMA_DATA_PACK" not in testbench
-    assert project.implementation_plan["temporal_pack"] == 2
+    assert project.implementation_plan["temporal_pack"] == 4
+    assert project.implementation_plan["dense_parallelism"] == 2
     assert project.implementation_plan["width_lanes"] == 4
     assert project.manifest["interfaces"]["rtl_interface"] == {
         "expected": {
             "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1",
-            "input_tdata_bits": 128,
+            "input_tdata_bits": 256,
             "output_tdata_bits": 32,
             "input_tdata_port": "input_TDATA",
             "output_tdata_port": "layer9_out_TDATA",
@@ -873,12 +938,13 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     }
     assert len(project.manifest["source_closure_sha256"]) == 64
     assert [item["id"] for item in project.manifest["pipeline"]["passes"]] == [
-        "PackTemporalInput2x",
+        "PackTemporalInput4x",
         "FuseRepackReshapeIntoFirstConv",
         "PropagateWideReLUStream",
         "SpecializeNonOverlappingMaxPool",
         "StreamFlattenIntoDense",
         "BindShallowInternalFifos",
+        "ElideDataflowStartPropagation",
     ]
     assert all(
         {
