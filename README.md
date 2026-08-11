@@ -24,6 +24,8 @@ with 86.7% fewer FF, 24.6% fewer LUT, and no BRAM_18K. The estimated clock perio
 HLS estimates; see the [source-backed comparison evidence](references/cnn_for_arianna/legacy/reports/hls4ml_exact_current.json)
 and [original reports](references/cnn_for_arianna/README.md) for the full audit.
 
+The throughput requirements of ARIANNA, RNO-G, and IceCube-Gen2 are already met by the current system design ([AI Trigger System, v3.3.0](https://github.com/NuDAQ/AI-Trigger-System/tree/v3.3.0)). For models with similar architectures and size, processing speed and power consumption are no longer limiting factors.
+
 More Information about the reference implementation, please see the [performance](https://github.com/NuDAQ/CNN-Core-Generator/tree/d37a0a6dc31cf5a38f0d241f47e21263e0fe9e67#performance) of the CNN-Core-Generator.
 
 ## Install
