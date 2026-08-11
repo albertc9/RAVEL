@@ -41,7 +41,7 @@ def convert(
     """Convert a compatible model using the Aria 1.1 public configuration."""
 
     unknown_fields = sorted(
-        config.keys() - {"Project", "HLS", "Verification", "Vitis"}
+        config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
     )
     if unknown_fields:
         raise ConfigurationError(

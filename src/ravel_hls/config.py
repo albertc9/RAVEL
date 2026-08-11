@@ -19,11 +19,27 @@ def _resolve_optimization(values: Any) -> dict[str, int]:
         return dict(_AGGRESSIVE_SPECIALIZATION)
     if not isinstance(values, Mapping):
         raise ConfigurationError("Optimization must be a mapping")
-    if dict(values) != _AGGRESSIVE_SPECIALIZATION:
+    fields = {"TemporalPacking", "DenseParallelism"}
+    unknown_fields = sorted(values.keys() - fields)
+    if unknown_fields:
         raise ConfigurationError(
-            "Only the default Aria optimization is currently supported"
+            f"Unknown RAVEL configuration field: Optimization.{unknown_fields[0]}"
         )
-    return dict(_AGGRESSIVE_SPECIALIZATION)
+    missing_fields = sorted(fields - values.keys())
+    if missing_fields:
+        raise ConfigurationError(
+            f"Optimization.{missing_fields[0]} is required when Optimization is supplied"
+        )
+    temporal_packing = values["TemporalPacking"]
+    if temporal_packing not in {2, 4} or isinstance(temporal_packing, bool):
+        raise ConfigurationError("Optimization.TemporalPacking must be one of: 2, 4")
+    dense_parallelism = values["DenseParallelism"]
+    if dense_parallelism not in {1, 2} or isinstance(dense_parallelism, bool):
+        raise ConfigurationError("Optimization.DenseParallelism must be one of: 1, 2")
+    return {
+        "TemporalPacking": temporal_packing,
+        "DenseParallelism": dense_parallelism,
+    }
 
 
 class RavelConfig(Mapping[str, Any]):
