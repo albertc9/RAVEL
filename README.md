@@ -116,10 +116,13 @@ RAVEL will evolve from the fixed, qualified specialization flow into a
 general rate-aware FPGA inference generator. Plans for higher versions
 are tentative.
 
+Higher versions will focus primarily on expanding functionality and model support. At present, Nocturne 2.0 is expected to bring the target model into its highest practical throughput range. Further versions may still achieve higher throughput, but the remaining headroom is expected to be quite limited.
+
 - **Aria 1.x** Continue improving the current P2 pair-parallel wide-stream
   profile, deterministic project lifecycle, verification, and tool compatibility.
   Aria remains a fixed specialization flow without design-space exploration. For this version, 
-  RAVEL's goal is simply to design an efficient converter for the trigger system in 
+  RAVEL's goal is simply to design an efficient converter for models currently in 
+  use or planned for use for 
   high-energy neutrino experiments, e.g., ARIANNA, RNO-G, and IceCube-Gen2.
 - **Nocturne 2.x** Support P2, P4, and P8 temporal packing,
   together with balanced layer-level parallelism.
