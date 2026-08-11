@@ -24,10 +24,13 @@ counts are followed by KU5P utilization.
 | RAVEL Aria 1.3.0 P4/D2 | 94 | 99 | 3.502 | 0.5 (0.10%) | 14 (0.77%) | 3709 (0.85%) | 7861 (3.62%) | +0.817 |
 | RAVEL Aria 1.4.0 P4/D2 | 94 | 99 | 3.402 | 1.5 (0.31%) | 15 (0.82%) | 3622 (0.83%) | 6981 (3.22%) | +0.524 |
 
-Against the vanilla II of 3076, Aria 1.1 reaches 178 and Aria 1.3/1.4 reach
-94. Post-route LUT/register counts are 18312/21745 for vanilla, 5332/2953 for
-Aria 1.1, 7861/3709 for Aria 1.3, and 6981/3622 for Aria 1.4. All four meet
-200 MHz.
+At 200 MHz, 1 GSa/s equals 3.90625 million 256-sample chunks/s and requires
+60.08/3.48/1.84/1.84 equivalent cores for vanilla/Aria 1.1/1.3/1.4. Relative
+to vanilla, Aria 1.1/1.3/1.4 reduce equivalent core count by
+94.2%/96.9%/96.9%, BRAM by 98.9%/99.7%/99.2%, DSP by 59.5%/57.2%/54.2%,
+registers by 99.2%/99.5%/99.5%, and LUTs by 98.3%/98.7%/98.8%. These
+linearized estimates allow fractional core counts and exclude all other FPGA
+logic.
 
 The throughput requirements of ARIANNA, RNO-G, and IceCube-Gen2 are already met by the current system design ([AI Trigger System, v3.3.0](https://github.com/NuDAQ/AI-Trigger-System/tree/v3.3.0)). For models with similar architectures and size, processing speed and power consumption are no longer limiting factors.
 
