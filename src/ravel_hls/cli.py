@@ -18,7 +18,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {version('ravel-hls')} (RAVEL Aria 1.1.0)",
+        version=f"%(prog)s {version('ravel-hls')} (RAVEL Aria 1.3.0)",
     )
     subparsers = parser.add_subparsers(dest="command")
     doctor_parser = subparsers.add_parser("doctor")

@@ -25,6 +25,10 @@ def test_open_project_reconstructs_public_project_state(tmp_path: Path) -> None:
 
     assert project.path == tmp_path
     assert project.config["Profile"] == "aria"
+    assert project.config["Optimization"] == {
+        "TemporalPacking": 2,
+        "DenseParallelism": 1,
+    }
     assert project.implementation_plan["temporal_pack"] == 2
     assert project.status == manifest["status"]
 

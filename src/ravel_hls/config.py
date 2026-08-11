@@ -8,6 +8,37 @@ from typing import Any
 from .exceptions import ConfigurationError
 
 
+_AGGRESSIVE_SPECIALIZATION = {
+    "TemporalPacking": 4,
+    "DenseParallelism": 2,
+}
+AGGRESSIVE_SPECIALIZATION_POLICY = "aria-aggressive-v1"
+
+
+def _resolve_optimization(values: Any) -> dict[str, int]:
+    if values is None:
+        return dict(_AGGRESSIVE_SPECIALIZATION)
+    if not isinstance(values, Mapping):
+        raise ConfigurationError("Optimization must be a mapping")
+    fields = {"TemporalPacking", "DenseParallelism"}
+    unknown_fields = sorted(values.keys() - fields)
+    if unknown_fields:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: Optimization.{unknown_fields[0]}"
+        )
+    resolved = {**_AGGRESSIVE_SPECIALIZATION, **values}
+    temporal_packing = resolved["TemporalPacking"]
+    if temporal_packing not in {2, 4} or isinstance(temporal_packing, bool):
+        raise ConfigurationError("Optimization.TemporalPacking must be one of: 2, 4")
+    dense_parallelism = resolved["DenseParallelism"]
+    if dense_parallelism not in {1, 2} or isinstance(dense_parallelism, bool):
+        raise ConfigurationError("Optimization.DenseParallelism must be one of: 1, 2")
+    return {
+        "TemporalPacking": temporal_packing,
+        "DenseParallelism": dense_parallelism,
+    }
+
+
 class RavelConfig(Mapping[str, Any]):
     """Typed, mapping-compatible configuration for a RAVEL run."""
 
@@ -30,14 +61,19 @@ class RavelConfig(Mapping[str, Any]):
         if self._data.keys() & {"Project", "HLS", "Vitis"}:
             self._init_run_config()
             return
-        unknown_fields = sorted(self._data.keys() - {"Profile", "Verification"})
+        unknown_fields = sorted(
+            self._data.keys() - {"Profile", "Optimization", "Verification"}
+        )
         if unknown_fields:
             raise ConfigurationError(
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
-            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.1.0")
+            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.3.0")
         self._data.setdefault("Profile", "aria")
+        self._data["Optimization"] = _resolve_optimization(
+            self._data.get("Optimization")
+        )
         verification_values = self._data.get("Verification", {})
         if not isinstance(verification_values, Mapping):
             raise ConfigurationError("Verification must be a mapping")
@@ -67,7 +103,8 @@ class RavelConfig(Mapping[str, Any]):
 
     def _init_run_config(self) -> None:
         unknown_fields = sorted(
-            self._data.keys() - {"Project", "HLS", "Verification", "Vitis"}
+            self._data.keys()
+            - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
         )
         if unknown_fields:
             raise ConfigurationError(
@@ -190,6 +227,7 @@ class RavelConfig(Mapping[str, Any]):
                 "ClockPeriod": clock_period,
                 "Config": deepcopy(dict(hls["Config"])),
             },
+            "Optimization": _resolve_optimization(self._data.get("Optimization")),
             "Verification": normalized_verification,
             "Vitis": {
                 "Run": run_vitis,

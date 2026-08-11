@@ -2,7 +2,7 @@
 
 ## Model profile
 
-Aria 1.1.0 accepts a single-input, single-output homogeneous HGQ model with this
+Aria 1.3.0 accepts a single-input, single-output homogeneous HGQ model with this
 semantic sequence:
 
 ```text
@@ -24,6 +24,12 @@ generation-legality contract, not a performance target.
 The optimized path requires the Vitis backend, `io_stream`, latency strategy,
 and reuse factor 1. Project name, output path, FPGA part, clock period, model
 parameters, verification inputs, and Vitis invocation remain user-selected.
+
+`Optimization.TemporalPacking` accepts 2 or 4 and
+`Optimization.DenseParallelism` accepts 1 or 2. Both are generation-time
+choices. Missing axes resolve independently to P4 and D2. P2/D1 preserves the
+Aria 1.1 input width and schedule semantics; P4 changes expected input TDATA
+from 128 to 256 bits. Refresh preserves the recorded selection.
 
 Linux supports the complete qualified workflow. macOS supports model parsing,
 generation, post-processing, package handling, and inspection; automatic C++

@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "classification": "aria_1_3_default_qualification",
+  "flow": "ravel-aria-p4d2",
+  "provenance": {
+    "ravel_source_commit": "ac69511",
+    "model_sha256": "65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978",
+    "generation_fingerprint": "56ba9fba6e3888a826e14184eb7427ccef82565b925ac5289d85b4d419ca049f",
+    "manifest_sha256": "a4bef06d5e4b9315b22f5716393c5a201cf20494c805bf833bd8c0a52a655ec4",
+    "source_closure_sha256": "1fedd0dbfba850beb4d588391e6ba9ec7aa73d9b3565dfd1aed498909d715c3b",
+    "synthesis_report_file": "aria_1_3_p4d2_csynth.xml",
+    "synthesis_report_sha256": "c4a2e1fd59a7bce12762c7d15ed0c5409c0cec1edc39fa6fd507d23682047088",
+    "cosimulation_report_file": "aria_1_3_p4d2_cosim.rpt",
+    "cosimulation_report_sha256": "837d30bc6fa0ef88c75fd80d3c2a480701ef4af090bcbb0255daaa41bb141ebe"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "hls4ml": "1.2.0",
+    "hgq2": "0.1.7",
+    "keras": "3.12.1",
+    "tensorflow": "2.20.0",
+    "vitis_hls": "2023.2"
+  },
+  "configuration": {
+    "backend": "Vitis",
+    "io_type": "io_stream",
+    "strategy": "Latency",
+    "reuse_factor": 1,
+    "part": "xcku5p-ffvb676-2-e",
+    "clock_period_ns": 5.0,
+    "temporal_packing": 4,
+    "dense_parallelism": 2,
+    "input_tdata_bits": 256,
+    "verification_samples": 32,
+    "build_stages": {
+      "reset": true,
+      "csim": false,
+      "synth": true,
+      "cosim": true,
+      "validation": false,
+      "export": false,
+      "vsynth": false,
+      "fifo_opt": false
+    }
+  },
+  "verification": {
+    "transformation_equivalence": "passed",
+    "model_fidelity": "reported",
+    "rtl_cosimulation": "passed",
+    "source_integrity": "clean"
+  },
+  "measurement": {
+    "estimated_clock_ns": 3.502,
+    "initiation_interval": 94,
+    "latency_cycles": 99,
+    "resources": {
+      "BRAM_18K": 0,
+      "DSP": 8,
+      "FF": 4436,
+      "LUT": 53502,
+      "URAM": 0
+    }
+  },
+  "aria_1_1_comparison": {
+    "initiation_interval": 178,
+    "latency_cycles": 183,
+    "estimated_clock_ns": 3.647,
+    "resources": {
+      "BRAM_18K": 0,
+      "DSP": 4,
+      "FF": 3483,
+      "LUT": 28922,
+      "URAM": 0
+    },
+    "p4d2_change": {
+      "initiation_interval_reduction_percent": 47.191011,
+      "latency_reduction_percent": 45.901639,
+      "ff_increase_percent": 27.361470,
+      "lut_increase_percent": 84.987207
+    }
+  },
+  "qualification_policy": {
+    "default_specialization_only": true,
+    "performance_gate": false,
+    "manual_resource_review": true
+  }
+}

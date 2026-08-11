@@ -110,6 +110,115 @@ ReadPairsWide:
 }
 
 template <class data_T, class res_T, typename CONFIG_T>
+void first_conv_4row_compute_window(
+    typename data_T::value_type rows[8][CONFIG_T::in_width],
+    unsigned offset,
+    res_T &res_pack,
+    typename CONFIG_T::weight_t weights[
+        CONFIG_T::filt_height * CONFIG_T::filt_width * CONFIG_T::n_chan * CONFIG_T::n_filt],
+    typename CONFIG_T::bias_t biases[CONFIG_T::n_filt]
+) {
+    #pragma HLS INLINE
+    PRAGMA_DATA_PACK(res_pack)
+ComputeOutputWidth:
+    for (unsigned i_iw = 0; i_iw < CONFIG_T::out_width; i_iw++) {
+        #pragma HLS UNROLL
+        typename data_T::value_type kernel_data[CONFIG_T::filt_height];
+        #pragma HLS ARRAY_PARTITION variable=kernel_data complete
+        for (unsigned k = 0; k < CONFIG_T::filt_height; k++) {
+            #pragma HLS UNROLL
+            kernel_data[k] = rows[offset + k][i_iw];
+        }
+        typename res_T::value_type res_out[CONFIG_T::n_filt];
+        #pragma HLS ARRAY_PARTITION variable=res_out complete
+        CONFIG_T::mult_config::template kernel<
+            typename data_T::value_type,
+            typename res_T::value_type,
+            typename CONFIG_T::mult_config>::dense(
+                kernel_data, res_out, weights, biases);
+        for (unsigned i_f = 0; i_f < CONFIG_T::n_filt; i_f++) {
+            #pragma HLS UNROLL
+            res_pack[i_iw * CONFIG_T::n_filt + i_f] = res_out[i_f];
+        }
+    }
+}
+
+template <class data_T, class res_T, typename CONFIG_T>
+void first_conv_4row_4lane_temporal_wide_cl(
+    hls::stream<data_T> &data,
+    hls::stream<res_T> &res,
+    typename CONFIG_T::weight_t weights[
+        CONFIG_T::filt_height * CONFIG_T::filt_width * CONFIG_T::n_chan * CONFIG_T::n_filt],
+    typename CONFIG_T::bias_t biases[CONFIG_T::n_filt]
+) {
+    static_assert(CONFIG_T::n_chan == 1, "Aria first convolution requires one channel");
+    static_assert(CONFIG_T::filt_height == 5 && CONFIG_T::filt_width == 1,
+                  "Aria P4 convolution requires a 5x1 kernel");
+    static_assert(CONFIG_T::stride_height == 3 && CONFIG_T::stride_width == 1,
+                  "Aria P4 convolution requires stride 3x1");
+    static_assert(CONFIG_T::in_width * 4 == data_T::size,
+                  "Aria P4 input word must contain four rows");
+    static_assert(CONFIG_T::n_filt * CONFIG_T::out_width == res_T::size,
+                  "Aria convolution output must contain every width/filter lane");
+    static_assert(CONFIG_T::in_height % 4 == 0,
+                  "Aria P4 input height must be divisible by four");
+
+    typename data_T::value_type previous[4][CONFIG_T::in_width];
+    typename data_T::value_type window_rows[8][CONFIG_T::in_width];
+    #pragma HLS ARRAY_PARTITION variable=previous complete dim=0
+    #pragma HLS ARRAY_PARTITION variable=window_rows complete dim=0
+    bool pending = false;
+    unsigned word = 0;
+    unsigned word_phase = 0;
+
+ReadAndDrainP4:
+    for (unsigned cycle = 0; cycle < CONFIG_T::out_height + 1; cycle++) {
+        #pragma HLS PIPELINE II=1
+        if (pending) {
+            res_T output;
+            first_conv_4row_compute_window<data_T, res_T, CONFIG_T>(
+                window_rows, 3, output, weights, biases);
+            res.write(output);
+            pending = false;
+        } else {
+            data_T input_word = data.read();
+            for (unsigned row = 0; row < 4; row++) {
+                #pragma HLS UNROLL
+                for (unsigned column = 0; column < CONFIG_T::in_width; column++) {
+                    #pragma HLS UNROLL
+                    if (word != 0) {
+                        window_rows[row][column] = previous[row][column];
+                    }
+                    window_rows[row + 4][column] =
+                        input_word[row * CONFIG_T::in_width + column];
+                }
+            }
+
+            if (word != 0) {
+                const unsigned offset = word_phase == 1 ? 0 :
+                                        word_phase == 2 ? 2 : 1;
+                res_T output;
+                first_conv_4row_compute_window<data_T, res_T, CONFIG_T>(
+                    window_rows, offset, output, weights, biases);
+                res.write(output);
+                pending = word_phase == 1;
+            }
+
+            for (unsigned row = 0; row < 4; row++) {
+                #pragma HLS UNROLL
+                for (unsigned column = 0; column < CONFIG_T::in_width; column++) {
+                    #pragma HLS UNROLL
+                    previous[row][column] =
+                        input_word[row * CONFIG_T::in_width + column];
+                }
+            }
+            word++;
+            word_phase = word_phase == 2 ? 0 : word_phase + 1;
+        }
+    }
+}
+
+template <class data_T, class res_T, typename CONFIG_T>
 void maxpool2d_wide_nonoverlap_cl(
     hls::stream<data_T> &data, hls::stream<res_T> &res
 ) {
@@ -162,33 +271,43 @@ void dense_wide_stream(
     static_assert(res_T::size == 1, "Aria dense result must contain one value");
     static_assert(CONFIG_T::n_in % data_T::size == 0, "Aria dense input packing mismatch");
     static_assert(data_T::size % 7 == 0, "Aria dense expects seven filters per width lane");
+    constexpr unsigned DENSE_PARALLELISM = {{ dense_parallelism }};
     constexpr unsigned WIDTH_LANES = data_T::size / 7;
     constexpr unsigned WORDS = CONFIG_T::n_in / data_T::size;
+    constexpr unsigned GROUPS = WIDTH_LANES / DENSE_PARALLELISM;
+    static_assert(WIDTH_LANES % DENSE_PARALLELISM == 0,
+                  "Aria dense parallelism must divide the width lanes");
     #pragma HLS ARRAY_PARTITION variable=weights complete
     #pragma HLS ARRAY_PARTITION variable=biases complete
     typename CONFIG_T::accum_t accumulator = (typename CONFIG_T::accum_t)biases[0];
     data_T input_word;
     unsigned word = 0;
-    unsigned width = 0;
+    unsigned group = 0;
 DenseValues:
-    for (unsigned i = 0; i < WORDS * WIDTH_LANES; i++) {
+    for (unsigned i = 0; i < WORDS * GROUPS; i++) {
         #pragma HLS PIPELINE II=1
-        if (width == 0) {
+        if (group == 0) {
             input_word = data.read();
         }
-        for (unsigned filter = 0; filter < 7; filter++) {
+        for (unsigned parallel_group = 0;
+             parallel_group < DENSE_PARALLELISM;
+             parallel_group++) {
             #pragma HLS UNROLL
-            const unsigned data_index = width * 7 + filter;
-            const unsigned weight_index = word * data_T::size + data_index;
-            accumulator += (typename CONFIG_T::accum_t)CONFIG_T::template product<
-                typename data_T::value_type, typename CONFIG_T::weight_t>::product(
-                    input_word[data_index], weights[weight_index]);
+            const unsigned width = group * DENSE_PARALLELISM + parallel_group;
+            for (unsigned filter = 0; filter < 7; filter++) {
+                #pragma HLS UNROLL
+                const unsigned data_index = width * 7 + filter;
+                const unsigned weight_index = word * data_T::size + data_index;
+                accumulator += (typename CONFIG_T::accum_t)CONFIG_T::template product<
+                    typename data_T::value_type, typename CONFIG_T::weight_t>::product(
+                        input_word[data_index], weights[weight_index]);
+            }
         }
-        if (width == WIDTH_LANES - 1) {
-            width = 0;
+        if (group == GROUPS - 1) {
+            group = 0;
             word++;
         } else {
-            width++;
+            group++;
         }
     }
     res_T output;

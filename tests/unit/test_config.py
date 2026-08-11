@@ -54,6 +54,7 @@ def test_config_exports_an_independent_dictionary() -> None:
     assert exported == {
         "Profile": "aria",
         "Verification": {"Mode": "disabled", "Samples": 16, "Seed": 7},
+        "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
     }
     assert config["Verification"]["Mode"] == "required"
 
@@ -69,6 +70,9 @@ def test_config_exports_deterministic_yaml() -> None:
         "  Mode: required\n"
         "  Samples: 16\n"
         "  Seed: 7\n"
+        "Optimization:\n"
+        "  TemporalPacking: 4\n"
+        "  DenseParallelism: 2\n"
     )
 
 
@@ -80,6 +84,7 @@ def test_config_loads_yaml_through_typed_validation() -> None:
     assert config.to_dict() == {
         "Profile": "aria",
         "Verification": {"Mode": "required", "Samples": 8, "Seed": 3},
+        "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
     }
 
 

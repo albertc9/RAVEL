@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .compatibility.dependencies import inspect_dependencies
-from .config import RavelConfig
+from .config import AGGRESSIVE_SPECIALIZATION_POLICY, RavelConfig
 
 
 def canonical_sha256(value: Any) -> str:
@@ -44,7 +44,11 @@ def build_generation_manifest(
     }
     generation_configuration = {
         "hls4ml": hls_config,
-        "ravel": {"Profile": "aria"},
+        "ravel": {
+            "Profile": "aria",
+            "OptimizationPolicy": AGGRESSIVE_SPECIALIZATION_POLICY,
+            "Optimization": ravel_config["Optimization"],
+        },
     }
     configuration_sha256 = canonical_sha256(generation_configuration)
     semantic_model_sha256 = canonical_sha256(semantic_model)
@@ -73,7 +77,7 @@ def build_generation_manifest(
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.1.0",
+            "release": "1.3.0",
             "package_version": package_version,
         },
         "source_model": {

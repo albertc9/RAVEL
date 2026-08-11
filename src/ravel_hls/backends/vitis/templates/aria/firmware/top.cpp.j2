@@ -9,7 +9,7 @@ void {{ project_name }}(
     hls::stream<{{ output_type }}> &{{ output_name }}
 ) {
     #pragma HLS INTERFACE axis port={{ input_name }},{{ output_name }}
-    #pragma HLS DATAFLOW
+    #pragma HLS DATAFLOW disable_start_propagation
 
 #ifndef __SYNTHESIS__
     static bool loaded_weights = false;
@@ -34,7 +34,7 @@ void {{ project_name }}(
     #pragma HLS STREAM variable={{ pool_stream }} depth=4
     #pragma HLS BIND_STORAGE variable={{ pool_stream }} type=fifo impl=srl
 
-    nnet::first_conv_2row_4lane_temporal_wide_cl<{{ input_wide_type }}, {{ conv_wide_type }}, {{ conv_config }}>(
+    nnet::{{ first_conv_function }}<{{ input_wide_type }}, {{ conv_wide_type }}, {{ conv_config }}>(
         {{ input_name }}, {{ conv_stream }}, {{ conv_weight.name }}, {{ conv_bias.name }});
     nnet::relu<{{ conv_wide_type }}, {{ activation_wide_type }}, {{ activation_config }}>(
         {{ conv_stream }}, {{ activation_stream }});

@@ -131,6 +131,8 @@ RavelProject = Project
 def open_project(path: str | Path) -> RavelProject:
     """Open an existing RAVEL project without modifying it."""
 
+    import yaml
+
     project_path = Path(path)
     manifest_path = project_path / "ravel_manifest.json"
     if not manifest_path.is_file():
@@ -146,7 +148,23 @@ def open_project(path: str | Path) -> RavelProject:
             "RAVEL project manifest schema_version must be 1 or 2"
         )
     config_path = project_path / "ravel_config.yml"
-    config = RavelConfig.from_yaml(config_path.read_text(encoding="utf-8"))
+    config_text = config_path.read_text(encoding="utf-8")
+    config = RavelConfig.from_yaml(config_text)
+    recorded_config = yaml.safe_load(config_text)
+    if isinstance(recorded_config, dict) and "Optimization" not in recorded_config:
+        implementation_plan = manifest.get("implementation_plan", {})
+        temporal_pack = implementation_plan.get("temporal_pack")
+        if temporal_pack in {2, 4}:
+            dense_parallelism = implementation_plan.get(
+                "dense_parallelism", 1 if temporal_pack == 2 else 2
+            )
+            if dense_parallelism in {1, 2}:
+                migrated_config = config.to_dict()
+                migrated_config["Optimization"] = {
+                    "TemporalPacking": temporal_pack,
+                    "DenseParallelism": dense_parallelism,
+                }
+                config = RavelConfig(migrated_config)
     return RavelProject(project_path, config, manifest)
 
 

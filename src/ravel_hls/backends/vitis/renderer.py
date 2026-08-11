@@ -1,5 +1,6 @@
 """Strict rendering of the Aria Vitis project specialization."""
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,11 @@ _TEMPLATE_ROOT = Path(__file__).with_name("templates")
 
 
 def render_aria_project(
-    project_path: Path, project_name: str, layers: list[Any]
+    project_path: Path,
+    project_name: str,
+    layers: list[Any],
+    *,
+    optimization: Mapping[str, int],
 ) -> list[str]:
     """Render all Aria-owned firmware files from a typed model context."""
 
@@ -28,6 +33,7 @@ def render_aria_project(
         raise ProjectGenerationError(
             "Aria requires Conv2D and Dense weight/bias pairs in the hls4ml graph"
         )
+    temporal_pack = optimization["TemporalPacking"]
 
     firmware = project_path / "firmware"
     defines_path = firmware / "defines.h"
@@ -42,7 +48,9 @@ def render_aria_project(
         "project_name": project_name,
         "input_name": input_variable.name,
         "output_name": output_variable.name,
-        "input_wide_type": _wide_type_name(input_variable.type.name, "x2"),
+        "input_wide_type": _wide_type_name(
+            input_variable.type.name, f"x{temporal_pack}"
+        ),
         "conv_wide_type": _wide_type_name(convolution_variable.type.name, "x4"),
         "activation_wide_type": _wide_type_name(activation_variable.type.name, "x4"),
         "pool_wide_type": _wide_type_name(pooling_variable.type.name, "x4"),
@@ -55,6 +63,12 @@ def render_aria_project(
         "activation_config": f"relu_config{activation.get_attr('index')}",
         "pool_config": f"config{pooling.get_attr('index')}",
         "dense_config": f"config{dense.get_attr('index')}",
+        "dense_parallelism": optimization["DenseParallelism"],
+        "temporal_pack": temporal_pack,
+        "input_words_per_inference": 256 // temporal_pack,
+        "first_conv_function": (
+            f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
+        ),
         "conv_stream": f"{convolution_variable.name}_x4",
         "activation_stream": f"{activation_variable.name}_x4",
         "pool_stream": f"{pooling_variable.name}_x4",

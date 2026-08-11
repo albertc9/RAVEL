@@ -38,10 +38,10 @@ from .verification.equivalence import (
 def convert(
     model: Any, config: Mapping[str, Any], *, inputs: Any | None = None
 ) -> RavelProject:
-    """Convert a compatible model using the Aria 1.1 public configuration."""
+    """Convert a compatible model using the Aria 1.3 public configuration."""
 
     unknown_fields = sorted(
-        config.keys() - {"Project", "HLS", "Verification", "Vitis"}
+        config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
     )
     if unknown_fields:
         raise ConfigurationError(
@@ -173,7 +173,7 @@ def optimize_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.1.0 dependency stack is not qualified: " + ", ".join(failures)
+            "Aria 1.3.0 dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -184,22 +184,22 @@ def optimize_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.1.0")
+        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.3.0")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.1.0")
+        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.3.0")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.1.0")
+        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.3.0")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.1.0")
+        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.3.0")
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     if input_shapes != [[256, 4]]:
         raise CompatibilityError(
-            "Aria 1.1.0 requires one logical input shape [256, 4]"
+            "Aria 1.3.0 requires one logical input shape [256, 4]"
         )
     output_shapes = list(hls_config.get("OutputShapes", {}).values())
     if output_shapes != [[1]]:
-        raise CompatibilityError("Aria 1.1.0 requires one logical output shape [1]")
+        raise CompatibilityError("Aria 1.3.0 requires one logical output shape [1]")
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
     return _generate_project(
@@ -271,15 +271,19 @@ def _generate_project(
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
-        implementation_plan = build_implementation_plan()
-        pass_records = build_pass_records()
+        optimization = ravel_config["Optimization"]
+        implementation_plan = build_implementation_plan(optimization)
+        pass_records = build_pass_records(optimization)
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
             raise ProjectGenerationError(
                 "hls4ml ProjectName must be a valid C++ identifier"
             )
         managed_paths = render_aria_project(
-            staging_path, project_name, layers
+            staging_path,
+            project_name,
+            layers,
+            optimization=ravel_config["Optimization"],
         )
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
@@ -330,7 +334,7 @@ def _generate_project(
             implementation_plan=implementation_plan,
             pass_records=pass_records,
             verification_report=verification_report,
-            interface_contract=_interface_contract(layers),
+            interface_contract=_interface_contract(layers, implementation_plan),
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -432,7 +436,9 @@ def _normalized_hls_config(hls_config: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _interface_contract(layers: list[Any]) -> dict[str, Any]:
+def _interface_contract(
+    layers: list[Any], implementation_plan: Mapping[str, Any]
+) -> dict[str, Any]:
     input_variable = layers[0].get_output_variable()
     output_variable = layers[-1].get_output_variable()
     input_precision = input_variable.type.precision
@@ -449,10 +455,12 @@ def _interface_contract(layers: list[Any]) -> dict[str, Any]:
             "output_shape": [1],
         },
         "hls_stream_interface": {
-            "input_rows_per_word": 2,
+            "input_rows_per_word": implementation_plan["temporal_pack"],
             "channels_per_row": 4,
-            "values_per_input_word": 8,
-            "input_words_per_inference": 128,
+            "values_per_input_word": implementation_plan["values_per_input_word"],
+            "input_words_per_inference": implementation_plan[
+                "input_words_per_inference"
+            ],
             "output_words_per_inference": 1,
             "input_scalar_bits": input_width,
             "output_scalar_bits": output_width,
@@ -466,7 +474,9 @@ def _interface_contract(layers: list[Any]) -> dict[str, Any]:
                 "qualification_profile": (
                     "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
                 ),
-                "input_tdata_bits": 8 * input_slot_width,
+                "input_tdata_bits": (
+                    implementation_plan["values_per_input_word"] * input_slot_width
+                ),
                 "output_tdata_bits": output_slot_width,
                 "input_tdata_port": f"{input_variable.name}_TDATA",
                 "output_tdata_port": f"{output_variable.name}_TDATA",
