@@ -1509,6 +1509,42 @@ def test_project_refreshes_with_a_new_complete_model(
     assert conversion_call["model"] is new_model
 
 
+def test_project_refresh_preserves_the_recorded_specialization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    original = convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    refreshed = original.refresh(object())
+
+    assert refreshed.config["Optimization"] == {
+        "TemporalPacking": 2,
+        "DenseParallelism": 1,
+    }
+    assert refreshed.manifest["generation_configuration"]["ravel"][
+        "Optimization"
+    ] == {"TemporalPacking": 2, "DenseParallelism": 1}
+    assert (
+        refreshed.manifest["configuration_sha256"]
+        == original.manifest["configuration_sha256"]
+    )
+
+
 def test_project_refreshes_from_parameters_through_the_complete_model_pipeline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
