@@ -204,12 +204,19 @@ def optimize_project(
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
     model_facts = {"dense": analyze_dense_facts(layers)}
+    implementation_plan = build_implementation_plan(
+        ravel_config["Optimization"], model_facts
+    )
+    dense_applicability = implementation_plan["weight_delivery"]["applicability"]
+    if dense_applicability["status"] != "applicable":
+        raise CompatibilityError("; ".join(dense_applicability["reasons"]))
     return _generate_project(
         hls_model,
         hls_config,
         ravel_config,
         layers,
         model_facts=model_facts,
+        implementation_plan=implementation_plan,
         dependency_report=dependency_report,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
@@ -231,6 +238,7 @@ def _generate_project(
     layers: list[Any],
     *,
     model_facts: Mapping[str, Any],
+    implementation_plan: dict[str, Any],
     dependency_report: Mapping[str, Any],
     force_replace: bool,
     verification_inputs: Any | None,
@@ -276,7 +284,6 @@ def _generate_project(
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
         optimization = ravel_config["Optimization"]
-        implementation_plan = build_implementation_plan(optimization, model_facts)
         pass_records = build_pass_records(optimization)
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
