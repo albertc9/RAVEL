@@ -97,6 +97,8 @@ class _FakeLayer:
         self._weights = attributes.pop("weights", [])
         self.attributes.update(attributes)
         self._input_variable: _FakeVariable | None = None
+        self.inputs: list[str] = []
+        self.outputs = [output_name]
 
     def get_attr(self, key: str, default: Any = None) -> Any:
         return self.attributes.get(key, default)
@@ -232,6 +234,7 @@ class _FakeHlsModel:
         ]
         for previous, current in zip(self.layers, self.layers[1:]):
             current._input_variable = previous.get_output_variable()
+            current.inputs = previous.outputs.copy()
 
     def write(self) -> None:
         self.write_called = True
@@ -449,6 +452,12 @@ def test_convert_records_dense_shape_and_coefficient_facts(
                 },
             },
             "bias": {"shape": [1], "elements": 1},
+            "graph": {
+                "predecessors": ["Reshape"],
+                "successors": [],
+            },
+            "feature_ordering": {"kind": "identity", "order": "C"},
+            "parameter_representation": "dense",
             "numeric": {
                 "input": {
                     "kind": "fixed",

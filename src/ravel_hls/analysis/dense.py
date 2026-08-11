@@ -9,8 +9,18 @@ import numpy as np
 def analyze_dense_facts(layers: Iterable[Any]) -> list[dict[str, Any]]:
     """Describe Dense dimensions and parameter statistics without choosing a plan."""
 
+    layer_list = list(layers)
+    producers = {
+        output: layer.class_name
+        for layer in layer_list
+        for output in getattr(layer, "outputs", ())
+    }
+    consumers: dict[str, list[str]] = {}
+    for layer in layer_list:
+        for input_name in getattr(layer, "inputs", ()):
+            consumers.setdefault(input_name, []).append(layer.class_name)
     facts = []
-    for layer in layers:
+    for layer in layer_list:
         if layer.class_name != "Dense":
             continue
         kernel, bias = list(layer.get_weights())
@@ -38,6 +48,26 @@ def analyze_dense_facts(layers: Iterable[Any]) -> list[dict[str, Any]]:
                     "shape": list(bias_values.shape),
                     "elements": int(bias_values.size),
                 },
+                "graph": {
+                    "predecessors": [
+                        producers[input_name]
+                        for input_name in getattr(layer, "inputs", ())
+                    ],
+                    "successors": [
+                        consumer
+                        for output_name in getattr(layer, "outputs", ())
+                        for consumer in consumers.get(output_name, ())
+                    ],
+                },
+                "feature_ordering": {
+                    "kind": "identity",
+                    "order": "C",
+                },
+                "parameter_representation": (
+                    "compressed"
+                    if hasattr(kernel.type, "index_precision")
+                    else "dense"
+                ),
                 "numeric": {
                     "input": _precision_facts(layer.get_input_variable().type),
                     "output": _precision_facts(layer.get_output_variable().type),
