@@ -24,6 +24,13 @@ def validate_aria_model_profile(layers: Iterable[Any]) -> None:
         raise CompatibilityError(
             "Aria 1.3.0 layer sequence must be " + " -> ".join(expected_sequence)
         )
+    for producer, consumer in zip(layer_list, layer_list[1:]):
+        if list(getattr(consumer, "inputs", ())) != list(
+            getattr(producer, "outputs", ())
+        ):
+            raise CompatibilityError(
+                "Aria graph wiring must be a direct linear chain"
+            )
     for layer in (layer_list[2], layer_list[-1]):
         module = layer.get_attr("module")
         if not isinstance(module, str) or not module.startswith("hgq.layers"):

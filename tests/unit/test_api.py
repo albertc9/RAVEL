@@ -939,6 +939,16 @@ def test_optimize_project_rejects_a_different_layer_sequence(tmp_path: Path) -> 
     assert hls_model.write_called is False
 
 
+def test_optimize_project_rejects_noncanonical_graph_wiring(tmp_path: Path) -> None:
+    hls_model = _FakeHlsModel(tmp_path / "project")
+    hls_model.layers[-1].inputs = hls_model.layers[3].outputs.copy()
+
+    with pytest.raises(CompatibilityError, match="graph wiring.*linear chain"):
+        optimize_project(hls_model, config={"Profile": "aria"})
+
+    assert hls_model.write_called is False
+
+
 @pytest.mark.parametrize(
     ("layer_index", "attribute", "invalid_value", "message"),
     [
