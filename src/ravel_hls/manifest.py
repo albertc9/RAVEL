@@ -85,6 +85,7 @@ def build_generation_manifest(
                 file_sha256(source_artifact) if source_artifact.is_file() else None
             ),
             "semantic_model_sha256": semantic_model_sha256,
+            "facts": semantic_model["facts"],
         },
         "dependencies": dependency_report["dependencies"],
         "normalized_configuration": recorded_configuration,

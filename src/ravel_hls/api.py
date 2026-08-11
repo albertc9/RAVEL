@@ -10,6 +10,7 @@ import tempfile
 from typing import Any
 import uuid
 
+from .analysis.dense import analyze_dense_facts
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
@@ -202,11 +203,13 @@ def optimize_project(
         raise CompatibilityError("Aria 1.3.0 requires one logical output shape [1]")
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
+    model_facts = {"dense": analyze_dense_facts(layers)}
     return _generate_project(
         hls_model,
         hls_config,
         ravel_config,
         layers,
+        model_facts=model_facts,
         dependency_report=dependency_report,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
@@ -227,6 +230,7 @@ def _generate_project(
     ravel_config: RavelConfig,
     layers: list[Any],
     *,
+    model_facts: Mapping[str, Any],
     dependency_report: Mapping[str, Any],
     force_replace: bool,
     verification_inputs: Any | None,
@@ -314,6 +318,7 @@ def _generate_project(
             published_ravel_config.to_yaml(), encoding="utf-8"
         )
         semantic_model = {
+            "facts": model_facts,
             "layers": [
                 {
                     "class_name": layer.class_name,

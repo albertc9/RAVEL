@@ -389,6 +389,43 @@ def test_convert_defaults_to_the_aggressive_specialization(
     }
 
 
+def test_convert_records_dense_shape_and_coefficient_facts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    converted_model = _FakeHlsModel(output_dir)
+    dense_kernel = converted_model.layers[-1].get_weights()[0]
+    dense_kernel.data[:3] = [0.5, -0.25, 0.375]
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(
+        convert_from_keras_model=lambda **kwargs: converted_model
+    )
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    project = convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    assert project.manifest["source_model"]["facts"]["dense"] == [
+        {
+            "role": "output",
+            "n_in": 1176,
+            "n_out": 1,
+            "kernel": {
+                "shape": [1176],
+                "elements": 1176,
+                "statistics": {"zero": 1173, "nonzero": 3, "unique": 4},
+            },
+            "bias": {"shape": [1], "elements": 1},
+        }
+    ]
+
+
 def test_convert_preserves_an_explicit_compatibility_specialization(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
