@@ -73,11 +73,11 @@ def build_generation_manifest(
     except PackageNotFoundError:
         package_version = "unknown"
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.3.0",
+            "release": "1.4.0",
             "package_version": package_version,
         },
         "source_model": {

@@ -1011,8 +1011,8 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     )
     assert "config_array_partition -maximum_size" not in published_build_script
     assert "csynth_design" in published_build_script
-    assert project.manifest["schema_version"] == 2
-    assert project.manifest["ravel"]["release"] == "1.3.0"
+    assert project.manifest["schema_version"] == 3
+    assert project.manifest["ravel"]["release"] == "1.4.0"
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")
     assert "OutputDir: .\n" in published_hls_config
     assert str(output_dir) not in published_hls_config

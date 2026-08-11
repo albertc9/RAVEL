@@ -75,7 +75,7 @@ def test_config_schema_describes_the_unified_aria_1_3_mapping() -> None:
     assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
 
 
-def test_manifest_schema_describes_the_v2_source_closure() -> None:
+def test_manifest_schema_describes_the_v3_source_closure() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_manifest.schema.json").read_text(
@@ -83,9 +83,9 @@ def test_manifest_schema_describes_the_v2_source_closure() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert schema["properties"]["schema_version"] == {"const": 3}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
-        "const": "1.3.0"
+        "const": "1.4.0"
     }
     assert "source_closure" in schema["required"]
     assert "source_closure_sha256" in schema["required"]
