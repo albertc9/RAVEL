@@ -151,6 +151,17 @@ def open_project(path: str | Path) -> RavelProject:
         raise ProjectGenerationError(
             "RAVEL project manifest schema_version must be 1, 2, or 3"
         )
+    implementation_plan = manifest.get("implementation_plan")
+    if (
+        manifest["schema_version"] in {1, 2}
+        and isinstance(implementation_plan, dict)
+        and "weight_delivery" not in implementation_plan
+    ):
+        manifest = dict(manifest)
+        manifest["implementation_plan"] = {
+            **implementation_plan,
+            "weight_delivery": {"id": "complete-partition", "version": 1},
+        }
     config_path = project_path / "ravel_config.yml"
     config_text = config_path.read_text(encoding="utf-8")
     config = RavelConfig.from_yaml(config_text)

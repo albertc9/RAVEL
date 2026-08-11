@@ -33,6 +33,30 @@ def test_open_project_reconstructs_public_project_state(tmp_path: Path) -> None:
     assert project.status == manifest["status"]
 
 
+def test_open_project_infers_the_legacy_dense_strategy_without_rewriting(
+    tmp_path: Path,
+) -> None:
+    manifest = _write_valid_project(tmp_path)
+    manifest["schema_version"] = 2
+    manifest["ravel"]["release"] = "1.3.0"
+    manifest["implementation_plan"] = {
+        "template_profile": "aria-p4-d2-v1",
+        "temporal_pack": 4,
+        "dense_parallelism": 2,
+    }
+    manifest_path = tmp_path / "ravel_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+    manifest_before = manifest_path.read_bytes()
+
+    project = open_project(tmp_path)
+
+    assert project.implementation_plan["weight_delivery"] == {
+        "id": "complete-partition",
+        "version": 1,
+    }
+    assert manifest_path.read_bytes() == manifest_before
+
+
 def test_open_project_marks_modified_managed_sources_and_stale_evidence(
     tmp_path: Path,
 ) -> None:
