@@ -77,7 +77,7 @@ def build_generation_manifest(
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.1.0",
+            "release": "1.3.0",
             "package_version": package_version,
         },
         "source_model": {

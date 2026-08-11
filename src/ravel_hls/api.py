@@ -38,7 +38,7 @@ from .verification.equivalence import (
 def convert(
     model: Any, config: Mapping[str, Any], *, inputs: Any | None = None
 ) -> RavelProject:
-    """Convert a compatible model using the Aria 1.1 public configuration."""
+    """Convert a compatible model using the Aria 1.3 public configuration."""
 
     unknown_fields = sorted(
         config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
@@ -173,7 +173,7 @@ def optimize_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.1.0 dependency stack is not qualified: " + ", ".join(failures)
+            "Aria 1.3.0 dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -184,22 +184,22 @@ def optimize_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.1.0")
+        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.3.0")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.1.0")
+        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.3.0")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.1.0")
+        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.3.0")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.1.0")
+        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.3.0")
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     if input_shapes != [[256, 4]]:
         raise CompatibilityError(
-            "Aria 1.1.0 requires one logical input shape [256, 4]"
+            "Aria 1.3.0 requires one logical input shape [256, 4]"
         )
     output_shapes = list(hls_config.get("OutputShapes", {}).values())
     if output_shapes != [[1]]:
-        raise CompatibilityError("Aria 1.1.0 requires one logical output shape [1]")
+        raise CompatibilityError("Aria 1.3.0 requires one logical output shape [1]")
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
     return _generate_project(
