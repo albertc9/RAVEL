@@ -12,6 +12,7 @@ _AGGRESSIVE_SPECIALIZATION = {
     "TemporalPacking": 4,
     "DenseParallelism": 2,
 }
+AGGRESSIVE_SPECIALIZATION_POLICY = "aria-aggressive-v1"
 
 
 def _resolve_optimization(values: Any) -> dict[str, int]:
@@ -60,7 +61,9 @@ class RavelConfig(Mapping[str, Any]):
         if self._data.keys() & {"Project", "HLS", "Vitis"}:
             self._init_run_config()
             return
-        unknown_fields = sorted(self._data.keys() - {"Profile", "Verification"})
+        unknown_fields = sorted(
+            self._data.keys() - {"Profile", "Optimization", "Verification"}
+        )
         if unknown_fields:
             raise ConfigurationError(
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
@@ -68,6 +71,9 @@ class RavelConfig(Mapping[str, Any]):
         if "Profile" in self._data and self._data["Profile"] != "aria":
             raise ConfigurationError("Profile must be aria for RAVEL Aria 1.1.0")
         self._data.setdefault("Profile", "aria")
+        self._data["Optimization"] = _resolve_optimization(
+            self._data.get("Optimization")
+        )
         verification_values = self._data.get("Verification", {})
         if not isinstance(verification_values, Mapping):
             raise ConfigurationError("Verification must be a mapping")

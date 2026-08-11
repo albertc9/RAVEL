@@ -1090,6 +1090,55 @@ def test_generation_identity_excludes_the_output_location(
     ]
 
 
+def test_generation_identity_records_the_resolved_specialization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    def config(
+        output_dir: Path, optimization: dict[str, int] | None = None
+    ) -> dict[str, Any]:
+        values: dict[str, Any] = {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        }
+        if optimization is not None:
+            values["Optimization"] = optimization
+        return values
+
+    aggressive = convert(object(), config(tmp_path / "aggressive"))
+    compatibility = convert(
+        object(),
+        config(
+            tmp_path / "compatibility",
+            {"TemporalPacking": 2, "DenseParallelism": 1},
+        ),
+    )
+
+    assert aggressive.manifest["generation_configuration"]["ravel"] == {
+        "Profile": "aria",
+        "OptimizationPolicy": "aria-aggressive-v1",
+        "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+    }
+    assert compatibility.manifest["generation_configuration"]["ravel"] == {
+        "Profile": "aria",
+        "OptimizationPolicy": "aria-aggressive-v1",
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }
+    assert aggressive.manifest["configuration_sha256"] != compatibility.manifest[
+        "configuration_sha256"
+    ]
+    assert aggressive.manifest["generation_fingerprint"] != compatibility.manifest[
+        "generation_fingerprint"
+    ]
+
+
 def test_optimize_project_cleanly_replaces_a_recognized_ravel_project(
     tmp_path: Path,
 ) -> None:
