@@ -31,7 +31,14 @@ class _FakeHlsConfig:
 class _FakePrecision:
     def __init__(self, cpp: str) -> None:
         self.cpp = cpp
-        self.width = int(cpp.split("<", 1)[1].split(",", 1)[0])
+        arguments = cpp.split("<", 1)[1].rsplit(">", 1)[0].split(",")
+        self.width = int(arguments[0])
+        self.integer = int(arguments[1])
+        self.fractional = self.width - self.integer
+        self.signed = not cpp.startswith("ap_ufixed")
+        self.rounding_mode = arguments[2] if len(arguments) > 2 else "TRN"
+        self.saturation_mode = arguments[3] if len(arguments) > 3 else "WRAP"
+        self.saturation_bits = int(arguments[4]) if len(arguments) > 4 else 0
 
     def definition_cpp(self) -> str:
         return self.cpp
@@ -80,14 +87,28 @@ class _FakeLayer:
             output_name, _FakeType(type_name, precision, n_elem)
         )
         self.types = {"result_t": self._output_variable.type}
+        accum_precision = attributes.pop("accum_precision", None)
+        if accum_precision is not None:
+            self.attributes = {
+                "accum_t": _FakeType(f"{self.name}_accum_t", accum_precision)
+            }
+        else:
+            self.attributes = {}
         self._weights = attributes.pop("weights", [])
-        self.attributes = attributes
+        self.attributes.update(attributes)
+        self._input_variable: _FakeVariable | None = None
+        self.inputs: list[str] = []
+        self.outputs = [output_name]
 
     def get_attr(self, key: str, default: Any = None) -> Any:
         return self.attributes.get(key, default)
 
     def get_output_variable(self) -> _FakeVariable:
         return self._output_variable
+
+    def get_input_variable(self) -> _FakeVariable:
+        assert self._input_variable is not None
+        return self._input_variable
 
     def get_weights(self) -> list[_FakeWeight]:
         return self._weights
@@ -201,6 +222,7 @@ class _FakeHlsModel:
                 output_name="layer9_out",
                 type_name="result_t",
                 precision="ap_fixed<22,11>",
+                accum_precision="ap_fixed<22,11>",
                 module="hgq.layers.core.dense",
                 reuse_factor=1,
                 strategy="latency",
@@ -210,6 +232,9 @@ class _FakeHlsModel:
                 index=9,
             ),
         ]
+        for previous, current in zip(self.layers, self.layers[1:]):
+            current._input_variable = previous.get_output_variable()
+            current.inputs = previous.outputs.copy()
 
     def write(self) -> None:
         self.write_called = True
@@ -389,6 +414,107 @@ def test_convert_defaults_to_the_aggressive_specialization(
     }
 
 
+def test_convert_records_dense_shape_and_coefficient_facts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    converted_model = _FakeHlsModel(output_dir)
+    dense_kernel = converted_model.layers[-1].get_weights()[0]
+    dense_kernel.data[:3] = [0.5, -0.25, 0.375]
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(
+        convert_from_keras_model=lambda **kwargs: converted_model
+    )
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    project = convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    assert project.manifest["source_model"]["facts"]["dense"] == [
+        {
+            "role": "output",
+            "n_in": 1176,
+            "n_out": 1,
+            "input_group_size": 7,
+            "kernel": {
+                "shape": [1176],
+                "elements": 1176,
+                "statistics": {
+                    "zero": 1173,
+                    "nonzero": 3,
+                    "power_of_two": 2,
+                    "unique": 4,
+                },
+            },
+            "bias": {"shape": [1], "elements": 1},
+            "graph": {
+                "predecessors": ["Reshape"],
+                "successors": [],
+            },
+            "feature_ordering": {"kind": "identity", "order": "C"},
+            "parameter_representation": "dense",
+            "numeric": {
+                "input": {
+                    "kind": "fixed",
+                    "width": 9,
+                    "integer": 4,
+                    "fractional": 5,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "output": {
+                    "kind": "fixed",
+                    "width": 22,
+                    "integer": 11,
+                    "fractional": 11,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "weight": {
+                    "kind": "fixed",
+                    "width": 8,
+                    "integer": 2,
+                    "fractional": 6,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "bias": {
+                    "kind": "fixed",
+                    "width": 8,
+                    "integer": 2,
+                    "fractional": 6,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+                "accumulator": {
+                    "kind": "fixed",
+                    "width": 22,
+                    "integer": 11,
+                    "fractional": 11,
+                    "signed": True,
+                    "rounding": "TRN",
+                    "overflow": "WRAP",
+                    "saturation_bits": 0,
+                },
+            },
+        }
+    ]
+
+
 def test_convert_preserves_an_explicit_compatibility_specialization(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -487,9 +613,11 @@ def test_convert_renders_the_selected_dense_schedule_and_control_cleanup(
     dense2_header = (
         dense2.path / "firmware" / "nnet_utils" / "nnet_aria.h"
     ).read_text(encoding="utf-8")
-    assert "constexpr unsigned DENSE_PARALLELISM = 1;" in dense1_header
-    assert "constexpr unsigned DENSE_PARALLELISM = 2;" in dense2_header
-    assert "parallel_group < DENSE_PARALLELISM" in dense2_header
+    assert "constexpr unsigned MAC_LANES = 7;" in dense1_header
+    assert "constexpr unsigned DENSE_STEPS = 168;" in dense1_header
+    assert "constexpr unsigned MAC_LANES = 14;" in dense2_header
+    assert "constexpr unsigned DENSE_STEPS = 84;" in dense2_header
+    assert "lane < MAC_LANES" in dense2_header
     for project in (dense1, dense2):
         source = (project.path / "firmware" / "aria_top.cpp").read_text(
             encoding="utf-8"
@@ -537,10 +665,23 @@ def test_convert_renders_the_selected_temporal_packing_contract(
     assert "hls::stream<input_x4_t>" in packed4_bridge
     assert "word_index < 64" in packed4_bridge
     assert "row < 4" in packed4_bridge
-    assert packed4.implementation_plan["template_profile"] == "aria-p4-d2-v1"
+    assert packed4.implementation_plan["template_profile"] == "aria-p4-d2-v2"
     assert packed4.implementation_plan["input_words_per_inference"] == 64
     assert packed4.implementation_plan["dense_steps"] == 84
-    assert packed2.implementation_plan["template_profile"] == "aria-p2-d1-v1"
+    assert packed4.implementation_plan["weight_delivery"] == {
+        "id": "wide-sequential",
+        "version": 1,
+        "mac_lanes": 14,
+        "word_bits": 112,
+        "depth": 84,
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "storage": {"type": "rom_1p", "implementation": "bram"},
+        "multipliers": {"implementation": "dsp", "instances": 14},
+        "accumulation": {"policy": "ordered"},
+        "applicability": {"status": "applicable", "reasons": []},
+    }
+    assert packed2.implementation_plan["template_profile"] == "aria-p2-d1-v2"
     assert packed2.implementation_plan["input_words_per_inference"] == 128
     assert packed2.implementation_plan["dense_steps"] == 168
     assert packed4.manifest["interfaces"]["hls_stream_interface"] == {
@@ -814,6 +955,32 @@ def test_optimize_project_rejects_a_different_layer_sequence(tmp_path: Path) -> 
     assert hls_model.write_called is False
 
 
+def test_optimize_project_rejects_noncanonical_graph_wiring(tmp_path: Path) -> None:
+    hls_model = _FakeHlsModel(tmp_path / "project")
+    hls_model.layers[-1].inputs = hls_model.layers[3].outputs.copy()
+
+    with pytest.raises(CompatibilityError, match="graph wiring.*linear chain"):
+        optimize_project(hls_model, config={"Profile": "aria"})
+
+    assert hls_model.write_called is False
+
+
+def test_optimize_project_rejects_an_inapplicable_dense_strategy(
+    tmp_path: Path,
+) -> None:
+    hls_model = _FakeHlsModel(tmp_path / "project")
+    dense_kernel = hls_model.layers[-1].get_weights()[0]
+    dense_kernel.type.index_precision = object()
+
+    with pytest.raises(
+        CompatibilityError,
+        match="wide-sequential-v1 requires dense parameter representation",
+    ):
+        optimize_project(hls_model, config={"Profile": "aria"})
+
+    assert hls_model.write_called is False
+
+
 @pytest.mark.parametrize(
     ("layer_index", "attribute", "invalid_value", "message"),
     [
@@ -876,8 +1043,8 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     )
     assert "config_array_partition -maximum_size" not in published_build_script
     assert "csynth_design" in published_build_script
-    assert project.manifest["schema_version"] == 2
-    assert project.manifest["ravel"]["release"] == "1.3.0"
+    assert project.manifest["schema_version"] == 3
+    assert project.manifest["ravel"]["release"] == "1.4.0"
     published_hls_config = (output_dir / "hls4ml_config.yml").read_text(encoding="utf-8")
     assert "OutputDir: .\n" in published_hls_config
     assert str(output_dir) not in published_hls_config
@@ -946,6 +1113,23 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "BindShallowInternalFifos",
         "ElideDataflowStartPropagation",
     ]
+    dense_pass = next(
+        item
+        for item in project.manifest["pipeline"]["passes"]
+        if item["id"] == "StreamFlattenIntoDense"
+    )
+    assert dense_pass["resolved_parameters"] == {
+        "dense_inputs": 1176,
+        "filter_lanes": 7,
+        "dense_parallelism": 2,
+        "dense_steps": 84,
+        "weight_delivery": "wide-sequential-v1",
+        "weight_word_bits": 112,
+        "weight_depth": 84,
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "accumulation": "ordered",
+    }
     assert all(
         {
             "id",
@@ -967,6 +1151,46 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "model_fidelity": "not_run",
         "source_integrity": "clean",
         "performance_qualification": "not_run",
+    }
+
+
+def test_optimize_project_prepacks_dense_weights_for_sequential_delivery(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    hls_model = _FakeHlsModel(output_dir)
+    dense_kernel = hls_model.layers[-1].get_weights()[0]
+    dense_kernel.data[:3] = [0.5, -0.25, -2.0]
+
+    project = optimize_project(
+        hls_model,
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+
+    packed_path = output_dir / "firmware" / "weights" / "w9_ravel_packed.h"
+    packed_source = packed_path.read_text(encoding="utf-8")
+    assert "const ap_uint<112> w9_ravel_packed[84]" in packed_source
+    assert 'ap_uint<112>("0x000000000000000000000080f020", 16)' in packed_source
+    top_source = (output_dir / "firmware" / "aria_top.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert '#include "weights/w9_ravel_packed.h"' in top_source
+    assert "load_weights_from_txt<dense_weight_t, 1176>(w9" not in top_source
+    assert (
+        "#pragma HLS BIND_STORAGE variable=w9_ravel_packed "
+        "type=rom_1p impl=bram"
+    ) in top_source
+    assert "layer9_out, w9_ravel_packed, b9" in top_source
+    dense_source = (
+        output_dir / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "const ap_uint<112> packed_weights[84]" in dense_source
+    assert "constexpr unsigned MAC_LANES = 14" in dense_source
+    assert "packed_weight.range" in dense_source
+    assert "#pragma HLS BIND_OP variable=products op=mul impl=dsp" in dense_source
+    assert "ARRAY_PARTITION variable=weights complete" not in dense_source
+    assert "firmware/weights/w9_ravel_packed.h" in {
+        entry["path"] for entry in project.manifest["source_closure"]
     }
 
 
@@ -1652,6 +1876,72 @@ def test_project_refresh_preserves_the_recorded_specialization(
         refreshed.manifest["configuration_sha256"]
         == original.manifest["configuration_sha256"]
     )
+
+
+def test_project_refresh_rejects_a_changed_dense_architecture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        refreshed_model = _FakeHlsModel(Path(kwargs["output_dir"]))
+        dense_kernel = refreshed_model.layers[-1].get_weights()[0]
+        dense_kernel.type.precision = _FakePrecision("ap_fixed<9,3>")
+        return refreshed_model
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    with pytest.raises(
+        CompatibilityError,
+        match="Dense implementation plan changed during refresh",
+    ):
+        original.refresh(object())
+
+
+def test_project_refresh_preserves_a_legacy_dense_strategy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+    manifest_path = output_dir / "ravel_manifest.json"
+    legacy_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    legacy_manifest["schema_version"] = 2
+    legacy_manifest["ravel"]["release"] = "1.3.0"
+    legacy_manifest["implementation_plan"]["template_profile"] = "aria-p4-d2-v1"
+    legacy_manifest["implementation_plan"].pop("weight_delivery")
+    manifest_path.write_text(
+        json.dumps(legacy_manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    refreshed = Project.open(output_dir).refresh(object())
+
+    assert refreshed.implementation_plan["template_profile"] == "aria-p4-d2-v1"
+    assert refreshed.implementation_plan["weight_delivery"] == {
+        "id": "complete-partition",
+        "version": 1,
+    }
 
 
 def test_project_refreshes_from_parameters_through_the_complete_model_pipeline(

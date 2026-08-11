@@ -1,0 +1,10 @@
+#ifndef {{ dense_packed.guard }}
+#define {{ dense_packed.guard }}
+
+#include "ap_int.h"
+
+const ap_uint<{{ dense_packed.word_bits }}> {{ dense_packed.name }}[{{ dense_packed.depth }}] = {
+{% for word in dense_packed.words %}    ap_uint<{{ dense_packed.word_bits }}>("{{ word }}", 16){% if not loop.last %},{% endif %}
+{% endfor %}};
+
+#endif

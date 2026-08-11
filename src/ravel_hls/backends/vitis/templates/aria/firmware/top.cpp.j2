@@ -3,6 +3,8 @@
 #include "{{ project_name }}.h"
 #include "parameters.h"
 #include "nnet_utils/nnet_aria.h"
+{% if dense_packed %}#include "weights/{{ dense_weight.name }}_ravel_packed.h"
+{% endif %}
 
 void {{ project_name }}(
     hls::stream<{{ input_wide_type }}> &{{ input_name }},
@@ -16,7 +18,9 @@ void {{ project_name }}(
     if (!loaded_weights) {
         nnet::load_weights_from_txt<{{ conv_weight.type_name }}, {{ conv_weight.length }}>({{ conv_weight.name }}, "{{ conv_weight.name }}.txt");
         nnet::load_weights_from_txt<{{ conv_bias.type_name }}, {{ conv_bias.length }}>({{ conv_bias.name }}, "{{ conv_bias.name }}.txt");
+{% if not dense_packed %}
         nnet::load_weights_from_txt<{{ dense_weight.type_name }}, {{ dense_weight.length }}>({{ dense_weight.name }}, "{{ dense_weight.name }}.txt");
+{% endif %}
         nnet::load_weights_from_txt<{{ dense_bias.type_name }}, {{ dense_bias.length }}>({{ dense_bias.name }}, "{{ dense_bias.name }}.txt");
         loaded_weights = true;
     }
@@ -33,6 +37,9 @@ void {{ project_name }}(
     hls::stream<{{ pool_wide_type }}> {{ pool_stream }}("{{ pool_stream }}");
     #pragma HLS STREAM variable={{ pool_stream }} depth=4
     #pragma HLS BIND_STORAGE variable={{ pool_stream }} type=fifo impl=srl
+{% if dense_packed %}
+    #pragma HLS BIND_STORAGE variable={{ dense_packed.name }} type=rom_1p impl=bram
+{% endif %}
 
     nnet::{{ first_conv_function }}<{{ input_wide_type }}, {{ conv_wide_type }}, {{ conv_config }}>(
         {{ input_name }}, {{ conv_stream }}, {{ conv_weight.name }}, {{ conv_bias.name }});
@@ -41,5 +48,5 @@ void {{ project_name }}(
     nnet::maxpool2d_wide_nonoverlap_cl<{{ activation_wide_type }}, {{ pool_wide_type }}, {{ pool_config }}>(
         {{ activation_stream }}, {{ pool_stream }});
     nnet::dense_wide_stream<{{ pool_wide_type }}, {{ output_type }}, {{ dense_config }}>(
-        {{ pool_stream }}, {{ output_name }}, {{ dense_weight.name }}, {{ dense_bias.name }});
+        {{ pool_stream }}, {{ output_name }}, {% if dense_packed %}{{ dense_packed.name }}{% else %}{{ dense_weight.name }}{% endif %}, {{ dense_bias.name }});
 }

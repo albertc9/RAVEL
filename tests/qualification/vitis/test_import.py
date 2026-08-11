@@ -45,6 +45,25 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     assert open_project(project_path).status["performance_qualification"] == "recorded"
 
 
+def test_import_vitis_reports_links_schema_v2_evidence_to_a_v3_manifest(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=3)
+    report_dir = tmp_path / "reports"
+    report_path = report_dir / "aria_top_csynth.xml"
+    report_dir.mkdir()
+    report_path.write_text(_CSYNTH_XML, encoding="utf-8")
+
+    Project.open(project_path).record(report_dir)
+
+    qualification = json.loads(
+        (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
+    )
+    assert qualification["schema_version"] == 2
+    assert Project.open(project_path).status["performance_qualification"] == "recorded"
+
+
 def test_import_vitis_reports_rejects_an_rtl_width_mismatch(tmp_path: Path) -> None:
     project_path = tmp_path / "project"
     _write_project(project_path)
@@ -120,7 +139,7 @@ def test_project_marks_qualification_with_a_foreign_fingerprint_as_stale(
     assert Project.open(project_path).status["performance_qualification"] == "stale"
 
 
-def _write_project(project_path: Path) -> None:
+def _write_project(project_path: Path, *, schema_version: int = 2) -> None:
     source = "void aria_top() {}\n"
     (project_path / "firmware").mkdir(parents=True)
     (project_path / "firmware" / "aria_top.cpp").write_text(source, encoding="utf-8")
@@ -143,7 +162,7 @@ def _write_project(project_path: Path) -> None:
         ).encode()
     ).hexdigest()
     manifest = {
-        "schema_version": 2,
+        "schema_version": schema_version,
         "ravel": {"product": "RAVEL", "generation": "Aria", "release": "1.1.0"},
         "implementation_plan": {"template_profile": "aria-2x-v1"},
         "normalized_configuration": {

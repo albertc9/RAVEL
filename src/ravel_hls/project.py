@@ -91,8 +91,8 @@ class Project:
     def build(self) -> Any:
         """Run Vitis HLS for this project and attach its synthesis measurements."""
 
-        if self.manifest.get("schema_version") != 2:
-            raise BuildError("Vitis builds require a schema-v2 RAVEL project")
+        if self.manifest.get("schema_version") not in {2, 3}:
+            raise BuildError("Vitis builds require a schema-v2 or schema-v3 RAVEL project")
         if self.status.get("source_integrity") != "clean":
             raise VerificationError(
                 "Cannot build a modified RAVEL project; regenerate or restore sources"
@@ -143,10 +143,25 @@ def open_project(path: str | Path) -> RavelProject:
         raise ProjectGenerationError(
             f"Cannot read RAVEL project manifest at {manifest_path}: {error}"
         ) from error
-    if not isinstance(manifest, dict) or manifest.get("schema_version") not in {1, 2}:
+    if not isinstance(manifest, dict) or manifest.get("schema_version") not in {
+        1,
+        2,
+        3,
+    }:
         raise ProjectGenerationError(
-            "RAVEL project manifest schema_version must be 1 or 2"
+            "RAVEL project manifest schema_version must be 1, 2, or 3"
         )
+    implementation_plan = manifest.get("implementation_plan")
+    if (
+        manifest["schema_version"] in {1, 2}
+        and isinstance(implementation_plan, dict)
+        and "weight_delivery" not in implementation_plan
+    ):
+        manifest = dict(manifest)
+        manifest["implementation_plan"] = {
+            **implementation_plan,
+            "weight_delivery": {"id": "complete-partition", "version": 1},
+        }
     config_path = project_path / "ravel_config.yml"
     config_text = config_path.read_text(encoding="utf-8")
     config = RavelConfig.from_yaml(config_text)

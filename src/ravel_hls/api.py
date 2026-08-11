@@ -10,6 +10,7 @@ import tempfile
 from typing import Any
 import uuid
 
+from .analysis.dense import analyze_dense_facts
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
@@ -38,7 +39,7 @@ from .verification.equivalence import (
 def convert(
     model: Any, config: Mapping[str, Any], *, inputs: Any | None = None
 ) -> RavelProject:
-    """Convert a compatible model using the Aria 1.3 public configuration."""
+    """Convert a compatible model using the Aria 1.4 public configuration."""
 
     unknown_fields = sorted(
         config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
@@ -102,6 +103,7 @@ def refresh_model(
         clock_period=hls_values.get("ClockPeriod"),
         force_replace=force_replace,
         verification_inputs=verification_inputs,
+        preserved_implementation_plan=project_view.implementation_plan,
     )
 
 
@@ -118,6 +120,7 @@ def convert_from_keras_model(
     clock_period: float | None = None,
     force_replace: bool = False,
     verification_inputs: Any | None = None,
+    preserved_implementation_plan: Mapping[str, Any] | None = None,
 ) -> RavelProject:
     """Convert a Keras/HGQ model and run the canonical Aria optimization engine."""
 
@@ -152,6 +155,7 @@ def convert_from_keras_model(
         ravel_config,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
+        preserved_implementation_plan=preserved_implementation_plan,
     )
 
 
@@ -161,6 +165,7 @@ def optimize_project(
     *,
     force_replace: bool = False,
     verification_inputs: Any | None = None,
+    preserved_implementation_plan: Mapping[str, Any] | None = None,
 ) -> RavelProject:
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
@@ -173,7 +178,7 @@ def optimize_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.3.0 dependency stack is not qualified: " + ", ".join(failures)
+            "Aria 1.4.0 dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -184,29 +189,75 @@ def optimize_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.3.0")
+        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.4.0")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.3.0")
+        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.4.0")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.3.0")
+        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.4.0")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.3.0")
+        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.4.0")
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     if input_shapes != [[256, 4]]:
         raise CompatibilityError(
-            "Aria 1.3.0 requires one logical input shape [256, 4]"
+            "Aria 1.4.0 requires one logical input shape [256, 4]"
         )
     output_shapes = list(hls_config.get("OutputShapes", {}).values())
     if output_shapes != [[1]]:
-        raise CompatibilityError("Aria 1.3.0 requires one logical output shape [1]")
+        raise CompatibilityError("Aria 1.4.0 requires one logical output shape [1]")
     layers = list(hls_model.get_layers())
     validate_aria_model_profile(layers)
+    model_facts = {"dense": analyze_dense_facts(layers)}
+    implementation_plan = build_implementation_plan(
+        ravel_config["Optimization"], model_facts
+    )
+    if preserved_implementation_plan is not None:
+        preserved_weight_delivery = preserved_implementation_plan.get(
+            "weight_delivery"
+        )
+        if (
+            isinstance(preserved_weight_delivery, Mapping)
+            and preserved_weight_delivery.get("id") == "complete-partition"
+        ):
+            implementation_plan["template_profile"] = preserved_implementation_plan[
+                "template_profile"
+            ]
+            implementation_plan["weight_delivery"] = dict(
+                preserved_weight_delivery
+            )
+        elif (
+            isinstance(preserved_weight_delivery, Mapping)
+            and preserved_weight_delivery.get("id") == "wide-sequential"
+        ):
+            if (
+                implementation_plan["template_profile"]
+                != preserved_implementation_plan["template_profile"]
+                or implementation_plan["weight_delivery"]
+                != preserved_weight_delivery
+            ):
+                raise CompatibilityError(
+                    "Dense implementation plan changed during refresh; "
+                    "use ordinary conversion"
+                )
+            implementation_plan["template_profile"] = (
+                preserved_implementation_plan["template_profile"]
+            )
+            implementation_plan["weight_delivery"] = dict(
+                preserved_weight_delivery
+            )
+    if implementation_plan["weight_delivery"]["id"] == "wide-sequential":
+        dense_applicability = implementation_plan["weight_delivery"][
+            "applicability"
+        ]
+        if dense_applicability["status"] != "applicable":
+            raise CompatibilityError("; ".join(dense_applicability["reasons"]))
     return _generate_project(
         hls_model,
         hls_config,
         ravel_config,
         layers,
+        model_facts=model_facts,
+        implementation_plan=implementation_plan,
         dependency_report=dependency_report,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
@@ -227,6 +278,8 @@ def _generate_project(
     ravel_config: RavelConfig,
     layers: list[Any],
     *,
+    model_facts: Mapping[str, Any],
+    implementation_plan: dict[str, Any],
     dependency_report: Mapping[str, Any],
     force_replace: bool,
     verification_inputs: Any | None,
@@ -271,9 +324,7 @@ def _generate_project(
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
-        optimization = ravel_config["Optimization"]
-        implementation_plan = build_implementation_plan(optimization)
-        pass_records = build_pass_records(optimization)
+        pass_records = build_pass_records(implementation_plan)
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
             raise ProjectGenerationError(
@@ -283,7 +334,7 @@ def _generate_project(
             staging_path,
             project_name,
             layers,
-            optimization=ravel_config["Optimization"],
+            implementation_plan=implementation_plan,
         )
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
@@ -314,6 +365,7 @@ def _generate_project(
             published_ravel_config.to_yaml(), encoding="utf-8"
         )
         semantic_model = {
+            "facts": model_facts,
             "layers": [
                 {
                     "class_name": layer.class_name,

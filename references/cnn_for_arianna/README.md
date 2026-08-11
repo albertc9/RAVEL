@@ -1,6 +1,6 @@
 # CNN for Arianna reference
 
-This directory is the executable Aria 1.3.0 reference consumer. It owns the
+This directory is the executable Aria 1.4.0 reference consumer. It owns the
 canonical trained Keras/HGQ2 model and uses only RAVEL's public API.
 
 ```bash
@@ -29,7 +29,7 @@ The qualification records the measured result for that exact project. It does
 not impose an application-specific performance threshold. Additional CSim,
 validation, export, or Vivado-synthesis stages remain explicit choices.
 
-## Aria 1.3 default result
+## Aria 1.4 default result
 
 The default P4/D2 project was generated with 32 deterministic verification
 samples and synthesized on Vitis HLS 2023.2. Verilog RTL CoSim passed.
@@ -38,12 +38,12 @@ samples and synthesized on Vitis HLS 2023.2. Verilog RTL CoSim passed.
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Aria 1.1.0 P2/D1 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |
 | Aria 1.3.0 P4/D2 | 94 | 99 | 3.502 | 0 | 8 | 4436 | 53502 |
+| Aria 1.4.0 P4/D2 | 94 | 99 | 3.402 | 3 | 8 | 4368 | 15623 |
 
-P4/D2 reduces II by 47.2% and latency by 45.9% relative to P2/D1. FF rises
-27.4% and LUT rises 85.0%; the selected KU5P utilization estimates remain
-1.02% FF, 24.66% LUT, 0.44% DSP, and 0% BRAM. The
-[evidence record](reports/aria_1_3_p4d2.json), adjacent synthesis XML, and RTL
-CoSim report provide the audit trail.
+Aria 1.4 retains the Aria 1.3 P4/D2 II and latency. The sequential packed Dense
+weight ROM reduces estimated LUT by 70.8% and FF by 1.5%, uses three BRAM_18Ks,
+and leaves DSP usage unchanged. The [evidence record](reports/aria_1_4_p4d2.json),
+adjacent synthesis XML, and RTL CoSim report provide the audit trail.
 
 ## Vanilla hls4ml baseline
 
@@ -116,7 +116,7 @@ lower cycle latency for RAVEL, with fewer reported resources. This is context,
 not a qualification gate or a strict speedup claim: the historical project uses
 an older parameter set, materialized `Conv2D`/`Dense` layers, and a 64-bit input
 port, while the HGQ2 P2/D1 reference retains `QConv2D`/`QDense` and produces a
-128-bit input port. Aria 1.3 P4/D2 uses a 256-bit input port. Run the
+128-bit input port. Aria 1.3 and 1.4 P4/D2 use a 256-bit input port. Run the
 exact-current-model baseline above before using
 the historical comparison as a like-for-like result; the exact result above is
 the primary comparison.

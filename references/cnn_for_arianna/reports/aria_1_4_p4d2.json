@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "classification": "aria_1_4_dense_qualification",
+  "flow": "ravel-aria-p4d2-wide-sequential-v1",
+  "provenance": {
+    "ravel_source_commit": "a52eab6",
+    "model_sha256": "65021d84030d9c09a7f1fd541221b150dad14858ad85458912a1a6a6b40a9978",
+    "generation_fingerprint": "d6b4fed75b2769830e03261f95f25b975ca20fadb90dd6813d1dcb845546fb2a",
+    "manifest_sha256": "f2c8d346a57a8c9e041c809cd335d5da6dbc9cb2ddf32a7323a52fd7c5124cda",
+    "source_closure_sha256": "0997c8302d92fe9ba906f591f66f251feaf0253cc03b83820850f623b55c1bd4",
+    "synthesis_report_file": "aria_1_4_p4d2_csynth.xml",
+    "synthesis_report_sha256": "56bcab1b9f4732c0f70568d5f1be89d563408d8fc57e51e544253135ce1d8ef7",
+    "cosimulation_report_file": "aria_1_4_p4d2_cosim.rpt",
+    "cosimulation_report_sha256": "299ee6566c50bb270b82bb26940d89cc01d56724ed01991cf342f11cbf411f6f"
+  },
+  "environment": {
+    "python": "3.11.15",
+    "hls4ml": "1.2.0",
+    "hgq2": "0.1.7",
+    "keras": "3.12.1",
+    "tensorflow": "2.20.0",
+    "vitis_hls": "2023.2"
+  },
+  "configuration": {
+    "backend": "Vitis",
+    "io_type": "io_stream",
+    "strategy": "Latency",
+    "reuse_factor": 1,
+    "part": "xcku5p-ffvb676-2-e",
+    "clock_period_ns": 5.0,
+    "temporal_packing": 4,
+    "dense_parallelism": 2,
+    "dense_strategy": "wide-sequential-v1",
+    "dense_weight_word_bits": 98,
+    "dense_weight_depth": 84,
+    "dense_mac_lanes": 14,
+    "input_tdata_bits": 256,
+    "verification_samples": 32,
+    "build_stages": {
+      "reset": true,
+      "csim": false,
+      "synth": true,
+      "cosim": true,
+      "validation": false,
+      "export": false,
+      "vsynth": false,
+      "fifo_opt": false
+    }
+  },
+  "verification": {
+    "transformation_equivalence": "passed",
+    "model_fidelity": "reported",
+    "rtl_cosimulation": "passed",
+    "source_integrity": "clean"
+  },
+  "measurement": {
+    "estimated_clock_ns": 3.402,
+    "initiation_interval": 94,
+    "latency_cycles": 99,
+    "resources": {
+      "BRAM_18K": 3,
+      "DSP": 8,
+      "FF": 4368,
+      "LUT": 15623,
+      "URAM": 0
+    }
+  },
+  "aria_1_3_comparison": {
+    "initiation_interval": 94,
+    "latency_cycles": 99,
+    "estimated_clock_ns": 3.502,
+    "resources": {
+      "BRAM_18K": 0,
+      "DSP": 8,
+      "FF": 4436,
+      "LUT": 53502,
+      "URAM": 0
+    },
+    "aria_1_4_change": {
+      "initiation_interval_change_cycles": 0,
+      "latency_change_cycles": 0,
+      "lut_reduction_percent": 70.799222,
+      "ff_reduction_percent": 1.532913,
+      "bram_18k_increase": 3,
+      "dsp_change": 0
+    }
+  },
+  "review": {
+    "objectives": {
+      "maximum_initiation_interval": 94,
+      "maximum_lut": 42000,
+      "maximum_dsp": 16,
+      "maximum_bram_18k": 4,
+      "maximum_estimated_clock_ns": 5.0
+    },
+    "objectives_met": true
+  },
+  "qualification_policy": {
+    "default_specialization_only": true,
+    "performance_gate": false,
+    "manual_resource_review": true
+  }
+}

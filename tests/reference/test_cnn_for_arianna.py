@@ -194,3 +194,53 @@ def test_aria_1_3_default_qualification_is_source_backed() -> None:
         synthesis.findtext("./AreaEstimates/Resources/LUT")
     )
     assert b"|   Verilog|      Pass|" in cosimulation_bytes
+
+
+def test_aria_1_4_dense_qualification_is_source_backed() -> None:
+    evidence_path = REFERENCE_ROOT / "reports" / "aria_1_4_p4d2.json"
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    synthesis_path = (
+        evidence_path.parent / evidence["provenance"]["synthesis_report_file"]
+    )
+    cosimulation_path = (
+        evidence_path.parent / evidence["provenance"]["cosimulation_report_file"]
+    )
+    synthesis_bytes = synthesis_path.read_bytes()
+    cosimulation_bytes = cosimulation_path.read_bytes()
+    synthesis = ET.fromstring(synthesis_bytes)
+
+    assert evidence["classification"] == "aria_1_4_dense_qualification"
+    assert evidence["provenance"]["ravel_source_commit"] == "a52eab6"
+    assert evidence["configuration"]["temporal_packing"] == 4
+    assert evidence["configuration"]["dense_parallelism"] == 2
+    assert evidence["configuration"]["dense_strategy"] == "wide-sequential-v1"
+    assert evidence["configuration"]["dense_weight_word_bits"] == 98
+    assert evidence["configuration"]["dense_weight_depth"] == 84
+    assert evidence["configuration"]["dense_mac_lanes"] == 14
+    assert evidence["configuration"]["verification_samples"] == 32
+    assert evidence["provenance"]["synthesis_report_sha256"] == hashlib.sha256(
+        synthesis_bytes
+    ).hexdigest()
+    assert evidence["provenance"]["cosimulation_report_sha256"] == hashlib.sha256(
+        cosimulation_bytes
+    ).hexdigest()
+    assert evidence["measurement"]["initiation_interval"] == int(
+        synthesis.findtext(
+            "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min"
+        )
+    )
+    assert evidence["measurement"]["latency_cycles"] == int(
+        synthesis.findtext(
+            "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency"
+        )
+    )
+    assert evidence["measurement"]["resources"]["LUT"] == int(
+        synthesis.findtext("./AreaEstimates/Resources/LUT")
+    )
+    assert evidence["review"]["objectives_met"] is True
+    assert evidence["measurement"]["initiation_interval"] <= 94
+    assert evidence["measurement"]["resources"]["LUT"] <= 42000
+    assert evidence["measurement"]["resources"]["DSP"] <= 16
+    assert evidence["measurement"]["resources"]["BRAM_18K"] <= 4
+    assert evidence["measurement"]["estimated_clock_ns"] <= 5.0
+    assert b"|   Verilog|      Pass|" in cosimulation_bytes

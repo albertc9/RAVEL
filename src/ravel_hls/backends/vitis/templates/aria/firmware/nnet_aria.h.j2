@@ -264,13 +264,66 @@ template <class data_T, class res_T, typename CONFIG_T>
 void dense_wide_stream(
     hls::stream<data_T> &data,
     hls::stream<res_T> &res,
+{% if dense_packed %}
+    const ap_uint<{{ dense_packed.word_bits }}> packed_weights[{{ dense_packed.depth }}],
+{% else %}
     typename CONFIG_T::weight_t weights[CONFIG_T::n_in * CONFIG_T::n_out],
+{% endif %}
     typename CONFIG_T::bias_t biases[CONFIG_T::n_out]
 ) {
     static_assert(CONFIG_T::n_out == 1, "Aria dense specialization requires one output");
     static_assert(res_T::size == 1, "Aria dense result must contain one value");
     static_assert(CONFIG_T::n_in % data_T::size == 0, "Aria dense input packing mismatch");
     static_assert(data_T::size % 7 == 0, "Aria dense expects seven filters per width lane");
+{% if dense_packed %}
+    constexpr unsigned WEIGHT_BITS = {{ dense_packed.lane_bits }};
+    constexpr unsigned MAC_LANES = {{ dense_packed.mac_lanes }};
+    constexpr unsigned DENSE_STEPS = {{ dense_packed.depth }};
+    constexpr unsigned VALID_LAST_LANES = {{ dense_packed.valid_last_lanes }};
+    constexpr unsigned GROUPS = data_T::size / MAC_LANES;
+    static_assert(data_T::size % MAC_LANES == 0,
+                  "Aria Dense MAC lanes must divide the input word");
+    static_assert(
+        DENSE_STEPS == (CONFIG_T::n_in + MAC_LANES - 1) / MAC_LANES,
+        "Aria packed Dense depth mismatch");
+    #pragma HLS ARRAY_PARTITION variable=biases complete
+    typename CONFIG_T::accum_t accumulator = (typename CONFIG_T::accum_t)biases[0];
+    data_T input_word;
+    unsigned group = 0;
+DenseValues:
+    for (unsigned step = 0; step < DENSE_STEPS; step++) {
+        #pragma HLS PIPELINE II=1
+        if (group == 0) {
+            input_word = data.read();
+        }
+        const ap_uint<{{ dense_packed.word_bits }}> packed_weight = packed_weights[step];
+        typename CONFIG_T::accum_t products[MAC_LANES];
+        #pragma HLS ARRAY_PARTITION variable=products complete
+        #pragma HLS BIND_OP variable=products op=mul impl=dsp
+DenseProducts:
+        for (unsigned lane = 0; lane < MAC_LANES; lane++) {
+            #pragma HLS UNROLL
+            typename CONFIG_T::weight_t lane_weight = 0;
+            lane_weight.range(WEIGHT_BITS - 1, 0) =
+                packed_weight.range((lane + 1) * WEIGHT_BITS - 1,
+                                    lane * WEIGHT_BITS);
+            const unsigned data_index = group * MAC_LANES + lane;
+            products[lane] =
+                (typename CONFIG_T::accum_t)CONFIG_T::template product<
+                    typename data_T::value_type,
+                    typename CONFIG_T::weight_t>::product(
+                        input_word[data_index], lane_weight);
+        }
+DenseAccumulate:
+        for (unsigned lane = 0; lane < MAC_LANES; lane++) {
+            #pragma HLS UNROLL
+            if (step != DENSE_STEPS - 1 || lane < VALID_LAST_LANES) {
+                accumulator += products[lane];
+            }
+        }
+        group = group == GROUPS - 1 ? 0 : group + 1;
+    }
+{% else %}
     constexpr unsigned DENSE_PARALLELISM = {{ dense_parallelism }};
     constexpr unsigned WIDTH_LANES = data_T::size / 7;
     constexpr unsigned WORDS = CONFIG_T::n_in / data_T::size;
@@ -310,6 +363,7 @@ DenseValues:
             group++;
         }
     }
+{% endif %}
     res_T output;
     PRAGMA_DATA_PACK(output)
     output[0] = cast<typename data_T::value_type, typename res_T::value_type, CONFIG_T>(accumulator);
