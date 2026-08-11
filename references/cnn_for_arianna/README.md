@@ -1,6 +1,6 @@
 # CNN for Arianna reference
 
-This directory is the executable Aria 1.1.0 reference consumer. It owns the
+This directory is the executable Aria 1.3.0 reference consumer. It owns the
 canonical trained Keras/HGQ2 model and uses only RAVEL's public API.
 
 ```bash
@@ -11,19 +11,39 @@ python references/cnn_for_arianna/generate.py
 
 The default run performs required bit-exact baseline/optimized C++ verification
 with 32 deterministic synthetic samples, targets `xcku5p-ffvb676-2-e` at 5 ns,
-and publishes below `generated/`. Supply `--inputs test_vectors.npy` for a local
+selects P4/D2 through RAVEL's omitted-option default, and publishes below
+`generated/`. Supply `--inputs test_vectors.npy` for a local
 tensor shaped `[samples, 256, 4]`; its source path is not recorded.
+
+Use `--temporal-packing {2,4}` and `--dense-parallelism {1,2}` for an explicit
+specialization. The flags are independent. If neither is present, the script
+does not add an `Optimization` section and RAVEL resolves P4/D2.
 
 Vitis is off by default. Add `--vitis` to set `Vitis.Run` true in the same Python
 configuration. RAVEL then runs the standalone Vitis HLS 2023.2 launcher after
-publication, using the default reset+synthesis stage profile, and automatically
-writes `ravel_qualification.json` on success. No user-written conditional or
-manual report-import step is required.
+publication. This reference enables reset, synthesis, and RTL CoSim, then
+automatically writes `ravel_qualification.json` on success. No manual
+report-import step is required.
 
 The qualification records the measured result for that exact project. It does
-not require II 178 or any other application-specific performance number. Enable
-additional `Vitis.Stages` only when their separate CSim, CoSim, validation,
-export, or Vivado-synthesis evidence is wanted.
+not impose an application-specific performance threshold. Additional CSim,
+validation, export, or Vivado-synthesis stages remain explicit choices.
+
+## Aria 1.3 default result
+
+The default P4/D2 project was generated with 32 deterministic verification
+samples and synthesized on Vitis HLS 2023.2. Verilog RTL CoSim passed.
+
+| Flow | II | Latency (cycles) | Est. clock (ns) | BRAM_18K | DSP | FF | LUT |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Aria 1.1.0 P2/D1 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |
+| Aria 1.3.0 P4/D2 | 94 | 99 | 3.502 | 0 | 8 | 4436 | 53502 |
+
+P4/D2 reduces II by 47.2% and latency by 45.9% relative to P2/D1. FF rises
+27.4% and LUT rises 85.0%; the selected KU5P utilization estimates remain
+1.02% FF, 24.66% LUT, 0.44% DSP, and 0% BRAM. The
+[evidence record](reports/aria_1_3_p4d2.json), adjacent synthesis XML, and RTL
+CoSim report provide the audit trail.
 
 ## Vanilla hls4ml baseline
 
@@ -62,7 +82,7 @@ configuration as the RAVEL flow.
 | Flow | II | Latency (cycles) | Est. clock (ns) | BRAM_18K | DSP | FF | LUT |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Vanilla hls4ml | 3076 | 3084 | 3.619 | 18 | 0 | 26275 | 38365 |
-| RAVEL Aria 1.1.0 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |
+| RAVEL Aria 1.1.0 P2/D1 | 178 | 183 | 3.647 | 0 | 4 | 3483 | 28922 |
 
 RAVEL reduces the measured initiation interval by 17.3x and cycle latency by
 16.9x. It also uses 86.7% fewer FF, 24.6% fewer LUT, and no BRAM_18K. The tradeoff
@@ -89,13 +109,14 @@ is preserved in `legacy/reports/hls4ml_c389552.json` and its adjacent XML.
 | Flow | II | Latency (cycles) | BRAM_18K | DSP | FF | LUT |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | Vanilla hls4ml (`c389552`) | 3076 | 3082 | 19 | 14 | 30061 | 34994 |
-| RAVEL Aria 1.1.0 | 178 | 183 | 0 | 4 | 3483 | 28922 |
+| RAVEL Aria 1.1.0 P2/D1 | 178 | 183 | 0 | 4 | 3483 | 28922 |
 
 The historical observation is a 17.3x lower initiation interval and a 16.8x
 lower cycle latency for RAVEL, with fewer reported resources. This is context,
 not a qualification gate or a strict speedup claim: the historical project uses
 an older parameter set, materialized `Conv2D`/`Dense` layers, and a 64-bit input
-port, while the current HGQ2 reference retains `QConv2D`/`QDense` and produces a
-128-bit RAVEL input port. Run the exact-current-model baseline above before using
+port, while the HGQ2 P2/D1 reference retains `QConv2D`/`QDense` and produces a
+128-bit input port. Aria 1.3 P4/D2 uses a 256-bit input port. Run the
+exact-current-model baseline above before using
 the historical comparison as a like-for-like result; the exact result above is
 the primary comparison.

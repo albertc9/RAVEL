@@ -7,7 +7,8 @@ specialization. Vendor tools may or may not have run.
 
 - `hls4ml_config.yml` is the portable hls4ml configuration. `OutputDir` is `.`
   and the project-local Keras snapshot uses a relative path.
-- `ravel_config.yml` is the normalized four-section RAVEL configuration. Its
+- `ravel_config.yml` is the normalized RAVEL configuration, including the
+  resolved `Optimization` section. Its
   published output directory is also `.`.
 - `ravel_manifest.json` is the immutable schema-v2 generation record.
 - `ravel_qualification.json` is optional schema-v2 measured Vitis evidence.
@@ -33,6 +34,8 @@ integrity and the ability to open, refresh, link, and build it.
 
 Output directory, verification selection, Vitis invocation, timestamps, and
 qualification results do not participate in generation identity.
+The versioned default policy and final temporal-packing/Dense-parallelism values
+do participate. An architecture-preserving refresh reuses those recorded values.
 
 ## Status and qualification
 
