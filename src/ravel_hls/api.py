@@ -103,6 +103,7 @@ def refresh_model(
         clock_period=hls_values.get("ClockPeriod"),
         force_replace=force_replace,
         verification_inputs=verification_inputs,
+        preserved_implementation_plan=project_view.implementation_plan,
     )
 
 
@@ -119,6 +120,7 @@ def convert_from_keras_model(
     clock_period: float | None = None,
     force_replace: bool = False,
     verification_inputs: Any | None = None,
+    preserved_implementation_plan: Mapping[str, Any] | None = None,
 ) -> RavelProject:
     """Convert a Keras/HGQ model and run the canonical Aria optimization engine."""
 
@@ -153,6 +155,7 @@ def convert_from_keras_model(
         ravel_config,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
+        preserved_implementation_plan=preserved_implementation_plan,
     )
 
 
@@ -162,6 +165,7 @@ def optimize_project(
     *,
     force_replace: bool = False,
     verification_inputs: Any | None = None,
+    preserved_implementation_plan: Mapping[str, Any] | None = None,
 ) -> RavelProject:
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
@@ -207,9 +211,26 @@ def optimize_project(
     implementation_plan = build_implementation_plan(
         ravel_config["Optimization"], model_facts
     )
-    dense_applicability = implementation_plan["weight_delivery"]["applicability"]
-    if dense_applicability["status"] != "applicable":
-        raise CompatibilityError("; ".join(dense_applicability["reasons"]))
+    if preserved_implementation_plan is not None:
+        preserved_weight_delivery = preserved_implementation_plan.get(
+            "weight_delivery"
+        )
+        if (
+            isinstance(preserved_weight_delivery, Mapping)
+            and preserved_weight_delivery.get("id") == "complete-partition"
+        ):
+            implementation_plan["template_profile"] = preserved_implementation_plan[
+                "template_profile"
+            ]
+            implementation_plan["weight_delivery"] = dict(
+                preserved_weight_delivery
+            )
+    if implementation_plan["weight_delivery"]["id"] == "wide-sequential":
+        dense_applicability = implementation_plan["weight_delivery"][
+            "applicability"
+        ]
+        if dense_applicability["status"] != "applicable":
+            raise CompatibilityError("; ".join(dense_applicability["reasons"]))
     return _generate_project(
         hls_model,
         hls_config,

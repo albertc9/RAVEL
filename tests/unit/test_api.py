@@ -1819,6 +1819,46 @@ def test_project_refresh_preserves_the_recorded_specialization(
     )
 
 
+def test_project_refresh_preserves_a_legacy_dense_strategy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        return _FakeHlsModel(Path(kwargs["output_dir"]))
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+    convert(
+        object(),
+        {
+            "Project": {"Name": "aria_top", "OutputDir": output_dir},
+            "HLS": {"Config": {"Model": {"Strategy": "Latency"}}},
+            "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+    manifest_path = output_dir / "ravel_manifest.json"
+    legacy_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    legacy_manifest["schema_version"] = 2
+    legacy_manifest["ravel"]["release"] = "1.3.0"
+    legacy_manifest["implementation_plan"]["template_profile"] = "aria-p4-d2-v1"
+    legacy_manifest["implementation_plan"].pop("weight_delivery")
+    manifest_path.write_text(
+        json.dumps(legacy_manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    refreshed = Project.open(output_dir).refresh(object())
+
+    assert refreshed.implementation_plan["template_profile"] == "aria-p4-d2-v1"
+    assert refreshed.implementation_plan["weight_delivery"] == {
+        "id": "complete-partition",
+        "version": 1,
+    }
+
+
 def test_project_refreshes_from_parameters_through_the_complete_model_pipeline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
