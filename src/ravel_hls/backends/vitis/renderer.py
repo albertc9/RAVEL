@@ -155,6 +155,12 @@ def _packed_weight_context(
         "guard": f"RAVEL_{weight.name.upper()}_PACKED_H_",
         "path": f"firmware/weights/{weight.name}_ravel_packed.h",
         "word_bits": word_bits,
+        "lane_bits": precision.width,
+        "mac_lanes": weight_delivery["mac_lanes"],
         "depth": len(words),
+        "tail_elements": weight_delivery["tail_elements"],
+        "valid_last_lanes": (
+            weight_delivery["tail_elements"] or weight_delivery["mac_lanes"]
+        ),
         "words": [f"0x{word:0{hex_digits}x}" for word in words],
     }

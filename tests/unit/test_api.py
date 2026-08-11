@@ -613,9 +613,11 @@ def test_convert_renders_the_selected_dense_schedule_and_control_cleanup(
     dense2_header = (
         dense2.path / "firmware" / "nnet_utils" / "nnet_aria.h"
     ).read_text(encoding="utf-8")
-    assert "constexpr unsigned DENSE_PARALLELISM = 1;" in dense1_header
-    assert "constexpr unsigned DENSE_PARALLELISM = 2;" in dense2_header
-    assert "parallel_group < DENSE_PARALLELISM" in dense2_header
+    assert "constexpr unsigned MAC_LANES = 7;" in dense1_header
+    assert "constexpr unsigned DENSE_STEPS = 168;" in dense1_header
+    assert "constexpr unsigned MAC_LANES = 14;" in dense2_header
+    assert "constexpr unsigned DENSE_STEPS = 84;" in dense2_header
+    assert "lane < MAC_LANES" in dense2_header
     for project in (dense1, dense2):
         source = (project.path / "firmware" / "aria_top.cpp").read_text(
             encoding="utf-8"
@@ -1169,6 +1171,24 @@ def test_optimize_project_prepacks_dense_weights_for_sequential_delivery(
     packed_source = packed_path.read_text(encoding="utf-8")
     assert "const ap_uint<112> w9_ravel_packed[84]" in packed_source
     assert 'ap_uint<112>("0x000000000000000000000080f020", 16)' in packed_source
+    top_source = (output_dir / "firmware" / "aria_top.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert '#include "weights/w9_ravel_packed.h"' in top_source
+    assert "load_weights_from_txt<dense_weight_t, 1176>(w9" not in top_source
+    assert (
+        "#pragma HLS BIND_STORAGE variable=w9_ravel_packed "
+        "type=rom_1p impl=bram"
+    ) in top_source
+    assert "layer9_out, w9_ravel_packed, b9" in top_source
+    dense_source = (
+        output_dir / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "const ap_uint<112> packed_weights[84]" in dense_source
+    assert "constexpr unsigned MAC_LANES = 14" in dense_source
+    assert "packed_weight.range" in dense_source
+    assert "#pragma HLS BIND_OP variable=products op=mul impl=dsp" in dense_source
+    assert "ARRAY_PARTITION variable=weights complete" not in dense_source
     assert "firmware/weights/w9_ravel_packed.h" in {
         entry["path"] for entry in project.manifest["source_closure"]
     }
