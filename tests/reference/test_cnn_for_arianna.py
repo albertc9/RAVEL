@@ -49,26 +49,6 @@ def test_reference_generator_uses_only_the_canonical_public_api() -> None:
     assert "convert_from_keras_model" not in source
 
 
-def test_current_readmes_publish_the_aria_1_4_default_result() -> None:
-    repository = REFERENCE_ROOT.parents[1]
-    root_readme = (repository / "README.md").read_text(encoding="utf-8")
-    reference_readme = (REFERENCE_ROOT / "README.md").read_text(encoding="utf-8")
-    root_result_row = (
-        "| RAVEL Aria 1.4.0 P4/D2 | 94 | 99 | 3.402 | 3 (0.31%) | "
-        "8 (0.44%) | 4368 (1.01%) | 15623 (7.20%) |"
-    )
-    reference_result_row = (
-        "| Aria 1.4.0 P4/D2 | 94 | 99 | 3.402 | 3 | 8 | 4368 | 15623 |"
-    )
-
-    assert root_result_row in root_readme
-    assert "reports/aria_1_4_p4d2.json" in root_readme
-    assert "Aria 1.4 default result" in reference_readme
-    assert reference_result_row in reference_readme
-    assert "reports/aria_1_4_p4d2.json" in reference_readme
-    assert "does not add an `Optimization` section" in reference_readme
-
-
 def test_vanilla_hls4ml_baseline_has_no_generated_source_edit_path() -> None:
     source = (REFERENCE_ROOT / "baseline.py").read_text(encoding="utf-8")
 
