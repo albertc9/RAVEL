@@ -72,12 +72,32 @@ def build_implementation_plan(
 
 
 def build_pass_records(
-    optimization: Mapping[str, int],
+    implementation_plan: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     """Return ordered records for the selected legal pass sequence."""
 
-    temporal_pack = optimization["TemporalPacking"]
-    dense_parallelism = optimization["DenseParallelism"]
+    temporal_pack = implementation_plan["temporal_pack"]
+    dense_parallelism = implementation_plan["dense_parallelism"]
+    weight_delivery = implementation_plan["weight_delivery"]
+    dense_parameters = {
+        "dense_inputs": implementation_plan["dense_inputs"],
+        "filter_lanes": implementation_plan["filter_lanes"],
+        "dense_parallelism": dense_parallelism,
+        "dense_steps": implementation_plan["dense_steps"],
+        "weight_delivery": (
+            f"{weight_delivery['id']}-v{weight_delivery['version']}"
+        ),
+    }
+    if weight_delivery["id"] == "wide-sequential":
+        dense_parameters.update(
+            {
+                "weight_word_bits": weight_delivery["word_bits"],
+                "weight_depth": weight_delivery["depth"],
+                "tail_elements": weight_delivery["tail_elements"],
+                "tail_mask": weight_delivery["tail_mask"],
+                "accumulation": weight_delivery["accumulation"]["policy"],
+            }
+        )
     pass_ids = (
         f"PackTemporalInput{temporal_pack}x",
         "FuseRepackReshapeIntoFirstConv",
@@ -96,11 +116,14 @@ def build_pass_records(
             ["firmware/defines.h", "bridge", "testbench"],
         ),
         (
-            {"width_lanes": 4, "filter_lanes": 7},
+            {
+                "width_lanes": implementation_plan["width_lanes"],
+                "filter_lanes": implementation_plan["filter_lanes"],
+            },
             ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
         ),
         (
-            {"values_per_word": 28},
+            {"values_per_word": implementation_plan["values_per_internal_word"]},
             ["firmware/top.cpp", "firmware/defines.h"],
         ),
         (
@@ -108,12 +131,7 @@ def build_pass_records(
             ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
         ),
         (
-            {
-                "dense_inputs": 1176,
-                "filter_lanes": 7,
-                "dense_parallelism": dense_parallelism,
-                "dense_steps": 168 // dense_parallelism,
-            },
+            dense_parameters,
             ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
         ),
         (

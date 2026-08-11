@@ -1111,6 +1111,23 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
         "BindShallowInternalFifos",
         "ElideDataflowStartPropagation",
     ]
+    dense_pass = next(
+        item
+        for item in project.manifest["pipeline"]["passes"]
+        if item["id"] == "StreamFlattenIntoDense"
+    )
+    assert dense_pass["resolved_parameters"] == {
+        "dense_inputs": 1176,
+        "filter_lanes": 7,
+        "dense_parallelism": 2,
+        "dense_steps": 84,
+        "weight_delivery": "wide-sequential-v1",
+        "weight_word_bits": 112,
+        "weight_depth": 84,
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "accumulation": "ordered",
+    }
     assert all(
         {
             "id",

@@ -324,8 +324,7 @@ def _generate_project(
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
-        optimization = ravel_config["Optimization"]
-        pass_records = build_pass_records(optimization)
+        pass_records = build_pass_records(implementation_plan)
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
             raise ProjectGenerationError(
