@@ -19,7 +19,14 @@ resources and WNS are single-core Vivado 2023.2 post-route results.
 | Flow | II | Latency (cycles) | HLS clock (ns) | OOC BRAM tile | OOC DSP | OOC registers | OOC LUTs | OOC WNS (ns) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | Vanilla hls4ml | 3076 | 3084 | 3.619 | 5.5 | 1 | 21745 | 18312 | +0.206 |
+| RAVEL Aria 1.1.0 P2/D1 | 178 | 183 | 3.647 | 1.0 | 7 | 2953 | 5332 | +1.121 |
+| RAVEL Aria 1.3.0 P4/D2 | 94 | 99 | 3.502 | 0.5 | 14 | 3709 | 7861 | +0.817 |
 | RAVEL Aria 1.4.0 P4/D2 | 94 | 99 | 3.402 | 1.5 | 15 | 3622 | 6981 | +0.524 |
+
+Against the vanilla II of 3076, Aria 1.1 reaches 178 and Aria 1.3/1.4 reach
+94. Post-route LUT/register counts are 18312/21745 for vanilla, 5332/2953 for
+Aria 1.1, 7861/3709 for Aria 1.3, and 6981/3622 for Aria 1.4. All four meet
+200 MHz.
 
 The throughput requirements of ARIANNA, RNO-G, and IceCube-Gen2 are already met by the current system design ([AI Trigger System, v3.3.0](https://github.com/NuDAQ/AI-Trigger-System/tree/v3.3.0)). For models with similar architectures and size, processing speed and power consumption are no longer limiting factors.
 
