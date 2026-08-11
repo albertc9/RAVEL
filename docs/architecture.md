@@ -5,7 +5,7 @@ project while preserving the model semantics. Training remains outside RAVEL.
 
 ## Aria workflow
 
-Aria 1.3.0 exposes one Python-first conversion path:
+Aria 1.4.0 exposes one Python-first conversion path:
 
 1. `ravel_hls.convert(model, config)` validates `Project`, `HLS`, optional
    `Optimization`, `Verification`, and `Vitis` settings.
@@ -42,6 +42,13 @@ deassert input `TREADY` while draining a second convolution output row. Dense
 x1 consumes one seven-filter group per step and Dense x2 consumes two while
 retaining fixed-point accumulation order.
 
+Before rendering, RAVEL extracts Dense connectivity, dimensions, numeric
+semantics, parameter representation, and coefficient statistics from the
+hls4ml graph. The resolved `wide-sequential-v1` plan packs weights at generation
+time into one sequential ROM, derives its word width and depth, and emits an
+ordered lane-local MAC schedule. Parameter statistics are descriptive and do
+not change the generated architecture.
+
 RAVEL renders owned files from the resolved plan through strict templates;
 unaffected project files remain hls4ml-owned.
 
@@ -73,5 +80,5 @@ clock, tool version, and expected RTL port widths.
   pass/fail limits.
 
 RTL simulation, IP export, implementation timing, and board validation remain
-separate activities. Aria 1.3.0 does not promote HLS synthesis into proof of any
+separate activities. Aria 1.4.0 does not promote HLS synthesis into proof of any
 of those layers.

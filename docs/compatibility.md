@@ -2,7 +2,7 @@
 
 ## Model profile
 
-Aria 1.3.0 accepts a single-input, single-output homogeneous HGQ model with this
+Aria 1.4.0 accepts a single-input, single-output homogeneous HGQ model with this
 semantic sequence:
 
 ```text
@@ -30,6 +30,11 @@ parameters, verification inputs, and Vitis invocation remain user-selected.
 choices. Missing axes resolve independently to P4 and D2. P2/D1 preserves the
 Aria 1.1 input width and schedule semantics; P4 changes expected input TDATA
 from 128 to 256 bits. Refresh preserves the recorded selection.
+
+Aria 1.4 derives a sequential packed Dense weight ROM from the converted
+hls4ml graph. Word width, depth, MAC lanes, and tail handling are internal plan
+properties; they are not additional public configuration fields. Refresh may
+change parameter values but rejects changes to the recorded structural plan.
 
 Linux supports the complete qualified workflow. macOS supports model parsing,
 generation, post-processing, package handling, and inspection; automatic C++
