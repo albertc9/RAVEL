@@ -663,10 +663,22 @@ def test_convert_renders_the_selected_temporal_packing_contract(
     assert "hls::stream<input_x4_t>" in packed4_bridge
     assert "word_index < 64" in packed4_bridge
     assert "row < 4" in packed4_bridge
-    assert packed4.implementation_plan["template_profile"] == "aria-p4-d2-v1"
+    assert packed4.implementation_plan["template_profile"] == "aria-p4-d2-v2"
     assert packed4.implementation_plan["input_words_per_inference"] == 64
     assert packed4.implementation_plan["dense_steps"] == 84
-    assert packed2.implementation_plan["template_profile"] == "aria-p2-d1-v1"
+    assert packed4.implementation_plan["weight_delivery"] == {
+        "id": "wide-sequential",
+        "version": 1,
+        "mac_lanes": 14,
+        "word_bits": 112,
+        "depth": 84,
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "storage": {"type": "rom_1p", "implementation": "bram"},
+        "multipliers": {"implementation": "dsp", "instances": 14},
+        "accumulation": {"policy": "ordered"},
+    }
+    assert packed2.implementation_plan["template_profile"] == "aria-p2-d1-v2"
     assert packed2.implementation_plan["input_words_per_inference"] == 128
     assert packed2.implementation_plan["dense_steps"] == 168
     assert packed4.manifest["interfaces"]["hls_stream_interface"] == {

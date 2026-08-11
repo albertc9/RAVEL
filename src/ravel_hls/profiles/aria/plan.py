@@ -6,23 +6,47 @@ import json
 from typing import Any
 
 
-def build_implementation_plan(optimization: Mapping[str, int]) -> dict[str, Any]:
+def build_implementation_plan(
+    optimization: Mapping[str, int], model_facts: Mapping[str, Any]
+) -> dict[str, Any]:
     """Return the deterministic plan for one resolved specialization."""
 
     temporal_pack = optimization["TemporalPacking"]
     dense_parallelism = optimization["DenseParallelism"]
+    dense_facts = model_facts["dense"][0]
+    dense_inputs = dense_facts["n_in"]
+    dense_outputs = dense_facts["n_out"]
+    dense_group_size = dense_facts["input_group_size"]
+    mac_lanes = dense_group_size * dense_parallelism
+    total_products = dense_inputs * dense_outputs
+    dense_steps = (total_products + mac_lanes - 1) // mac_lanes
+    tail_elements = total_products % mac_lanes
+    valid_tail_lanes = tail_elements or mac_lanes
+    weight_delivery = {
+        "id": "wide-sequential",
+        "version": 1,
+        "mac_lanes": mac_lanes,
+        "word_bits": mac_lanes * dense_facts["numeric"]["weight"]["width"],
+        "depth": dense_steps,
+        "tail_elements": tail_elements,
+        "tail_mask": (1 << valid_tail_lanes) - 1,
+        "storage": {"type": "rom_1p", "implementation": "bram"},
+        "multipliers": {"implementation": "dsp", "instances": mac_lanes},
+        "accumulation": {"policy": "ordered"},
+    }
     return {
-        "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v1",
+        "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v2",
         "temporal_pack": temporal_pack,
         "channels_per_row": 4,
         "values_per_input_word": temporal_pack * 4,
         "input_words_per_inference": 256 // temporal_pack,
         "width_lanes": 4,
-        "filter_lanes": 7,
-        "values_per_internal_word": 28,
-        "dense_inputs": 1176,
+        "filter_lanes": dense_group_size,
+        "values_per_internal_word": 4 * dense_group_size,
+        "dense_inputs": dense_inputs,
         "dense_parallelism": dense_parallelism,
-        "dense_steps": 168 // dense_parallelism,
+        "dense_steps": dense_steps,
+        "weight_delivery": weight_delivery,
         "internal_fifo_depth": 4,
         "dataflow_start_propagation": False,
     }
