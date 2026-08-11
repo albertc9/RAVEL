@@ -75,9 +75,7 @@ project = ravel.convert(model, config)
 print(project.status)
 ```
 
-`Optimization` is optional. Omission selects the versioned aggressive default,
-currently P4/D2. Explicit values use the same mapping style as the other RAVEL
-and hls4ml settings:
+`Optimization` is optional. Omission selects the versioned aggressive default:
 
 ```python
 config["Optimization"] = {
@@ -142,8 +140,7 @@ are tentative.
 Higher versions will focus primarily on expanding functionality and model support. At present, Nocturne 2.0 is expected to bring the target model into its highest practical throughput range. Further versions may still achieve higher throughput, but the remaining headroom is expected to be quite limited.
 
 - **Aria 1.x** Continue improving the closed P2/P4 x D1/D2 specialization set,
-  deterministic project lifecycle, verification, and tool compatibility.
-  Aria does not perform design-space exploration. For this version,
+  deterministic project lifecycle, verification, and tool compatibility. For this version,
   RAVEL's goal is simply to design an efficient converter for models currently in 
   use or planned for use for 
   high-energy neutrino experiments, e.g., ARIANNA, RNO-G, and IceCube-Gen2.
