@@ -27,6 +27,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-name", default="cnn_core")
     parser.add_argument("--part", default="xcku5p-ffvb676-2-e")
     parser.add_argument("--clock-period", type=float, default=5.0)
+    parser.add_argument("--temporal-packing", type=int, choices=(2, 4))
+    parser.add_argument("--dense-parallelism", type=int, choices=(1, 2))
     parser.add_argument(
         "--verification",
         choices=("auto", "required", "disabled"),
@@ -87,6 +89,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         },
         "Vitis": {"Run": args.vitis},
     }
+    optimization = {}
+    if args.temporal_packing is not None:
+        optimization["TemporalPacking"] = args.temporal_packing
+    if args.dense_parallelism is not None:
+        optimization["DenseParallelism"] = args.dense_parallelism
+    if optimization:
+        config["Optimization"] = optimization
     project = ravel.convert(
         model,
         config,

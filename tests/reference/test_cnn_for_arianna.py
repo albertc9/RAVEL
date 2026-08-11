@@ -32,6 +32,8 @@ def test_reference_generator_exposes_a_lightweight_help_entrypoint() -> None:
     assert result.returncode == 0
     assert "--verification" in result.stdout
     assert "--part" in result.stdout
+    assert "--temporal-packing {2,4}" in result.stdout
+    assert "--dense-parallelism {1,2}" in result.stdout
     assert "--vitis" in result.stdout
 
 
@@ -41,6 +43,7 @@ def test_reference_generator_uses_only_the_canonical_public_api() -> None:
     assert "import ravel_hls as ravel" in source
     assert "ravel.convert(" in source
     assert '"Vitis": {"Run": args.vitis}' in source
+    assert 'config["Optimization"] = optimization' in source
     assert "RavelConfig" not in source
     assert "convert_from_keras_model" not in source
 
