@@ -114,9 +114,9 @@ See the executable [CNN-for-Arianna reference](references/cnn_for_arianna/README
 
 RAVEL will evolve from the fixed, qualified specialization flow into a
 general rate-aware FPGA inference generator. Plans for higher versions
-are merely tentative.
+are tentative.
 
-- **Aria 1.0** Continue improving the current P2 pair-parallel wide-stream
+- **Aria 1.x** Continue improving the current P2 pair-parallel wide-stream
   profile, deterministic project lifecycle, verification, and tool compatibility.
   Aria remains a fixed specialization flow without design-space exploration. For this version, 
   RAVEL's goal is simply to design an efficient converter for the trigger system in 
