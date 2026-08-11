@@ -34,7 +34,7 @@ def test_committed_hls4ml_configs_do_not_expose_generation_machine_paths() -> No
         assert "/Users/" not in config
 
 
-def test_public_namespace_exposes_only_the_aria_1_3_lifecycle() -> None:
+def test_public_namespace_exposes_only_the_aria_1_4_lifecycle() -> None:
     import ravel_hls
 
     assert {"convert", "Project"} <= set(ravel_hls.__all__)
@@ -51,7 +51,7 @@ def test_public_namespace_exposes_only_the_aria_1_3_lifecycle() -> None:
         assert not hasattr(ravel_hls, removed_name)
 
 
-def test_config_schema_describes_the_unified_aria_1_3_mapping() -> None:
+def test_config_schema_describes_the_unified_aria_1_4_mapping() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_config.schema.json").read_text(
@@ -59,7 +59,7 @@ def test_config_schema_describes_the_unified_aria_1_3_mapping() -> None:
         )
     )
 
-    assert schema["title"] == "RAVEL Aria 1.3.0 configuration"
+    assert schema["title"] == "RAVEL Aria 1.4.0 configuration"
     assert schema["required"] == ["Project", "HLS"]
     assert set(schema["properties"]) == {
         "Project",

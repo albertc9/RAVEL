@@ -7,7 +7,7 @@ from ..exceptions import CompatibilityError
 
 
 def validate_aria_model_profile(layers: Iterable[Any]) -> None:
-    """Reject model graphs outside the fixed Aria 1.3.0 topology family."""
+    """Reject model graphs outside the fixed Aria 1.4.0 topology family."""
 
     layer_list = list(layers)
     expected_sequence = [
@@ -22,7 +22,7 @@ def validate_aria_model_profile(layers: Iterable[Any]) -> None:
     actual_sequence = [layer.class_name for layer in layer_list]
     if actual_sequence != expected_sequence:
         raise CompatibilityError(
-            "Aria 1.3.0 layer sequence must be " + " -> ".join(expected_sequence)
+            "Aria 1.4.0 layer sequence must be " + " -> ".join(expected_sequence)
         )
     for producer, consumer in zip(layer_list, layer_list[1:]):
         if list(getattr(consumer, "inputs", ())) != list(
