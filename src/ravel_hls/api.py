@@ -334,7 +334,7 @@ def _generate_project(
             staging_path,
             project_name,
             layers,
-            optimization=ravel_config["Optimization"],
+            implementation_plan=implementation_plan,
         )
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)

@@ -5,8 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
+import numpy as np
 
 from ...exceptions import ProjectGenerationError
+from ...packing import pack_fixed_point_words
 
 
 _TEMPLATE_ROOT = Path(__file__).with_name("templates")
@@ -17,7 +19,7 @@ def render_aria_project(
     project_name: str,
     layers: list[Any],
     *,
-    optimization: Mapping[str, int],
+    implementation_plan: Mapping[str, Any],
 ) -> list[str]:
     """Render all Aria-owned firmware files from a typed model context."""
 
@@ -33,7 +35,11 @@ def render_aria_project(
         raise ProjectGenerationError(
             "Aria requires Conv2D and Dense weight/bias pairs in the hls4ml graph"
         )
-    temporal_pack = optimization["TemporalPacking"]
+    temporal_pack = implementation_plan["temporal_pack"]
+    weight_delivery = implementation_plan["weight_delivery"]
+    dense_packed = None
+    if weight_delivery["id"] == "wide-sequential":
+        dense_packed = _packed_weight_context(dense_weights[0], weight_delivery)
 
     firmware = project_path / "firmware"
     defines_path = firmware / "defines.h"
@@ -63,7 +69,7 @@ def render_aria_project(
         "activation_config": f"relu_config{activation.get_attr('index')}",
         "pool_config": f"config{pooling.get_attr('index')}",
         "dense_config": f"config{dense.get_attr('index')}",
-        "dense_parallelism": optimization["DenseParallelism"],
+        "dense_parallelism": implementation_plan["dense_parallelism"],
         "temporal_pack": temporal_pack,
         "input_words_per_inference": 256 // temporal_pack,
         "first_conv_function": (
@@ -75,6 +81,7 @@ def render_aria_project(
         "conv_weight": _weight_context(convolution_weights[0]),
         "conv_bias": _weight_context(convolution_weights[1]),
         "dense_weight": _weight_context(dense_weights[0]),
+        "dense_packed": dense_packed,
         "dense_bias": _weight_context(dense_weights[1]),
         "baseline_defines_body": defines_body.rstrip(),
     }
@@ -92,6 +99,8 @@ def render_aria_project(
         f"{project_name}_bridge.cpp": "aria/bridge/bridge.cpp.j2",
         f"{project_name}_test.cpp": "aria/testbench/test.cpp.j2",
     }
+    if dense_packed is not None:
+        outputs[dense_packed["path"]] = "aria/firmware/dense_weights.h.j2"
     for relative_path, template_name in outputs.items():
         output = project_path / relative_path
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -111,4 +120,41 @@ def _weight_context(weight: Any) -> dict[str, Any]:
         "name": weight.name,
         "type_name": weight.type.name,
         "length": weight.data_length,
+    }
+
+
+def _packed_weight_context(
+    weight: Any, weight_delivery: Mapping[str, Any]
+) -> dict[str, Any]:
+    precision = weight.type.precision
+    values = np.asarray(weight.data).reshape(-1)
+    if len(values) != weight.data_length:
+        raise ProjectGenerationError(
+            f"Dense weight {weight.name} data length does not match its declaration"
+        )
+    try:
+        words = pack_fixed_point_words(
+            values,
+            width=precision.width,
+            integer=precision.integer,
+            signed=precision.signed,
+            lanes=weight_delivery["mac_lanes"],
+        )
+    except ValueError as error:
+        raise ProjectGenerationError(
+            f"Dense weight {weight.name} cannot be packed: {error}"
+        ) from error
+    if len(words) != weight_delivery["depth"]:
+        raise ProjectGenerationError(
+            f"Dense weight {weight.name} packed depth does not match its plan"
+        )
+    word_bits = weight_delivery["word_bits"]
+    hex_digits = (word_bits + 3) // 4
+    return {
+        "name": f"{weight.name}_ravel_packed",
+        "guard": f"RAVEL_{weight.name.upper()}_PACKED_H_",
+        "path": f"firmware/weights/{weight.name}_ravel_packed.h",
+        "word_bits": word_bits,
+        "depth": len(words),
+        "words": [f"0x{word:0{hex_digits}x}" for word in words],
     }

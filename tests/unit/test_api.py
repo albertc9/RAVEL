@@ -1152,6 +1152,28 @@ def test_optimize_project_publishes_a_complete_aria_project(tmp_path: Path) -> N
     }
 
 
+def test_optimize_project_prepacks_dense_weights_for_sequential_delivery(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "aria_project"
+    hls_model = _FakeHlsModel(output_dir)
+    dense_kernel = hls_model.layers[-1].get_weights()[0]
+    dense_kernel.data[:3] = [0.5, -0.25, -2.0]
+
+    project = optimize_project(
+        hls_model,
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+
+    packed_path = output_dir / "firmware" / "weights" / "w9_ravel_packed.h"
+    packed_source = packed_path.read_text(encoding="utf-8")
+    assert "const ap_uint<112> w9_ravel_packed[84]" in packed_source
+    assert 'ap_uint<112>("0x000000000000000000000080f020", 16)' in packed_source
+    assert "firmware/weights/w9_ravel_packed.h" in {
+        entry["path"] for entry in project.manifest["source_closure"]
+    }
+
+
 def test_project_build_runs_vitis_in_place_and_records_the_report(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
