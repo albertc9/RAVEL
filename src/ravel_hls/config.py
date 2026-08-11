@@ -25,15 +25,11 @@ def _resolve_optimization(values: Any) -> dict[str, int]:
         raise ConfigurationError(
             f"Unknown RAVEL configuration field: Optimization.{unknown_fields[0]}"
         )
-    missing_fields = sorted(fields - values.keys())
-    if missing_fields:
-        raise ConfigurationError(
-            f"Optimization.{missing_fields[0]} is required when Optimization is supplied"
-        )
-    temporal_packing = values["TemporalPacking"]
+    resolved = {**_AGGRESSIVE_SPECIALIZATION, **values}
+    temporal_packing = resolved["TemporalPacking"]
     if temporal_packing not in {2, 4} or isinstance(temporal_packing, bool):
         raise ConfigurationError("Optimization.TemporalPacking must be one of: 2, 4")
-    dense_parallelism = values["DenseParallelism"]
+    dense_parallelism = resolved["DenseParallelism"]
     if dense_parallelism not in {1, 2} or isinstance(dense_parallelism, bool):
         raise ConfigurationError("Optimization.DenseParallelism must be one of: 1, 2")
     return {
