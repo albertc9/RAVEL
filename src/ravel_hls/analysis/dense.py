@@ -17,6 +17,8 @@ def analyze_dense_facts(layers: Iterable[Any]) -> list[dict[str, Any]]:
         kernel_values = np.asarray(kernel.data)
         bias_values = np.asarray(bias.data)
         zero = int(np.count_nonzero(kernel_values == 0))
+        nonzero_values = kernel_values[kernel_values != 0]
+        mantissas, _ = np.frexp(np.abs(nonzero_values))
         facts.append(
             {
                 "role": "output",
@@ -28,6 +30,7 @@ def analyze_dense_facts(layers: Iterable[Any]) -> list[dict[str, Any]]:
                     "statistics": {
                         "zero": zero,
                         "nonzero": int(kernel_values.size) - zero,
+                        "power_of_two": int(np.count_nonzero(mantissas == 0.5)),
                         "unique": int(np.unique(kernel_values).size),
                     },
                 },

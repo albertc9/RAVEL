@@ -419,7 +419,12 @@ def test_convert_records_dense_shape_and_coefficient_facts(
             "kernel": {
                 "shape": [1176],
                 "elements": 1176,
-                "statistics": {"zero": 1173, "nonzero": 3, "unique": 4},
+                "statistics": {
+                    "zero": 1173,
+                    "nonzero": 3,
+                    "power_of_two": 2,
+                    "unique": 4,
+                },
             },
             "bias": {"shape": [1], "elements": 1},
         }
