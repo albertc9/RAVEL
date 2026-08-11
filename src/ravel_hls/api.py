@@ -225,6 +225,26 @@ def optimize_project(
             implementation_plan["weight_delivery"] = dict(
                 preserved_weight_delivery
             )
+        elif (
+            isinstance(preserved_weight_delivery, Mapping)
+            and preserved_weight_delivery.get("id") == "wide-sequential"
+        ):
+            if (
+                implementation_plan["template_profile"]
+                != preserved_implementation_plan["template_profile"]
+                or implementation_plan["weight_delivery"]
+                != preserved_weight_delivery
+            ):
+                raise CompatibilityError(
+                    "Dense implementation plan changed during refresh; "
+                    "use ordinary conversion"
+                )
+            implementation_plan["template_profile"] = (
+                preserved_implementation_plan["template_profile"]
+            )
+            implementation_plan["weight_delivery"] = dict(
+                preserved_weight_delivery
+            )
     if implementation_plan["weight_delivery"]["id"] == "wide-sequential":
         dense_applicability = implementation_plan["weight_delivery"][
             "applicability"

@@ -1819,6 +1819,32 @@ def test_project_refresh_preserves_the_recorded_specialization(
     )
 
 
+def test_project_refresh_rejects_a_changed_dense_architecture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output_dir = tmp_path / "project"
+    original = optimize_project(
+        _FakeHlsModel(output_dir),
+        config={"Profile": "aria", "Verification": {"Mode": "disabled"}},
+    )
+
+    def fake_convert(**kwargs: Any) -> _FakeHlsModel:
+        refreshed_model = _FakeHlsModel(Path(kwargs["output_dir"]))
+        dense_kernel = refreshed_model.layers[-1].get_weights()[0]
+        dense_kernel.type.precision = _FakePrecision("ap_fixed<9,3>")
+        return refreshed_model
+
+    fake_hls4ml = ModuleType("hls4ml")
+    fake_hls4ml.converters = SimpleNamespace(convert_from_keras_model=fake_convert)
+    monkeypatch.setitem(sys.modules, "hls4ml", fake_hls4ml)
+
+    with pytest.raises(
+        CompatibilityError,
+        match="Dense implementation plan changed during refresh",
+    ):
+        original.refresh(object())
+
+
 def test_project_refresh_preserves_a_legacy_dense_strategy(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
