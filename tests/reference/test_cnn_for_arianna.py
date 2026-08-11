@@ -42,7 +42,8 @@ def test_reference_generator_uses_only_the_canonical_public_api() -> None:
 
     assert "import ravel_hls as ravel" in source
     assert "ravel.convert(" in source
-    assert '"Vitis": {"Run": args.vitis}' in source
+    assert '"Run": args.vitis' in source
+    assert '"Stages": {"CoSim": args.vitis}' in source
     assert 'config["Optimization"] = optimization' in source
     assert "RavelConfig" not in source
     assert "convert_from_keras_model" not in source

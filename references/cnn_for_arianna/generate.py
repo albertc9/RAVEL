@@ -45,7 +45,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--vitis",
         action="store_true",
-        help="Run Vitis HLS 2023.2 and record synthesis measurements",
+        help="Run Vitis HLS synthesis and RTL co-simulation",
     )
     return parser
 
@@ -87,7 +87,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             "Samples": args.samples,
             "Seed": args.seed,
         },
-        "Vitis": {"Run": args.vitis},
+        "Vitis": {
+            "Run": args.vitis,
+            "Stages": {"CoSim": args.vitis},
+        },
     }
     optimization = {}
     if args.temporal_packing is not None:
