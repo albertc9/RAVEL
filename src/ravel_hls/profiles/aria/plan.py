@@ -22,6 +22,21 @@ def build_implementation_plan(
     dense_steps = (total_products + mac_lanes - 1) // mac_lanes
     tail_elements = total_products % mac_lanes
     valid_tail_lanes = tail_elements or mac_lanes
+    applicability_reasons = []
+    if dense_facts["n_out"] != 1:
+        applicability_reasons.append("wide-sequential-v1 requires one Dense output")
+    if dense_facts["parameter_representation"] != "dense":
+        applicability_reasons.append(
+            "wide-sequential-v1 requires dense parameter representation"
+        )
+    if dense_facts["feature_ordering"]["kind"] != "identity":
+        applicability_reasons.append(
+            "wide-sequential-v1 requires identity feature ordering"
+        )
+    if any(
+        numeric["kind"] != "fixed" for numeric in dense_facts["numeric"].values()
+    ):
+        applicability_reasons.append("wide-sequential-v1 requires fixed-point types")
     weight_delivery = {
         "id": "wide-sequential",
         "version": 1,
@@ -33,6 +48,10 @@ def build_implementation_plan(
         "storage": {"type": "rom_1p", "implementation": "bram"},
         "multipliers": {"implementation": "dsp", "instances": mac_lanes},
         "accumulation": {"policy": "ordered"},
+        "applicability": {
+            "status": "applicable" if not applicability_reasons else "inapplicable",
+            "reasons": applicability_reasons,
+        },
     }
     return {
         "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v2",

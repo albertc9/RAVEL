@@ -677,6 +677,7 @@ def test_convert_renders_the_selected_temporal_packing_contract(
         "storage": {"type": "rom_1p", "implementation": "bram"},
         "multipliers": {"implementation": "dsp", "instances": 14},
         "accumulation": {"policy": "ordered"},
+        "applicability": {"status": "applicable", "reasons": []},
     }
     assert packed2.implementation_plan["template_profile"] == "aria-p2-d1-v2"
     assert packed2.implementation_plan["input_words_per_inference"] == 128
