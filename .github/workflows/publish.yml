@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -11,7 +12,7 @@ permissions:
 jobs:
   build:
     name: Test and build distributions
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, ravel-release]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,6 +38,7 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: build
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
