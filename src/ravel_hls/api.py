@@ -24,7 +24,7 @@ from .exceptions import (
 from .manifest import architecture_contract_sha256, build_generation_manifest
 from .parameters import Parameters
 from .project import RavelProject, open_project
-from .rendering.vitis import render_aria_project as render_resolved_aria_project
+from .generations import builtin_generation
 from .verification.equivalence import (
     predict_baseline,
     predict_optimized,
@@ -386,7 +386,14 @@ def _generate_project(
             raise ProjectGenerationError(
                 "hls4ml ProjectName must be a valid C++ identifier"
             )
-        managed_paths = render_resolved_aria_project(
+        generation = builtin_generation(
+            model_analysis["generation"]["id"],
+            model_analysis["generation"]["version"],
+        )
+        binding = generation.backend_binding(
+            hls_config["Backend"], hls_config["IOType"]
+        )
+        managed_paths = binding.render(
             staging_path,
             project_name,
             model_analysis["resolved_design"],

@@ -5,8 +5,23 @@ import hashlib
 import json
 from typing import Any, Callable, Mapping
 
+from ..registry import ComponentDefinition
+
 
 PassEffect = Callable[[dict[str, Any]], dict[str, Any]]
+
+ARIA_PASS_DEFINITIONS = tuple(
+    ComponentDefinition(pass_id, 1)
+    for pass_id in (
+        "pack-temporal-input",
+        "fuse-repack-into-first-conv",
+        "propagate-wide-relu-stream",
+        "specialize-nonoverlapping-maxpool",
+        "stream-flatten-into-dense",
+        "bind-shallow-internal-fifos",
+        "elide-dataflow-start-propagation",
+    )
+)
 
 
 def resolve_aria_design(
@@ -38,10 +53,9 @@ def resolve_aria_design(
         "rendering": deepcopy(dict(rendering)),
         "streaming": {},
     }
-    transformations: tuple[tuple[str, int, PassEffect], ...] = (
+    transformations: tuple[tuple[ComponentDefinition, PassEffect], ...] = (
         (
-            "pack-temporal-input",
-            1,
+            ARIA_PASS_DEFINITIONS[0],
             lambda current: _set_streaming(
                 current,
                 "input",
@@ -55,8 +69,7 @@ def resolve_aria_design(
             ),
         ),
         (
-            "fuse-repack-into-first-conv",
-            1,
+            ARIA_PASS_DEFINITIONS[1],
             lambda current: _set_streaming(
                 current,
                 "first_convolution",
@@ -76,8 +89,7 @@ def resolve_aria_design(
             ),
         ),
         (
-            "propagate-wide-relu-stream",
-            1,
+            ARIA_PASS_DEFINITIONS[2],
             lambda current: _set_streaming(
                 current,
                 "activation",
@@ -90,8 +102,7 @@ def resolve_aria_design(
             ),
         ),
         (
-            "specialize-nonoverlapping-maxpool",
-            1,
+            ARIA_PASS_DEFINITIONS[3],
             lambda current: _set_streaming(
                 current,
                 "pooling",
@@ -109,8 +120,7 @@ def resolve_aria_design(
             ),
         ),
         (
-            "stream-flatten-into-dense",
-            1,
+            ARIA_PASS_DEFINITIONS[4],
             lambda current: _set_streaming(
                 current,
                 "dense",
@@ -124,8 +134,7 @@ def resolve_aria_design(
             ),
         ),
         (
-            "bind-shallow-internal-fifos",
-            1,
+            ARIA_PASS_DEFINITIONS[5],
             lambda current: _set_streaming(
                 current,
                 "buffers",
@@ -136,8 +145,7 @@ def resolve_aria_design(
             ),
         ),
         (
-            "elide-dataflow-start-propagation",
-            1,
+            ARIA_PASS_DEFINITIONS[6],
             lambda current: _set_streaming(
                 current,
                 "dataflow_control",
@@ -151,16 +159,16 @@ def resolve_aria_design(
         ),
     )
     records = []
-    for order, (pass_id, version, transform) in enumerate(transformations, start=1):
+    for order, (definition, transform) in enumerate(transformations, start=1):
         input_fingerprint = _fingerprint(state)
         transformed = transform(state)
         output_fingerprint = _fingerprint(transformed)
         if output_fingerprint == input_fingerprint:
-            raise RuntimeError(f"Aria pass {pass_id} did not transform the design")
+            raise RuntimeError(f"Aria pass {definition.id} did not transform the design")
         records.append(
             {
-                "id": pass_id,
-                "version": version,
+                "id": definition.id,
+                "version": definition.version,
                 "order": order,
                 "result": "applied",
                 "input_design_sha256": input_fingerprint,
