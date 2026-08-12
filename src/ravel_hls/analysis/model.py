@@ -107,6 +107,29 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     if io_type != "io_stream":
         raise ConfigurationError("HLS.IOType must be io_stream")
 
+    optimization = config.get("Optimization", {})
+    if not isinstance(optimization, Mapping):
+        raise ConfigurationError("Optimization must be a mapping")
+    unknown_optimization = sorted(
+        set(optimization) - {"TemporalPacking", "DenseParallelism"}
+    )
+    if unknown_optimization:
+        raise ConfigurationError(
+            f"Unknown optimization field: {unknown_optimization[0]}"
+        )
+    choices = {
+        "TemporalPacking": optimization.get("TemporalPacking", 4),
+        "DenseParallelism": optimization.get("DenseParallelism", 2),
+    }
+    for field, allowed in (
+        ("TemporalPacking", {2, 4}),
+        ("DenseParallelism", {1, 2}),
+    ):
+        value = choices[field]
+        if isinstance(value, bool) or not isinstance(value, int) or value not in allowed:
+            options = ", ".join(str(item) for item in sorted(allowed))
+            raise ConfigurationError(f"Optimization.{field} must be one of {options}")
+
     dependencies = inspect_dependencies()
     if dependencies["dependency_qualification"] != "qualified":
         failed = [
@@ -162,26 +185,30 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
         model_facts, frontend_provenance
     )
 
-    optimization = config.get("Optimization", {})
-    if not isinstance(optimization, Mapping):
-        raise ConfigurationError("Optimization must be a mapping")
-    choices = {
-        "TemporalPacking": optimization.get("TemporalPacking", 4),
-        "DenseParallelism": optimization.get("DenseParallelism", 2),
-    }
     dense_facts: dict[str, Any] = {}
     resolved_design = None
     if model_family is not None:
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
-        interface = _predicted_interface(model_facts, plan)
-        resolved_design = resolve_aria_design(
-            model_facts=model_facts,
-            implementation_plan=plan,
-            interfaces=interface,
-            parameter_bindings=_parameter_bindings(model_facts, parameter_payload),
-            rendering=_rendering_contract(layers, plan),
+        strategy_findings = _strategy_geometry_findings(
+            model_facts["operations"], choices, plan
         )
+        if strategy_findings:
+            applicability = {
+                "status": "unsupported",
+                "findings": strategy_findings,
+            }
+        else:
+            interface = _predicted_interface(model_facts, plan)
+            resolved_design = resolve_aria_design(
+                model_facts=model_facts,
+                implementation_plan=plan,
+                interfaces=interface,
+                parameter_bindings=_parameter_bindings(
+                    model_facts, parameter_payload
+                ),
+                rendering=_rendering_contract(layers, plan),
+            )
     analysis = ModelAnalysis._from_report(
         {
             "schema_version": 1,
@@ -373,6 +400,151 @@ def _shape_size(shape: list[int]) -> int:
     for dimension in shape:
         result *= dimension
     return result
+
+
+def _strategy_geometry_findings(
+    operations: list[Mapping[str, Any]],
+    choices: Mapping[str, int],
+    plan: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Check the selected renderer's real compile-time geometry contract."""
+
+    by_id = {operation["id"]: operation for operation in operations}
+    input_shape = by_id["input_0"]["outputs"][0]["shape"]
+    convolution = by_id["conv2d_0"]["attributes"]
+    pooling = by_id["max_pool2d_0"]["attributes"]
+    temporal_pack = choices["TemporalPacking"]
+    dense_parallelism = choices["DenseParallelism"]
+    findings: list[dict[str, Any]] = []
+
+    def require(
+        condition: bool,
+        *,
+        code: str,
+        operation_id: str,
+        field: str,
+        expected: Any,
+        observed: Any,
+        message: str,
+    ) -> None:
+        if not condition:
+            findings.append(
+                {
+                    "code": code,
+                    "severity": "error",
+                    "operation_id": operation_id,
+                    "field": field,
+                    "expected": expected,
+                    "observed": observed,
+                    "message": message,
+                }
+            )
+
+    require(
+        input_shape[0] % temporal_pack == 0,
+        code="strategy.geometry.input_pack",
+        operation_id="input_0",
+        field="height",
+        expected=f"divisible by {temporal_pack}",
+        observed=input_shape[0],
+        message="Selected temporal packing must divide the input height",
+    )
+    common_convolution = {
+        "n_chan": 1,
+        "filt_width": 1,
+        "stride_width": 1,
+        "pad_top": 0,
+        "pad_bottom": 0,
+        "pad_left": 0,
+        "pad_right": 0,
+    }
+    for field, expected in common_convolution.items():
+        require(
+            convolution[field] == expected,
+            code="strategy.geometry.convolution",
+            operation_id="conv2d_0",
+            field=field,
+            expected=expected,
+            observed=convolution[field],
+            message=f"Aria streaming convolution does not support {field}={convolution[field]}",
+        )
+
+    if temporal_pack == 4:
+        p4_contract = {"filt_height": 5, "stride_height": 3}
+        for field, expected in p4_contract.items():
+            require(
+                convolution[field] == expected,
+                code="strategy.geometry.p4",
+                operation_id="conv2d_0",
+                field=field,
+                expected=expected,
+                observed=convolution[field],
+                message=f"Aria P4 requires Conv2D {field}={expected}",
+            )
+    else:
+        require(
+            convolution["filt_height"] >= 3,
+            code="strategy.geometry.p2",
+            operation_id="conv2d_0",
+            field="filt_height",
+            expected=">= 3",
+            observed=convolution["filt_height"],
+            message="Aria P2 requires Conv2D filt_height>=3",
+        )
+        require(
+            convolution["stride_height"] >= 2,
+            code="strategy.geometry.p2",
+            operation_id="conv2d_0",
+            field="stride_height",
+            expected=">= 2",
+            observed=convolution["stride_height"],
+            message="Aria P2 requires Conv2D stride_height>=2",
+        )
+
+    pooling_contract = {
+        "pool_height": 2,
+        "pool_width": 1,
+        "stride_height": 2,
+        "stride_width": 1,
+        "pad_top": 0,
+        "pad_bottom": 0,
+        "pad_left": 0,
+        "pad_right": 0,
+        "pool_op": "Max",
+    }
+    for field, expected in pooling_contract.items():
+        require(
+            pooling[field] == expected,
+            code="strategy.geometry.pooling",
+            operation_id="max_pool2d_0",
+            field=field,
+            expected=expected,
+            observed=pooling[field],
+            message=f"Aria streaming pooling requires {field}={expected}",
+        )
+
+    require(
+        convolution["out_width"] % dense_parallelism == 0,
+        code="strategy.geometry.dense_stream",
+        operation_id="dense_0",
+        field="DenseParallelism",
+        expected=f"divisor of output width {convolution['out_width']}",
+        observed=dense_parallelism,
+        message="Dense parallelism must divide each streamed width group",
+    )
+    for reason in plan["weight_delivery"]["applicability"]["reasons"]:
+        findings.append(
+            {
+                "code": "strategy.parameters.dense",
+                "severity": "error",
+                "operation_id": "dense_0",
+                "field": "weight_delivery",
+                "expected": "wide-sequential-v1 compatible Dense",
+                "observed": reason,
+                "message": reason,
+            }
+        )
+    return findings
 
 
 def _parameter_bindings(

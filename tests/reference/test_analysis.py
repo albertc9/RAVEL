@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ravel_hls import analyze
+from ravel_hls import ConfigurationError, analyze
 
 
 REFERENCE_MODEL = (
@@ -222,6 +222,46 @@ def test_same_topology_accepts_extracted_geometry_instead_of_arianna_constants(
         "values_per_input_word": 8,
         "input_words_per_inference": 64,
     }
+
+
+def test_same_family_reports_an_unsupported_strategy_before_rendering(
+    noncanonical_geometry_model,
+) -> None:
+    report = analyze(
+        noncanonical_geometry_model,
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+
+    assert report["model_family"] == {
+        "id": "hgq-conv-pool-dense",
+        "version": 1,
+    }
+    assert report["applicability"]["status"] == "unsupported"
+    assert report["resolved_design"] is None
+    assert "strategy.geometry.p4" in {
+        finding["code"] for finding in report["applicability"]["findings"]
+    }
+
+
+@pytest.mark.parametrize(
+    ("optimization", "message"),
+    [
+        ({"TemporalPacking": 3}, "TemporalPacking"),
+        ({"DenseParallelism": 4}, "DenseParallelism"),
+        ({"Unknown": 1}, "Unknown optimization field"),
+    ],
+)
+def test_analysis_rejects_unregistered_strategy_choices(
+    optimization: dict[str, int], message: str,
+) -> None:
+    with pytest.raises(ConfigurationError, match=message):
+        analyze(
+            REFERENCE_MODEL,
+            {
+                "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+                "Optimization": optimization,
+            },
+        )
 
 
 @pytest.mark.parametrize(
