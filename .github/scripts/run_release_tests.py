@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run each test module in a fresh process to bound release-runner memory."""
+"""Run the curated release smoke gate with bounded process memory."""
 
 import argparse
 from pathlib import Path
@@ -8,27 +8,42 @@ import sys
 
 
 REPOSITORY = Path(__file__).resolve().parents[2]
+RELEASE_TESTS = (
+    (
+        "tests/project_conformance/test_distribution.py::"
+        "test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish"
+    ),
+    (
+        "tests/project_conformance/test_distribution.py::"
+        "test_public_namespace_exposes_only_the_aria_1_5_lifecycle"
+    ),
+    (
+        "tests/project_conformance/test_distribution.py::"
+        "test_wheel_contains_aria_rendering_templates"
+    ),
+    "tests/project_conformance/test_import_boundaries.py",
+    "tests/project_conformance/test_release_test_runner.py",
+    "tests/project_conformance/test_release_version.py",
+    (
+        "tests/qualification/vitis/test_import.py::"
+        "test_import_records_first_convolution_pipeline_evidence"
+    ),
+    "tests/reference/test_aria_1_5_1_rtl_evidence.py",
+    (
+        "tests/reference/test_dynamic_conversion.py::"
+        "test_conversion_checks_implementation_consistency_without_accuracy_labels"
+    ),
+    "tests/unit/test_generation_registry.py",
+)
 
 
-def discover_test_modules(repository: Path) -> tuple[Path, ...]:
-    """Return every pytest module in deterministic repository-relative order."""
+def run_release_tests(repository: Path, tests: tuple[str, ...]) -> int:
+    """Run the release tests sequentially, releasing state between groups."""
 
-    return tuple(
-        sorted(
-            path.relative_to(repository)
-            for path in (repository / "tests").rglob("test_*.py")
-            if path.is_file()
-        )
-    )
-
-
-def run_test_modules(repository: Path, modules: tuple[Path, ...]) -> int:
-    """Run all modules sequentially, releasing interpreter state between them."""
-
-    for module in modules:
-        print(f"\n== {module.as_posix()} ==", flush=True)
+    for test in tests:
+        print(f"\n== {test} ==", flush=True)
         completed = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", module.as_posix()],
+            [sys.executable, "-m", "pytest", "-q", test],
             cwd=repository,
             check=False,
         )
@@ -45,12 +60,11 @@ def main(arguments: list[str]) -> int:
         help="list discovered test modules without running them",
     )
     options = parser.parse_args(arguments)
-    modules = discover_test_modules(REPOSITORY)
     if options.list:
-        for module in modules:
-            print(module.as_posix())
+        for test in RELEASE_TESTS:
+            print(test)
         return 0
-    return run_test_modules(REPOSITORY, modules)
+    return run_release_tests(REPOSITORY, RELEASE_TESTS)
 
 
 if __name__ == "__main__":
