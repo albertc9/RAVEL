@@ -40,6 +40,31 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
         "x64",
         "ravel-release",
     ]
+    build_steps = workflow["jobs"]["build"]["steps"]
+    assert not any(
+        step.get("uses", "").startswith("actions/setup-python@")
+        for step in build_steps
+    )
+    uv_setup = next(
+        step
+        for step in build_steps
+        if step.get("uses", "").startswith("astral-sh/setup-uv@")
+    )
+    assert uv_setup == {
+        "name": "Set up Python 3.11 with uv",
+        "uses": (
+            "astral-sh/setup-uv@"
+            "c771a70e6277c0a99b617c7a806ffedaca235ff9"
+        ),
+        "with": {
+            "version": "0.11.32",
+            "python-version": "3.11",
+            "activate-environment": "true",
+            "enable-cache": "true",
+            "cache-python": "true",
+            "prune-cache": "true",
+        },
+    }
     assert workflow["jobs"]["publish"]["runs-on"] == "ubuntu-latest"
     assert workflow["jobs"]["publish"]["if"] == (
         "${{ startsWith(github.ref, 'refs/tags/v') }}"
