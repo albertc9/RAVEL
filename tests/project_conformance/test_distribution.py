@@ -82,6 +82,14 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
     assert test_step["run"] == (
         'mkdir -p "$TMPDIR"\npython .github/scripts/run_release_tests.py\n'
     )
+    version_check = next(
+        step
+        for step in build_steps
+        if step.get("name") == "Verify tag matches package version"
+    )
+    assert version_check["if"] == (
+        "${{ startsWith(github.ref, 'refs/tags/v') }}"
+    )
     assert workflow["jobs"]["publish"]["runs-on"] == "ubuntu-latest"
     assert workflow["jobs"]["publish"]["if"] == (
         "${{ startsWith(github.ref, 'refs/tags/v') }}"
