@@ -65,6 +65,14 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
             "prune-cache": "true",
         },
     }
+    dependency_install = next(
+        step
+        for step in build_steps
+        if step.get("name") == "Install build and test dependencies"
+    )
+    assert dependency_install["run"] == (
+        "uv pip install --upgrade build twine '.[test]'"
+    )
     assert workflow["jobs"]["publish"]["runs-on"] == "ubuntu-latest"
     assert workflow["jobs"]["publish"]["if"] == (
         "${{ startsWith(github.ref, 'refs/tags/v') }}"
