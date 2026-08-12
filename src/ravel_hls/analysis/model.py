@@ -12,7 +12,6 @@ from typing import Any
 
 from ..analysis.dense import analyze_dense_facts
 from ..compatibility.dependencies import inspect_dependencies
-from ..compatibility.model_profile import validate_aria_model_profile
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..profiles.aria.plan import build_implementation_plan
 
@@ -106,9 +105,8 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
         conversion["clock_period"] = hls_values["ClockPeriod"]
     graph = hls4ml.converters.convert_from_keras_model(**conversion)
     layers = list(graph.get_layers())
-    validate_aria_model_profile(layers)
-
     model_facts, fingerprints = _extract_model_facts(layers)
+    model_family, applicability = _match_model_family(model_facts, layers)
 
     optimization = config.get("Optimization", {})
     if not isinstance(optimization, Mapping):
@@ -117,23 +115,27 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
         "TemporalPacking": optimization.get("TemporalPacking", 4),
         "DenseParallelism": optimization.get("DenseParallelism", 2),
     }
-    dense_facts = {"dense": analyze_dense_facts(layers)}
-    plan = build_implementation_plan(choices, dense_facts)
-    interface = _predicted_interface(layers, plan)
+    dense_facts: dict[str, Any] = {}
+    resolved_design = None
+    if model_family is not None:
+        dense_facts = {"dense": analyze_dense_facts(layers)}
+        plan = build_implementation_plan(choices, dense_facts)
+        interface = _predicted_interface(layers, plan)
+        resolved_design = {
+            "specialization": {
+                "temporal_packing": plan["temporal_pack"],
+                "dense_parallelism": plan["dense_parallelism"],
+            },
+            "interfaces": interface,
+        }
     return ModelAnalysis._from_report(
         {
             "schema_version": 1,
             "generation": {"id": "aria", "version": "1.5.0"},
-            "model_family": {"id": "hgq-conv-pool-dense", "version": 1},
-            "applicability": {"status": "applicable", "findings": []},
+            "model_family": model_family,
+            "applicability": applicability,
             "model_facts": {**model_facts, **dense_facts},
-            "resolved_design": {
-                "specialization": {
-                    "temporal_packing": plan["temporal_pack"],
-                    "dense_parallelism": plan["dense_parallelism"],
-                },
-                "interfaces": interface,
-            },
+            "resolved_design": resolved_design,
             "fingerprints": fingerprints,
         }
     )
@@ -148,10 +150,142 @@ def _semantic_kind(layer: Any) -> str:
         "Input": "input",
         "Repack": "repack",
         "Conv2D": "conv2d",
+        "PointwiseConv2D": "conv2d",
         "Reshape": "reshape",
         "Dense": "dense",
     }
     return names.get(layer.class_name, layer.class_name.lower())
+
+
+_CANONICAL_SEQUENCE = (
+    "input",
+    "repack",
+    "conv2d",
+    "relu",
+    "max_pool2d",
+    "reshape",
+    "dense",
+)
+
+_CANONICAL_ATTRIBUTES = {
+    "repack_0": {"target_shape": [256, 4, 1]},
+    "conv2d_0": {
+        "in_height": 256,
+        "in_width": 4,
+        "n_chan": 1,
+        "filt_height": 5,
+        "filt_width": 1,
+        "n_filt": 7,
+        "stride_height": 3,
+        "stride_width": 1,
+        "pad_top": 0,
+        "pad_bottom": 0,
+        "pad_left": 0,
+        "pad_right": 0,
+        "out_height": 84,
+        "out_width": 4,
+    },
+    "relu_0": {"activation": "relu", "n_in": 2352},
+    "max_pool2d_0": {
+        "in_height": 84,
+        "in_width": 4,
+        "n_filt": 7,
+        "pool_height": 2,
+        "pool_width": 1,
+        "stride_height": 2,
+        "stride_width": 1,
+        "pad_top": 0,
+        "pad_bottom": 0,
+        "pad_left": 0,
+        "pad_right": 0,
+        "pool_op": "Max",
+        "out_height": 42,
+        "out_width": 4,
+    },
+    "reshape_0": {"target_shape": [1176]},
+    "dense_0": {"n_in": 1176, "n_out": 1},
+}
+
+
+def _match_model_family(
+    facts: Mapping[str, Any], layers: list[Any]
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    operations = facts["operations"]
+    observed_sequence = tuple(operation["kind"] for operation in operations)
+    findings: list[dict[str, Any]] = []
+    if observed_sequence != _CANONICAL_SEQUENCE:
+        mismatch = next(
+            (
+                index
+                for index, (observed, expected) in enumerate(
+                    zip(observed_sequence, _CANONICAL_SEQUENCE)
+                )
+                if observed != expected
+            ),
+            min(len(observed_sequence), len(_CANONICAL_SEQUENCE)),
+        )
+        findings.append(
+            {
+                "code": "family.topology.sequence",
+                "severity": "error",
+                "operation_id": (
+                    operations[mismatch]["id"] if mismatch < len(operations) else None
+                ),
+                "expected": list(_CANONICAL_SEQUENCE),
+                "observed": list(observed_sequence),
+                "message": "Model operation sequence is outside this family",
+            }
+        )
+    else:
+        for operation in operations:
+            expected_attributes = _CANONICAL_ATTRIBUTES.get(operation["id"], {})
+            for name, expected in expected_attributes.items():
+                observed = operation["attributes"].get(name)
+                if observed != expected:
+                    findings.append(
+                        {
+                            "code": "family.geometry.attribute",
+                            "severity": "error",
+                            "operation_id": operation["id"],
+                            "field": name,
+                            "expected": expected,
+                            "observed": observed,
+                            "message": f"{operation['id']}.{name} is outside this family",
+                        }
+                    )
+        for previous, current in zip(operations, operations[1:]):
+            if current["inputs"] != [previous["outputs"][0]["id"]]:
+                findings.append(
+                    {
+                        "code": "family.topology.wiring",
+                        "severity": "error",
+                        "operation_id": current["id"],
+                        "expected": [previous["outputs"][0]["id"]],
+                        "observed": current["inputs"],
+                        "message": "Model family requires a direct linear chain",
+                    }
+                )
+        for operation, layer in zip(operations, layers):
+            if operation["kind"] not in {"conv2d", "dense"}:
+                continue
+            module = layer.get_attr("module")
+            if not isinstance(module, str) or not module.startswith("hgq.layers"):
+                findings.append(
+                    {
+                        "code": "family.provenance.hgq2",
+                        "severity": "error",
+                        "operation_id": operation["id"],
+                        "expected": "hgq.layers origin",
+                        "observed": module,
+                        "message": "Model family requires HGQ2 Conv2D and Dense origins",
+                    }
+                )
+    if findings:
+        return None, {"status": "unsupported", "findings": findings}
+    return (
+        {"id": "hgq-conv-pool-dense", "version": 1},
+        {"status": "applicable", "findings": []},
+    )
 
 
 _OPERATION_ATTRIBUTES = {

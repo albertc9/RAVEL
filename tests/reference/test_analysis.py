@@ -94,3 +94,32 @@ def test_retrained_models_share_a_family_while_exposing_learned_numeric_types() 
         narrow["fingerprints"]["parameter_state_sha256"]
         != wide["fingerprints"]["parameter_state_sha256"]
     )
+
+
+def test_future_topology_is_analyzed_before_it_is_reported_as_unsupported() -> None:
+    import keras
+
+    inputs = keras.Input(shape=(256, 4))
+    x = keras.layers.Reshape((256, 4, 1))(inputs)
+    x = keras.layers.Conv2D(
+        7, (5, 1), strides=(3, 1), padding="valid", activation="relu"
+    )(x)
+    x = keras.layers.Conv2D(7, (1, 1), padding="same")(x)
+    x = keras.layers.MaxPool2D((2, 1), strides=(2, 1))(x)
+    x = keras.layers.Flatten()(x)
+    model = keras.Model(inputs, keras.layers.Dense(1)(x))
+
+    report = analyze(
+        model,
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+
+    assert "conv2d_1" in [
+        operation["id"] for operation in report["model_facts"]["operations"]
+    ]
+    assert report["model_family"] is None
+    assert report["applicability"]["status"] == "unsupported"
+    assert "family.topology.sequence" in {
+        finding["code"] for finding in report["applicability"]["findings"]
+    }
+    assert report["resolved_design"] is None
