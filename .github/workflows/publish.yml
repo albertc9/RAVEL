@@ -13,6 +13,8 @@ jobs:
   build:
     name: Test and build distributions
     runs-on: [self-hosted, linux, x64, ravel-release]
+    env:
+      TMPDIR: ${{ runner.temp }}
     steps:
       - uses: actions/checkout@v4
         with:
