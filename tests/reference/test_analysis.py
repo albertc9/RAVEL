@@ -41,7 +41,7 @@ def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
     )
 
     report = analysis.to_dict()
-    assert report["generation"] == {"id": "aria", "version": "1.5.0"}
+    assert report["generation"] == {"id": "aria", "version": "1.5.1"}
     assert report["model_family"] == {
         "id": "hgq-conv-pool-dense",
         "version": 1,
@@ -341,9 +341,9 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         },
     ).to_dict()["resolved_design"]
 
-    assert design["strategy"] == {"id": "aria-wide-stream", "version": 1}
-    assert design["resolver"] == {"id": "aria-explicit-pd", "version": 1}
-    assert design["implementation_plan"]["template_profile"] == "aria-p4-d2-v2"
+    assert design["strategy"] == {"id": "aria-wide-stream", "version": 2}
+    assert design["resolver"] == {"id": "aria-explicit-pd", "version": 2}
+    assert design["implementation_plan"]["template_profile"] == "aria-p4-d2-v3"
     assert [binding["id"] for binding in design["parameter_bindings"]] == [
         "conv2d_0:bias",
         "conv2d_0:weight",
@@ -361,6 +361,7 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         "elide-dataflow-start-propagation",
     ]
     assert all(item["result"] == "applied" for item in passes)
+    assert passes[1]["version"] == 2
     assert all(
         previous["output_design_sha256"] == current["input_design_sha256"]
         for previous, current in zip(passes, passes[1:])

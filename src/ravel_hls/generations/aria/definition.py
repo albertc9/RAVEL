@@ -13,9 +13,9 @@ from .matching import evaluate_aria_wide_stream, match_hgq_conv_pool_dense
 from .passes import ARIA_PASS_DEFINITIONS, resolve_aria_design
 
 
-ARIA_1_5 = GenerationDefinition(
+ARIA_1_5_1 = GenerationDefinition(
     id="aria",
-    version="1.5.0",
+    version="1.5.1",
     operation_extractors=tuple(
         ComponentDefinition(operation_id, 1)
         for operation_id in (
@@ -34,13 +34,13 @@ ARIA_1_5 = GenerationDefinition(
         ),
     ),
     strategies=(
-        StrategyDefinition("aria-wide-stream", 1, evaluate_aria_wide_stream),
+        StrategyDefinition("aria-wide-stream", 2, evaluate_aria_wide_stream),
     ),
-    resolver=ResolverDefinition("aria-explicit-pd", 1, resolve_aria_design),
+    resolver=ResolverDefinition("aria-explicit-pd", 2, resolve_aria_design),
     passes=ARIA_PASS_DEFINITIONS,
     backends=(
         BackendBindingDefinition(
-            "Vitis", "io_stream", "aria-vitis-templates", 1, render_aria_project
+            "Vitis", "io_stream", "aria-vitis-templates", 2, render_aria_project
         ),
     ),
 )

@@ -1,6 +1,6 @@
 # CNN for Arianna reference
 
-This directory is the executable Aria 1.5.0 reference consumer. It owns the
+This directory is the executable Aria 1.5.1 reference consumer. It owns the
 canonical trained Keras/HGQ2 model and uses only RAVEL's public API.
 
 ```bash

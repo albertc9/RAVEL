@@ -72,7 +72,7 @@ def build_implementation_plan(
         },
     }
     return {
-        "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v2",
+        "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v3",
         "temporal_pack": temporal_pack,
         "channels_per_row": input_shape[1],
         "values_per_input_word": temporal_pack * input_shape[1],

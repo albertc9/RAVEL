@@ -2,7 +2,7 @@
 # RAVEL
 
 RAVEL (Rate-Aware Vectorized Engine for Low-latency) generates a specialized,
-hls4ml-compatible FPGA inference project. Aria 1.5.0 analyzes qualified
+hls4ml-compatible FPGA inference project. Aria 1.5.1 analyzes qualified
 Keras/HGQ2 models through hls4ml's `ModelGraph`, extracts learned fixed-point
 types and parameters, and resolves P2/P4 temporal packing with Dense x1/x2.
 New conversions default to P4/D2 with sequential packed Dense weights.

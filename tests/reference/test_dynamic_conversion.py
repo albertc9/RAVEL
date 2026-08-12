@@ -44,7 +44,7 @@ def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
     assert isinstance(project, Project)
     assert project.path == output_dir
     assert project.manifest["schema_version"] == 4
-    assert project.manifest["ravel"]["release"] == "1.5.0"
+    assert project.manifest["ravel"]["release"] == "1.5.1"
     assert project.manifest["source_model"]["model_family"] == {
         "id": "hgq-conv-pool-dense",
         "version": 1,

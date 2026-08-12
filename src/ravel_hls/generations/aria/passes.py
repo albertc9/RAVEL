@@ -11,15 +11,15 @@ from ..registry import ComponentDefinition
 PassEffect = Callable[[dict[str, Any]], dict[str, Any]]
 
 ARIA_PASS_DEFINITIONS = tuple(
-    ComponentDefinition(pass_id, 1)
-    for pass_id in (
-        "pack-temporal-input",
-        "fuse-repack-into-first-conv",
-        "propagate-wide-relu-stream",
-        "specialize-nonoverlapping-maxpool",
-        "stream-flatten-into-dense",
-        "bind-shallow-internal-fifos",
-        "elide-dataflow-start-propagation",
+    ComponentDefinition(pass_id, version)
+    for pass_id, version in (
+        ("pack-temporal-input", 1),
+        ("fuse-repack-into-first-conv", 2),
+        ("propagate-wide-relu-stream", 1),
+        ("specialize-nonoverlapping-maxpool", 1),
+        ("stream-flatten-into-dense", 1),
+        ("bind-shallow-internal-fifos", 1),
+        ("elide-dataflow-start-propagation", 1),
     )
 )
 
@@ -39,10 +39,10 @@ def resolve_aria_design(
     }
     state: dict[str, Any] = {
         "schema_version": 1,
-        "generation": {"id": "aria", "version": "1.5.0"},
+        "generation": {"id": "aria", "version": "1.5.1"},
         "model_family": {"id": "hgq-conv-pool-dense", "version": 1},
-        "strategy": {"id": "aria-wide-stream", "version": 1},
-        "resolver": {"id": "aria-explicit-pd", "version": 1},
+        "strategy": {"id": "aria-wide-stream", "version": 2},
+        "resolver": {"id": "aria-explicit-pd", "version": 2},
         "specialization": {
             "temporal_packing": implementation_plan["temporal_pack"],
             "dense_parallelism": implementation_plan["dense_parallelism"],

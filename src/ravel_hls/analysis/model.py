@@ -98,7 +98,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
 def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     """Return the private graph-bearing analysis used by conversion."""
 
-    generation = builtin_generation("aria", "1.5.0")
+    generation = builtin_generation("aria", "1.5.1")
     config = validate_public_config(config)
     hls_values = config["HLS"]
     backend = hls_values.get("Backend", "Vitis")
@@ -118,7 +118,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.5.0 dependency stack is not qualified: " + ", ".join(failed)
+            "Aria 1.5.1 dependency stack is not qualified: " + ", ".join(failed)
         )
 
     import hls4ml
@@ -170,7 +170,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     if model_family is not None:
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
-        strategy = generation.strategy("aria-wide-stream", 1)
+        strategy = generation.strategy("aria-wide-stream", 2)
         strategy_findings = strategy.evaluate(
             model_facts["operations"], choices, plan
         )
