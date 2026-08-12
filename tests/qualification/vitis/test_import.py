@@ -31,6 +31,7 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     assert record.resources == {"BRAM_18K": 0, "DSP": 4, "FF": 3483, "LUT": 28922, "URAM": 0}
     assert record.rtl_ports["input_layer_TDATA"] == {"direction": "in", "bits": 128}
     assert record.rtl_ports["layer9_out_TDATA"] == {"direction": "out", "bits": 32}
+    assert record.rtl_cosimulation == "not_run"
     assert (project_path / "ravel_qualification.json").is_file()
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
@@ -121,6 +122,46 @@ def test_import_records_performance_without_target_thresholds(tmp_path: Path) ->
     assert Project.open(project_path).status["performance_qualification"] == "recorded"
 
 
+def test_import_records_a_requested_passing_rtl_cosimulation(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path, cosim=True)
+    report_dir = tmp_path / "reports"
+    synthesis = report_dir / "solution1" / "syn" / "report" / "aria_top_csynth.xml"
+    synthesis.parent.mkdir(parents=True)
+    synthesis.write_text(_CSYNTH_XML, encoding="utf-8")
+    cosimulation = report_dir / "solution1" / "sim" / "report" / "aria_top_cosim.rpt"
+    cosimulation.parent.mkdir(parents=True)
+    cosimulation.write_text(_COSIM_REPORT, encoding="utf-8")
+
+    record = Project.open(project_path).record(report_dir)
+
+    assert record.rtl_cosimulation == "passed"
+    qualification = record.to_dict()
+    assert qualification["rtl_cosimulation"] == "passed"
+    assert qualification["report_files"][
+        "solution1/sim/report/aria_top_cosim.rpt"
+    ] == hashlib.sha256(_COSIM_REPORT.encode()).hexdigest()
+
+
+def test_import_rejects_a_missing_requested_rtl_cosimulation_report(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path, cosim=True)
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(
+        _CSYNTH_XML, encoding="utf-8"
+    )
+
+    with pytest.raises(ProjectGenerationError, match="requested RTL CoSim"):
+        Project.open(project_path).record(report_dir)
+
+    assert not (project_path / "ravel_qualification.json").exists()
+
+
 def test_project_marks_qualification_with_a_foreign_fingerprint_as_stale(
     tmp_path: Path,
 ) -> None:
@@ -139,12 +180,28 @@ def test_project_marks_qualification_with_a_foreign_fingerprint_as_stale(
     assert Project.open(project_path).status["performance_qualification"] == "stale"
 
 
-def _write_project(project_path: Path, *, schema_version: int = 2) -> None:
+def _write_project(
+    project_path: Path, *, schema_version: int = 2, cosim: bool = False
+) -> None:
     source = "void aria_top() {}\n"
     (project_path / "firmware").mkdir(parents=True)
     (project_path / "firmware" / "aria_top.cpp").write_text(source, encoding="utf-8")
     hls_config = "Backend: Vitis\nIOType: io_stream\n"
-    ravel_config = "Profile: aria\nVerification:\n  Mode: required\n"
+    ravel_config = (
+        "Project:\n"
+        "  Name: aria_top\n"
+        "  OutputDir: .\n"
+        "HLS:\n"
+        "  Backend: Vitis\n"
+        "  IOType: io_stream\n"
+        "  Config: {}\n"
+        "Verification:\n"
+        "  Mode: required\n"
+        "Vitis:\n"
+        "  Run: false\n"
+        "  Stages:\n"
+        f"    CoSim: {'true' if cosim else 'false'}\n"
+    )
     (project_path / "hls4ml_config.yml").write_text(
         hls_config, encoding="utf-8"
     )
@@ -231,4 +288,17 @@ _CSYNTH_XML = """\
     <RtlPorts><name>layer9_out_TDATA</name><Dir>out</Dir><Bits>32</Bits></RtlPorts>
   </InterfaceSummary>
 </profile>
+"""
+
+
+_COSIM_REPORT = """\
+Report time       : Tue Aug 12 13:00:00 2026.
+Solution          : solution1.
+Simulation tool   : xsim.
+
++----------+----------+
+|       RTL|    Status|
++----------+----------+
+|   Verilog|      Pass|
++----------+----------+
 """

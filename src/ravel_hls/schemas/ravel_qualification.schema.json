@@ -16,6 +16,7 @@
     "performance",
     "resources",
     "rtl_ports",
+    "rtl_cosimulation",
     "report_files",
     "status"
   ],
@@ -69,6 +70,7 @@
         }
       }
     },
+    "rtl_cosimulation": {"enum": ["not_run", "passed"]},
     "report_files": {
       "type": "object",
       "additionalProperties": {"$ref": "#/$defs/sha256"}

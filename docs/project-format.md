@@ -47,8 +47,11 @@ hashing and never claims the source is clean.
 Qualification is separate so vendor execution cannot rewrite generation facts.
 It binds the manifest hash, generation fingerprint, source-closure hash, top,
 tool version, part, target clock, measured timing/performance/resources, RTL
-ports, and report-file hashes. Foreign or edited evidence is `stale`. Recorded
-measurements have no universal pass/fail threshold.
+ports, requested RTL CoSim status, and report-file hashes. When CoSim is
+selected, a qualification record is not written unless the top-level Verilog
+report says `Pass`; that report is included in the evidence hash closure.
+Foreign or edited evidence is `stale`. Recorded measurements have no universal
+performance pass/fail threshold.
 
 ## Parameter package schema
 

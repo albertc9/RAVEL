@@ -71,6 +71,8 @@ its tool version, top, part, target clock, and expected stream port widths match
 the immutable project identity. II, latency, estimated clock, and resources are
 measurements: RAVEL does not require a particular II, does not require estimated
 clock to beat the target, and does not define matrix-specific release gates.
+If `Vitis.Stages.CoSim` is true, recording additionally requires a passing
+top-level Verilog CoSim report and binds its hash into the qualification record.
 
 This support does not strengthen the RTL proof boundary. CoSim, validation,
 export, Vivado synthesis, implementation, and board tests run only when selected

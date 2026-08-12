@@ -147,7 +147,11 @@ def test_qualification_schema_binds_v2_evidence_identity() -> None:
         "generation_fingerprint",
         "source_closure_sha256",
         "top",
+        "rtl_cosimulation",
     } <= set(schema["required"])
+    assert schema["properties"]["rtl_cosimulation"] == {
+        "enum": ["not_run", "passed"]
+    }
     assert schema["properties"]["status"] == {"const": "recorded"}
 
 
