@@ -1,6 +1,7 @@
 """Primary public generation workflows."""
 
 from collections.abc import Mapping
+from copy import deepcopy
 import hashlib
 import json
 import os
@@ -37,9 +38,33 @@ from .verification.equivalence import (
 
 
 def convert(
-    model: Any, config: Mapping[str, Any], *, inputs: Any | None = None
+    model: Any,
+    output_dir: str | os.PathLike[str] | Mapping[str, Any],
+    config: Mapping[str, Any] | None = None,
+    *,
+    verification_inputs: Any | None = None,
+    inputs: Any | None = None,
 ) -> RavelProject:
-    """Convert a compatible model using the Aria 1.4 public configuration."""
+    """Convert a compatible model using one Aria configuration."""
+
+    if config is not None:
+        if inputs is not None:
+            raise ConfigurationError(
+                "Use verification_inputs with the Aria 1.5 conversion API"
+            )
+        return _convert_analyzed_model(
+            model,
+            Path(output_dir),
+            config,
+            verification_inputs=verification_inputs,
+        )
+    if not isinstance(output_dir, Mapping):
+        raise ConfigurationError("config is required")
+    config = output_dir
+    if verification_inputs is not None:
+        raise ConfigurationError(
+            "Use inputs with the legacy internal conversion configuration"
+        )
 
     unknown_fields = sorted(
         config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
@@ -65,6 +90,72 @@ def convert(
         verification_inputs=inputs,
     )
     if normalized["Vitis"]["Run"]:
+        generated.build()
+    return generated
+
+
+def _convert_analyzed_model(
+    model: Any,
+    output_dir: Path,
+    config: Mapping[str, Any],
+    *,
+    verification_inputs: Any | None,
+) -> RavelProject:
+    from .analysis.model import _analyze_model
+
+    unknown_fields = sorted(
+        config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
+    )
+    if unknown_fields:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: {unknown_fields[0]}"
+        )
+    analyzed = _analyze_model(model, config)
+    if not analyzed.analysis.applicable:
+        messages = [finding["message"] for finding in analyzed.analysis.findings]
+        raise CompatibilityError("; ".join(messages))
+    hls = config.get("HLS", {})
+    project = config.get("Project", {})
+    if not isinstance(project, Mapping):
+        raise ConfigurationError("Project must be a mapping")
+    force_replace = project.get("ForceReplace", False)
+    if not isinstance(force_replace, bool):
+        raise ConfigurationError("Project.ForceReplace must be a boolean")
+    project_name = output_dir.name
+    if not project_name.isidentifier():
+        raise ConfigurationError(
+            "output_dir name must be a valid C++ project identifier"
+        )
+    graph_config = analyzed.graph.config.config
+    graph_config["OutputDir"] = str(output_dir)
+    graph_config["ProjectName"] = project_name
+    run_config = RavelConfig(
+        {
+            "Project": {
+                "Name": project_name,
+                "OutputDir": str(output_dir),
+                "ForceReplace": force_replace,
+            },
+            "HLS": {
+                "Backend": hls.get("Backend", "Vitis"),
+                "IOType": hls.get("IOType", "io_stream"),
+                "Part": hls.get("Part"),
+                "ClockPeriod": hls.get("ClockPeriod"),
+                "Config": deepcopy(graph_config["HLSConfig"]),
+            },
+            "Optimization": dict(config.get("Optimization", {})),
+            "Verification": dict(config.get("Verification", {})),
+            "Vitis": dict(config.get("Vitis", {})),
+        }
+    )
+    generated = optimize_project(
+        analyzed.graph,
+        run_config,
+        force_replace=force_replace,
+        verification_inputs=verification_inputs,
+        model_analysis=analyzed.analysis.to_dict(),
+    )
+    if run_config["Vitis"]["Run"]:
         generated.build()
     return generated
 
@@ -166,6 +257,7 @@ def optimize_project(
     force_replace: bool = False,
     verification_inputs: Any | None = None,
     preserved_implementation_plan: Mapping[str, Any] | None = None,
+    model_analysis: Mapping[str, Any] | None = None,
 ) -> RavelProject:
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
@@ -261,6 +353,7 @@ def optimize_project(
         dependency_report=dependency_report,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
+        model_analysis=model_analysis,
     )
 
 
@@ -283,6 +376,7 @@ def _generate_project(
     dependency_report: Mapping[str, Any],
     force_replace: bool,
     verification_inputs: Any | None,
+    model_analysis: Mapping[str, Any] | None,
 ) -> RavelProject:
     output_value = hls_config.get("OutputDir")
     if not isinstance(output_value, (str, os.PathLike)):
@@ -387,6 +481,7 @@ def _generate_project(
             pass_records=pass_records,
             verification_report=verification_report,
             interface_contract=_interface_contract(layers, implementation_plan),
+            model_analysis=dict(model_analysis) if model_analysis is not None else None,
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

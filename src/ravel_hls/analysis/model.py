@@ -78,8 +78,21 @@ class ModelAnalysis:
         return _thaw(self._report)
 
 
+@dataclass(frozen=True)
+class _AnalyzedModel:
+    graph: Any
+    source_model: Any
+    analysis: ModelAnalysis
+
+
 def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
     """Analyze a qualified Keras/HGQ2 model without publishing a project."""
+
+    return _analyze_model(model, config).analysis
+
+
+def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
+    """Return the private graph-bearing analysis used by conversion."""
 
     hls_values = config.get("HLS")
     if not isinstance(hls_values, Mapping):
@@ -165,7 +178,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
             },
             "interfaces": interface,
         }
-    return ModelAnalysis._from_report(
+    analysis = ModelAnalysis._from_report(
         {
             "schema_version": 1,
             "generation": {"id": "aria", "version": "1.5.0"},
@@ -177,6 +190,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
             "fingerprints": fingerprints,
         }
     )
+    return _AnalyzedModel(graph, normalized_model, analysis)
 
 
 def _semantic_kind(layer: Any) -> str:
