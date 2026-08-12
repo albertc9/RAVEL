@@ -11,11 +11,8 @@ import tempfile
 from typing import Any
 import uuid
 
-from .analysis.dense import analyze_dense_facts
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
-from .compatibility.model_profile import validate_aria_model_profile
-from .backends.vitis.renderer import render_aria_project as render_legacy_aria_project
 from .backends.vitis.build import normalize_build_script, write_build_options
 from .exceptions import (
     CompatibilityError,
@@ -26,7 +23,6 @@ from .exceptions import (
 )
 from .manifest import architecture_contract_sha256, build_generation_manifest
 from .parameters import Parameters
-from .profiles.aria.plan import build_implementation_plan, build_pass_records
 from .project import RavelProject, open_project
 from .rendering.vitis import render_aria_project as render_resolved_aria_project
 from .verification.equivalence import (
@@ -41,59 +37,19 @@ from .verification.equivalence import (
 
 def convert(
     model: Any,
-    output_dir: str | os.PathLike[str] | Mapping[str, Any],
-    config: Mapping[str, Any] | None = None,
+    output_dir: str | os.PathLike[str],
+    config: Mapping[str, Any],
     *,
     verification_inputs: Any | None = None,
-    inputs: Any | None = None,
 ) -> RavelProject:
     """Convert a compatible model using one Aria configuration."""
 
-    if config is not None:
-        if inputs is not None:
-            raise ConfigurationError(
-                "Use verification_inputs with the Aria 1.5 conversion API"
-            )
-        return _convert_analyzed_model(
-            model,
-            Path(output_dir),
-            config,
-            verification_inputs=verification_inputs,
-        )
-    if not isinstance(output_dir, Mapping):
-        raise ConfigurationError("config is required")
-    config = output_dir
-    if verification_inputs is not None:
-        raise ConfigurationError(
-            "Use inputs with the legacy internal conversion configuration"
-        )
-
-    unknown_fields = sorted(
-        config.keys() - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
-    )
-    if unknown_fields:
-        raise ConfigurationError(
-            f"Unknown RAVEL configuration field: {unknown_fields[0]}"
-        )
-    normalized = RavelConfig(config)
-    project = normalized["Project"]
-    hls = normalized["HLS"]
-    generated = convert_from_keras_model(
+    return _convert_analyzed_model(
         model,
-        output_dir=project["OutputDir"],
-        project_name=project["Name"],
-        hls_config=hls["Config"],
-        ravel_config=normalized,
-        backend=hls.get("Backend", "Vitis"),
-        io_type=hls.get("IOType", "io_stream"),
-        part=hls.get("Part"),
-        clock_period=hls.get("ClockPeriod"),
-        force_replace=project["ForceReplace"],
-        verification_inputs=inputs,
+        Path(output_dir),
+        config,
+        verification_inputs=verification_inputs,
     )
-    if normalized["Vitis"]["Run"]:
-        generated.build()
-    return generated
 
 
 def _convert_analyzed_model(
@@ -171,7 +127,7 @@ def _publish_analyzed_graph(
             "Vitis": dict(config.get("Vitis", {})),
         }
     )
-    generated = optimize_project(
+    generated = _generate_analyzed_project(
         graph,
         run_config,
         force_replace=force_replace,
@@ -278,110 +234,19 @@ def _refresh_configuration(project: RavelProject) -> dict[str, Any]:
     }
 
 
-def refresh_model(
-    project: RavelProject | str | os.PathLike[str],
-    model: Any,
-    *,
-    output_dir: str | os.PathLike[str] | None = None,
-    verification_inputs: Any | None = None,
-    force_replace: bool = False,
-) -> RavelProject:
-    """Regenerate an existing RAVEL project with a complete compatible model."""
-
-    project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if isinstance(model, Parameters):
-        import keras
-        from hgq.layers import QConv2D, QDense
-
-        template = keras.models.load_model(
-            project_view.path / "keras_model.keras",
-            custom_objects={"QConv2D": QConv2D, "QDense": QDense},
-        )
-        model = model._apply(template)
-    hls_values = _load_hls4ml_config(project_view.path / "hls4ml_config.yml")
-    target = project_view.path if output_dir is None else Path(output_dir)
-    return convert_from_keras_model(
-        model,
-        output_dir=target,
-        project_name=hls_values["ProjectName"],
-        hls_config=hls_values["HLSConfig"],
-        ravel_config=project_view.config,
-        backend=hls_values["Backend"],
-        io_type=hls_values["IOType"],
-        part=hls_values.get("Part"),
-        clock_period=hls_values.get("ClockPeriod"),
-        force_replace=force_replace,
-        verification_inputs=verification_inputs,
-        preserved_implementation_plan=project_view.implementation_plan,
-    )
-
-
-def convert_from_keras_model(
-    model: Any,
-    *,
-    output_dir: str | os.PathLike[str],
-    project_name: str,
-    hls_config: Mapping[str, Any],
-    ravel_config: RavelConfig | Mapping[str, Any] | None = None,
-    backend: str = "Vitis",
-    io_type: str = "io_stream",
-    part: str | None = None,
-    clock_period: float | None = None,
-    force_replace: bool = False,
-    verification_inputs: Any | None = None,
-    preserved_implementation_plan: Mapping[str, Any] | None = None,
-) -> RavelProject:
-    """Convert a Keras/HGQ model and run the canonical Aria optimization engine."""
-
-    import hls4ml
-
-    normalized_model = model
-    if isinstance(model, (str, os.PathLike)):
-        import keras
-        from hgq.layers import QConv2D, QDense
-
-        model_path = Path(model)
-        if not model_path.is_file():
-            raise CompatibilityError(f"Keras model file does not exist: {model_path}")
-        normalized_model = keras.models.load_model(
-            model_path, custom_objects={"QConv2D": QConv2D, "QDense": QDense}
-        )
-    conversion_arguments: dict[str, Any] = {
-        "model": normalized_model,
-        "output_dir": str(output_dir),
-        "project_name": project_name,
-        "hls_config": dict(hls_config),
-        "backend": backend,
-        "io_type": io_type,
-    }
-    if part is not None:
-        conversion_arguments["part"] = part
-    if clock_period is not None:
-        conversion_arguments["clock_period"] = clock_period
-    hls_model = hls4ml.converters.convert_from_keras_model(**conversion_arguments)
-    return optimize_project(
-        hls_model,
-        ravel_config,
-        force_replace=force_replace,
-        verification_inputs=verification_inputs,
-        preserved_implementation_plan=preserved_implementation_plan,
-    )
-
-
-def optimize_project(
+def _generate_analyzed_project(
     hls_model: Any,
-    config: RavelConfig | Mapping[str, Any] | None = None,
+    config: RavelConfig,
     *,
     force_replace: bool = False,
     verification_inputs: Any | None = None,
-    preserved_implementation_plan: Mapping[str, Any] | None = None,
-    model_analysis: Mapping[str, Any] | None = None,
-    parameter_payload: Any | None = None,
+    model_analysis: Mapping[str, Any],
+    parameter_payload: Any,
     source_consistency_available: bool = True,
 ) -> RavelProject:
-    """Generate an Aria-optimized project from a compatible hls4ml model graph."""
+    """Generate from the graph-bearing result of the public analysis path."""
 
-    ravel_config = RavelConfig(config) if not isinstance(config, RavelConfig) else config
+    ravel_config = config
     dependency_report = inspect_dependencies()
     if dependency_report["dependency_qualification"] != "qualified":
         failures = [
@@ -390,7 +255,7 @@ def optimize_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.4.0 dependency stack is not qualified: " + ", ".join(failures)
+            "Aria 1.5.0 dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -401,77 +266,27 @@ def optimize_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.4.0")
+        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.5.0")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.4.0")
+        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.5.0")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.4.0")
+        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.5.0")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.4.0")
+        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.5.0")
     layers = list(hls_model.get_layers())
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     output_shapes = list(hls_config.get("OutputShapes", {}).values())
-    if model_analysis is None:
-        if input_shapes != [[256, 4]]:
-            raise CompatibilityError(
-                "Aria 1.4.0 requires one logical input shape [256, 4]"
-            )
-        if output_shapes != [[1]]:
-            raise CompatibilityError(
-                "Aria 1.4.0 requires one logical output shape [1]"
-            )
-        validate_aria_model_profile(layers)
-        model_facts = {"dense": analyze_dense_facts(layers)}
-    else:
-        model_facts = dict(model_analysis["model_facts"])
-        expected_input = model_facts["operations"][0]["outputs"][0]["shape"]
-        expected_output = model_facts["operations"][-1]["outputs"][0]["shape"]
-        if input_shapes != [expected_input] or output_shapes != [expected_output]:
-            raise CompatibilityError(
-                "Analyzed model facts disagree with the hls4ml graph interface"
-            )
-    implementation_plan = build_implementation_plan(
-        ravel_config["Optimization"], model_facts
+    model_facts = dict(model_analysis["model_facts"])
+    expected_input = model_facts["operations"][0]["outputs"][0]["shape"]
+    expected_output = model_facts["operations"][-1]["outputs"][0]["shape"]
+    if input_shapes != [expected_input] or output_shapes != [expected_output]:
+        raise CompatibilityError(
+            "Analyzed model facts disagree with the hls4ml graph interface"
+        )
+    implementation_plan = deepcopy(
+        model_analysis["resolved_design"]["implementation_plan"]
     )
-    if model_analysis is not None:
-        implementation_plan = deepcopy(
-            model_analysis["resolved_design"]["implementation_plan"]
-        )
-    if preserved_implementation_plan is not None:
-        preserved_weight_delivery = preserved_implementation_plan.get(
-            "weight_delivery"
-        )
-        if (
-            isinstance(preserved_weight_delivery, Mapping)
-            and preserved_weight_delivery.get("id") == "complete-partition"
-        ):
-            implementation_plan["template_profile"] = preserved_implementation_plan[
-                "template_profile"
-            ]
-            implementation_plan["weight_delivery"] = dict(
-                preserved_weight_delivery
-            )
-        elif (
-            isinstance(preserved_weight_delivery, Mapping)
-            and preserved_weight_delivery.get("id") == "wide-sequential"
-        ):
-            if (
-                implementation_plan["template_profile"]
-                != preserved_implementation_plan["template_profile"]
-                or implementation_plan["weight_delivery"]
-                != preserved_weight_delivery
-            ):
-                raise CompatibilityError(
-                    "Dense implementation plan changed during refresh; "
-                    "use ordinary conversion"
-                )
-            implementation_plan["template_profile"] = (
-                preserved_implementation_plan["template_profile"]
-            )
-            implementation_plan["weight_delivery"] = dict(
-                preserved_weight_delivery
-            )
     if implementation_plan["weight_delivery"]["id"] == "wide-sequential":
         dense_applicability = implementation_plan["weight_delivery"][
             "applicability"
@@ -513,8 +328,8 @@ def _generate_project(
     dependency_report: Mapping[str, Any],
     force_replace: bool,
     verification_inputs: Any | None,
-    model_analysis: Mapping[str, Any] | None,
-    parameter_payload: Any | None,
+    model_analysis: Mapping[str, Any],
+    parameter_payload: Any,
     source_consistency_available: bool,
 ) -> RavelProject:
     output_value = hls_config.get("OutputDir")
@@ -549,11 +364,7 @@ def _generate_project(
             stimuli, stimuli_record = prepare_stimuli(
                 ravel_config,
                 verification_inputs,
-                (
-                    model_analysis["model_facts"]["operations"][0]["outputs"][0]
-                    if model_analysis is not None
-                    else None
-                ),
+                model_analysis["model_facts"]["operations"][0]["outputs"][0],
             )
             verification_unavailable = _verification_unavailable_reason(
                 hls_model, dependency_report
@@ -567,34 +378,20 @@ def _generate_project(
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
-        pass_records = (
-            deepcopy(model_analysis["resolved_design"]["executed_passes"])
-            if model_analysis is not None
-            else build_pass_records(implementation_plan)
+        pass_records = deepcopy(
+            model_analysis["resolved_design"]["executed_passes"]
         )
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
             raise ProjectGenerationError(
                 "hls4ml ProjectName must be a valid C++ identifier"
             )
-        if model_analysis is None:
-            managed_paths = render_legacy_aria_project(
-                staging_path,
-                project_name,
-                layers,
-                implementation_plan=implementation_plan,
-            )
-        else:
-            if parameter_payload is None:
-                raise ProjectGenerationError(
-                    "Aria 1.5 rendering requires a ModelGraph parameter payload"
-                )
-            managed_paths = render_resolved_aria_project(
-                staging_path,
-                project_name,
-                model_analysis["resolved_design"],
-                parameter_payload,
-            )
+        managed_paths = render_resolved_aria_project(
+            staging_path,
+            project_name,
+            model_analysis["resolved_design"],
+            parameter_payload,
+        )
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
@@ -615,7 +412,7 @@ def _generate_project(
             )
             require_bit_exact(baseline_predictions, optimized_predictions)
             verification_report["transformation_equivalence"] = "passed"
-            if model_analysis is not None and source_consistency_available:
+            if source_consistency_available:
                 source_consistency = require_source_consistency(
                     hls_config.get("KerasModel"),
                     stimuli,
@@ -663,7 +460,7 @@ def _generate_project(
             pass_records=pass_records,
             verification_report=verification_report,
             interface_contract=_interface_contract(layers, implementation_plan),
-            model_analysis=dict(model_analysis) if model_analysis is not None else None,
+            model_analysis=dict(model_analysis),
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -865,26 +662,6 @@ def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None
     config_path.write_text(
         yaml.dump(values, Dumper=Dumper, sort_keys=False), encoding="utf-8"
     )
-
-
-def _load_hls4ml_config(config_path: Path) -> dict[str, Any]:
-    import yaml
-
-    class Loader(yaml.SafeLoader):
-        pass
-
-    Loader.add_multi_constructor(
-        "!keras_model", lambda loader, suffix, node: loader.construct_scalar(node)
-    )
-    try:
-        values = yaml.load(config_path.read_text(encoding="utf-8"), Loader=Loader)
-    except (OSError, UnicodeError, yaml.YAMLError) as error:
-        raise ProjectGenerationError(
-            f"Cannot read recorded hls4ml configuration: {error}"
-        ) from error
-    if not isinstance(values, dict):
-        raise ProjectGenerationError("Recorded hls4ml configuration must be a mapping")
-    return values
 
 
 def _published_ravel_config(config: RavelConfig) -> RavelConfig:

@@ -42,11 +42,13 @@ def test_reference_generator_uses_only_the_canonical_public_api() -> None:
 
     assert "import ravel_hls as ravel" in source
     assert "ravel.convert(" in source
+    assert "args.model,\n        args.output,\n        config," in source
     assert '"Run": args.vitis' in source
     assert '"Stages": {"CoSim": args.vitis}' in source
     assert 'config["Optimization"] = optimization' in source
     assert "RavelConfig" not in source
     assert "convert_from_keras_model" not in source
+    assert "config_from_keras_model" not in source
 
 
 def test_vanilla_hls4ml_baseline_has_no_generated_source_edit_path() -> None:

@@ -53,6 +53,22 @@ def test_public_namespace_exposes_only_the_aria_1_5_lifecycle() -> None:
         assert not hasattr(ravel_hls, removed_name)
 
 
+def test_removed_internal_generation_paths_are_absent() -> None:
+    repository = Path(__file__).resolve().parents[2]
+
+    assert not (repository / "src/ravel_hls/backends/vitis/renderer.py").exists()
+    assert not (repository / "src/ravel_hls/compatibility/model_profile.py").exists()
+
+    api = (repository / "src/ravel_hls/api.py").read_text(encoding="utf-8")
+    for removed_name in (
+        "convert_from_keras_model",
+        "optimize_project",
+        "refresh_model",
+        "build_pass_records",
+    ):
+        assert f"def {removed_name}(" not in api
+
+
 def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(

@@ -62,7 +62,7 @@ def build_generation_manifest(
     pass_records: list[dict[str, Any]],
     verification_report: dict[str, Any],
     interface_contract: dict[str, Any],
-    model_analysis: dict[str, Any] | None = None,
+    model_analysis: dict[str, Any],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
     recorded_configuration = {
@@ -106,32 +106,25 @@ def build_generation_manifest(
         "semantic_model_sha256": semantic_model_sha256,
         "facts": semantic_model["facts"],
     }
-    schema_version = 3
-    release = "1.4.0"
-    profile: dict[str, Any] = {"id": "aria", "version": 1}
-    architecture_contract = None
-    if model_analysis is not None:
-        schema_version = 4
-        release = "1.5.0"
-        source_model = {
-            "source_artifact_sha256": source_model["source_artifact_sha256"],
-            "semantic_model_sha256": semantic_model_sha256,
-            "frontend_provenance": model_analysis["frontend_provenance"],
-            "model_family": model_analysis["model_family"],
-            "facts": model_analysis["model_facts"],
-            "fingerprints": model_analysis["fingerprints"],
-        }
-        profile = {
-            "generation": model_analysis["generation"],
-            "model_family": model_analysis["model_family"],
-        }
-        architecture_contract = architecture_contract_sha256(model_analysis)
+    source_model = {
+        "source_artifact_sha256": source_model["source_artifact_sha256"],
+        "semantic_model_sha256": semantic_model_sha256,
+        "frontend_provenance": model_analysis["frontend_provenance"],
+        "model_family": model_analysis["model_family"],
+        "facts": model_analysis["model_facts"],
+        "fingerprints": model_analysis["fingerprints"],
+    }
+    profile = {
+        "generation": model_analysis["generation"],
+        "model_family": model_analysis["model_family"],
+    }
+    architecture_contract = architecture_contract_sha256(model_analysis)
     manifest = {
-        "schema_version": schema_version,
+        "schema_version": 4,
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": release,
+            "release": "1.5.0",
             "package_version": package_version,
         },
         "source_model": source_model,
@@ -170,9 +163,8 @@ def build_generation_manifest(
         "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,
     }
-    if model_analysis is not None:
-        manifest["resolved_design"] = model_analysis["resolved_design"]
-        manifest["architecture_contract_sha256"] = architecture_contract
+    manifest["resolved_design"] = model_analysis["resolved_design"]
+    manifest["architecture_contract_sha256"] = architecture_contract
     return manifest
 
 

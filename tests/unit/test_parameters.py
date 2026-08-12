@@ -1,7 +1,7 @@
-from pathlib import Path
 from io import BytesIO
 import hashlib
 import json
+from pathlib import Path
 import stat
 from types import SimpleNamespace
 import zipfile
@@ -12,76 +12,52 @@ import pytest
 from ravel_hls import ConfigurationError, Parameters
 
 
-class _Variable:
-    def __init__(self, path: str, values: list[float]) -> None:
-        self.path = path
-        self.name = path.rsplit("/", 1)[-1]
-        self._values = np.asarray(values, dtype=np.float32)
-
-    def numpy(self) -> np.ndarray:
-        return self._values.copy()
-
-
-class _Layer:
-    def __init__(self, name: str, class_name: str, weights: list[_Variable]) -> None:
-        self.name = name
-        self._class_name = class_name
-        self.weights = weights
-
-    def get_config(self) -> dict[str, object]:
-        return {
-            "name": self.name,
-            "kq_conf": {
-                "q_type": "kif",
-                "round_mode": "RND",
-                "overflow_mode": "SAT_SYM",
-                "homogeneous_axis": [0],
-                "heterogeneous_axis": None,
-            },
-        }
+MODEL = (
+    Path(__file__).parents[2]
+    / "references"
+    / "fLow_0.08-fhigh_0.23-rate_0.5"
+    / "adam_p1_step2"
+    / "adam_p1_step2_best.keras"
+)
 
 
-class _Model:
-    def __init__(self) -> None:
-        self.layers = [
-            _Layer(
-                "private_conv_name",
-                "QConv2D",
-                [
-                    _Variable("private_conv_name/kernel", [1.0, 2.0]),
-                    _Variable("private_conv_name/bias", [0.5]),
-                    _Variable("private_conv_name/private_conv_name_kq/k", [1.0]),
-                    _Variable("private_conv_name/private_conv_name_kq/i", [2.0]),
-                    _Variable("private_conv_name/private_conv_name_kq/f", [3.0]),
-                    _Variable("private_conv_name/beta", [0.1]),
-                    _Variable("private_conv_name/ebops", [99.0]),
-                ],
-            )
-        ]
+@pytest.fixture(scope="module")
+def valid_package(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    path = tmp_path_factory.mktemp("parameters") / "valid.ravelparams"
+    Parameters.extract(MODEL).save(path)
+    return path
 
 
-def test_parameters_round_trip_is_deterministic_and_private(tmp_path: Path) -> None:
-    parameters = Parameters.extract(_Model())
-    first = tmp_path / "first.ravelparams"
-    second = tmp_path / "second.ravelparams"
+def _rewrite_package(
+    source_path: Path,
+    target_path: Path,
+    mutate_manifest,
+    replace_payload=None,
+) -> None:
+    with zipfile.ZipFile(source_path) as source:
+        manifest = json.loads(source.read("parameter_package.json"))
+        mutate_manifest(manifest)
+        with zipfile.ZipFile(target_path, "w") as target:
+            target.writestr("parameter_package.json", json.dumps(manifest))
+            for entry in manifest.get("entries", []):
+                payload = source.read(entry["storage"])
+                if replace_payload is not None:
+                    payload = replace_payload(entry, payload)
+                target.writestr(entry["storage"], payload)
 
-    parameters.save(first)
-    parameters.save(second)
-    loaded = Parameters.load(first)
 
-    assert first.read_bytes() == second.read_bytes()
-    assert loaded.compatibility_sha256 == parameters.compatibility_sha256
-    assert loaded.parameter_state_sha256 == parameters.parameter_state_sha256
-    assert loaded.package_content_sha256 == parameters.package_content_sha256
-    assert b"private_conv_name" not in first.read_bytes()
-    assert b"beta" not in first.read_bytes()
-    assert b"ebops" not in first.read_bytes()
+def test_parameters_reject_legacy_object_extraction() -> None:
+    class _LegacyModel:
+        layers = []
+
+    with pytest.raises(ConfigurationError, match="model path or loaded Keras model"):
+        Parameters.extract(_LegacyModel())
 
 
-def test_parameters_reject_path_traversal_before_loading_payload(tmp_path: Path) -> None:
-    valid = tmp_path / "valid.ravelparams"
-    Parameters.extract(_Model()).save(valid)
-    with zipfile.ZipFile(valid) as archive:
+def test_parameters_reject_path_traversal_before_loading_payload(
+    tmp_path: Path, valid_package: Path
+) -> None:
+    with zipfile.ZipFile(valid_package) as archive:
         manifest = json.loads(archive.read("parameter_package.json"))
         payload = archive.read(manifest["entries"][0]["storage"])
     manifest["entries"][0]["storage"] = "../payload.npy"
@@ -114,18 +90,17 @@ def test_parameters_reject_an_oversized_manifest(tmp_path: Path) -> None:
         Parameters.load(oversized)
 
 
-def test_parameters_reject_an_unknown_schema_version(tmp_path: Path) -> None:
-    valid = tmp_path / "valid.ravelparams"
-    Parameters.extract(_Model()).save(valid)
+def test_parameters_reject_a_non_v2_schema(
+    tmp_path: Path, valid_package: Path
+) -> None:
     unknown = tmp_path / "unknown.ravelparams"
-    with zipfile.ZipFile(valid) as source, zipfile.ZipFile(unknown, "w") as target:
-        manifest = json.loads(source.read("parameter_package.json"))
-        manifest["schema_version"] = 99
-        target.writestr("parameter_package.json", json.dumps(manifest))
-        for entry in manifest["entries"]:
-            target.writestr(entry["storage"], source.read(entry["storage"]))
+    _rewrite_package(
+        valid_package,
+        unknown,
+        lambda manifest: manifest.update(schema_version=1),
+    )
 
-    with pytest.raises(ConfigurationError, match="schema_version.*1 or 2"):
+    with pytest.raises(ConfigurationError, match="schema_version must be 2"):
         Parameters.load(unknown)
 
 
@@ -167,11 +142,13 @@ def test_parameters_reject_oversized_payload_metadata_before_reading(
         Parameters.load("oversized.ravelparams")
 
 
-def test_parameters_reject_a_zip_symlink_entry(tmp_path: Path) -> None:
-    valid = tmp_path / "valid.ravelparams"
-    Parameters.extract(_Model()).save(valid)
+def test_parameters_reject_a_zip_symlink_entry(
+    tmp_path: Path, valid_package: Path
+) -> None:
     linked = tmp_path / "linked.ravelparams"
-    with zipfile.ZipFile(valid) as source, zipfile.ZipFile(linked, "w") as target:
+    with zipfile.ZipFile(valid_package) as source, zipfile.ZipFile(
+        linked, "w"
+    ) as target:
         for source_info in source.infolist():
             target_info = zipfile.ZipInfo(source_info.filename)
             target_info.compress_type = zipfile.ZIP_DEFLATED
@@ -184,56 +161,58 @@ def test_parameters_reject_a_zip_symlink_entry(tmp_path: Path) -> None:
         Parameters.load(linked)
 
 
-def test_parameters_reject_an_object_dtype_payload(tmp_path: Path) -> None:
-    valid = tmp_path / "valid.ravelparams"
-    Parameters.extract(_Model()).save(valid)
+def test_parameters_reject_an_object_dtype_payload(
+    tmp_path: Path, valid_package: Path
+) -> None:
     unsafe = tmp_path / "unsafe.ravelparams"
     object_payload = BytesIO()
     np.save(object_payload, np.asarray([object()], dtype=object), allow_pickle=True)
     payload = object_payload.getvalue()
-    with zipfile.ZipFile(valid) as source:
-        manifest = json.loads(source.read("parameter_package.json"))
-        replaced_storage = manifest["entries"][0]["storage"]
+
+    def mutate(manifest: dict[str, object]) -> None:
         manifest["entries"][0]["sha256"] = hashlib.sha256(payload).hexdigest()
-        with zipfile.ZipFile(unsafe, "w") as target:
-            target.writestr("parameter_package.json", json.dumps(manifest))
-            for entry in manifest["entries"]:
-                target.writestr(
-                    entry["storage"],
-                    payload
-                    if entry["storage"] == replaced_storage
-                    else source.read(entry["storage"]),
-                )
+
+    first_storage = None
+    with zipfile.ZipFile(valid_package) as source:
+        first_storage = json.loads(source.read("parameter_package.json"))["entries"][0][
+            "storage"
+        ]
+    _rewrite_package(
+        valid_package,
+        unsafe,
+        mutate,
+        lambda entry, original: payload
+        if entry["storage"] == first_storage
+        else original,
+    )
 
     with pytest.raises(ConfigurationError, match="object dtype"):
         Parameters.load(unsafe)
 
 
-def test_parameters_reject_a_payload_shape_mismatch(tmp_path: Path) -> None:
-    valid = tmp_path / "valid.ravelparams"
-    Parameters.extract(_Model()).save(valid)
+def test_parameters_reject_a_payload_shape_mismatch(
+    tmp_path: Path, valid_package: Path
+) -> None:
     mismatched = tmp_path / "mismatched.ravelparams"
-    with zipfile.ZipFile(valid) as source, zipfile.ZipFile(mismatched, "w") as target:
-        manifest = json.loads(source.read("parameter_package.json"))
+
+    def mutate(manifest: dict[str, object]) -> None:
         manifest["entries"][0]["shape"] = [999]
-        target.writestr("parameter_package.json", json.dumps(manifest))
-        for entry in manifest["entries"]:
-            target.writestr(entry["storage"], source.read(entry["storage"]))
+
+    _rewrite_package(valid_package, mismatched, mutate)
 
     with pytest.raises(ConfigurationError, match="shape"):
         Parameters.load(mismatched)
 
 
-def test_parameters_recompute_the_compatibility_identity(tmp_path: Path) -> None:
-    valid = tmp_path / "valid.ravelparams"
-    Parameters.extract(_Model()).save(valid)
+def test_parameters_recompute_the_compatibility_identity(
+    tmp_path: Path, valid_package: Path
+) -> None:
     mismatched = tmp_path / "mismatched-identity.ravelparams"
-    with zipfile.ZipFile(valid) as source, zipfile.ZipFile(mismatched, "w") as target:
-        manifest = json.loads(source.read("parameter_package.json"))
-        manifest["compatibility_sha256"] = "0" * 64
-        target.writestr("parameter_package.json", json.dumps(manifest))
-        for entry in manifest["entries"]:
-            target.writestr(entry["storage"], source.read(entry["storage"]))
+    _rewrite_package(
+        valid_package,
+        mismatched,
+        lambda manifest: manifest.update(compatibility_sha256="0" * 64),
+    )
 
     with pytest.raises(ConfigurationError, match="compatibility"):
         Parameters.load(mismatched)

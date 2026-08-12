@@ -1,8 +1,6 @@
 """Resolved implementation plans for the Aria specialization set."""
 
 from collections.abc import Mapping
-import hashlib
-import json
 from typing import Any
 
 
@@ -18,16 +16,8 @@ def build_implementation_plan(
         operation["id"]: operation
         for operation in model_facts.get("operations", ())
     }
-    input_shape = (
-        operations["input_0"]["outputs"][0]["shape"]
-        if operations
-        else [256, 4]
-    )
-    convolution = (
-        operations["conv2d_0"]["attributes"]
-        if operations
-        else {"out_width": 4, "n_filt": dense_facts["input_group_size"]}
-    )
+    input_shape = operations["input_0"]["outputs"][0]["shape"]
+    convolution = operations["conv2d_0"]["attributes"]
     dense_inputs = dense_facts["n_in"]
     dense_outputs = dense_facts["n_out"]
     dense_group_size = dense_facts["input_group_size"]
@@ -85,104 +75,3 @@ def build_implementation_plan(
         "internal_fifo_depth": 4,
         "dataflow_start_propagation": False,
     }
-
-
-def build_pass_records(
-    implementation_plan: Mapping[str, Any],
-) -> list[dict[str, Any]]:
-    """Return ordered records for the selected legal pass sequence."""
-
-    temporal_pack = implementation_plan["temporal_pack"]
-    dense_parallelism = implementation_plan["dense_parallelism"]
-    weight_delivery = implementation_plan["weight_delivery"]
-    dense_parameters = {
-        "dense_inputs": implementation_plan["dense_inputs"],
-        "filter_lanes": implementation_plan["filter_lanes"],
-        "dense_parallelism": dense_parallelism,
-        "dense_steps": implementation_plan["dense_steps"],
-        "weight_delivery": (
-            f"{weight_delivery['id']}-v{weight_delivery['version']}"
-        ),
-    }
-    if weight_delivery["id"] == "wide-sequential":
-        dense_parameters.update(
-            {
-                "weight_word_bits": weight_delivery["word_bits"],
-                "weight_depth": weight_delivery["depth"],
-                "tail_elements": weight_delivery["tail_elements"],
-                "tail_mask": weight_delivery["tail_mask"],
-                "accumulation": weight_delivery["accumulation"]["policy"],
-            }
-        )
-    pass_ids = (
-        f"PackTemporalInput{temporal_pack}x",
-        "FuseRepackReshapeIntoFirstConv",
-        "PropagateWideReLUStream",
-        "SpecializeNonOverlappingMaxPool",
-        "StreamFlattenIntoDense",
-        "BindShallowInternalFifos",
-        "ElideDataflowStartPropagation",
-    )
-    effects = [
-        (
-            {
-                "rows_per_word": temporal_pack,
-                "values_per_word": temporal_pack * 4,
-            },
-            ["firmware/defines.h", "bridge", "testbench"],
-        ),
-        (
-            {
-                "width_lanes": implementation_plan["width_lanes"],
-                "filter_lanes": implementation_plan["filter_lanes"],
-            },
-            ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
-        ),
-        (
-            {"values_per_word": implementation_plan["values_per_internal_word"]},
-            ["firmware/top.cpp", "firmware/defines.h"],
-        ),
-        (
-            {"pool_height": 2, "pool_width": 1, "stride_height": 2},
-            ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
-        ),
-        (
-            dense_parameters,
-            ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
-        ),
-        (
-            {"fifo_depth": 4, "storage": "srl"},
-            ["firmware/top.cpp"],
-        ),
-        (
-            {"start_propagation": False, "block_control": "ap_ctrl_hs"},
-            ["firmware/top.cpp"],
-        ),
-    ]
-    state: dict[str, Any] = {"profile": "aria", "streaming": {}}
-    records = []
-    for order, (pass_id, effect) in enumerate(zip(pass_ids, effects), start=1):
-        parameters, artifacts = effect
-        input_fingerprint = _fingerprint(state)
-        state = {
-            **state,
-            "streaming": {**state["streaming"], pass_id: parameters},
-        }
-        records.append(
-            {
-                "id": pass_id,
-                "version": 1,
-                "order": order,
-                "legality": "passed",
-                "resolved_parameters": parameters,
-                "input_ir_sha256": input_fingerprint,
-                "output_ir_sha256": _fingerprint(state),
-                "affected_artifacts": artifacts,
-            }
-        )
-    return records
-
-
-def _fingerprint(value: Any) -> str:
-    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(encoded).hexdigest()

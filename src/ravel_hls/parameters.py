@@ -24,20 +24,6 @@ _MAX_ARCHIVE_ENTRIES = 4096
 _MAX_MANIFEST_SIZE = 8 * 1024 * 1024
 _MAX_ARRAY_SIZE = 2 * 1024**3
 _MAX_TOTAL_SIZE = 8 * 1024**3
-_INFERENCE_VARIABLES = {"kernel", "bias", "k", "i", "f"}
-_STATIC_QUANTIZER_KEYS = {
-    "affine",
-    "enable_iq",
-    "enable_oq",
-    "heterogeneous_axis",
-    "homogeneous_axis",
-    "overflow",
-    "overflow_mode",
-    "q_type",
-    "round_mode",
-    "rounding",
-    "scaler",
-}
 
 
 @dataclass(frozen=True)
@@ -61,9 +47,7 @@ class Parameters:
 
         value = self._manifest.get("model_structure_sha256")
         if not isinstance(value, str):
-            raise ConfigurationError(
-                "Legacy parameter packages have no ModelGraph structure identity"
-            )
+            raise ConfigurationError("Parameter package has no ModelGraph structure identity")
         return value
 
     @property
@@ -74,79 +58,14 @@ class Parameters:
     def extract(cls, model: Any) -> "Parameters":
         """Extract generation-relevant inference state from a loaded model."""
 
-        if isinstance(model, (str, os.PathLike)) or (
-            hasattr(model, "inputs") and hasattr(model, "outputs")
+        if not (
+            isinstance(model, (str, os.PathLike))
+            or (hasattr(model, "inputs") and hasattr(model, "outputs"))
         ):
-            return cls._extract_modelgraph(model)
-
-        if isinstance(model, (str, os.PathLike)):
-            import keras
-            from hgq.layers import QConv2D, QDense
-
-            model_path = Path(model)
-            if not model_path.is_file():
-                raise ConfigurationError(f"Keras model file does not exist: {model_path}")
-            model = keras.models.load_model(
-                model_path, custom_objects={"QConv2D": QConv2D, "QDense": QDense}
+            raise ConfigurationError(
+                "Parameters.extract requires a model path or loaded Keras model"
             )
-        layers = getattr(model, "layers", None)
-        if not isinstance(layers, (list, tuple)):
-            raise ConfigurationError("Parameters.extract requires a loaded model")
-        arrays: list[np.ndarray] = []
-        entries: list[dict[str, Any]] = []
-        topology: list[dict[str, Any]] = []
-        for layer_index, layer in enumerate(layers):
-            layer_name = str(getattr(layer, "name", ""))
-            config = layer.get_config() if callable(getattr(layer, "get_config", None)) else {}
-            topology.append(
-                {
-                    "class_name": getattr(layer, "_class_name", type(layer).__name__),
-                    "quantizer_contract": _quantizer_contract(config),
-                }
-            )
-            for variable in getattr(layer, "weights", ()):
-                kind = str(getattr(variable, "name", "")).rsplit("/", 1)[-1]
-                if kind not in _INFERENCE_VARIABLES:
-                    continue
-                values = np.ascontiguousarray(variable.numpy())
-                if values.dtype.hasobject:
-                    raise ConfigurationError("Parameter arrays cannot use object dtype")
-                role = _variable_role(variable, layer_name)
-                array_index = len(arrays)
-                storage = f"arrays/{array_index:04d}.npy"
-                payload = _npy_bytes(values)
-                entries.append(
-                    {
-                        "slot": f"layer-{layer_index:03d}/{role}",
-                        "kind": kind,
-                        "shape": list(values.shape),
-                        "dtype": values.dtype.str,
-                        "storage": storage,
-                        "sha256": hashlib.sha256(payload).hexdigest(),
-                    }
-                )
-                arrays.append(values)
-        compatibility = {
-            "frontend_contract": {"id": "keras-hgq2", "version": 1},
-            "topology": topology,
-            "slots": [
-                {key: entry[key] for key in ("slot", "kind", "shape", "dtype")}
-                for entry in entries
-            ],
-        }
-        parameter_state = [
-            {"slot": entry["slot"], "sha256": entry["sha256"]} for entry in entries
-        ]
-        manifest = {
-            "schema_version": 1,
-            "frontend_contract": compatibility["frontend_contract"],
-            "topology": topology,
-            "entries": entries,
-            "compatibility_sha256": _canonical_sha256(compatibility),
-            "parameter_state_sha256": _canonical_sha256(parameter_state),
-        }
-        manifest["package_content_sha256"] = _package_content_sha256(manifest, arrays)
-        return cls(manifest, tuple(arrays))
+        return cls._extract_modelgraph(model)
 
     @classmethod
     def _extract_modelgraph(cls, model: Any) -> "Parameters":
@@ -225,21 +144,6 @@ class Parameters:
             for entry, values in zip(self._manifest["entries"], self._arrays):
                 _write_zip_entry(archive, entry["storage"], _npy_bytes(values))
 
-    def _apply(self, model: Any) -> Any:
-        template = type(self).extract(model)
-        if template.compatibility_sha256 != self.compatibility_sha256:
-            raise ConfigurationError(
-                "Parameter package is incompatible with the project model template"
-            )
-        variables = list(_inference_variables(model))
-        if len(variables) != len(self._arrays):
-            raise ConfigurationError(
-                "Parameter package does not match the project model variable slots"
-            )
-        for variable, values in zip(variables, self._arrays):
-            variable.assign(values)
-        return model
-
     @classmethod
     def load(cls, path: str | Path) -> "Parameters":
         """Load and validate a `.ravelparams` archive."""
@@ -278,9 +182,11 @@ class Parameters:
                     "Parameter package manifest exceeds the 8 MiB safety limit"
                 )
             manifest = json.loads(archive.read(_MANIFEST_NAME))
-            if manifest.get("schema_version") not in {1, 2}:
+            if manifest.get("schema_version") != 2:
+                raise ConfigurationError("Parameter package schema_version must be 2")
+            if manifest.get("format") != "ravel-modelgraph-parameters":
                 raise ConfigurationError(
-                    "Parameter package schema_version must be 1 or 2"
+                    "Parameter package format must be ravel-modelgraph-parameters"
                 )
             arrays = []
             for entry in manifest.get("entries", []):
@@ -313,54 +219,30 @@ class Parameters:
                     )
                 arrays.append(np.ascontiguousarray(values))
         expected_content = _package_content_sha256(manifest, arrays)
-        if manifest["schema_version"] == 2:
-            expected_compatibility = _canonical_sha256(
-                {
-                    "model_family": manifest.get("model_family"),
-                    "model_structure_sha256": manifest.get(
-                        "model_structure_sha256"
-                    ),
-                    "entries": [
-                        {
-                            key: entry.get(key)
-                            for key in (
-                                "id",
-                                "operation_id",
-                                "role",
-                                "shape",
-                                "numeric_type",
-                            )
-                        }
-                        for entry in manifest.get("entries", [])
-                    ],
-                }
-            )
-        else:
-            expected_compatibility = _canonical_sha256(
-                {
-                    "frontend_contract": manifest.get("frontend_contract"),
-                    "topology": manifest.get("topology"),
-                    "slots": [
-                        {
-                            key: entry.get(key)
-                            for key in ("slot", "kind", "shape", "dtype")
-                        }
-                        for entry in manifest.get("entries", [])
-                    ],
-                }
-            )
+        expected_compatibility = _canonical_sha256(
+            {
+                "model_family": manifest.get("model_family"),
+                "model_structure_sha256": manifest.get(
+                    "model_structure_sha256"
+                ),
+                "entries": [
+                    {
+                        key: entry.get(key)
+                        for key in (
+                            "id",
+                            "operation_id",
+                            "role",
+                            "shape",
+                            "numeric_type",
+                        )
+                    }
+                    for entry in manifest.get("entries", [])
+                ],
+            }
+        )
         if expected_compatibility != manifest.get("compatibility_sha256"):
             raise ConfigurationError("Parameter package compatibility digest mismatch")
-        expected_parameter_state = (
-            _modelgraph_parameter_state(manifest, arrays)
-            if manifest["schema_version"] == 2
-            else _canonical_sha256(
-                [
-                    {"slot": entry.get("slot"), "sha256": entry.get("sha256")}
-                    for entry in manifest.get("entries", [])
-                ]
-            )
-        )
+        expected_parameter_state = _modelgraph_parameter_state(manifest, arrays)
         if expected_parameter_state != manifest.get("parameter_state_sha256"):
             raise ConfigurationError("Parameter package state digest mismatch")
         if expected_content != manifest.get("package_content_sha256"):
@@ -368,10 +250,6 @@ class Parameters:
         return cls(manifest, tuple(arrays))
 
     def _payload_for(self, template: ParameterPayload) -> ParameterPayload:
-        if self._manifest.get("schema_version") != 2:
-            raise ConfigurationError(
-                "Architecture refresh requires a schema-v2 parameter package"
-            )
         template_by_id = template.by_id()
         tensors = []
         for entry, values in zip(self._manifest["entries"], self._arrays):
@@ -426,38 +304,6 @@ class Parameters:
             "parameter_state_sha256"
         ]
         return payload, report
-
-
-def _quantizer_contract(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            key: _quantizer_contract(item)
-            for key, item in sorted(value.items())
-            if key in _STATIC_QUANTIZER_KEYS or isinstance(item, dict)
-        }
-    if isinstance(value, (list, tuple)):
-        return [_quantizer_contract(item) for item in value]
-    if isinstance(value, np.generic):
-        return value.item()
-    return value
-
-
-def _inference_variables(model: Any):
-    for layer in model.layers:
-        for variable in getattr(layer, "weights", ()):
-            kind = str(getattr(variable, "name", "")).rsplit("/", 1)[-1]
-            if kind in _INFERENCE_VARIABLES:
-                yield variable
-
-
-def _variable_role(variable: Any, layer_name: str) -> str:
-    path = str(getattr(variable, "path", getattr(variable, "name", "")))
-    parts = path.split("/")
-    if parts and parts[0] == layer_name:
-        parts = parts[1:]
-    return "/".join(
-        part.removeprefix(f"{layer_name}_") if layer_name else part for part in parts
-    )
 
 
 def _canonical_bytes(value: Any) -> bytes:
