@@ -73,6 +73,10 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
     assert dependency_install["run"] == (
         "uv pip install --upgrade build twine '.[test]'"
     )
+    test_step = next(
+        step for step in build_steps if step.get("name") == "Run tests"
+    )
+    assert test_step["run"] == "python .github/scripts/run_release_tests.py"
     assert workflow["jobs"]["publish"]["runs-on"] == "ubuntu-latest"
     assert workflow["jobs"]["publish"]["if"] == (
         "${{ startsWith(github.ref, 'refs/tags/v') }}"
