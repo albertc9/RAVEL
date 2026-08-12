@@ -57,9 +57,15 @@ def render_aria_project(
         "input_wide_type": _wide_type_name(
             input_variable.type.name, f"x{temporal_pack}"
         ),
-        "conv_wide_type": _wide_type_name(convolution_variable.type.name, "x4"),
-        "activation_wide_type": _wide_type_name(activation_variable.type.name, "x4"),
-        "pool_wide_type": _wide_type_name(pooling_variable.type.name, "x4"),
+        "conv_wide_type": _wide_type_name(
+            convolution_variable.type.name, f"x{implementation_plan['width_lanes']}"
+        ),
+        "activation_wide_type": _wide_type_name(
+            activation_variable.type.name, f"x{implementation_plan['width_lanes']}"
+        ),
+        "pool_wide_type": _wide_type_name(
+            pooling_variable.type.name, f"x{implementation_plan['width_lanes']}"
+        ),
         "output_type": output_variable.type.name,
         "input_precision": input_variable.type.precision.definition_cpp(),
         "conv_precision": convolution_variable.type.precision.definition_cpp(),
@@ -71,7 +77,19 @@ def render_aria_project(
         "dense_config": f"config{dense.get_attr('index')}",
         "dense_parallelism": implementation_plan["dense_parallelism"],
         "temporal_pack": temporal_pack,
-        "input_words_per_inference": 256 // temporal_pack,
+        "channels_per_row": implementation_plan["channels_per_row"],
+        "input_values_per_inference": (
+            implementation_plan["input_words_per_inference"]
+            * implementation_plan["values_per_input_word"]
+        ),
+        "input_words_per_inference": implementation_plan[
+            "input_words_per_inference"
+        ],
+        "width_lanes": implementation_plan["width_lanes"],
+        "filter_lanes": implementation_plan["filter_lanes"],
+        "values_per_internal_word": implementation_plan[
+            "values_per_internal_word"
+        ],
         "first_conv_function": (
             f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
         ),

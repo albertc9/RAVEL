@@ -16,16 +16,22 @@ from ..exceptions import ConfigurationError, VerificationError
 def prepare_stimuli(
     config: RavelConfig,
     verification_inputs: Any | None,
-    input_numeric_type: dict[str, Any] | None = None,
+    input_tensor: dict[str, Any] | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Normalize supplied data or create deterministic synthetic inputs."""
 
     verification = config["Verification"]
+    if input_tensor is not None:
+        input_numeric_type = input_tensor["numeric_type"]
+        input_shape = tuple(input_tensor["shape"])
+    else:
+        input_numeric_type = None
+        input_shape = (256, 4)
     if verification_inputs is None and input_numeric_type is not None:
         sample_count = verification.get("Samples", 32)
         seed = verification.get("Seed", 0)
         codes = _numeric_contract_codes(
-            sample_count, (256, 4), input_numeric_type, seed
+            sample_count, input_shape, input_numeric_type, seed
         )
         fractional = input_numeric_type["width"] - input_numeric_type["integer"]
         inputs = (codes.astype(np.float64) / (2**fractional)).astype(np.float32)
@@ -34,16 +40,21 @@ def prepare_stimuli(
         sample_count = verification.get("Samples", 32)
         seed = verification.get("Seed", 0)
         inputs = np.random.default_rng(seed).uniform(
-            -1.0, 1.0, size=(sample_count, 256, 4)
+            -1.0, 1.0, size=(sample_count, *input_shape)
         ).astype(np.float32)
         kind = "synthetic"
     else:
         inputs = np.asarray(verification_inputs)
         seed = None
         kind = "supplied"
-    if inputs.ndim != 3 or tuple(inputs.shape[1:]) != (256, 4) or inputs.shape[0] < 1:
+    if (
+        inputs.ndim != len(input_shape) + 1
+        or tuple(inputs.shape[1:]) != input_shape
+        or inputs.shape[0] < 1
+    ):
         raise ConfigurationError(
-            "verification_inputs must have shape [samples, 256, 4]"
+            "verification_inputs must have shape "
+            f"[samples, {', '.join(str(value) for value in input_shape)}]"
         )
     inputs = np.ascontiguousarray(inputs)
     record = {

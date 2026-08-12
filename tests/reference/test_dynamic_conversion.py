@@ -73,3 +73,29 @@ def test_conversion_checks_implementation_consistency_without_accuracy_labels(
     assert verification["stimuli"]["input_numeric_type"]["width"] == 8
     assert verification["stimuli"]["sample_count"] == 8
     assert "accuracy" not in verification
+
+
+def test_extracted_geometry_drives_generated_cpp_and_consistency(
+    tmp_path: Path, noncanonical_geometry_model,
+) -> None:
+    project = convert(
+        noncanonical_geometry_model,
+        tmp_path / "aria_dynamic_geometry",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 2, "DenseParallelism": 2},
+            "Verification": {"Mode": "required", "Samples": 8, "Seed": 11},
+        },
+    )
+
+    assert project.manifest["interfaces"]["logical_model_interface"] == {
+        "input_shape": [128, 4],
+        "output_shape": [1],
+    }
+    assert project.manifest["interfaces"]["hls_stream_interface"][
+        "values_per_input_word"
+    ] == 8
+    assert project.manifest["verification"][
+        "source_conversion_consistency"
+    ] == "passed"
+    assert project.manifest["verification"]["transformation_equivalence"] == "passed"

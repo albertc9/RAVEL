@@ -21,8 +21,8 @@ void pack_aria_test_input(
     for (unsigned word_index = 0; word_index < {{ input_words_per_inference }}; word_index++) {
         {{ input_wide_type }} word;
         for (unsigned row = 0; row < {{ temporal_pack }}; row++) {
-            for (unsigned channel = 0; channel < 4; channel++) {
-                word[row * 4 + channel] = logical_input[(word_index * {{ temporal_pack }} + row) * 4 + channel];
+            for (unsigned channel = 0; channel < {{ channels_per_row }}; channel++) {
+                word[row * {{ channels_per_row }} + channel] = logical_input[(word_index * {{ temporal_pack }} + row) * {{ channels_per_row }} + channel];
             }
         }
         packed_input.write(word);
@@ -45,8 +45,8 @@ int main() {
         for (char *token = std::strtok(text, " "); token != NULL; token = std::strtok(NULL, " ")) {
             input.push_back(std::atof(token));
         }
-        if (input.size() != 256 * 4) {
-            std::cerr << "Expected 1024 input values, received " << input.size() << std::endl;
+        if (input.size() != {{ input_values_per_inference }}) {
+            std::cerr << "Expected {{ input_values_per_inference }} input values, received " << input.size() << std::endl;
             return 2;
         }
         hls::stream<{{ input_wide_type }}> {{ input_name }}("{{ input_name }}");
@@ -58,7 +58,7 @@ int main() {
     }
 
     if (sample == 0) {
-        std::vector<float> zero_input(256 * 4, 0.0f);
+        std::vector<float> zero_input({{ input_values_per_inference }}, 0.0f);
         hls::stream<{{ input_wide_type }}> {{ input_name }}("{{ input_name }}");
         hls::stream<{{ output_type }}> {{ output_name }}("{{ output_name }}");
         pack_aria_test_input(zero_input, {{ input_name }});

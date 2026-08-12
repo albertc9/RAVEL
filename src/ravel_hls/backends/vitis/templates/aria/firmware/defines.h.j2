@@ -1,9 +1,9 @@
 {{ baseline_defines_body }}
 
 // RAVEL Aria wide-stream types.
-typedef nnet::array<{{ input_precision }}, {{ temporal_pack }}*4> {{ input_wide_type }};
-typedef nnet::array<{{ conv_precision }}, 7*4> {{ conv_wide_type }};
-typedef nnet::array<{{ activation_precision }}, 7*4> {{ activation_wide_type }};
-typedef nnet::array<{{ pool_precision }}, 7*4> {{ pool_wide_type }};
+typedef nnet::array<{{ input_precision }}, {{ temporal_pack }}*{{ channels_per_row }}> {{ input_wide_type }};
+typedef nnet::array<{{ conv_precision }}, {{ values_per_internal_word }}> {{ conv_wide_type }};
+typedef nnet::array<{{ activation_precision }}, {{ values_per_internal_word }}> {{ activation_wide_type }};
+typedef nnet::array<{{ pool_precision }}, {{ values_per_internal_word }}> {{ pool_wide_type }};
 
 #endif

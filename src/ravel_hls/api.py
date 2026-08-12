@@ -290,17 +290,28 @@ def optimize_project(
         raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.4.0")
     if model_config.get("ReuseFactor", 1) != 1:
         raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.4.0")
-    input_shapes = list(hls_config.get("InputShapes", {}).values())
-    if input_shapes != [[256, 4]]:
-        raise CompatibilityError(
-            "Aria 1.4.0 requires one logical input shape [256, 4]"
-        )
-    output_shapes = list(hls_config.get("OutputShapes", {}).values())
-    if output_shapes != [[1]]:
-        raise CompatibilityError("Aria 1.4.0 requires one logical output shape [1]")
     layers = list(hls_model.get_layers())
-    validate_aria_model_profile(layers)
-    model_facts = {"dense": analyze_dense_facts(layers)}
+    input_shapes = list(hls_config.get("InputShapes", {}).values())
+    output_shapes = list(hls_config.get("OutputShapes", {}).values())
+    if model_analysis is None:
+        if input_shapes != [[256, 4]]:
+            raise CompatibilityError(
+                "Aria 1.4.0 requires one logical input shape [256, 4]"
+            )
+        if output_shapes != [[1]]:
+            raise CompatibilityError(
+                "Aria 1.4.0 requires one logical output shape [1]"
+            )
+        validate_aria_model_profile(layers)
+        model_facts = {"dense": analyze_dense_facts(layers)}
+    else:
+        model_facts = dict(model_analysis["model_facts"])
+        expected_input = model_facts["operations"][0]["outputs"][0]["shape"]
+        expected_output = model_facts["operations"][-1]["outputs"][0]["shape"]
+        if input_shapes != [expected_input] or output_shapes != [expected_output]:
+            raise CompatibilityError(
+                "Analyzed model facts disagree with the hls4ml graph interface"
+            )
     implementation_plan = build_implementation_plan(
         ravel_config["Optimization"], model_facts
     )
@@ -412,9 +423,7 @@ def _generate_project(
                 ravel_config,
                 verification_inputs,
                 (
-                    model_analysis["model_facts"]["operations"][0]["outputs"][0][
-                        "numeric_type"
-                    ]
+                    model_analysis["model_facts"]["operations"][0]["outputs"][0]
                     if model_analysis is not None
                     else None
                 ),
@@ -625,14 +634,24 @@ def _interface_contract(
         raise ProjectGenerationError("Unable to resolve Aria interface precision widths")
     input_slot_width = max(8, 1 << (input_width - 1).bit_length())
     output_slot_width = max(8, 1 << (output_width - 1).bit_length())
+    input_shape = [
+        int(dimension)
+        for dimension in getattr(input_variable, "shape", (256, 4))
+    ]
+    output_shape = [
+        int(dimension) for dimension in getattr(output_variable, "shape", (1,))
+    ]
+    output_values = 1
+    for dimension in output_shape:
+        output_values *= dimension
     return {
         "logical_model_interface": {
-            "input_shape": [256, 4],
-            "output_shape": [1],
+            "input_shape": input_shape,
+            "output_shape": output_shape,
         },
         "hls_stream_interface": {
             "input_rows_per_word": implementation_plan["temporal_pack"],
-            "channels_per_row": 4,
+            "channels_per_row": implementation_plan["channels_per_row"],
             "values_per_input_word": implementation_plan["values_per_input_word"],
             "input_words_per_inference": implementation_plan[
                 "input_words_per_inference"
@@ -653,7 +672,7 @@ def _interface_contract(
                 "input_tdata_bits": (
                     implementation_plan["values_per_input_word"] * input_slot_width
                 ),
-                "output_tdata_bits": output_slot_width,
+            "output_tdata_bits": output_values * output_slot_width,
                 "input_tdata_port": f"{input_variable.name}_TDATA",
                 "output_tdata_port": f"{output_variable.name}_TDATA",
                 "input_scalar_bits": input_width,
