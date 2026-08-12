@@ -108,6 +108,13 @@ def test_extracted_geometry_drives_generated_cpp_and_consistency(
         "source_conversion_consistency"
     ] == "passed"
     assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    generated_convolution = (
+        project.path / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "static const unsigned multiplier_limit = 60;" in generated_convolution
+    assert generated_convolution.count(
+        "using mult_config = aria_first_conv_mult_config"
+    ) == 2
 
 
 @pytest.mark.parametrize(

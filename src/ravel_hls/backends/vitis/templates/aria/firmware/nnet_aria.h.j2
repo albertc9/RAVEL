@@ -8,6 +8,11 @@
 
 namespace nnet {
 
+template <class BASE_CONFIG_T>
+struct aria_first_conv_mult_config : BASE_CONFIG_T {
+    static const unsigned multiplier_limit = {{ first_conv_multiplier_limit }};
+};
+
 template <class data_T, class res_T, typename CONFIG_T>
 void first_conv_2row_4lane_temporal_wide_cl(
     hls::stream<data_T> &data,
@@ -95,8 +100,10 @@ ReadPairsWide:
 
                 res_value_t res_out[CONFIG_T::n_filt];
                 #pragma HLS ARRAY_PARTITION variable=res_out complete
-                CONFIG_T::mult_config::template kernel<
-                    data_value_t, res_value_t, typename CONFIG_T::mult_config>::dense(
+                using mult_config = aria_first_conv_mult_config<
+                    typename CONFIG_T::mult_config>;
+                mult_config::template kernel<
+                    data_value_t, res_value_t, mult_config>::dense(
                         kernel_data, res_out, weights, biases);
                 for (unsigned i_f = 0; i_f < CONFIG_T::n_filt; i_f++) {
                     #pragma HLS UNROLL
@@ -131,10 +138,12 @@ ComputeOutputWidth:
         }
         typename res_T::value_type res_out[CONFIG_T::n_filt];
         #pragma HLS ARRAY_PARTITION variable=res_out complete
-        CONFIG_T::mult_config::template kernel<
+        using mult_config = aria_first_conv_mult_config<
+            typename CONFIG_T::mult_config>;
+        mult_config::template kernel<
             typename data_T::value_type,
             typename res_T::value_type,
-            typename CONFIG_T::mult_config>::dense(
+            mult_config>::dense(
                 kernel_data, res_out, weights, biases);
         for (unsigned i_f = 0; i_f < CONFIG_T::n_filt; i_f++) {
             #pragma HLS UNROLL
