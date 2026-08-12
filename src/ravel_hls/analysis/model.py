@@ -87,6 +87,8 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
 
+    frontend_provenance = _frontend_provenance(normalized_model)
+
     hls_config = hls4ml.utils.config_from_keras_model(
         normalized_model, granularity="name", backend=backend
     )
@@ -106,7 +108,12 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
     graph = hls4ml.converters.convert_from_keras_model(**conversion)
     layers = list(graph.get_layers())
     model_facts, fingerprints = _extract_model_facts(layers)
-    model_family, applicability = _match_model_family(model_facts, layers)
+    fingerprints["frontend_provenance_sha256"] = _canonical_sha256(
+        frontend_provenance
+    )
+    model_family, applicability = _match_model_family(
+        model_facts, frontend_provenance
+    )
 
     optimization = config.get("Optimization", {})
     if not isinstance(optimization, Mapping):
@@ -134,6 +141,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
             "generation": {"id": "aria", "version": "1.5.0"},
             "model_family": model_family,
             "applicability": applicability,
+            "frontend_provenance": frontend_provenance,
             "model_facts": {**model_facts, **dense_facts},
             "resolved_design": resolved_design,
             "fingerprints": fingerprints,
@@ -208,7 +216,7 @@ _CANONICAL_ATTRIBUTES = {
 
 
 def _match_model_family(
-    facts: Mapping[str, Any], layers: list[Any]
+    facts: Mapping[str, Any], provenance: Mapping[str, Any]
 ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     operations = facts["operations"]
     observed_sequence = tuple(operation["kind"] for operation in operations)
@@ -265,18 +273,22 @@ def _match_model_family(
                         "message": "Model family requires a direct linear chain",
                     }
                 )
-        for operation, layer in zip(operations, layers):
-            if operation["kind"] not in {"conv2d", "dense"}:
-                continue
-            module = layer.get_attr("module")
-            if not isinstance(module, str) or not module.startswith("hgq.layers"):
+        source_layers = provenance["source_layers"]
+        for class_name in ("QConv2D", "QDense"):
+            matching_sources = [
+                source
+                for source in source_layers
+                if source["class_name"] == class_name
+                and source["module"].startswith("hgq.layers")
+            ]
+            if len(matching_sources) != 1:
                 findings.append(
                     {
                         "code": "family.provenance.hgq2",
                         "severity": "error",
-                        "operation_id": operation["id"],
-                        "expected": "hgq.layers origin",
-                        "observed": module,
+                        "operation_id": "conv2d_0" if class_name == "QConv2D" else "dense_0",
+                        "expected": f"one hgq.layers {class_name}",
+                        "observed": len(matching_sources),
                         "message": "Model family requires HGQ2 Conv2D and Dense origins",
                     }
                 )
@@ -286,6 +298,56 @@ def _match_model_family(
         {"id": "hgq-conv-pool-dense", "version": 1},
         {"status": "applicable", "findings": []},
     )
+
+
+_QUANTIZER_ROLES = {
+    "iq_conf": "input",
+    "kq_conf": "weight",
+    "bq_conf": "bias",
+    "oq_conf": "output",
+}
+
+
+def _frontend_provenance(model: Any) -> dict[str, Any]:
+    source_layers = []
+    quantizer_contracts = []
+    for ordinal, layer in enumerate(model.layers):
+        source_layers.append(
+            {
+                "ordinal": ordinal,
+                "module": type(layer).__module__,
+                "class_name": type(layer).__name__,
+            }
+        )
+        config = layer.get_config()
+        for field, role in _QUANTIZER_ROLES.items():
+            serialized = config.get(field)
+            if not isinstance(serialized, Mapping):
+                continue
+            quantizer = serialized.get("config")
+            if not isinstance(quantizer, Mapping):
+                continue
+            quantizer_contracts.append(
+                {
+                    "source_ordinal": ordinal,
+                    "role": role,
+                    "q_type": quantizer.get("q_type"),
+                    "rounding": quantizer.get("round_mode"),
+                    "overflow": quantizer.get("overflow_mode"),
+                    "homogeneous_axis": _json_value(
+                        quantizer.get("homogeneous_axis")
+                    ),
+                    "heterogeneous_axis": _json_value(
+                        quantizer.get("heterogeneous_axis")
+                    ),
+                    "is_weight": quantizer.get("is_weight"),
+                }
+            )
+    return {
+        "adapter": {"id": "keras-hgq2", "version": 1},
+        "source_layers": source_layers,
+        "quantizer_contracts": quantizer_contracts,
+    }
 
 
 _OPERATION_ATTRIBUTES = {

@@ -123,3 +123,45 @@ def test_future_topology_is_analyzed_before_it_is_reported_as_unsupported() -> N
         finding["code"] for finding in report["applicability"]["findings"]
     }
     assert report["resolved_design"] is None
+
+
+def test_retraining_does_not_change_the_static_hgq2_frontend_contract() -> None:
+    first = analyze(
+        RETRAINED_ROOT / "adam_p1_step2" / "adam_p1_step2_best.keras",
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+    second = analyze(
+        RETRAINED_ROOT
+        / "adam_hgq_replicate_s2"
+        / "adam_hgq_replicate_s2_best.keras",
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+
+    provenance = first["frontend_provenance"]
+    assert provenance["adapter"] == {"id": "keras-hgq2", "version": 1}
+    assert [layer["class_name"] for layer in provenance["source_layers"]] == [
+        "Reshape",
+        "QConv2D",
+        "MaxPooling2D",
+        "Flatten",
+        "QDense",
+    ]
+    weight_contract = next(
+        contract
+        for contract in provenance["quantizer_contracts"]
+        if contract["source_ordinal"] == 1 and contract["role"] == "weight"
+    )
+    assert weight_contract == {
+        "source_ordinal": 1,
+        "role": "weight",
+        "q_type": "kif",
+        "rounding": "RND",
+        "overflow": "SAT_SYM",
+        "homogeneous_axis": None,
+        "heterogeneous_axis": [],
+        "is_weight": True,
+    }
+    assert (
+        first["fingerprints"]["frontend_provenance_sha256"]
+        == second["fingerprints"]["frontend_provenance_sha256"]
+    )
