@@ -133,7 +133,7 @@ def test_parameter_package_schema_describes_portable_inference_state() -> None:
     } <= set(schema["required"])
 
 
-def test_qualification_schema_binds_v2_evidence_identity() -> None:
+def test_qualification_schema_binds_v3_evidence_identity_and_stages() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_qualification.schema.json").read_text(
@@ -141,13 +141,14 @@ def test_qualification_schema_binds_v2_evidence_identity() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert schema["properties"]["schema_version"] == {"const": 3}
     assert {
         "manifest_sha256",
         "generation_fingerprint",
         "source_closure_sha256",
         "top",
         "rtl_cosimulation",
+        "stages",
     } <= set(schema["required"])
     assert schema["properties"]["rtl_cosimulation"] == {
         "enum": ["not_run", "passed"]

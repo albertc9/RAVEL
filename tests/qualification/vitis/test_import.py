@@ -36,7 +36,8 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 2
+    assert qualification["schema_version"] == 3
+    assert qualification["stages"] == {}
     assert qualification["generation_fingerprint"] == "1" * 64
     assert qualification["source_closure_sha256"] == json.loads(
         (project_path / "ravel_manifest.json").read_text(encoding="utf-8")
@@ -46,7 +47,7 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     assert open_project(project_path).status["performance_qualification"] == "recorded"
 
 
-def test_import_vitis_reports_links_schema_v2_evidence_to_a_v3_manifest(
+def test_import_vitis_reports_links_schema_v3_evidence_to_a_v3_manifest(
     tmp_path: Path,
 ) -> None:
     project_path = tmp_path / "project"
@@ -61,7 +62,7 @@ def test_import_vitis_reports_links_schema_v2_evidence_to_a_v3_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 2
+    assert qualification["schema_version"] == 3
     assert Project.open(project_path).status["performance_qualification"] == "recorded"
 
 
@@ -145,6 +146,42 @@ def test_import_records_a_requested_passing_rtl_cosimulation(
     ] == hashlib.sha256(_COSIM_REPORT.encode()).hexdigest()
 
 
+def test_import_records_first_convolution_pipeline_evidence(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "project"
+    first_convolution = "first_conv_4row_4lane_temporal_wide_cl"
+    _write_project(project_path, first_convolution=first_convolution)
+    report_dir = tmp_path / "reports"
+    top_report = report_dir / "aria_top_csynth.xml"
+    report_dir.mkdir()
+    top_report.write_text(_CSYNTH_XML, encoding="utf-8")
+    stage_report = report_dir / f"{first_convolution}_specialized_csynth.xml"
+    stage_report.write_text(_FIRST_CONV_CSYNTH_XML, encoding="utf-8")
+
+    record = Project.open(project_path).record(report_dir)
+
+    assert record.stages == {
+        "first_convolution": {
+            "top": f"{first_convolution}_specialized",
+            "initiation_interval": 258,
+            "latency_cycles": 258,
+            "loop": {
+                "name": "ReadAndDrainP4",
+                "trip_count": 85,
+                "pipeline_ii": 3,
+                "pipeline_depth": 5,
+            },
+        }
+    }
+    qualification = record.to_dict()
+    assert qualification["schema_version"] == 3
+    assert qualification["stages"] == record.stages
+    assert qualification["report_files"][stage_report.name] == hashlib.sha256(
+        _FIRST_CONV_CSYNTH_XML.encode()
+    ).hexdigest()
+
+
 def test_import_rejects_a_missing_requested_rtl_cosimulation_report(
     tmp_path: Path,
 ) -> None:
@@ -181,7 +218,11 @@ def test_project_marks_qualification_with_a_foreign_fingerprint_as_stale(
 
 
 def _write_project(
-    project_path: Path, *, schema_version: int = 2, cosim: bool = False
+    project_path: Path,
+    *,
+    schema_version: int = 2,
+    cosim: bool = False,
+    first_convolution: str | None = None,
 ) -> None:
     source = "void aria_top() {}\n"
     (project_path / "firmware").mkdir(parents=True)
@@ -253,6 +294,10 @@ def _write_project(
         "source_closure_sha256": source_closure_sha256,
         "generation_fingerprint": "1" * 64,
     }
+    if first_convolution is not None:
+        manifest["resolved_design"] = {
+            "rendering": {"first_convolution_function": first_convolution}
+        }
     (project_path / "ravel_manifest.json").write_text(
         json.dumps(manifest, sort_keys=True), encoding="utf-8"
     )
@@ -301,4 +346,26 @@ Simulation tool   : xsim.
 +----------+----------+
 |   Verilog|      Pass|
 +----------+----------+
+"""
+
+
+_FIRST_CONV_CSYNTH_XML = """\
+<profile>
+  <ReportVersion><Version>2023.2</Version></ReportVersion>
+  <UserAssignments>
+    <Part>xcku5p-ffvb676-2-e</Part>
+    <TopModelName>first_conv_4row_4lane_temporal_wide_cl_specialized</TopModelName>
+    <TargetClockPeriod>5.00</TargetClockPeriod>
+  </UserAssignments>
+  <PerformanceEstimates>
+    <SummaryOfOverallLatency>
+      <Best-caseLatency>258</Best-caseLatency><Interval-min>258</Interval-min>
+    </SummaryOfOverallLatency>
+    <SummaryOfLoopLatency>
+      <ReadAndDrainP4>
+        <TripCount>85</TripCount><PipelineII>3</PipelineII><PipelineDepth>5</PipelineDepth>
+      </ReadAndDrainP4>
+    </SummaryOfLoopLatency>
+  </PerformanceEstimates>
+</profile>
 """
