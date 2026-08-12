@@ -7,6 +7,7 @@ import tomllib
 import zipfile
 
 import pytest
+import yaml
 
 
 def test_distribution_version_is_derived_from_git_tags() -> None:
@@ -22,6 +23,26 @@ def test_distribution_version_is_derived_from_git_tags() -> None:
     assert metadata["tool"]["setuptools_scm"]["version_scheme"] == "guess-next-dev"
     assert metadata["tool"]["setuptools_scm"]["version_file"] == (
         "src/ravel_hls/_version.py"
+    )
+
+
+def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -> None:
+    repository = Path(__file__).resolve().parents[2]
+    workflow = yaml.load(
+        (repository / ".github/workflows/publish.yml").read_text(encoding="utf-8"),
+        Loader=yaml.BaseLoader,
+    )
+
+    assert "workflow_dispatch" in workflow["on"]
+    assert workflow["jobs"]["build"]["runs-on"] == [
+        "self-hosted",
+        "linux",
+        "x64",
+        "ravel-release",
+    ]
+    assert workflow["jobs"]["publish"]["runs-on"] == "ubuntu-latest"
+    assert workflow["jobs"]["publish"]["if"] == (
+        "${{ startsWith(github.ref, 'refs/tags/v') }}"
     )
 
 
