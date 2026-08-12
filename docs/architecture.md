@@ -32,19 +32,20 @@ immutable model facts and executes resolved-design transformations for packing,
 rates, buffers, parallel allocation, interfaces, and legal fusion. Aria records
 these actual transformations in order:
 
-1. `PackTemporalInput2x` or `PackTemporalInput4x`
-2. `FuseRepackReshapeIntoFirstConv`
-3. `PropagateWideReLUStream`
-4. `SpecializeNonOverlappingMaxPool`
-5. `StreamFlattenIntoDense`
-6. `BindShallowInternalFifos`
-7. `ElideDataflowStartPropagation`
+1. `pack-temporal-input`
+2. `fuse-repack-into-first-conv`
+3. `propagate-wide-relu-stream`
+4. `specialize-nonoverlapping-maxpool`
+5. `stream-flatten-into-dense`
+6. `bind-shallow-internal-fifos`
+7. `elide-dataflow-start-propagation`
 
-P2 carries two chronological rows in each 128-bit input word; P4 carries four
-rows in each 256-bit word. Both use the same 28-value internal stream. P4 may
-deassert input `TREADY` while draining a second convolution output row. Dense
-x1 consumes one seven-filter group per step and Dense x2 consumes two while
-retaining fixed-point accumulation order.
+P2 carries two chronological rows in each input word; P4 carries four. The
+canonical model's learned precision makes those words 128 and 256 bits and its
+convolution uses a 28-value internal stream. Widths for other applicable models
+are derived from model facts. P4 may deassert input `TREADY` while draining a
+second convolution output row. Dense x1 consumes one extracted filter group per
+step and Dense x2 consumes two while retaining fixed-point accumulation order.
 
 Before rendering, RAVEL extracts Dense connectivity, dimensions, numeric
 semantics, parameter representation, and coefficient statistics from the
@@ -56,6 +57,12 @@ not change the generated architecture.
 RAVEL renders owned files from the resolved design and read-only parameter
 payload through strict templates. The renderer cannot inspect a `ModelGraph`;
 unaffected project files remain hls4ml-owned.
+
+The internal built-in generation registry is immutable and closed. Aria 1.5
+explicitly composes its operation extractors, family matcher, strategy,
+resolver, executed passes, and Vitis/io_stream renderer binding. Matching checks
+all declared families and rejects ambiguity; there is no import-time plugin
+discovery or registration-order priority.
 
 ## Identity and integrity
 

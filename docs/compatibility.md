@@ -3,15 +3,15 @@
 ## Model profile
 
 Aria 1.5.0 recognizes a single-input, single-output homogeneous HGQ2 family with
-this operation sequence:
-semantic sequence:
+this semantic sequence. Dimensions are symbols extracted from the converted
+`ModelGraph`, not constants copied from one training archive:
 
 ```text
-Input [256, 4]
-  -> Reshape [256, 4, 1], channels last
-  -> QConv2D(7 filters, 5x1 kernel, 3x1 stride, valid, ReLU)
+Input [H, W]
+  -> Reshape [H, W, 1], channels last
+  -> QConv2D(F filters, Khx1 kernel, Shx1 stride, valid, ReLU)
   -> MaxPool2D(2x1 pool, 2x1 stride, valid)
-  -> Flatten [1176]
+  -> Flatten [N]
   -> QDense(1, linear)
 ```
 
@@ -21,6 +21,16 @@ each selected Aria strategy still enforces its own kernel, stride, packing, and
 pooling legality. Connectivity, data format, input/output count, and static
 quantizer semantics remain compatibility requirements. Recognition is not a
 performance target.
+
+Family recognition and strategy applicability are separate. P2 currently
+requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 requires `H`
+divisible by 4 and the qualified `Kh=5`, `Sh=3` schedule. Both require one
+input channel, width-one convolution, valid padding, the shown non-overlapping
+MaxPool, one Dense output, and a Dense parallelism that divides the streamed
+convolution width. An unsupported strategy returns structured findings before
+rendering. The regression suite includes a P2 case with `[128,4]`, five filters,
+a 3x1/stride-2 convolution, and `N=620`, in addition to the 12 retrained
+canonical-geometry models.
 
 ## hls4ml and host profile
 

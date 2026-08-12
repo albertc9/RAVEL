@@ -1,6 +1,6 @@
 # CNN for Arianna reference
 
-This directory is the executable Aria 1.4.0 reference consumer. It owns the
+This directory is the executable Aria 1.5.0 reference consumer. It owns the
 canonical trained Keras/HGQ2 model and uses only RAVEL's public API.
 
 ```bash
@@ -29,7 +29,7 @@ The qualification records the measured result for that exact project. It does
 not impose an application-specific performance threshold. Additional CSim,
 validation, export, or Vivado-synthesis stages remain explicit choices.
 
-## Aria 1.4 default result
+## Historical Aria 1.4 default result
 
 The default P4/D2 project was generated with 32 deterministic verification
 samples and synthesized on Vitis HLS 2023.2. Verilog RTL CoSim passed.
