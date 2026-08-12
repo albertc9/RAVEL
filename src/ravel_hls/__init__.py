@@ -14,6 +14,7 @@ from .exceptions import (
 )
 
 if TYPE_CHECKING:
+    from .analysis.model import ModelAnalysis, analyze
     from .api import convert
     from .parameters import Parameters
     from .project import Project
@@ -23,6 +24,7 @@ __all__ = [
     "BuildError",
     "CompatibilityError",
     "ConfigurationError",
+    "ModelAnalysis",
     "OptimizationError",
     "Parameters",
     "Project",
@@ -30,15 +32,18 @@ __all__ = [
     "QualificationRecord",
     "RavelError",
     "VerificationError",
+    "analyze",
     "convert",
 ]
 
 
 def __getattr__(name: str) -> Any:
     lazy_exports = {
+        "ModelAnalysis": (".analysis.model", "ModelAnalysis"),
         "Parameters": (".parameters", "Parameters"),
         "Project": (".project", "Project"),
         "QualificationRecord": (".qualification.vitis", "QualificationRecord"),
+        "analyze": (".analysis.model", "analyze"),
         "convert": (".api", "convert"),
     }
     target = lazy_exports.get(name)
