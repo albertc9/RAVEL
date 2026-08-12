@@ -41,7 +41,7 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
         "ravel-release",
     ]
     assert workflow["jobs"]["build"]["env"] == {
-        "TMPDIR": "${{ runner.temp }}"
+        "TMPDIR": "${{ github.workspace }}/.runner-temp"
     }
     build_steps = workflow["jobs"]["build"]["steps"]
     assert not any(
@@ -79,7 +79,9 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
     test_step = next(
         step for step in build_steps if step.get("name") == "Run tests"
     )
-    assert test_step["run"] == "python .github/scripts/run_release_tests.py"
+    assert test_step["run"] == (
+        'mkdir -p "$TMPDIR"\npython .github/scripts/run_release_tests.py\n'
+    )
     assert workflow["jobs"]["publish"]["runs-on"] == "ubuntu-latest"
     assert workflow["jobs"]["publish"]["if"] == (
         "${{ startsWith(github.ref, 'refs/tags/v') }}"
