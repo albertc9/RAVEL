@@ -42,6 +42,36 @@ class ModelAnalysis:
     def _from_report(cls, report: Mapping[str, Any]) -> "ModelAnalysis":
         return cls(_freeze(report))
 
+    @property
+    def applicable(self) -> bool:
+        """Whether one model family and implementation design are applicable."""
+
+        return self._report["applicability"]["status"] == "applicable"
+
+    @property
+    def model_family(self) -> Mapping[str, Any] | None:
+        """The uniquely matched model family, if any."""
+
+        return self._report["model_family"]
+
+    @property
+    def findings(self) -> tuple[Mapping[str, Any], ...]:
+        """Structured applicability findings."""
+
+        return self._report["applicability"]["findings"]
+
+    @property
+    def model_facts(self) -> Mapping[str, Any]:
+        """Immutable normalized hardware-semantic model facts."""
+
+        return self._report["model_facts"]
+
+    @property
+    def resolved_design(self) -> Mapping[str, Any] | None:
+        """The immutable render-ready design when analysis is applicable."""
+
+        return self._report["resolved_design"]
+
     def to_dict(self) -> dict[str, Any]:
         """Return an independent schema representation."""
 

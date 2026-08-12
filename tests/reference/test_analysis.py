@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ravel_hls import analyze
 
 
@@ -165,3 +167,22 @@ def test_retraining_does_not_change_the_static_hgq2_frontend_contract() -> None:
         first["fingerprints"]["frontend_provenance_sha256"]
         == second["fingerprints"]["frontend_provenance_sha256"]
     )
+
+
+def test_model_analysis_exposes_read_only_public_properties() -> None:
+    analysis = analyze(
+        REFERENCE_MODEL,
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    )
+
+    assert analysis.applicable is True
+    assert analysis.model_family == {"id": "hgq-conv-pool-dense", "version": 1}
+    assert analysis.findings == ()
+    assert analysis.model_facts["operations"][0]["id"] == "input_0"
+    assert analysis.resolved_design["specialization"]["temporal_packing"] == 4
+    with pytest.raises(TypeError):
+        analysis.model_facts["schema_version"] = 99
+
+    mutable_copy = analysis.to_dict()
+    mutable_copy["model_facts"]["schema_version"] = 99
+    assert analysis.model_facts["schema_version"] == 1
