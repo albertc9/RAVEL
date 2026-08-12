@@ -40,6 +40,9 @@ def test_release_build_uses_the_dedicated_runner_without_moving_pypi_publish() -
         "x64",
         "ravel-release",
     ]
+    assert workflow["jobs"]["build"]["env"] == {
+        "TMPDIR": "${{ runner.temp }}"
+    }
     build_steps = workflow["jobs"]["build"]["steps"]
     assert not any(
         step.get("uses", "").startswith("actions/setup-python@")
