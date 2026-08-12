@@ -34,10 +34,12 @@ def test_committed_hls4ml_configs_do_not_expose_generation_machine_paths() -> No
         assert "/Users/" not in config
 
 
-def test_public_namespace_exposes_only_the_aria_1_4_lifecycle() -> None:
+def test_public_namespace_exposes_only_the_aria_1_5_lifecycle() -> None:
     import ravel_hls
 
-    assert {"convert", "Project"} <= set(ravel_hls.__all__)
+    assert {"analyze", "convert", "refresh", "Parameters", "Project"} <= set(
+        ravel_hls.__all__
+    )
     for removed_name in (
         "RavelConfig",
         "RavelProject",
@@ -51,7 +53,7 @@ def test_public_namespace_exposes_only_the_aria_1_4_lifecycle() -> None:
         assert not hasattr(ravel_hls, removed_name)
 
 
-def test_config_schema_describes_the_unified_aria_1_4_mapping() -> None:
+def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_config.schema.json").read_text(
@@ -59,8 +61,8 @@ def test_config_schema_describes_the_unified_aria_1_4_mapping() -> None:
         )
     )
 
-    assert schema["title"] == "RAVEL Aria 1.4.0 configuration"
-    assert schema["required"] == ["Project", "HLS"]
+    assert schema["title"] == "RAVEL Aria 1.5.0 configuration"
+    assert schema["required"] == ["HLS"]
     assert set(schema["properties"]) == {
         "Project",
         "HLS",
@@ -75,7 +77,7 @@ def test_config_schema_describes_the_unified_aria_1_4_mapping() -> None:
     assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
 
 
-def test_manifest_schema_describes_the_v3_source_closure() -> None:
+def test_manifest_schema_describes_the_v4_resolved_design() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_manifest.schema.json").read_text(
@@ -83,13 +85,15 @@ def test_manifest_schema_describes_the_v3_source_closure() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 3}
+    assert schema["properties"]["schema_version"] == {"const": 4}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
-        "const": "1.4.0"
+        "const": "1.5.0"
     }
     assert "source_closure" in schema["required"]
     assert "source_closure_sha256" in schema["required"]
     assert "managed_files" not in schema["properties"]
+    assert "resolved_design" in schema["required"]
+    assert "architecture_contract_sha256" in schema["required"]
 
 
 def test_parameter_package_schema_describes_portable_inference_state() -> None:
@@ -100,9 +104,12 @@ def test_parameter_package_schema_describes_portable_inference_state() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 1}
+    assert schema["properties"]["schema_version"] == {"const": 2}
     assert {
-        "frontend_contract",
+        "format",
+        "model_family",
+        "model_structure_sha256",
+        "model_facts",
         "entries",
         "compatibility_sha256",
         "parameter_state_sha256",

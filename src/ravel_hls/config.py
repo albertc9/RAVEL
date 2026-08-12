@@ -69,7 +69,7 @@ class RavelConfig(Mapping[str, Any]):
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
-            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.4.0")
+            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.5.0")
         self._data.setdefault("Profile", "aria")
         self._data["Optimization"] = _resolve_optimization(
             self._data.get("Optimization")

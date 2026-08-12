@@ -2,7 +2,8 @@
 
 ## Model profile
 
-Aria 1.4.0 accepts a single-input, single-output homogeneous HGQ model with this
+Aria 1.5.0 recognizes a single-input, single-output homogeneous HGQ2 family with
+this operation sequence:
 semantic sequence:
 
 ```text
@@ -14,10 +15,12 @@ Input [256, 4]
   -> QDense(1, linear)
 ```
 
-Weights, biases, legal learned K/I/F values, sparsity, and layer names may vary.
-Geometry, connectivity, data format, input/output count, and the static
-quantizer contract are compatibility requirements. This model profile is a
-generation-legality contract, not a performance target.
+Weights, biases, legal learned fixed-point types, sparsity, and layer names may
+vary. Geometry is extracted rather than compared with a single archive, while
+each selected Aria strategy still enforces its own kernel, stride, packing, and
+pooling legality. Connectivity, data format, input/output count, and static
+quantizer semantics remain compatibility requirements. Recognition is not a
+performance target.
 
 ## hls4ml and host profile
 
@@ -31,7 +34,7 @@ choices. Missing axes resolve independently to P4 and D2. P2/D1 preserves the
 Aria 1.1 input width and schedule semantics; P4 changes expected input TDATA
 from 128 to 256 bits. Refresh preserves the recorded selection.
 
-Aria 1.4 derives a sequential packed Dense weight ROM from the converted
+Aria 1.5 derives a sequential packed Dense weight ROM from the converted
 hls4ml graph. Word width, depth, MAC lanes, and tail handling are internal plan
 properties; they are not additional public configuration fields. Refresh may
 change parameter values but rejects changes to the recorded structural plan.
@@ -65,11 +68,11 @@ by the user and retain their own evidence semantics.
 
 ## Parameter-package compatibility
 
-A `.ravelparams` package may update kernel, bias, and learned K/I/F state. Its
-topology, canonical slot schema, shapes, dtypes, frontend contract, and static
-quantizer type/rounding/overflow/axis/granularity must match the project-local
-model template exactly. Static-contract changes require a complete model
-refresh.
+A schema-v2 `.ravelparams` package carries ModelGraph kernel and bias payloads
+under canonical operation/role IDs. Its model-structure fingerprint, shapes,
+numeric descriptors, family, and static frontend provenance must match the
+project architecture contract. A learned precision change requires ordinary
+conversion.
 
 Packages contain no pickle or custom executable objects and reject traversal,
 absolute paths, symlinks, duplicate entries, object arrays, invalid digests, and
