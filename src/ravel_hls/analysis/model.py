@@ -3,6 +3,8 @@
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass
+import hashlib
+import json
 import os
 from pathlib import Path
 from types import MappingProxyType
@@ -106,13 +108,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
     layers = list(graph.get_layers())
     validate_aria_model_profile(layers)
 
-    operation_kinds = []
-    ordinals: dict[str, int] = {}
-    for layer in layers:
-        kind = _semantic_kind(layer)
-        ordinal = ordinals.get(kind, 0)
-        ordinals[kind] = ordinal + 1
-        operation_kinds.append({"id": f"{kind}_{ordinal}", "kind": kind})
+    model_facts, fingerprints = _extract_model_facts(layers)
 
     optimization = config.get("Optimization", {})
     if not isinstance(optimization, Mapping):
@@ -130,7 +126,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
             "generation": {"id": "aria", "version": "1.5.0"},
             "model_family": {"id": "hgq-conv-pool-dense", "version": 1},
             "applicability": {"status": "applicable", "findings": []},
-            "model_facts": {"operations": operation_kinds, **dense_facts},
+            "model_facts": {**model_facts, **dense_facts},
             "resolved_design": {
                 "specialization": {
                     "temporal_packing": plan["temporal_pack"],
@@ -138,6 +134,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
                 },
                 "interfaces": interface,
             },
+            "fingerprints": fingerprints,
         }
     )
 
@@ -155,6 +152,157 @@ def _semantic_kind(layer: Any) -> str:
         "Dense": "dense",
     }
     return names.get(layer.class_name, layer.class_name.lower())
+
+
+_OPERATION_ATTRIBUTES = {
+    "input": ("input_shape",),
+    "repack": ("target_shape",),
+    "conv2d": (
+        "in_height",
+        "in_width",
+        "n_chan",
+        "filt_height",
+        "filt_width",
+        "n_filt",
+        "stride_height",
+        "stride_width",
+        "pad_top",
+        "pad_bottom",
+        "pad_left",
+        "pad_right",
+        "out_height",
+        "out_width",
+    ),
+    "relu": ("activation", "n_in"),
+    "max_pool2d": (
+        "in_height",
+        "in_width",
+        "n_filt",
+        "pool_height",
+        "pool_width",
+        "stride_height",
+        "stride_width",
+        "pad_top",
+        "pad_bottom",
+        "pad_left",
+        "pad_right",
+        "pool_op",
+        "out_height",
+        "out_width",
+    ),
+    "reshape": ("target_shape",),
+    "dense": ("n_in", "n_out"),
+}
+
+
+def _extract_model_facts(
+    layers: list[Any],
+) -> tuple[dict[str, Any], dict[str, str]]:
+    import numpy as np
+
+    operations: list[dict[str, Any]] = []
+    raw_outputs: dict[str, str] = {}
+    ordinals: dict[str, int] = {}
+    parameter_identities: list[dict[str, Any]] = []
+    for layer in layers:
+        kind = _semantic_kind(layer)
+        ordinal = ordinals.get(kind, 0)
+        ordinals[kind] = ordinal + 1
+        operation_id = f"{kind}_{ordinal}"
+        inputs = [raw_outputs[name] for name in layer.inputs if name in raw_outputs]
+        outputs = []
+        for port, raw_name in enumerate(layer.outputs):
+            variable = layer.get_output_variable(raw_name)
+            tensor_id = f"{operation_id}:out{port}"
+            raw_outputs[raw_name] = tensor_id
+            outputs.append(
+                {
+                    "id": tensor_id,
+                    "shape": [int(dimension) for dimension in variable.shape],
+                    "numeric_type": _numeric_type(variable.type.precision),
+                }
+            )
+        parameters = []
+        for role, weight in layer.weights.items():
+            values = np.ascontiguousarray(weight.data)
+            numeric_type = _numeric_type(weight.type.precision)
+            fractional = numeric_type["width"] - numeric_type["integer"]
+            codes = np.rint(values * (2**fractional)).astype("<i8", copy=False)
+            content = hashlib.sha256(codes.tobytes(order="C")).hexdigest()
+            descriptor = {
+                "role": role,
+                "shape": [int(dimension) for dimension in values.shape],
+                "numeric_type": numeric_type,
+                "content_sha256": content,
+            }
+            parameters.append(descriptor)
+            parameter_identities.append(
+                {
+                    "operation_id": operation_id,
+                    **descriptor,
+                }
+            )
+        attributes = {
+            name: _json_value(layer.get_attr(name))
+            for name in _OPERATION_ATTRIBUTES.get(kind, ())
+            if layer.get_attr(name) is not None
+        }
+        operations.append(
+            {
+                "id": operation_id,
+                "kind": kind,
+                "inputs": inputs,
+                "outputs": outputs,
+                "attributes": attributes,
+                "parameters": parameters,
+            }
+        )
+
+    facts = {
+        "schema_version": 1,
+        "inputs": [operations[0]["outputs"][0]["id"]],
+        "outputs": [operations[-1]["outputs"][0]["id"]],
+        "operations": operations,
+    }
+    structure = deepcopy(facts)
+    for operation in structure["operations"]:
+        for parameter in operation["parameters"]:
+            parameter.pop("content_sha256")
+    return facts, {
+        "model_structure_sha256": _canonical_sha256(structure),
+        "parameter_state_sha256": _canonical_sha256(parameter_identities),
+    }
+
+
+def _numeric_type(precision: Any) -> dict[str, Any]:
+    rounding = getattr(precision, "rounding_mode", None)
+    saturation = getattr(precision, "saturation_mode", None)
+    return {
+        "kind": "fixed" if hasattr(precision, "integer") else "integer",
+        "width": int(precision.width),
+        "integer": int(getattr(precision, "integer", precision.width)),
+        "signed": bool(getattr(precision, "signed", True)),
+        "rounding": str(rounding) if rounding is not None else None,
+        "saturation": str(saturation) if saturation is not None else None,
+        "saturation_bits": int(getattr(precision, "saturation_bits", 0)),
+    }
+
+
+def _json_value(value: Any) -> Any:
+    if isinstance(value, tuple):
+        return [_json_value(item) for item in value]
+    if isinstance(value, list):
+        return [_json_value(item) for item in value]
+    if hasattr(value, "item"):
+        return value.item()
+    return value
+
+
+def _canonical_sha256(value: Any) -> str:
+    encoded = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _predicted_interface(

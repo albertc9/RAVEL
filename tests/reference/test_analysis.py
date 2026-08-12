@@ -10,6 +10,11 @@ REFERENCE_MODEL = (
     / "models"
     / "cnn_for_arianna.keras"
 )
+RETRAINED_ROOT = (
+    Path(__file__).parents[2]
+    / "references"
+    / "fLow_0.08-fhigh_0.23-rate_0.5"
+)
 
 
 def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
@@ -48,3 +53,44 @@ def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
     assert report["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
     assert report["resolved_design"]["interfaces"]["rtl"]["output_tdata_bits"] == 32
     assert list(tmp_path.iterdir()) == []
+
+
+def test_retrained_models_share_a_family_while_exposing_learned_numeric_types() -> None:
+    narrow = analyze(
+        RETRAINED_ROOT / "adam_p1_step2" / "adam_p1_step2_best.keras",
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+    wide = analyze(
+        RETRAINED_ROOT
+        / "adam_hgq_replicate_s2"
+        / "adam_hgq_replicate_s2_best.keras",
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+
+    assert narrow["model_family"] == wide["model_family"]
+    narrow_input = narrow["model_facts"]["operations"][0]["outputs"][0]
+    wide_input = wide["model_facts"]["operations"][0]["outputs"][0]
+    assert narrow_input == {
+        "id": "input_0:out0",
+        "shape": [256, 4],
+        "numeric_type": {
+            "kind": "fixed",
+            "width": 8,
+            "integer": 4,
+            "signed": True,
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+        },
+    }
+    assert wide_input["numeric_type"]["width"] == 11
+    assert narrow["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 128
+    assert wide["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
+    assert (
+        narrow["fingerprints"]["model_structure_sha256"]
+        != wide["fingerprints"]["model_structure_sha256"]
+    )
+    assert (
+        narrow["fingerprints"]["parameter_state_sha256"]
+        != wide["fingerprints"]["parameter_state_sha256"]
+    )
