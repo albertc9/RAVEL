@@ -24,7 +24,6 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         default=REFERENCE_ROOT / "generated" / "cnn_core",
     )
-    parser.add_argument("--project-name", default="cnn_core")
     parser.add_argument("--part", default="xcku5p-ffvb676-2-e")
     parser.add_argument("--clock-period", type=float, default=5.0)
     parser.add_argument("--temporal-packing", type=int, choices=(2, 4))
@@ -53,26 +52,12 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
 
-    import hls4ml
-    import keras
     import numpy as np
-    from hgq.layers import QConv2D, QDense
     import ravel_hls as ravel
 
-    model = keras.models.load_model(
-        args.model, custom_objects={"QConv2D": QConv2D, "QDense": QDense}
-    )
-    hls_config = hls4ml.utils.config_from_keras_model(
-        model, granularity="name", backend="Vitis"
-    )
-    hls_config.setdefault("Model", {}).update(
-        {"Strategy": "Latency", "ReuseFactor": 1}
-    )
     verification_inputs = np.load(args.inputs) if args.inputs is not None else None
     config = {
         "Project": {
-            "Name": args.project_name,
-            "OutputDir": args.output,
             "ForceReplace": args.force_replace,
         },
         "HLS": {
@@ -80,7 +65,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             "IOType": "io_stream",
             "Part": args.part,
             "ClockPeriod": args.clock_period,
-            "Config": hls_config,
         },
         "Verification": {
             "Mode": args.verification,
@@ -100,9 +84,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if optimization:
         config["Optimization"] = optimization
     project = ravel.convert(
-        model,
+        args.model,
+        args.output,
         config,
-        inputs=verification_inputs,
+        verification_inputs=verification_inputs,
     )
     print(
         json.dumps(

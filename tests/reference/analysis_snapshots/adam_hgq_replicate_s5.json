@@ -1,0 +1,889 @@
+{
+  "applicability": {
+    "findings": [],
+    "status": "applicable"
+  },
+  "fingerprints": {
+    "frontend_provenance_sha256": "16579514306e905a8188e7db27cba5783c384eaf8032de15e3308dd686c4aedc",
+    "model_structure_sha256": "6aeaf8bc321d4ea6d14586a77bfeda344e17c191d9002fcda89f3094c6c4577a",
+    "parameter_state_sha256": "8e81d35a3c855cd109e669d4b9b8ba9d342af4498146b06eb520db4fac5d3e8a"
+  },
+  "frontend_provenance": {
+    "adapter": {
+      "id": "keras-hgq2",
+      "version": 1
+    },
+    "quantizer_contracts": [
+      {
+        "heterogeneous_axis": [],
+        "homogeneous_axis": null,
+        "is_weight": false,
+        "overflow": "SAT_SYM",
+        "q_type": "kif",
+        "role": "input",
+        "rounding": "RND",
+        "source_ordinal": 1
+      },
+      {
+        "heterogeneous_axis": [],
+        "homogeneous_axis": null,
+        "is_weight": true,
+        "overflow": "SAT_SYM",
+        "q_type": "kif",
+        "role": "weight",
+        "rounding": "RND",
+        "source_ordinal": 1
+      },
+      {
+        "heterogeneous_axis": [],
+        "homogeneous_axis": null,
+        "is_weight": false,
+        "overflow": "SAT_SYM",
+        "q_type": "kif",
+        "role": "bias",
+        "rounding": "RND",
+        "source_ordinal": 1
+      },
+      {
+        "heterogeneous_axis": [],
+        "homogeneous_axis": null,
+        "is_weight": false,
+        "overflow": "SAT_SYM",
+        "q_type": "kif",
+        "role": "input",
+        "rounding": "RND",
+        "source_ordinal": 4
+      },
+      {
+        "heterogeneous_axis": [],
+        "homogeneous_axis": null,
+        "is_weight": true,
+        "overflow": "SAT_SYM",
+        "q_type": "kif",
+        "role": "weight",
+        "rounding": "RND",
+        "source_ordinal": 4
+      },
+      {
+        "heterogeneous_axis": [],
+        "homogeneous_axis": null,
+        "is_weight": false,
+        "overflow": "SAT_SYM",
+        "q_type": "kif",
+        "role": "bias",
+        "rounding": "RND",
+        "source_ordinal": 4
+      }
+    ],
+    "source_layers": [
+      {
+        "class_name": "Reshape",
+        "module": "keras.src.layers.reshaping.reshape",
+        "ordinal": 0
+      },
+      {
+        "class_name": "QConv2D",
+        "module": "hgq.layers.conv",
+        "ordinal": 1
+      },
+      {
+        "class_name": "MaxPooling2D",
+        "module": "keras.src.layers.pooling.max_pooling2d",
+        "ordinal": 2
+      },
+      {
+        "class_name": "Flatten",
+        "module": "keras.src.layers.reshaping.flatten",
+        "ordinal": 3
+      },
+      {
+        "class_name": "QDense",
+        "module": "hgq.layers.core.dense",
+        "ordinal": 4
+      }
+    ]
+  },
+  "generation": {
+    "id": "aria",
+    "version": "1.5.0"
+  },
+  "model_facts": {
+    "dense": [
+      {
+        "bias": {
+          "elements": 1,
+          "shape": [
+            1
+          ]
+        },
+        "feature_ordering": {
+          "kind": "identity",
+          "order": "C"
+        },
+        "graph": {
+          "predecessors": [
+            "Reshape"
+          ],
+          "successors": []
+        },
+        "input_group_size": 7,
+        "kernel": {
+          "elements": 1176,
+          "shape": [
+            1176,
+            1
+          ],
+          "statistics": {
+            "nonzero": 1156,
+            "power_of_two": 268,
+            "unique": 116,
+            "zero": 20
+          }
+        },
+        "n_in": 1176,
+        "n_out": 1,
+        "numeric": {
+          "accumulator": {
+            "fractional": 13,
+            "integer": 11,
+            "kind": "fixed",
+            "overflow": "WRAP",
+            "rounding": "TRN",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 24
+          },
+          "bias": {
+            "fractional": 4,
+            "integer": 0,
+            "kind": "fixed",
+            "overflow": "WRAP",
+            "rounding": "TRN",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 4
+          },
+          "input": {
+            "fractional": 6,
+            "integer": 4,
+            "kind": "fixed",
+            "overflow": "SAT_SYM",
+            "rounding": "RND",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 10
+          },
+          "output": {
+            "fractional": 13,
+            "integer": 11,
+            "kind": "fixed",
+            "overflow": "WRAP",
+            "rounding": "TRN",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 24
+          },
+          "weight": {
+            "fractional": 7,
+            "integer": 2,
+            "kind": "fixed",
+            "overflow": "WRAP",
+            "rounding": "TRN",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          }
+        },
+        "parameter_representation": "dense",
+        "role": "output"
+      }
+    ],
+    "inputs": [
+      "input_0:out0"
+    ],
+    "operations": [
+      {
+        "attributes": {
+          "input_shape": [
+            256,
+            4
+          ]
+        },
+        "id": "input_0",
+        "inputs": [],
+        "kind": "input",
+        "outputs": [
+          {
+            "id": "input_0:out0",
+            "numeric_type": {
+              "integer": 4,
+              "kind": "fixed",
+              "rounding": "RND",
+              "saturation": "SAT_SYM",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 10
+            },
+            "shape": [
+              256,
+              4
+            ]
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "attributes": {
+          "target_shape": [
+            256,
+            4,
+            1
+          ]
+        },
+        "id": "repack_0",
+        "inputs": [
+          "input_0:out0"
+        ],
+        "kind": "repack",
+        "outputs": [
+          {
+            "id": "repack_0:out0",
+            "numeric_type": {
+              "integer": 4,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 10
+            },
+            "shape": [
+              256,
+              4,
+              1
+            ]
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "attributes": {
+          "filt_height": 5,
+          "filt_width": 1,
+          "in_height": 256,
+          "in_width": 4,
+          "n_chan": 1,
+          "n_filt": 7,
+          "out_height": 84,
+          "out_width": 4,
+          "pad_bottom": 0,
+          "pad_left": 0,
+          "pad_right": 0,
+          "pad_top": 0,
+          "stride_height": 3,
+          "stride_width": 1
+        },
+        "id": "conv2d_0",
+        "inputs": [
+          "repack_0:out0"
+        ],
+        "kind": "conv2d",
+        "outputs": [
+          {
+            "id": "conv2d_0:out0",
+            "numeric_type": {
+              "integer": 6,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 19
+            },
+            "shape": [
+              84,
+              4,
+              7
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "content_sha256": "5a27772655c8744b9466494299355a608278ce4ef059ce210452c4392bdf728b",
+            "numeric_type": {
+              "integer": 1,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 8
+            },
+            "role": "weight",
+            "shape": [
+              5,
+              1,
+              1,
+              7
+            ]
+          },
+          {
+            "content_sha256": "1c1e1054962e10037a10457625a1b175249a1359ccd6090e09891b49ddaa7b1e",
+            "numeric_type": {
+              "integer": 1,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 6
+            },
+            "role": "bias",
+            "shape": [
+              7
+            ]
+          }
+        ]
+      },
+      {
+        "attributes": {
+          "activation": "relu",
+          "n_in": 2352
+        },
+        "id": "relu_0",
+        "inputs": [
+          "conv2d_0:out0"
+        ],
+        "kind": "relu",
+        "outputs": [
+          {
+            "id": "relu_0:out0",
+            "numeric_type": {
+              "integer": 5,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": false,
+              "width": 18
+            },
+            "shape": [
+              84,
+              4,
+              7
+            ]
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "attributes": {
+          "in_height": 84,
+          "in_width": 4,
+          "n_filt": 7,
+          "out_height": 42,
+          "out_width": 4,
+          "pad_bottom": 0,
+          "pad_left": 0,
+          "pad_right": 0,
+          "pad_top": 0,
+          "pool_height": 2,
+          "pool_op": "Max",
+          "pool_width": 1,
+          "stride_height": 2,
+          "stride_width": 1
+        },
+        "id": "max_pool2d_0",
+        "inputs": [
+          "relu_0:out0"
+        ],
+        "kind": "max_pool2d",
+        "outputs": [
+          {
+            "id": "max_pool2d_0:out0",
+            "numeric_type": {
+              "integer": 4,
+              "kind": "fixed",
+              "rounding": "RND",
+              "saturation": "SAT_SYM",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 10
+            },
+            "shape": [
+              42,
+              4,
+              7
+            ]
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "attributes": {
+          "target_shape": [
+            1176
+          ]
+        },
+        "id": "reshape_0",
+        "inputs": [
+          "max_pool2d_0:out0"
+        ],
+        "kind": "reshape",
+        "outputs": [
+          {
+            "id": "reshape_0:out0",
+            "numeric_type": {
+              "integer": 4,
+              "kind": "fixed",
+              "rounding": "RND",
+              "saturation": "SAT_SYM",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 10
+            },
+            "shape": [
+              1176
+            ]
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "attributes": {
+          "n_in": 1176,
+          "n_out": 1
+        },
+        "id": "dense_0",
+        "inputs": [
+          "reshape_0:out0"
+        ],
+        "kind": "dense",
+        "outputs": [
+          {
+            "id": "dense_0:out0",
+            "numeric_type": {
+              "integer": 11,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 24
+            },
+            "shape": [
+              1
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "content_sha256": "87570546e607085a4f1d5077104b5f5925428a32f8a1c9b6cfc5084a8d87fa2e",
+            "numeric_type": {
+              "integer": 2,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 9
+            },
+            "role": "weight",
+            "shape": [
+              1176,
+              1
+            ]
+          },
+          {
+            "content_sha256": "9db26f8ea010babf6afb228a7b257afe54c28f98cd0b246a2f16dc14d16336d7",
+            "numeric_type": {
+              "integer": 0,
+              "kind": "fixed",
+              "rounding": "TRN",
+              "saturation": "WRAP",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 4
+            },
+            "role": "bias",
+            "shape": [
+              1
+            ]
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      "dense_0:out0"
+    ],
+    "schema_version": 1
+  },
+  "model_family": {
+    "id": "hgq-conv-pool-dense",
+    "version": 1
+  },
+  "resolved_design": {
+    "executed_passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "4b410c5685cf11a2814658f7e04546ce6a7a65d6ad701bf816ef66c7e70b6507",
+        "order": 1,
+        "output_design_sha256": "2fd543ea2044e1aa5d941bcdb04b129a541a2bed76a6e9b5f267f84a7c44e876",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "2fd543ea2044e1aa5d941bcdb04b129a541a2bed76a6e9b5f267f84a7c44e876",
+        "order": 2,
+        "output_design_sha256": "b5d6209939c20fcba8fa673ead5f8b2be04b729c90faea39ca81d56d8caa9c73",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "b5d6209939c20fcba8fa673ead5f8b2be04b729c90faea39ca81d56d8caa9c73",
+        "order": 3,
+        "output_design_sha256": "2f95bfc36711d73c550c48afec60e0da513f04f4e3507858133a4212167aa002",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "2f95bfc36711d73c550c48afec60e0da513f04f4e3507858133a4212167aa002",
+        "order": 4,
+        "output_design_sha256": "6509dbde62ceb3d8fb4f148bc2698c2694b03d189d4b5bf8e43057e0180ef134",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "6509dbde62ceb3d8fb4f148bc2698c2694b03d189d4b5bf8e43057e0180ef134",
+        "order": 5,
+        "output_design_sha256": "ff27047ae0624d38e07fdb15b0c3c7967fd4b01c43a9b1054c6888a561922bbf",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "ff27047ae0624d38e07fdb15b0c3c7967fd4b01c43a9b1054c6888a561922bbf",
+        "order": 6,
+        "output_design_sha256": "c739966a2cd75da93ba18b734082dd2b2331d154d81b1f3b93c73a4e1e121f21",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "c739966a2cd75da93ba18b734082dd2b2331d154d81b1f3b93c73a4e1e121f21",
+        "order": 7,
+        "output_design_sha256": "e07e70fef5cf8092365e8010a7207068159cbc20f2d1e25d7bc0a45d5e036eca",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "generation": {
+      "id": "aria",
+      "version": "1.5.0"
+    },
+    "implementation_plan": {
+      "channels_per_row": 4,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 1176,
+      "dense_parallelism": 2,
+      "dense_steps": 84,
+      "filter_lanes": 7,
+      "input_words_per_inference": 64,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p4-d2-v2",
+      "temporal_pack": 4,
+      "values_per_input_word": 16,
+      "values_per_internal_word": 28,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 84,
+        "id": "wide-sequential",
+        "mac_lanes": 14,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 14
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "version": 1,
+        "word_bits": 126
+      },
+      "width_lanes": 4
+    },
+    "interfaces": {
+      "hls_stream": {
+        "input_rows_per_word": 4,
+        "input_words_per_inference": 64,
+        "values_per_input_word": 16
+      },
+      "logical": {
+        "input_shape": [
+          256,
+          4
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl": {
+        "input_tdata_bits": 256,
+        "output_tdata_bits": 32
+      }
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 6
+          },
+          "role": "bias",
+          "shape": [
+            7
+          ]
+        },
+        "id": "conv2d_0:bias",
+        "operation_id": "conv2d_0",
+        "role": "bias",
+        "symbol": "b4",
+        "type_name": "q_conv2d_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 8
+          },
+          "role": "weight",
+          "shape": [
+            5,
+            1,
+            1,
+            7
+          ]
+        },
+        "id": "conv2d_0:weight",
+        "operation_id": "conv2d_0",
+        "role": "weight",
+        "symbol": "w4",
+        "type_name": "q_conv2d_weight_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 0,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 4
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias",
+        "operation_id": "dense_0",
+        "role": "bias",
+        "symbol": "b9",
+        "type_name": "q_dense_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 2,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "role": "weight",
+          "shape": [
+            1176,
+            1
+          ]
+        },
+        "id": "dense_0:weight",
+        "operation_id": "dense_0",
+        "role": "weight",
+        "symbol": "w9",
+        "type_name": "q_dense_weight_t"
+      }
+    ],
+    "rendering": {
+      "first_convolution_function": "first_conv_4row_4lane_temporal_wide_cl",
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config4",
+          "output_precision_cpp": "ap_fixed<19,6>",
+          "output_symbol": "layer4_out",
+          "output_type": "q_conv2d_t"
+        },
+        "dense_0": {
+          "config_symbol": "config9",
+          "output_precision_cpp": "ap_fixed<24,11>",
+          "output_symbol": "layer9_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<10,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "input_layer",
+          "output_type": "input_layer_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config6",
+          "output_precision_cpp": "ap_fixed<10,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer6_out",
+          "output_type": "max_pooling2d_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config5",
+          "output_precision_cpp": "ap_ufixed<18,5>",
+          "output_symbol": "layer5_out",
+          "output_type": "q_conv2d_relu_t"
+        },
+        "repack_0": {
+          "output_precision_cpp": "ap_fixed<10,4>",
+          "output_symbol": "layer10_out",
+          "output_type": "reshape_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_fixed<10,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer7_out",
+          "output_type": "max_pooling2d_t"
+        }
+      },
+      "streams": {
+        "activation": "layer5_out_x4",
+        "convolution": "layer4_out_x4",
+        "pooling": "layer6_out_x4"
+      },
+      "types": {
+        "activation_wide": "q_conv2d_relu_x4_t",
+        "convolution_wide": "q_conv2d_x4_t",
+        "input_wide": "input_layer_x4_t",
+        "pooling_wide": "max_pooling2d_x4_t"
+      }
+    },
+    "resolved_design_sha256": "e07e70fef5cf8092365e8010a7207068159cbc20f2d1e25d7bc0a45d5e036eca",
+    "resolver": {
+      "id": "aria-explicit-pd",
+      "version": 1
+    },
+    "schema_version": 1,
+    "specialization": {
+      "dense_parallelism": 2,
+      "temporal_packing": 4
+    },
+    "strategy": {
+      "id": "aria-wide-stream",
+      "version": 1
+    },
+    "streaming": {
+      "activation": {
+        "operation_id": "relu_0",
+        "values_per_word": 28
+      },
+      "buffers": {
+        "depth": 4,
+        "storage": "srl"
+      },
+      "dataflow_control": {
+        "block_control": "ap_ctrl_hs",
+        "start_propagation": false
+      },
+      "dense": {
+        "inputs": 1176,
+        "operation_id": "dense_0",
+        "parallelism": 2,
+        "steps": 84,
+        "weight_delivery": {
+          "accumulation": {
+            "policy": "ordered"
+          },
+          "applicability": {
+            "reasons": [],
+            "status": "applicable"
+          },
+          "depth": 84,
+          "id": "wide-sequential",
+          "mac_lanes": 14,
+          "multipliers": {
+            "implementation": "dsp",
+            "instances": 14
+          },
+          "storage": {
+            "implementation": "bram",
+            "type": "rom_1p"
+          },
+          "tail_elements": 0,
+          "tail_mask": 16383,
+          "version": 1,
+          "word_bits": 126
+        }
+      },
+      "first_convolution": {
+        "filter_lanes": 7,
+        "kernel": [
+          5,
+          1
+        ],
+        "operation_id": "conv2d_0",
+        "stride": [
+          3,
+          1
+        ],
+        "width_lanes": 4
+      },
+      "input": {
+        "rows_per_word": 4,
+        "values_per_word": 16,
+        "words_per_inference": 64
+      },
+      "pooling": {
+        "operation_id": "max_pool2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "window": [
+          2,
+          1
+        ]
+      }
+    }
+  },
+  "schema_version": 1
+}

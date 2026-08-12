@@ -10,7 +10,7 @@ specialization. Vendor tools may or may not have run.
 - `ravel_config.yml` is the normalized RAVEL configuration, including the
   resolved `Optimization` section. Its
   published output directory is also `.`.
-- `ravel_manifest.json` is the immutable schema-v2 generation record.
+- `ravel_manifest.json` is the immutable schema-v4 generation record.
 - `ravel_qualification.json` is optional schema-v2 measured Vitis evidence.
 - `build_opt.tcl` contains explicit Vitis stage booleans.
 
@@ -47,27 +47,30 @@ hashing and never claims the source is clean.
 Qualification is separate so vendor execution cannot rewrite generation facts.
 It binds the manifest hash, generation fingerprint, source-closure hash, top,
 tool version, part, target clock, measured timing/performance/resources, RTL
-ports, and report-file hashes. Foreign or edited evidence is `stale`. Recorded
-measurements have no universal pass/fail threshold.
+ports, requested RTL CoSim status, and report-file hashes. When CoSim is
+selected, a qualification record is not written unless the top-level Verilog
+report says `Pass`; that report is included in the evidence hash closure.
+Foreign or edited evidence is `stale`. Recorded measurements have no universal
+performance pass/fail threshold.
 
 ## Parameter package schema
 
 `.ravelparams` is a deterministic ZIP container with
-`parameter_package.json` and ordered `arrays/*.npy` payloads. Schema version 1
+`parameter_package.json` and ordered `arrays/*.npy` payloads. Schema version 2
 defines:
 
-- `frontend_contract` for the Keras/HGQ2 adapter;
-- canonical topology and static quantizer contracts;
-- entries with canonical slot, kind, shape, dtype, relative storage, and SHA-256;
+- generation, model family, frontend provenance, and ModelGraph model facts;
+- a canonical model-structure and numeric-contract identity;
+- entries with operation/role ID, shape, dtype, numeric type, storage, and hash;
 - `compatibility_sha256`, `parameter_state_sha256`, and
   `package_content_sha256` as separate identities.
 
-Packages include only generation-relevant inference state. They exclude
-optimizer, training history, loss/metrics, beta/EBOPS counters, data, labels,
-random state, absolute paths, RAVEL/hls4ml configuration, generated sources,
-reports, and application thresholds. Applying a package reconstructs a complete
-temporary model and runs the normal staged refresh pipeline; it never patches
-generated weight headers in place.
+Packages include only generation-relevant hardware state. They exclude layer
+names, framework variable order, optimizer and training state, data, labels,
+absolute paths, generated sources, reports, and application thresholds.
+Applying a package replaces the clean ModelGraph payload in staging and runs the
+normal generation pipeline; it never patches a published weight header in
+place.
 
 The JSON Schemas for configuration, manifest, qualification, and parameter
 packages ship under `ravel_hls/schemas` in the installed distribution.

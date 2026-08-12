@@ -14,6 +14,16 @@ _AGGRESSIVE_SPECIALIZATION = {
 }
 AGGRESSIVE_SPECIALIZATION_POLICY = "aria-aggressive-v1"
 
+_VITIS_STAGE_DEFAULTS = {
+    "Reset": True,
+    "CSim": False,
+    "Synth": True,
+    "CoSim": False,
+    "Validation": False,
+    "Export": False,
+    "VSynth": False,
+}
+
 
 def _resolve_optimization(values: Any) -> dict[str, int]:
     if values is None:
@@ -36,6 +46,124 @@ def _resolve_optimization(values: Any) -> dict[str, int]:
     return {
         "TemporalPacking": temporal_packing,
         "DenseParallelism": dense_parallelism,
+    }
+
+
+def validate_public_config(values: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate and normalize the unified Aria 1.5 user configuration."""
+
+    unknown_fields = sorted(
+        values.keys()
+        - {"Project", "HLS", "Optimization", "Verification", "Vitis"}
+    )
+    if unknown_fields:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: {unknown_fields[0]}"
+        )
+
+    project = values.get("Project", {})
+    if not isinstance(project, Mapping):
+        raise ConfigurationError("Project must be a mapping")
+    unknown_project = sorted(project.keys() - {"ForceReplace"})
+    if unknown_project:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: Project.{unknown_project[0]}"
+        )
+    force_replace = project.get("ForceReplace", False)
+    if not isinstance(force_replace, bool):
+        raise ConfigurationError("Project.ForceReplace must be a boolean")
+
+    hls = values.get("HLS")
+    if not isinstance(hls, Mapping):
+        raise ConfigurationError("HLS must be a mapping")
+    unknown_hls = sorted(
+        hls.keys() - {"Backend", "IOType", "Part", "ClockPeriod"}
+    )
+    if unknown_hls:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: HLS.{unknown_hls[0]}"
+        )
+    backend = hls.get("Backend", "Vitis")
+    if backend != "Vitis":
+        raise ConfigurationError("HLS.Backend must be Vitis")
+    io_type = hls.get("IOType", "io_stream")
+    if io_type != "io_stream":
+        raise ConfigurationError("HLS.IOType must be io_stream")
+    part = hls.get("Part")
+    if part is not None and (not isinstance(part, str) or not part):
+        raise ConfigurationError("HLS.Part must be a nonempty string or null")
+    clock_period = hls.get("ClockPeriod")
+    if clock_period is not None and (
+        not isinstance(clock_period, (int, float))
+        or isinstance(clock_period, bool)
+        or clock_period <= 0
+    ):
+        raise ConfigurationError("HLS.ClockPeriod must be a positive number or null")
+
+    verification = values.get("Verification", {})
+    if not isinstance(verification, Mapping):
+        raise ConfigurationError("Verification must be a mapping")
+    unknown_verification = sorted(
+        verification.keys() - {"Mode", "Samples", "Seed"}
+    )
+    if unknown_verification:
+        raise ConfigurationError(
+            "Unknown RAVEL configuration field: "
+            f"Verification.{unknown_verification[0]}"
+        )
+    normalized_verification = {"Mode": "auto", **verification}
+    if normalized_verification["Mode"] not in {"auto", "required", "disabled"}:
+        raise ConfigurationError(
+            "Verification.Mode must be one of: auto, required, disabled"
+        )
+    samples = normalized_verification.get("Samples")
+    if samples is not None and (
+        not isinstance(samples, int) or isinstance(samples, bool) or samples < 1
+    ):
+        raise ConfigurationError("Verification.Samples must be a positive integer")
+    seed = normalized_verification.get("Seed")
+    if seed is not None and (
+        not isinstance(seed, int) or isinstance(seed, bool) or seed < 0
+    ):
+        raise ConfigurationError("Verification.Seed must be a nonnegative integer")
+
+    vitis = values.get("Vitis", {})
+    if not isinstance(vitis, Mapping):
+        raise ConfigurationError("Vitis must be a mapping")
+    unknown_vitis = sorted(vitis.keys() - {"Run", "Stages"})
+    if unknown_vitis:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: Vitis.{unknown_vitis[0]}"
+        )
+    run_vitis = vitis.get("Run", False)
+    if not isinstance(run_vitis, bool):
+        raise ConfigurationError("Vitis.Run must be a boolean")
+    stages = vitis.get("Stages", {})
+    if not isinstance(stages, Mapping):
+        raise ConfigurationError("Vitis.Stages must be a mapping")
+    unknown_stages = sorted(stages.keys() - _VITIS_STAGE_DEFAULTS.keys())
+    if unknown_stages:
+        raise ConfigurationError(
+            f"Unknown RAVEL configuration field: Vitis.Stages.{unknown_stages[0]}"
+        )
+    for stage, enabled in stages.items():
+        if not isinstance(enabled, bool):
+            raise ConfigurationError(f"Vitis.Stages.{stage} must be a boolean")
+
+    return {
+        "Project": {"ForceReplace": force_replace},
+        "HLS": {
+            "Backend": backend,
+            "IOType": io_type,
+            "Part": part,
+            "ClockPeriod": clock_period,
+        },
+        "Optimization": _resolve_optimization(values.get("Optimization")),
+        "Verification": dict(normalized_verification),
+        "Vitis": {
+            "Run": run_vitis,
+            "Stages": {**_VITIS_STAGE_DEFAULTS, **stages},
+        },
     }
 
 
@@ -69,7 +197,7 @@ class RavelConfig(Mapping[str, Any]):
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
-            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.4.0")
+            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.5.0")
         self._data.setdefault("Profile", "aria")
         self._data["Optimization"] = _resolve_optimization(
             self._data.get("Optimization")
@@ -193,15 +321,7 @@ class RavelConfig(Mapping[str, Any]):
         run_vitis = vitis.get("Run", False)
         if not isinstance(run_vitis, bool):
             raise ConfigurationError("Vitis.Run must be a boolean")
-        stage_defaults = {
-            "Reset": True,
-            "CSim": False,
-            "Synth": True,
-            "CoSim": False,
-            "Validation": False,
-            "Export": False,
-            "VSynth": False,
-        }
+        stage_defaults = dict(_VITIS_STAGE_DEFAULTS)
         stages = vitis.get("Stages", {})
         if not isinstance(stages, Mapping):
             raise ConfigurationError("Vitis.Stages must be a mapping")

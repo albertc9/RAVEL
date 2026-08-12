@@ -28,6 +28,7 @@ class QualificationRecord:
     latency_cycles: int
     resources: dict[str, int]
     rtl_ports: dict[str, dict[str, int | str]]
+    rtl_cosimulation: str
     report_files: dict[str, str]
 
     def to_dict(self) -> dict[str, Any]:
@@ -49,6 +50,7 @@ class QualificationRecord:
             },
             "resources": self.resources,
             "rtl_ports": self.rtl_ports,
+            "rtl_cosimulation": self.rtl_cosimulation,
             "report_files": self.report_files,
             "status": "recorded",
         }
@@ -62,9 +64,10 @@ def import_vitis_reports(
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {2, 3}:
+    if project_view.manifest.get("schema_version") not in {2, 3, 4}:
         raise ProjectGenerationError(
-            "Vitis evidence can only be recorded for a schema-v2 or schema-v3 project"
+            "Vitis evidence can only be recorded for a schema-v2, schema-v3, "
+            "or schema-v4 project"
         )
     if project_view.status.get("source_integrity") != "clean":
         raise VerificationError(
@@ -158,6 +161,21 @@ def import_vitis_reports(
                 f"{measured_bits}; expected direction {expected_direction} but measured "
                 f"{measured_direction}"
             )
+    cosim_requested = bool(project_view.config["Vitis"]["Stages"]["CoSim"])
+    cosim_report = _rtl_cosimulation_report(report_root, reported_top)
+    if cosim_requested and cosim_report is None:
+        raise ProjectGenerationError(
+            "Vitis run requested RTL CoSim but no passing top-level CoSim report "
+            f"was found for {reported_top}"
+        )
+    rtl_cosimulation = "passed" if cosim_report is not None else "not_run"
+    report_files = {
+        report_path.relative_to(report_root).as_posix(): _file_sha256(report_path)
+    }
+    if cosim_report is not None:
+        report_files[
+            cosim_report.relative_to(report_root).as_posix()
+        ] = _file_sha256(cosim_report)
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         generation_fingerprint=_required_manifest_sha256(
@@ -190,9 +208,8 @@ def import_vitis_reports(
         ),
         resources=resources,
         rtl_ports=rtl_ports,
-        report_files={
-            report_path.relative_to(report_root).as_posix(): _file_sha256(report_path)
-        },
+        rtl_cosimulation=rtl_cosimulation,
+        report_files=report_files,
     )
     qualification_path = project_view.path / "ravel_qualification.json"
     temporary_path = qualification_path.with_name(".ravel_qualification.json.tmp")
@@ -202,6 +219,26 @@ def import_vitis_reports(
     )
     os.replace(temporary_path, qualification_path)
     return record
+
+
+def _rtl_cosimulation_report(report_root: Path, top: str) -> Path | None:
+    candidates = sorted(report_root.rglob(f"{top}_cosim.rpt"))
+    passing = []
+    for candidate in candidates:
+        try:
+            content = candidate.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if any(
+            "|" in line and "Verilog" in line and "Pass" in line
+            for line in content.splitlines()
+        ):
+            passing.append(candidate)
+    if len(passing) > 1:
+        raise ProjectGenerationError(
+            "Expected at most one passing top-level Vitis RTL CoSim report"
+        )
+    return passing[0] if passing else None
 
 
 def _required_text(node: ET.Element, path: str) -> str:

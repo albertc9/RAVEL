@@ -26,6 +26,32 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def architecture_contract_sha256(model_analysis: dict[str, Any]) -> str:
+    """Hash the architecture-preserving refresh boundary without parameters."""
+
+    design = model_analysis["resolved_design"]
+    return canonical_sha256(
+        {
+            "generation": model_analysis["generation"],
+            "model_family": model_analysis["model_family"],
+            "model_structure_sha256": model_analysis["fingerprints"][
+                "model_structure_sha256"
+            ],
+            "strategy": design["strategy"],
+            "resolver": design["resolver"],
+            "implementation_plan": design["implementation_plan"],
+            "interfaces": design["interfaces"],
+            "parameter_bindings": [
+                {
+                    "id": binding["id"],
+                    "descriptor": binding["descriptor"],
+                }
+                for binding in design["parameter_bindings"]
+            ],
+        }
+    )
+
+
 def build_generation_manifest(
     *,
     project_path: Path,
@@ -36,6 +62,7 @@ def build_generation_manifest(
     pass_records: list[dict[str, Any]],
     verification_report: dict[str, Any],
     interface_contract: dict[str, Any],
+    model_analysis: dict[str, Any],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
     recorded_configuration = {
@@ -72,26 +99,40 @@ def build_generation_manifest(
         package_version = version("ravel-hls")
     except PackageNotFoundError:
         package_version = "unknown"
-    return {
-        "schema_version": 3,
+    source_model = {
+        "source_artifact_sha256": (
+            file_sha256(source_artifact) if source_artifact.is_file() else None
+        ),
+        "semantic_model_sha256": semantic_model_sha256,
+        "facts": semantic_model["facts"],
+    }
+    source_model = {
+        "source_artifact_sha256": source_model["source_artifact_sha256"],
+        "semantic_model_sha256": semantic_model_sha256,
+        "frontend_provenance": model_analysis["frontend_provenance"],
+        "model_family": model_analysis["model_family"],
+        "facts": model_analysis["model_facts"],
+        "fingerprints": model_analysis["fingerprints"],
+    }
+    profile = {
+        "generation": model_analysis["generation"],
+        "model_family": model_analysis["model_family"],
+    }
+    architecture_contract = architecture_contract_sha256(model_analysis)
+    manifest = {
+        "schema_version": 4,
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.4.0",
+            "release": "1.5.0",
             "package_version": package_version,
         },
-        "source_model": {
-            "source_artifact_sha256": (
-                file_sha256(source_artifact) if source_artifact.is_file() else None
-            ),
-            "semantic_model_sha256": semantic_model_sha256,
-            "facts": semantic_model["facts"],
-        },
+        "source_model": source_model,
         "dependencies": dependency_report["dependencies"],
         "normalized_configuration": recorded_configuration,
         "generation_configuration": generation_configuration,
         "configuration_sha256": configuration_sha256,
-        "profile": {"id": "aria", "version": 1},
+        "profile": profile,
         "implementation_plan": implementation_plan,
         "implementation_sha256": implementation_sha256,
         "pipeline": {
@@ -122,6 +163,9 @@ def build_generation_manifest(
         "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,
     }
+    manifest["resolved_design"] = model_analysis["resolved_design"]
+    manifest["architecture_contract_sha256"] = architecture_contract
+    return manifest
 
 
 def _build_source_closure(project_path: Path) -> list[dict[str, Any]]:

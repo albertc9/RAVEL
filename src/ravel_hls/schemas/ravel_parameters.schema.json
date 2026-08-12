@@ -1,56 +1,57 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_parameters.schema.json",
-  "title": "RAVEL parameter package",
+  "title": "RAVEL ModelGraph parameter package v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
-    "frontend_contract",
-    "topology",
+    "format",
+    "generation",
+    "model_family",
+    "model_structure_sha256",
+    "frontend_provenance",
+    "model_facts",
     "entries",
     "compatibility_sha256",
     "parameter_state_sha256",
+    "known_answer_evidence",
     "package_content_sha256"
   ],
   "properties": {
-    "schema_version": {"const": 1},
-    "frontend_contract": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "version"],
-      "properties": {
-        "id": {"const": "keras-hgq2"},
-        "version": {"const": 1}
-      }
-    },
-    "topology": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["class_name", "quantizer_contract"],
-        "properties": {
-          "class_name": {"type": "string", "minLength": 1},
-          "quantizer_contract": {"type": "object"}
-        }
-      }
-    },
+    "schema_version": {"const": 2},
+    "format": {"const": "ravel-modelgraph-parameters"},
+    "generation": {"type": "object"},
+    "model_family": {"type": "object"},
+    "model_structure_sha256": {"$ref": "#/$defs/sha256"},
+    "frontend_provenance": {"type": "object"},
+    "model_facts": {"type": "object"},
     "entries": {
       "type": "array",
       "maxItems": 4096,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["slot", "kind", "shape", "dtype", "storage", "sha256"],
+        "required": [
+          "id",
+          "operation_id",
+          "role",
+          "shape",
+          "dtype",
+          "numeric_type",
+          "storage",
+          "sha256"
+        ],
         "properties": {
-          "slot": {"type": "string", "minLength": 1},
-          "kind": {"enum": ["kernel", "bias", "k", "i", "f"]},
+          "id": {"type": "string", "pattern": "^[a-z0-9_]+:[a-z0-9_]+$"},
+          "operation_id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+          "role": {"enum": ["weight", "bias"]},
           "shape": {
             "type": "array",
             "items": {"type": "integer", "minimum": 0}
           },
           "dtype": {"type": "string", "minLength": 1},
+          "numeric_type": {"type": "object"},
           "storage": {"type": "string", "pattern": "^arrays/[0-9]{4}\\.npy$"},
           "sha256": {"$ref": "#/$defs/sha256"}
         }
@@ -58,6 +59,7 @@
     },
     "compatibility_sha256": {"$ref": "#/$defs/sha256"},
     "parameter_state_sha256": {"$ref": "#/$defs/sha256"},
+    "known_answer_evidence": {"type": ["object", "null"]},
     "package_content_sha256": {"$ref": "#/$defs/sha256"}
   },
   "$defs": {

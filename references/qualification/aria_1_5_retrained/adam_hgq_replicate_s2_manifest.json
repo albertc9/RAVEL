@@ -1,0 +1,1865 @@
+{
+  "architecture_contract_sha256": "e17a028b5b44d889d19af3de949120a4d9088acaa73a73b67da5f48c89696389",
+  "configuration_sha256": "ad87a1f35945d74132665099f974370b69f030f69fb83b9adeb9fa5d0f83d0dc",
+  "dependencies": {
+    "Jinja2": {
+      "installed": "3.1.6",
+      "required": "==3.1.6",
+      "status": "qualified"
+    },
+    "PyYAML": {
+      "installed": "6.0.3",
+      "required": "==6.0.3",
+      "status": "qualified"
+    },
+    "hgq2": {
+      "installed": "0.1.7",
+      "required": "==0.1.7",
+      "status": "qualified"
+    },
+    "hls4ml": {
+      "installed": "1.2.0",
+      "required": "==1.2.0",
+      "status": "qualified"
+    },
+    "keras": {
+      "installed": "3.12.1",
+      "required": "==3.12.1",
+      "status": "qualified"
+    },
+    "numpy": {
+      "installed": "1.26.4",
+      "required": "==1.26.4",
+      "status": "qualified"
+    },
+    "quantizers": {
+      "installed": "1.2.2",
+      "required": "==1.2.2",
+      "status": "qualified"
+    }
+  },
+  "generation_configuration": {
+    "hls4ml": {
+      "Backend": "Vitis",
+      "ClockPeriod": 5.0,
+      "IOType": "io_stream",
+      "Part": "xcku5p-ffvb676-2-e",
+      "ProjectName": "project",
+      "ReuseFactor": 1,
+      "Strategy": "Latency"
+    },
+    "ravel": {
+      "Optimization": {
+        "DenseParallelism": 2,
+        "TemporalPacking": 4
+      },
+      "OptimizationPolicy": "aria-aggressive-v1",
+      "Profile": "aria"
+    }
+  },
+  "generation_fingerprint": "949f99f23458c28e24fefbfe24f3075a68312b64ee3288376edd35f949d449d3",
+  "implementation_plan": {
+    "channels_per_row": 4,
+    "dataflow_start_propagation": false,
+    "dense_inputs": 1176,
+    "dense_parallelism": 2,
+    "dense_steps": 84,
+    "filter_lanes": 7,
+    "input_words_per_inference": 64,
+    "internal_fifo_depth": 4,
+    "template_profile": "aria-p4-d2-v2",
+    "temporal_pack": 4,
+    "values_per_input_word": 16,
+    "values_per_internal_word": 28,
+    "weight_delivery": {
+      "accumulation": {
+        "policy": "ordered"
+      },
+      "applicability": {
+        "reasons": [],
+        "status": "applicable"
+      },
+      "depth": 84,
+      "id": "wide-sequential",
+      "mac_lanes": 14,
+      "multipliers": {
+        "implementation": "dsp",
+        "instances": 14
+      },
+      "storage": {
+        "implementation": "bram",
+        "type": "rom_1p"
+      },
+      "tail_elements": 0,
+      "tail_mask": 16383,
+      "version": 1,
+      "word_bits": 126
+    },
+    "width_lanes": 4
+  },
+  "implementation_sha256": "9718f39684ed95a52d0a8f19bf6af246de4824c5bf4d7d5cc90ae787657d90ff",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 4,
+      "input_scalar_bits": 11,
+      "input_words_per_inference": 64,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 24,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 16
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 11,
+        "input_tdata_bits": 256,
+        "input_tdata_port": "input_layer_TDATA",
+        "output_scalar_bits": 24,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer9_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "normalized_configuration": {
+    "hls4ml": {
+      "Backend": "Vitis",
+      "ClockPeriod": 5.0,
+      "IOType": "io_stream",
+      "Part": "xcku5p-ffvb676-2-e",
+      "ProjectName": "project",
+      "ReuseFactor": 1,
+      "Strategy": "Latency"
+    },
+    "ravel": {
+      "HLS": {
+        "Backend": "Vitis",
+        "ClockPeriod": 5.0,
+        "Config": {
+          "LayerName": {
+            "flatten": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "input_layer": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "max_pooling2d": {
+              "ConvImplementation": "LineBuffer",
+              "Precision": {
+                "accum": "auto",
+                "result": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "q_conv2d": {
+              "ConvImplementation": "LineBuffer",
+              "ParallelizationFactor": 1,
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "q_conv2d_iq": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "q_conv2d_relu": {
+              "Precision": {
+                "result": "auto",
+                "table": "fixed<18,8,TRN,WRAP,0>"
+              },
+              "ReuseFactor": 1,
+              "TableSize": 1024,
+              "Trace": false
+            },
+            "q_dense": {
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "q_dense_iq": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "reshape": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            }
+          },
+          "Model": {
+            "BitExact": null,
+            "BramFactor": 1000000000,
+            "Precision": {
+              "default": "fixed<16,6>"
+            },
+            "ReuseFactor": 1,
+            "Strategy": "Latency",
+            "TraceOutput": false
+          }
+        },
+        "IOType": "io_stream",
+        "Part": "xcku5p-ffvb676-2-e"
+      },
+      "Optimization": {
+        "DenseParallelism": 2,
+        "TemporalPacking": 4
+      },
+      "Project": {
+        "ForceReplace": true,
+        "Name": "project",
+        "OutputDir": "."
+      },
+      "Verification": {
+        "Mode": "required",
+        "Samples": 32,
+        "Seed": 19
+      },
+      "Vitis": {
+        "Run": true,
+        "Stages": {
+          "CSim": false,
+          "CoSim": true,
+          "Export": false,
+          "Reset": true,
+          "Synth": true,
+          "VSynth": false,
+          "Validation": false
+        }
+      }
+    }
+  },
+  "pipeline": {
+    "passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "f8c925f8e46e27b555f1eb9a718590db2ddb0993db16683a4bd1b9d8aa9c5d32",
+        "order": 1,
+        "output_design_sha256": "8f780feb01491290bad058f6a9285d69d9997aec10dc5b9a7776791feaffaa6b",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "8f780feb01491290bad058f6a9285d69d9997aec10dc5b9a7776791feaffaa6b",
+        "order": 2,
+        "output_design_sha256": "7213dfc071f412c72f303c4a16b3fff0ff78607a5e261e29a60b040f013f632d",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "7213dfc071f412c72f303c4a16b3fff0ff78607a5e261e29a60b040f013f632d",
+        "order": 3,
+        "output_design_sha256": "90ccc5316db85259dd726e507173148dff6ec96954e44d8fc465efab1f618363",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "90ccc5316db85259dd726e507173148dff6ec96954e44d8fc465efab1f618363",
+        "order": 4,
+        "output_design_sha256": "3fee19b0771fefda9e03c0614cc6c0d1b3e73859c5691cb0224d92fcd9142d23",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "3fee19b0771fefda9e03c0614cc6c0d1b3e73859c5691cb0224d92fcd9142d23",
+        "order": 5,
+        "output_design_sha256": "0440a2f6d802d3747a86ca85f4d9bf6f3360b22a049875d500e216abcca40496",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "0440a2f6d802d3747a86ca85f4d9bf6f3360b22a049875d500e216abcca40496",
+        "order": 6,
+        "output_design_sha256": "41980c26a77503545cd9902d27b70eaf611fda5f9706b141e28cae62f8f7f156",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "41980c26a77503545cd9902d27b70eaf611fda5f9706b141e28cae62f8f7f156",
+        "order": 7,
+        "output_design_sha256": "ac2f9543c741958d33b3d65caf95e160a72795ee70e721285ab00a3d61bf4556",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "phases": [
+      "ValidateProfile",
+      "GenerateBaseline",
+      "BuildIR",
+      "ApplyAriaPasses",
+      "RenderProject",
+      "ValidateProject",
+      "PromoteProject"
+    ]
+  },
+  "profile": {
+    "generation": {
+      "id": "aria",
+      "version": "1.5.0"
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    }
+  },
+  "ravel": {
+    "generation": "Aria",
+    "package_version": "1.5.0",
+    "product": "RAVEL",
+    "release": "1.5.0"
+  },
+  "resolved_design": {
+    "executed_passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "f8c925f8e46e27b555f1eb9a718590db2ddb0993db16683a4bd1b9d8aa9c5d32",
+        "order": 1,
+        "output_design_sha256": "8f780feb01491290bad058f6a9285d69d9997aec10dc5b9a7776791feaffaa6b",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "8f780feb01491290bad058f6a9285d69d9997aec10dc5b9a7776791feaffaa6b",
+        "order": 2,
+        "output_design_sha256": "7213dfc071f412c72f303c4a16b3fff0ff78607a5e261e29a60b040f013f632d",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "7213dfc071f412c72f303c4a16b3fff0ff78607a5e261e29a60b040f013f632d",
+        "order": 3,
+        "output_design_sha256": "90ccc5316db85259dd726e507173148dff6ec96954e44d8fc465efab1f618363",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "90ccc5316db85259dd726e507173148dff6ec96954e44d8fc465efab1f618363",
+        "order": 4,
+        "output_design_sha256": "3fee19b0771fefda9e03c0614cc6c0d1b3e73859c5691cb0224d92fcd9142d23",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "3fee19b0771fefda9e03c0614cc6c0d1b3e73859c5691cb0224d92fcd9142d23",
+        "order": 5,
+        "output_design_sha256": "0440a2f6d802d3747a86ca85f4d9bf6f3360b22a049875d500e216abcca40496",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "0440a2f6d802d3747a86ca85f4d9bf6f3360b22a049875d500e216abcca40496",
+        "order": 6,
+        "output_design_sha256": "41980c26a77503545cd9902d27b70eaf611fda5f9706b141e28cae62f8f7f156",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "41980c26a77503545cd9902d27b70eaf611fda5f9706b141e28cae62f8f7f156",
+        "order": 7,
+        "output_design_sha256": "ac2f9543c741958d33b3d65caf95e160a72795ee70e721285ab00a3d61bf4556",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "generation": {
+      "id": "aria",
+      "version": "1.5.0"
+    },
+    "implementation_plan": {
+      "channels_per_row": 4,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 1176,
+      "dense_parallelism": 2,
+      "dense_steps": 84,
+      "filter_lanes": 7,
+      "input_words_per_inference": 64,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p4-d2-v2",
+      "temporal_pack": 4,
+      "values_per_input_word": 16,
+      "values_per_internal_word": 28,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 84,
+        "id": "wide-sequential",
+        "mac_lanes": 14,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 14
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "version": 1,
+        "word_bits": 126
+      },
+      "width_lanes": 4
+    },
+    "interfaces": {
+      "hls_stream": {
+        "input_rows_per_word": 4,
+        "input_words_per_inference": 64,
+        "values_per_input_word": 16
+      },
+      "logical": {
+        "input_shape": [
+          256,
+          4
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl": {
+        "input_tdata_bits": 256,
+        "output_tdata_bits": 32
+      }
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "bias",
+          "shape": [
+            7
+          ]
+        },
+        "id": "conv2d_0:bias",
+        "operation_id": "conv2d_0",
+        "role": "bias",
+        "symbol": "b4",
+        "type_name": "q_conv2d_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 8
+          },
+          "role": "weight",
+          "shape": [
+            5,
+            1,
+            1,
+            7
+          ]
+        },
+        "id": "conv2d_0:weight",
+        "operation_id": "conv2d_0",
+        "role": "weight",
+        "symbol": "w4",
+        "type_name": "q_conv2d_weight_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias",
+        "operation_id": "dense_0",
+        "role": "bias",
+        "symbol": "b9",
+        "type_name": "q_dense_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 2,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "role": "weight",
+          "shape": [
+            1176,
+            1
+          ]
+        },
+        "id": "dense_0:weight",
+        "operation_id": "dense_0",
+        "role": "weight",
+        "symbol": "w9",
+        "type_name": "q_dense_weight_t"
+      }
+    ],
+    "rendering": {
+      "first_convolution_function": "first_conv_4row_4lane_temporal_wide_cl",
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config4",
+          "output_precision_cpp": "ap_fixed<20,7>",
+          "output_symbol": "layer4_out",
+          "output_type": "q_conv2d_t"
+        },
+        "dense_0": {
+          "config_symbol": "config9",
+          "output_precision_cpp": "ap_fixed<24,11>",
+          "output_symbol": "layer9_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<11,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "input_layer",
+          "output_type": "input_layer_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config6",
+          "output_precision_cpp": "ap_fixed<9,3,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer6_out",
+          "output_type": "max_pooling2d_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config5",
+          "output_precision_cpp": "ap_ufixed<19,6>",
+          "output_symbol": "layer5_out",
+          "output_type": "q_conv2d_relu_t"
+        },
+        "repack_0": {
+          "output_precision_cpp": "ap_fixed<11,5>",
+          "output_symbol": "layer10_out",
+          "output_type": "reshape_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_fixed<9,3,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer7_out",
+          "output_type": "max_pooling2d_t"
+        }
+      },
+      "streams": {
+        "activation": "layer5_out_x4",
+        "convolution": "layer4_out_x4",
+        "pooling": "layer6_out_x4"
+      },
+      "types": {
+        "activation_wide": "q_conv2d_relu_x4_t",
+        "convolution_wide": "q_conv2d_x4_t",
+        "input_wide": "input_layer_x4_t",
+        "pooling_wide": "max_pooling2d_x4_t"
+      }
+    },
+    "resolved_design_sha256": "ac2f9543c741958d33b3d65caf95e160a72795ee70e721285ab00a3d61bf4556",
+    "resolver": {
+      "id": "aria-explicit-pd",
+      "version": 1
+    },
+    "schema_version": 1,
+    "specialization": {
+      "dense_parallelism": 2,
+      "temporal_packing": 4
+    },
+    "strategy": {
+      "id": "aria-wide-stream",
+      "version": 1
+    },
+    "streaming": {
+      "activation": {
+        "operation_id": "relu_0",
+        "values_per_word": 28
+      },
+      "buffers": {
+        "depth": 4,
+        "storage": "srl"
+      },
+      "dataflow_control": {
+        "block_control": "ap_ctrl_hs",
+        "start_propagation": false
+      },
+      "dense": {
+        "inputs": 1176,
+        "operation_id": "dense_0",
+        "parallelism": 2,
+        "steps": 84,
+        "weight_delivery": {
+          "accumulation": {
+            "policy": "ordered"
+          },
+          "applicability": {
+            "reasons": [],
+            "status": "applicable"
+          },
+          "depth": 84,
+          "id": "wide-sequential",
+          "mac_lanes": 14,
+          "multipliers": {
+            "implementation": "dsp",
+            "instances": 14
+          },
+          "storage": {
+            "implementation": "bram",
+            "type": "rom_1p"
+          },
+          "tail_elements": 0,
+          "tail_mask": 16383,
+          "version": 1,
+          "word_bits": 126
+        }
+      },
+      "first_convolution": {
+        "filter_lanes": 7,
+        "kernel": [
+          5,
+          1
+        ],
+        "operation_id": "conv2d_0",
+        "stride": [
+          3,
+          1
+        ],
+        "width_lanes": 4
+      },
+      "input": {
+        "rows_per_word": 4,
+        "values_per_word": 16,
+        "words_per_inference": 64
+      },
+      "pooling": {
+        "operation_id": "max_pool2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "window": [
+          2,
+          1
+        ]
+      }
+    }
+  },
+  "schema_version": 4,
+  "source_closure": [
+    {
+      "path": "build_lib.sh",
+      "role": "project",
+      "sha256": "37113e2ad1ee7ed0c7c6239301aa93eefccc0a854f21e7994eb42ef0eb0d05bc",
+      "size": 961
+    },
+    {
+      "path": "build_opt.tcl",
+      "role": "vendor_script",
+      "sha256": "943870c46433f4857a5fc4d1e96f0f02f9151cb3de35229beaf33d30e2419e8b",
+      "size": 154
+    },
+    {
+      "path": "build_prj.tcl",
+      "role": "vendor_script",
+      "sha256": "00ca8797acd0c5e49951aaa86576a0780fbc743a99c8c2c1fc8fe6916935262c",
+      "size": 7665
+    },
+    {
+      "path": "firmware/ap_types/ap_common.h",
+      "role": "firmware",
+      "sha256": "d61258f6ebca39dc11492965e6e7a1508499478b6c4ac435cf83cd454738e0a5",
+      "size": 10180
+    },
+    {
+      "path": "firmware/ap_types/ap_decl.h",
+      "role": "firmware",
+      "sha256": "cf51ec1fed914af4a8a1f4d947b4477aa21f02711856e1dc22efeeb5ef608c48",
+      "size": 6473
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed.h",
+      "role": "firmware",
+      "sha256": "de5778ab2178ef99c3b68e7b00772c2ddf8f7e827b765a650e864f2d7228e9de",
+      "size": 12185
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_base.h",
+      "role": "firmware",
+      "sha256": "09dd402506631f154a6efa38c3d6bdca5904c8d8dd5c747b545f625281936f4a",
+      "size": 85182
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_ref.h",
+      "role": "firmware",
+      "sha256": "4cef7266a7567f4564b17986e1237dfe7fc20d8415594e32ba36b461f92b402c",
+      "size": 27302
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_special.h",
+      "role": "firmware",
+      "sha256": "c977d09e301cf2f26fe53e91f5ae0bfde03453f6b4ca9ccafd14a7f32ab3b7fb",
+      "size": 6985
+    },
+    {
+      "path": "firmware/ap_types/ap_float.h",
+      "role": "firmware",
+      "sha256": "c6c8ea808e4595ab3e1b8d5fb2da427e388104979fb31f9014d12915e47a6e1b",
+      "size": 6528
+    },
+    {
+      "path": "firmware/ap_types/ap_int.h",
+      "role": "firmware",
+      "sha256": "9d38b2ac537c20f08646ce516290a42d3f72e08c5aaa84541ed21ba5488e2cd0",
+      "size": 10012
+    },
+    {
+      "path": "firmware/ap_types/ap_int_base.h",
+      "role": "firmware",
+      "sha256": "2ade108df516f39afc9718d8e044aa7a547f0a7a4cd2e6dbe0ae5dd86d3718c4",
+      "size": 71735
+    },
+    {
+      "path": "firmware/ap_types/ap_int_ref.h",
+      "role": "firmware",
+      "sha256": "e6bb0e75a6e5c1e0bd84a1ad43c2a4b6bd3beec110f75833487e46e6133b9b96",
+      "size": 55218
+    },
+    {
+      "path": "firmware/ap_types/ap_int_special.h",
+      "role": "firmware",
+      "sha256": "1c8bd146e88a1a90270a98a05115f470e4145fcf1d6e9de51a4516a5b8253022",
+      "size": 6301
+    },
+    {
+      "path": "firmware/ap_types/ap_shift_reg.h",
+      "role": "firmware",
+      "sha256": "c2a7bc8f78a46dd6625f062c62502c15b3857902e161721b2a8442e9f2467ae7",
+      "size": 4894
+    },
+    {
+      "path": "firmware/ap_types/etc/ap_private.h",
+      "role": "firmware",
+      "sha256": "4c37711885f4af70fa425f0a797a1c79198785d970140dc092bdfebef31502d9",
+      "size": 261465
+    },
+    {
+      "path": "firmware/ap_types/hls_math.h",
+      "role": "firmware",
+      "sha256": "69b141a19cd88e6fe97c2db092e725561d47baf609fd8a1b9cdfb543df464627",
+      "size": 674
+    },
+    {
+      "path": "firmware/ap_types/hls_stream.h",
+      "role": "firmware",
+      "sha256": "3539157db138f1ce979cc21f47d5b325b0f05277deeb2d7dc495f1052dc6fbe2",
+      "size": 7480
+    },
+    {
+      "path": "firmware/ap_types/utils/x_hls_utils.h",
+      "role": "firmware",
+      "sha256": "c76e1c7f51f264abf427c61022852f604deec3a48d2fbbd67ad446222166d89c",
+      "size": 2227
+    },
+    {
+      "path": "firmware/defines.h",
+      "role": "firmware",
+      "sha256": "615d1a179cdcc4768ebe75f7c676b2b00a9e5394f7efe8bc2ccdfcbaa7a3a2e6",
+      "size": 1408
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_activation.h",
+      "role": "firmware",
+      "sha256": "2581cd0352d5df49fcd11902375c00e20da9562f7dac2a2137377de19bfe9e29",
+      "size": 31520
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_activation_stream.h",
+      "role": "firmware",
+      "sha256": "f802bfc772baa07f85e4ce83b0edcdc6a703e6ed59c8018bf21f7ed2bd862dfb",
+      "size": 27068
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_aria.h",
+      "role": "firmware",
+      "sha256": "49d47276f89aca418485a9058c7658beb0e25ab6df239966809a06f26b3b8f83",
+      "size": 14382
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_batchnorm.h",
+      "role": "firmware",
+      "sha256": "6665f9fb59f8c5aa0dc472852f5f85443cbbbab29218639a1ba2c77e80e400e3",
+      "size": 4214
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_batchnorm_stream.h",
+      "role": "firmware",
+      "sha256": "3a580856776ee62a341ee35e45096e98042a8df9154bc3e3c299672ff1d68c40",
+      "size": 4182
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_code_gen.h",
+      "role": "firmware",
+      "sha256": "9de4b308358b39a759ff555adb5804e73d419674f5492cf5d74320e69feaf57b",
+      "size": 786
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_common.h",
+      "role": "firmware",
+      "sha256": "cac405e71adaa8cd03960d6c311d5b625f0631454ec6d30f8f425c756f33a4ef",
+      "size": 2127
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d.h",
+      "role": "firmware",
+      "sha256": "65add8931f0a3c9d0e3ee07978f2c5291ef3350300a89b9c4b1def73209e14a5",
+      "size": 6211
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_latency.h",
+      "role": "firmware",
+      "sha256": "35c2971d1bb480c56f243e22a16d83c630c367846b6814669c7e035bf188ef7f",
+      "size": 7034
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_resource.h",
+      "role": "firmware",
+      "sha256": "ead84fac549f8340c52a153992716c420882ad66dabf5b8230ff59c66531dbc3",
+      "size": 4126
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_stream.h",
+      "role": "firmware",
+      "sha256": "5b7ec28b42bbbd79db9d9885b7c47ebf6f655b17d83219db2652b70afbab2fe5",
+      "size": 1480
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d.h",
+      "role": "firmware",
+      "sha256": "3de5f4078081aa31aa5c7f7e4ccbea73f73c40549e9cc7e50bcbeb9330ff3424",
+      "size": 3748
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_latency.h",
+      "role": "firmware",
+      "sha256": "508f64a51b17679caac753eadd8c912f39f76c23695e61ba8e2668b071a3cf37",
+      "size": 3343
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_resource.h",
+      "role": "firmware",
+      "sha256": "c02c1da4f73ae52456562f2b3f0487173d016e9fa4e295202d920e75ab9b6d3e",
+      "size": 4254
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_stream.h",
+      "role": "firmware",
+      "sha256": "a332d3983f36f06835f8f5530961b9b96de44f52ccc5d42cffc10ae3831c447a",
+      "size": 3813
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv_stream.h",
+      "role": "firmware",
+      "sha256": "bbf2b6d3869c644296bc643f54b268c42413e3981a79a9640d89569fdff8bbfe",
+      "size": 14130
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_cropping.h",
+      "role": "firmware",
+      "sha256": "d1e419717c94b155951b5eed161f27536aac744dfdc29dd066bc36cdb237acf2",
+      "size": 2948
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_cropping_stream.h",
+      "role": "firmware",
+      "sha256": "760dede5c6d10b184e0ebb3e822a8832a727be04bc7f95eafc9c83728bf96640",
+      "size": 1600
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_da_wrappers.h",
+      "role": "firmware",
+      "sha256": "af95f6f6ce7e0bcf02e6c015909c4e216376bc60fbec1d460f6d2ee29f31d548",
+      "size": 3968
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense.h",
+      "role": "firmware",
+      "sha256": "96a8568b0b32eda76b90ae0f7b4f4194cf948802b2c55f48135d13504928f6c2",
+      "size": 3023
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_compressed.h",
+      "role": "firmware",
+      "sha256": "bd898a282cc1275b942da2a51289831dfab6d073b0dea2744c537ca85e86d7dd",
+      "size": 2859
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_latency.h",
+      "role": "firmware",
+      "sha256": "38d0f0957711681d600f2328ad8ea8f0cdb977b4b7cc5e1f47194d97aaeae770",
+      "size": 2424
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_resource.h",
+      "role": "firmware",
+      "sha256": "247e6bf2ab59bef2ed100df348168308e71b0f2e464a09a3a09ce9d62fdfdb5e",
+      "size": 9928
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_stream.h",
+      "role": "firmware",
+      "sha256": "87ea7b6d015b7de69fab590295309f65837ddd0a6011154b344e93305473a0f8",
+      "size": 3975
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_depthwise_product.h",
+      "role": "firmware",
+      "sha256": "440ce61e86999aeabbc782a5dfa9a80ca1e7f3f02a4b792511ac14ac16182ed3",
+      "size": 10646
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_einsum.h",
+      "role": "firmware",
+      "sha256": "2fbe65d527216602cf6a68c53fbc57156f3cf852d0ebb5b2157313f9e79d9819",
+      "size": 2881
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_einsum_dense.h",
+      "role": "firmware",
+      "sha256": "f1aa9f3987fabb5073ace8ead7641d76fb259b6cc90fa31d4393342952b32829",
+      "size": 4643
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_embed.h",
+      "role": "firmware",
+      "sha256": "a0026798df56ba20bec8708a307cb28b473d0069021ecdc62e793b48d0206764",
+      "size": 1292
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_embed_stream.h",
+      "role": "firmware",
+      "sha256": "4238c65129da40ebafc0bffb0b5b598246968870a26190f67d26ce72eb0da1a4",
+      "size": 839
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_function_stubs.h",
+      "role": "firmware",
+      "sha256": "ebf011b1965d033f89ff2c6d29d5ea8d5acf14140f176c2a15a4c99e5d56d0d0",
+      "size": 2960
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_garnet.h",
+      "role": "firmware",
+      "sha256": "358a67f4f5e1a45eb5262cb773dff084264d7fbbbfcd1f74e5443c9d1962dae6",
+      "size": 30731
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_helpers.h",
+      "role": "firmware",
+      "sha256": "be3b44aa21ba78d32f47d74ef42be38e082dab1913bbe6214dc83afd74511c61",
+      "size": 12528
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_image.h",
+      "role": "firmware",
+      "sha256": "3b1ce15c0c271670e26f3499860e1a6d05e95eb614ac31ead747b64b2cdc849d",
+      "size": 1293
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_image_stream.h",
+      "role": "firmware",
+      "sha256": "de91a55af0c7f415ef7aaadbaa0689a827ad340cafcd26772f04eb87054ed7cf",
+      "size": 1847
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_layernorm.h",
+      "role": "firmware",
+      "sha256": "70c2547b92be5a3ef8cd341cc0a671fae73fde6cea581538411d925d804ad844",
+      "size": 4986
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_math.h",
+      "role": "firmware",
+      "sha256": "854ad22a2122186b1aa30a11b92aa685670c559e7abfcb679bcdd3db6ac7c54f",
+      "size": 7677
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_merge.h",
+      "role": "firmware",
+      "sha256": "64224f5b5d6b6cf95b0ceeebfb23fee5b4e21e7503e41b4cf8f5b63e7355dcea",
+      "size": 11100
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_merge_stream.h",
+      "role": "firmware",
+      "sha256": "4d5dfda8cee2a6085519515d27c3d6f9c809048523f5791f85f723ca854d55b5",
+      "size": 11891
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_mult.h",
+      "role": "firmware",
+      "sha256": "28bc325053f8458fc65e12c54a6b98aa4d9bfe8f8984836a6ddbb149bdd9a269",
+      "size": 3306
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_padding.h",
+      "role": "firmware",
+      "sha256": "dcf886fb846c6a93cb5537c21f723fecea4170cb792361f5c95529cb5c0a8289",
+      "size": 4327
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_padding_stream.h",
+      "role": "firmware",
+      "sha256": "881dd9fd4017abdcf7ee2e503e688ea8b7bcc7de67344b084cf0a38da2c7edd9",
+      "size": 2191
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_pooling.h",
+      "role": "firmware",
+      "sha256": "53bc840be504ac7b863d73a64edaf63eac6c4e05caaba56722221332f01eebbe",
+      "size": 14814
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_pooling_stream.h",
+      "role": "firmware",
+      "sha256": "3052c16c8e9f58af2c9d44350e19d4be2224decb9cceab4b9fe9b2a97ec6395d",
+      "size": 12369
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_recr_activations.h",
+      "role": "firmware",
+      "sha256": "91a6c8d6bcd026ea5153d71f8621da8d9ce172c4b9f0be6276ab2732c90ef42f",
+      "size": 1889
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_recurrent.h",
+      "role": "firmware",
+      "sha256": "a776387c17848500a884d3da56885d9dac680132862d08535304ffc5ed8fb0c3",
+      "size": 40588
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d.h",
+      "role": "firmware",
+      "sha256": "851f8cf9068e08160eaa3b07378d916efa10f7db5b8c2706a59f210838f68a97",
+      "size": 2502
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d_latency.h",
+      "role": "firmware",
+      "sha256": "365edd0cdbf3c3f0537a7130d84e76245253838850f5346068729de194291b42",
+      "size": 3216
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d_stream.h",
+      "role": "firmware",
+      "sha256": "22b2f187bf02f765c41320e5ab2be7fea8520816bfaea4759cf721959941c004",
+      "size": 4981
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d.h",
+      "role": "firmware",
+      "sha256": "4a21453b6d223cd8a326cb25b05dcd376e0c633b06070795f28ba6d356bc16f6",
+      "size": 2823
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d_latency.h",
+      "role": "firmware",
+      "sha256": "3e3ab3b3797fd42e9827a0d7411ce43d9fa2d9c4f944fbdbd76f420076018650",
+      "size": 3248
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d_stream.h",
+      "role": "firmware",
+      "sha256": "6b88e512b99df79ea16ec8c1f58c27be7e6c73304c10d0f0da75926297752fc6",
+      "size": 6908
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv_stream.h",
+      "role": "firmware",
+      "sha256": "dd351d9b275011c4f9df05221b85cb8abf5ebf7060347fb5baea2c6cc852ef99",
+      "size": 8899
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_stream.h",
+      "role": "firmware",
+      "sha256": "9b49c36ab28cd1f23d5462bc8a27e1d35ef31048d919eef7ae2e2210da66ac60",
+      "size": 10823
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_time_distributed.h",
+      "role": "firmware",
+      "sha256": "bcdc66cc9c10bee19995692287c7567f994962da50d7ff0629dc33759a2c417a",
+      "size": 3910
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_transpose.h",
+      "role": "firmware",
+      "sha256": "5d182f26e0f0d95bb3e2cbb6d0ce308a8f29ae2db05625bcf72eacca14de0032",
+      "size": 1210
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_transpose_stream.h",
+      "role": "firmware",
+      "sha256": "6a756046342e73694b078f331d59e15b389a8ab1be7d303c87c061a5caf89dd0",
+      "size": 2424
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_types.h",
+      "role": "firmware",
+      "sha256": "559c986616e4b03ae3844070cb2325e7274479e4400e14d700dd28597117d0a4",
+      "size": 1920
+    },
+    {
+      "path": "firmware/parameters.h",
+      "role": "firmware",
+      "sha256": "15cd2ab9798ce599c990ac2a978d7e7008cd6f7d67e6660181fdf283cd9ccb52",
+      "size": 5689
+    },
+    {
+      "path": "firmware/project-0662f401.so",
+      "role": "firmware",
+      "sha256": "e1ad6af9cb00907b4e575851f1a101a332802705070b1d3f3c04373a2aa4c368",
+      "size": 128640
+    },
+    {
+      "path": "firmware/project.cpp",
+      "role": "firmware",
+      "sha256": "58a68412e3bb7f0fb32c4284c92bd909e4ea9a146b5ac4811a2220824e69a83a",
+      "size": 1855
+    },
+    {
+      "path": "firmware/project.h",
+      "role": "firmware",
+      "sha256": "8e0e66583e9ad37d9bbf179b36b3d6ea06eed6c3e480b84f6ba7f3586f886c69",
+      "size": 239
+    },
+    {
+      "path": "firmware/weights/b4.h",
+      "role": "parameter",
+      "sha256": "b9844057407c5f6f734c667c5d220c6a8d0f049be456d95f95e8790f68b8b9f1",
+      "size": 271
+    },
+    {
+      "path": "firmware/weights/b4.txt",
+      "role": "parameter",
+      "sha256": "c8bff2442abf8d5f541c6c7eeaed86baa07655fa0a936cdec83b47d0ab7d0e17",
+      "size": 59
+    },
+    {
+      "path": "firmware/weights/b9.h",
+      "role": "parameter",
+      "sha256": "8c224a85016d4ff108459b767bf87a0f4154ddffdb1be8d2ca04452843ad896e",
+      "size": 218
+    },
+    {
+      "path": "firmware/weights/b9.txt",
+      "role": "parameter",
+      "sha256": "2481b24a0a552cca885ad137f8a5c5c76d83237d7dd79b51735fb3f42c471866",
+      "size": 7
+    },
+    {
+      "path": "firmware/weights/w4.h",
+      "role": "parameter",
+      "sha256": "b897bf317d2b80ff813fc133c42546e930f7403b294530c3a8b9b53586ebf9bb",
+      "size": 627
+    },
+    {
+      "path": "firmware/weights/w4.txt",
+      "role": "parameter",
+      "sha256": "7c9d854cc9a1167234caa3e6019ee92ed3c231d3ef8ab839e9a3566e1572c189",
+      "size": 400
+    },
+    {
+      "path": "firmware/weights/w9.h",
+      "role": "parameter",
+      "sha256": "25b03c03993dc1803d68c92b214ead17dda80c271f8255b82211e9a340ee1cdf",
+      "size": 13611
+    },
+    {
+      "path": "firmware/weights/w9.txt",
+      "role": "parameter",
+      "sha256": "02c7a03d8274ea10a71da577a165e828913e84d86547750be813da31c6511ac6",
+      "size": 13384
+    },
+    {
+      "path": "firmware/weights/w9_ravel_packed.h",
+      "role": "parameter",
+      "sha256": "925e82238ddd4413021a7688c2754ecb80262e7946fd3593385d029096d92a27",
+      "size": 5169
+    },
+    {
+      "path": "hls4ml_config.yml",
+      "role": "configuration",
+      "sha256": "536ca2562b47bf0a1b2844203f9af4fe4b09c4cb799eefb137341ef19d3b6a6a",
+      "size": 1681
+    },
+    {
+      "path": "keras_model.keras",
+      "role": "model",
+      "sha256": "f33a7c6e463dce71a3fb8f6e72e92016c147f3a8bea8ab00cfeaa2b3e3c49e8c",
+      "size": 62957
+    },
+    {
+      "path": "project.tcl",
+      "role": "vendor_script",
+      "sha256": "ff06927485b1766e4ec91391f19c7403b3451963bde34f9e6e1f0de0e3d28e87",
+      "size": 307
+    },
+    {
+      "path": "project_bridge.cpp",
+      "role": "simulation",
+      "sha256": "0b2776d4223994272d09acc18bbe2db9d7c0b38f14e2a514b6a9630b2123fb3c",
+      "size": 2528
+    },
+    {
+      "path": "project_test.cpp",
+      "role": "simulation",
+      "sha256": "2c21b4995f2bef56d718742a0c9bf40e9c325e0b384e8001b076a78a71a9ba5c",
+      "size": 2380
+    },
+    {
+      "path": "ravel_config.yml",
+      "role": "configuration",
+      "sha256": "1743a532d3c45d04951daf311e58bb0dd9742314c83ca5ea18b2ccf92b790517",
+      "size": 1762
+    },
+    {
+      "path": "vivado_synth.tcl",
+      "role": "vendor_script",
+      "sha256": "ce4820bd66e1d7532145f060b185d3488cec83494ee8ac62acda63e55a2ee4c1",
+      "size": 295
+    }
+  ],
+  "source_closure_sha256": "b19915d94f6543482b3914ba0f12efdf51964c349b5040af773b8edd02222d58",
+  "source_model": {
+    "facts": {
+      "dense": [
+        {
+          "bias": {
+            "elements": 1,
+            "shape": [
+              1
+            ]
+          },
+          "feature_ordering": {
+            "kind": "identity",
+            "order": "C"
+          },
+          "graph": {
+            "predecessors": [
+              "Reshape"
+            ],
+            "successors": []
+          },
+          "input_group_size": 7,
+          "kernel": {
+            "elements": 1176,
+            "shape": [
+              1176,
+              1
+            ],
+            "statistics": {
+              "nonzero": 1107,
+              "power_of_two": 374,
+              "unique": 110,
+              "zero": 69
+            }
+          },
+          "n_in": 1176,
+          "n_out": 1,
+          "numeric": {
+            "accumulator": {
+              "fractional": 13,
+              "integer": 11,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 24
+            },
+            "bias": {
+              "fractional": 4,
+              "integer": 1,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 5
+            },
+            "input": {
+              "fractional": 6,
+              "integer": 3,
+              "kind": "fixed",
+              "overflow": "SAT_SYM",
+              "rounding": "RND",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 9
+            },
+            "output": {
+              "fractional": 13,
+              "integer": 11,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 24
+            },
+            "weight": {
+              "fractional": 7,
+              "integer": 2,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 9
+            }
+          },
+          "parameter_representation": "dense",
+          "role": "output"
+        }
+      ],
+      "inputs": [
+        "input_0:out0"
+      ],
+      "operations": [
+        {
+          "attributes": {
+            "input_shape": [
+              256,
+              4
+            ]
+          },
+          "id": "input_0",
+          "inputs": [],
+          "kind": "input",
+          "outputs": [
+            {
+              "id": "input_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 11
+              },
+              "shape": [
+                256,
+                4
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "target_shape": [
+              256,
+              4,
+              1
+            ]
+          },
+          "id": "repack_0",
+          "inputs": [
+            "input_0:out0"
+          ],
+          "kind": "repack",
+          "outputs": [
+            {
+              "id": "repack_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 11
+              },
+              "shape": [
+                256,
+                4,
+                1
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "filt_height": 5,
+            "filt_width": 1,
+            "in_height": 256,
+            "in_width": 4,
+            "n_chan": 1,
+            "n_filt": 7,
+            "out_height": 84,
+            "out_width": 4,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "stride_height": 3,
+            "stride_width": 1
+          },
+          "id": "conv2d_0",
+          "inputs": [
+            "repack_0:out0"
+          ],
+          "kind": "conv2d",
+          "outputs": [
+            {
+              "id": "conv2d_0:out0",
+              "numeric_type": {
+                "integer": 7,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 20
+              },
+              "shape": [
+                84,
+                4,
+                7
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "e6d882ca4138e63a0ba2a1bcd95da0c02ee0bdd422eef141f2ba442950e8d4e3",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 8
+              },
+              "role": "weight",
+              "shape": [
+                5,
+                1,
+                1,
+                7
+              ]
+            },
+            {
+              "content_sha256": "005a200cd23c8bc8c6ec21e993a4d614aa7386797d2c4a60f92412cac4d09c0a",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 5
+              },
+              "role": "bias",
+              "shape": [
+                7
+              ]
+            }
+          ]
+        },
+        {
+          "attributes": {
+            "activation": "relu",
+            "n_in": 2352
+          },
+          "id": "relu_0",
+          "inputs": [
+            "conv2d_0:out0"
+          ],
+          "kind": "relu",
+          "outputs": [
+            {
+              "id": "relu_0:out0",
+              "numeric_type": {
+                "integer": 6,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 19
+              },
+              "shape": [
+                84,
+                4,
+                7
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "in_height": 84,
+            "in_width": 4,
+            "n_filt": 7,
+            "out_height": 42,
+            "out_width": 4,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "pool_height": 2,
+            "pool_op": "Max",
+            "pool_width": 1,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "max_pool2d_0",
+          "inputs": [
+            "relu_0:out0"
+          ],
+          "kind": "max_pool2d",
+          "outputs": [
+            {
+              "id": "max_pool2d_0:out0",
+              "numeric_type": {
+                "integer": 3,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 9
+              },
+              "shape": [
+                42,
+                4,
+                7
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "target_shape": [
+              1176
+            ]
+          },
+          "id": "reshape_0",
+          "inputs": [
+            "max_pool2d_0:out0"
+          ],
+          "kind": "reshape",
+          "outputs": [
+            {
+              "id": "reshape_0:out0",
+              "numeric_type": {
+                "integer": 3,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 9
+              },
+              "shape": [
+                1176
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "n_in": 1176,
+            "n_out": 1
+          },
+          "id": "dense_0",
+          "inputs": [
+            "reshape_0:out0"
+          ],
+          "kind": "dense",
+          "outputs": [
+            {
+              "id": "dense_0:out0",
+              "numeric_type": {
+                "integer": 11,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 24
+              },
+              "shape": [
+                1
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "76c358952f0719f6657c762cdade666e00ac0d75db544c7f47a29b825e118907",
+              "numeric_type": {
+                "integer": 2,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 9
+              },
+              "role": "weight",
+              "shape": [
+                1176,
+                1
+              ]
+            },
+            {
+              "content_sha256": "47a1396c4cb92b24e2bf0ccde13921d8593992d4af4698ad44cd28fcba36c998",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 5
+              },
+              "role": "bias",
+              "shape": [
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        "dense_0:out0"
+      ],
+      "schema_version": 1
+    },
+    "fingerprints": {
+      "frontend_provenance_sha256": "16579514306e905a8188e7db27cba5783c384eaf8032de15e3308dd686c4aedc",
+      "model_structure_sha256": "01c74b926bd00e11aa8d5a7967430789bbde6205c86846745a4b29e8aea1e72f",
+      "parameter_state_sha256": "2e88852e48d3f4bdf5e8ca394515dd58f20fceeeb1d46caeb758071bd4c1b94e"
+    },
+    "frontend_provenance": {
+      "adapter": {
+        "id": "keras-hgq2",
+        "version": 1
+      },
+      "quantizer_contracts": [
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "input",
+          "rounding": "RND",
+          "source_ordinal": 1
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 1
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 1
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "input",
+          "rounding": "RND",
+          "source_ordinal": 4
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 4
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 4
+        }
+      ],
+      "source_layers": [
+        {
+          "class_name": "Reshape",
+          "module": "keras.src.layers.reshaping.reshape",
+          "ordinal": 0
+        },
+        {
+          "class_name": "QConv2D",
+          "module": "hgq.layers.conv",
+          "ordinal": 1
+        },
+        {
+          "class_name": "MaxPooling2D",
+          "module": "keras.src.layers.pooling.max_pooling2d",
+          "ordinal": 2
+        },
+        {
+          "class_name": "Flatten",
+          "module": "keras.src.layers.reshaping.flatten",
+          "ordinal": 3
+        },
+        {
+          "class_name": "QDense",
+          "module": "hgq.layers.core.dense",
+          "ordinal": 4
+        }
+      ]
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "semantic_model_sha256": "262164e40113c5065ecd1a71a7be3a03c933d461a86663fac30e022d6e354031",
+    "source_artifact_sha256": "f33a7c6e463dce71a3fb8f6e72e92016c147f3a8bea8ab00cfeaa2b3e3c49e8c"
+  },
+  "status": {
+    "correctness_verification": "passed",
+    "dependency_qualification": "qualified",
+    "generation": "complete",
+    "model_fidelity": "reported",
+    "performance_qualification": "not_run",
+    "source_integrity": "clean"
+  },
+  "verification": {
+    "mode": "required",
+    "model_fidelity": "reported",
+    "model_fidelity_report": {
+      "max_abs_score_diff": 0.0,
+      "shape_match": true,
+      "status": "reported"
+    },
+    "source_conversion_consistency": "passed",
+    "source_conversion_report": {
+      "comparison": "canonical_fixed_point_integer_codes",
+      "max_abs_float_difference": 0.0,
+      "status": "passed"
+    },
+    "stimuli": {
+      "content_sha256": "a25d597f3d9bc370393b4a93af2bacd79f05f38f001af1442dd4c6a147fa8a64",
+      "dtype": "float32",
+      "input_numeric_type": {
+        "integer": 5,
+        "kind": "fixed",
+        "rounding": "RND",
+        "saturation": "SAT_SYM",
+        "saturation_bits": 0,
+        "signed": true,
+        "width": 11
+      },
+      "integer_code_sha256": "96ca640dba183a634a88befaa8ea709ba156add10c75f89234c3cfd3eba2aaad",
+      "kind": "numeric_contract",
+      "sample_count": 32,
+      "seed": 19,
+      "shape": [
+        32,
+        256,
+        4
+      ]
+    },
+    "transformation_equivalence": "passed"
+  }
+}

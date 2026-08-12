@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "hls4ml": "1.2.0",
+    "hgq2": "0.1.7",
+    "keras": "3.12.1",
+    "numpy": "1.26.4"
+  },
+  "generation_commit": "cca8710",
+  "models": {
+    "adam_p1_step2": {
+      "manifest_sha256": "a21fa774b4c5d942eecdfd4abff1cf21b55d94cb4e2532edbdff768b81bee61d",
+      "model_sha256": "ecaa94f70e1ff84d81f7937c2780b5dee3f10f0bc250816de7dcf8ef951b83cb",
+      "qualification_sha256": "023d3bfccdc15a591aa757d7c8bcfbd4cd6ede02454f61a30bccfca5db0ad430"
+    },
+    "adam_hgq_replicate_s2": {
+      "manifest_sha256": "311e7b6710a927e5ddd28cd87f97492dbe343806cecc9d2483eb0aa471af720c",
+      "model_sha256": "356e460bca3d3d200834f9b24c2b52a1c9667cc923171d9ca14e4dcb19833fe0",
+      "qualification_sha256": "d9b17322320085e0831cd01968d764fa3c95e96b1cbc025ee6331e498047cb89"
+    },
+    "adam_hgq_replicate_s2_300ep": {
+      "manifest_sha256": "7a099da9ddb7c04ce9846b6d64d438f733a595ad409add618bf4f82781032313",
+      "model_sha256": "782fb04d31359f8bad610b3fd09221c0699141ba553ecadb845d73bf1087deba",
+      "qualification_sha256": "7373509f9882601da344030a4c5014212bae903b7059612baed9b063fefb32a2"
+    }
+  },
+  "ravel_commit": "0ea7b80"
+}

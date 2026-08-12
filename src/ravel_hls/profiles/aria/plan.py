@@ -1,8 +1,6 @@
 """Resolved implementation plans for the Aria specialization set."""
 
 from collections.abc import Mapping
-import hashlib
-import json
 from typing import Any
 
 
@@ -14,6 +12,12 @@ def build_implementation_plan(
     temporal_pack = optimization["TemporalPacking"]
     dense_parallelism = optimization["DenseParallelism"]
     dense_facts = model_facts["dense"][0]
+    operations = {
+        operation["id"]: operation
+        for operation in model_facts.get("operations", ())
+    }
+    input_shape = operations["input_0"]["outputs"][0]["shape"]
+    convolution = operations["conv2d_0"]["attributes"]
     dense_inputs = dense_facts["n_in"]
     dense_outputs = dense_facts["n_out"]
     dense_group_size = dense_facts["input_group_size"]
@@ -56,12 +60,14 @@ def build_implementation_plan(
     return {
         "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v2",
         "temporal_pack": temporal_pack,
-        "channels_per_row": 4,
-        "values_per_input_word": temporal_pack * 4,
-        "input_words_per_inference": 256 // temporal_pack,
-        "width_lanes": 4,
-        "filter_lanes": dense_group_size,
-        "values_per_internal_word": 4 * dense_group_size,
+        "channels_per_row": input_shape[1],
+        "values_per_input_word": temporal_pack * input_shape[1],
+        "input_words_per_inference": input_shape[0] // temporal_pack,
+        "width_lanes": convolution["out_width"],
+        "filter_lanes": convolution["n_filt"],
+        "values_per_internal_word": (
+            convolution["out_width"] * convolution["n_filt"]
+        ),
         "dense_inputs": dense_inputs,
         "dense_parallelism": dense_parallelism,
         "dense_steps": dense_steps,
@@ -69,104 +75,3 @@ def build_implementation_plan(
         "internal_fifo_depth": 4,
         "dataflow_start_propagation": False,
     }
-
-
-def build_pass_records(
-    implementation_plan: Mapping[str, Any],
-) -> list[dict[str, Any]]:
-    """Return ordered records for the selected legal pass sequence."""
-
-    temporal_pack = implementation_plan["temporal_pack"]
-    dense_parallelism = implementation_plan["dense_parallelism"]
-    weight_delivery = implementation_plan["weight_delivery"]
-    dense_parameters = {
-        "dense_inputs": implementation_plan["dense_inputs"],
-        "filter_lanes": implementation_plan["filter_lanes"],
-        "dense_parallelism": dense_parallelism,
-        "dense_steps": implementation_plan["dense_steps"],
-        "weight_delivery": (
-            f"{weight_delivery['id']}-v{weight_delivery['version']}"
-        ),
-    }
-    if weight_delivery["id"] == "wide-sequential":
-        dense_parameters.update(
-            {
-                "weight_word_bits": weight_delivery["word_bits"],
-                "weight_depth": weight_delivery["depth"],
-                "tail_elements": weight_delivery["tail_elements"],
-                "tail_mask": weight_delivery["tail_mask"],
-                "accumulation": weight_delivery["accumulation"]["policy"],
-            }
-        )
-    pass_ids = (
-        f"PackTemporalInput{temporal_pack}x",
-        "FuseRepackReshapeIntoFirstConv",
-        "PropagateWideReLUStream",
-        "SpecializeNonOverlappingMaxPool",
-        "StreamFlattenIntoDense",
-        "BindShallowInternalFifos",
-        "ElideDataflowStartPropagation",
-    )
-    effects = [
-        (
-            {
-                "rows_per_word": temporal_pack,
-                "values_per_word": temporal_pack * 4,
-            },
-            ["firmware/defines.h", "bridge", "testbench"],
-        ),
-        (
-            {
-                "width_lanes": implementation_plan["width_lanes"],
-                "filter_lanes": implementation_plan["filter_lanes"],
-            },
-            ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
-        ),
-        (
-            {"values_per_word": implementation_plan["values_per_internal_word"]},
-            ["firmware/top.cpp", "firmware/defines.h"],
-        ),
-        (
-            {"pool_height": 2, "pool_width": 1, "stride_height": 2},
-            ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
-        ),
-        (
-            dense_parameters,
-            ["firmware/top.cpp", "firmware/nnet_utils/nnet_aria.h"],
-        ),
-        (
-            {"fifo_depth": 4, "storage": "srl"},
-            ["firmware/top.cpp"],
-        ),
-        (
-            {"start_propagation": False, "block_control": "ap_ctrl_hs"},
-            ["firmware/top.cpp"],
-        ),
-    ]
-    state: dict[str, Any] = {"profile": "aria", "streaming": {}}
-    records = []
-    for order, (pass_id, effect) in enumerate(zip(pass_ids, effects), start=1):
-        parameters, artifacts = effect
-        input_fingerprint = _fingerprint(state)
-        state = {
-            **state,
-            "streaming": {**state["streaming"], pass_id: parameters},
-        }
-        records.append(
-            {
-                "id": pass_id,
-                "version": 1,
-                "order": order,
-                "legality": "passed",
-                "resolved_parameters": parameters,
-                "input_ir_sha256": input_fingerprint,
-                "output_ir_sha256": _fingerprint(state),
-                "affected_artifacts": artifacts,
-            }
-        )
-    return records
-
-
-def _fingerprint(value: Any) -> str:
-    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(encoded).hexdigest()

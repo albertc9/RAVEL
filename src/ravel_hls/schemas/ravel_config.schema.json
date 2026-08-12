@@ -1,31 +1,26 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_config.schema.json",
-  "title": "RAVEL Aria 1.4.0 configuration",
+  "title": "RAVEL Aria 1.5.0 configuration",
   "type": "object",
   "additionalProperties": false,
-  "required": ["Project", "HLS"],
+  "required": ["HLS"],
   "properties": {
     "Project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["Name", "OutputDir"],
       "properties": {
-        "Name": {"type": "string", "minLength": 1},
-        "OutputDir": {"type": "string", "minLength": 1},
         "ForceReplace": {"type": "boolean", "default": false}
       }
     },
     "HLS": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["Config"],
       "properties": {
         "Backend": {"const": "Vitis", "default": "Vitis"},
         "IOType": {"const": "io_stream", "default": "io_stream"},
         "Part": {"type": ["string", "null"]},
-        "ClockPeriod": {"type": ["number", "null"], "exclusiveMinimum": 0},
-        "Config": {"type": "object"}
+        "ClockPeriod": {"type": ["number", "null"], "exclusiveMinimum": 0}
       }
     },
     "Optimization": {

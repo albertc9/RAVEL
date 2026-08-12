@@ -274,7 +274,8 @@ void dense_wide_stream(
     static_assert(CONFIG_T::n_out == 1, "Aria dense specialization requires one output");
     static_assert(res_T::size == 1, "Aria dense result must contain one value");
     static_assert(CONFIG_T::n_in % data_T::size == 0, "Aria dense input packing mismatch");
-    static_assert(data_T::size % 7 == 0, "Aria dense expects seven filters per width lane");
+    static_assert(data_T::size % {{ filter_lanes }} == 0,
+                  "Aria dense input must contain complete filter groups");
 {% if dense_packed %}
     constexpr unsigned WEIGHT_BITS = {{ dense_packed.lane_bits }};
     constexpr unsigned MAC_LANES = {{ dense_packed.mac_lanes }};
@@ -325,7 +326,7 @@ DenseAccumulate:
     }
 {% else %}
     constexpr unsigned DENSE_PARALLELISM = {{ dense_parallelism }};
-    constexpr unsigned WIDTH_LANES = data_T::size / 7;
+    constexpr unsigned WIDTH_LANES = data_T::size / {{ filter_lanes }};
     constexpr unsigned WORDS = CONFIG_T::n_in / data_T::size;
     constexpr unsigned GROUPS = WIDTH_LANES / DENSE_PARALLELISM;
     static_assert(WIDTH_LANES % DENSE_PARALLELISM == 0,
@@ -347,9 +348,9 @@ DenseValues:
              parallel_group++) {
             #pragma HLS UNROLL
             const unsigned width = group * DENSE_PARALLELISM + parallel_group;
-            for (unsigned filter = 0; filter < 7; filter++) {
+            for (unsigned filter = 0; filter < {{ filter_lanes }}; filter++) {
                 #pragma HLS UNROLL
-                const unsigned data_index = width * 7 + filter;
+                const unsigned data_index = width * {{ filter_lanes }} + filter;
                 const unsigned weight_index = word * data_T::size + data_index;
                 accumulator += (typename CONFIG_T::accum_t)CONFIG_T::template product<
                     typename data_T::value_type, typename CONFIG_T::weight_t>::product(

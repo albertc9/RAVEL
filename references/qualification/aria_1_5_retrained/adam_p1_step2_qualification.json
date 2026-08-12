@@ -1,0 +1,83 @@
+{
+  "generation_fingerprint": "0094fe868311ada6955c5f7037ae70c6d81173cd7f936a569a3e86cc8e628185",
+  "manifest_sha256": "a21fa774b4c5d942eecdfd4abff1cf21b55d94cb4e2532edbdff768b81bee61d",
+  "part": "xcku5p-ffvb676-2-e",
+  "performance": {
+    "initiation_interval": 94,
+    "latency_cycles": 99
+  },
+  "report_files": {
+    "project_prj/solution1/sim/report/project_cosim.rpt": "0fb80625ca64dfd6f46a4c3147da995b2cfb5e6db7548bace696e7747cb73ceb",
+    "project_prj/solution1/syn/report/project_csynth.xml": "fdf08936d530ea1d53033ed49115db2c51f896e4be848eb8cb9a0ea94b83883a"
+  },
+  "resources": {
+    "BRAM_18K": 4,
+    "DSP": 8,
+    "FF": 3999,
+    "LUT": 13149,
+    "URAM": 0
+  },
+  "rtl_cosimulation": "passed",
+  "rtl_ports": {
+    "ap_clk": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_done": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_idle": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_ready": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_rst_n": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_start": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "input_layer_TDATA": {
+      "bits": 128,
+      "direction": "in"
+    },
+    "input_layer_TREADY": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "input_layer_TVALID": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer9_out_TDATA": {
+      "bits": 32,
+      "direction": "out"
+    },
+    "layer9_out_TREADY": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer9_out_TVALID": {
+      "bits": 1,
+      "direction": "out"
+    }
+  },
+  "schema_version": 2,
+  "source_closure_sha256": "d2ade5f0f091cf4209156acab6d9dab8b3a186c166a175404497826d4b57c048",
+  "status": "recorded",
+  "timing": {
+    "estimated_clock_ns": 3.423,
+    "target_clock_ns": 5.0
+  },
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "top": "project"
+}

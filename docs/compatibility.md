@@ -2,22 +2,35 @@
 
 ## Model profile
 
-Aria 1.4.0 accepts a single-input, single-output homogeneous HGQ model with this
-semantic sequence:
+Aria 1.5.0 recognizes a single-input, single-output homogeneous HGQ2 family with
+this semantic sequence. Dimensions are symbols extracted from the converted
+`ModelGraph`, not constants copied from one training archive:
 
 ```text
-Input [256, 4]
-  -> Reshape [256, 4, 1], channels last
-  -> QConv2D(7 filters, 5x1 kernel, 3x1 stride, valid, ReLU)
+Input [H, W]
+  -> Reshape [H, W, 1], channels last
+  -> QConv2D(F filters, Khx1 kernel, Shx1 stride, valid, ReLU)
   -> MaxPool2D(2x1 pool, 2x1 stride, valid)
-  -> Flatten [1176]
+  -> Flatten [N]
   -> QDense(1, linear)
 ```
 
-Weights, biases, legal learned K/I/F values, sparsity, and layer names may vary.
-Geometry, connectivity, data format, input/output count, and the static
-quantizer contract are compatibility requirements. This model profile is a
-generation-legality contract, not a performance target.
+Weights, biases, legal learned fixed-point types, sparsity, and layer names may
+vary. Geometry is extracted rather than compared with a single archive, while
+each selected Aria strategy still enforces its own kernel, stride, packing, and
+pooling legality. Connectivity, data format, input/output count, and static
+quantizer semantics remain compatibility requirements. Recognition is not a
+performance target.
+
+Family recognition and strategy applicability are separate. P2 currently
+requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 requires `H`
+divisible by 4 and the qualified `Kh=5`, `Sh=3` schedule. Both require one
+input channel, width-one convolution, valid padding, the shown non-overlapping
+MaxPool, one Dense output, and a Dense parallelism that divides the streamed
+convolution width. An unsupported strategy returns structured findings before
+rendering. The regression suite includes a P2 case with `[128,4]`, five filters,
+a 3x1/stride-2 convolution, and `N=620`, in addition to the 12 retrained
+canonical-geometry models.
 
 ## hls4ml and host profile
 
@@ -31,7 +44,7 @@ choices. Missing axes resolve independently to P4 and D2. P2/D1 preserves the
 Aria 1.1 input width and schedule semantics; P4 changes expected input TDATA
 from 128 to 256 bits. Refresh preserves the recorded selection.
 
-Aria 1.4 derives a sequential packed Dense weight ROM from the converted
+Aria 1.5 derives a sequential packed Dense weight ROM from the converted
 hls4ml graph. Word width, depth, MAC lanes, and tail handling are internal plan
 properties; they are not additional public configuration fields. Refresh may
 change parameter values but rejects changes to the recorded structural plan.
@@ -58,6 +71,8 @@ its tool version, top, part, target clock, and expected stream port widths match
 the immutable project identity. II, latency, estimated clock, and resources are
 measurements: RAVEL does not require a particular II, does not require estimated
 clock to beat the target, and does not define matrix-specific release gates.
+If `Vitis.Stages.CoSim` is true, recording additionally requires a passing
+top-level Verilog CoSim report and binds its hash into the qualification record.
 
 This support does not strengthen the RTL proof boundary. CoSim, validation,
 export, Vivado synthesis, implementation, and board tests run only when selected
@@ -65,11 +80,11 @@ by the user and retain their own evidence semantics.
 
 ## Parameter-package compatibility
 
-A `.ravelparams` package may update kernel, bias, and learned K/I/F state. Its
-topology, canonical slot schema, shapes, dtypes, frontend contract, and static
-quantizer type/rounding/overflow/axis/granularity must match the project-local
-model template exactly. Static-contract changes require a complete model
-refresh.
+A schema-v2 `.ravelparams` package carries ModelGraph kernel and bias payloads
+under canonical operation/role IDs. Its model-structure fingerprint, shapes,
+numeric descriptors, family, and static frontend provenance must match the
+project architecture contract. A learned precision change requires ordinary
+conversion.
 
 Packages contain no pickle or custom executable objects and reject traversal,
 absolute paths, symlinks, duplicate entries, object arrays, invalid digests, and
