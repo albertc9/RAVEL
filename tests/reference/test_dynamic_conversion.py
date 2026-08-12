@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from ravel_hls import Project, convert
 
 
@@ -10,6 +12,13 @@ MODEL = (
     / "adam_p1_step2"
     / "adam_p1_step2_best.keras"
 )
+REFERENCE_MODELS = sorted(
+    path
+    for path in (Path(__file__).parents[2] / "references").glob("**/*.keras")
+    if "cnn_for_arianna" not in path.parts
+)
+
+assert len(REFERENCE_MODELS) == 12
 
 
 def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
@@ -95,6 +104,32 @@ def test_extracted_geometry_drives_generated_cpp_and_consistency(
     assert project.manifest["interfaces"]["hls_stream_interface"][
         "values_per_input_word"
     ] == 8
+    assert project.manifest["verification"][
+        "source_conversion_consistency"
+    ] == "passed"
+    assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+
+
+@pytest.mark.parametrize(
+    "model_path", REFERENCE_MODELS, ids=lambda path: path.parent.name
+)
+def test_every_retrained_reference_model_generates_consistent_default_cpp(
+    tmp_path: Path, model_path: Path
+) -> None:
+    project = convert(
+        model_path,
+        tmp_path / model_path.parent.name,
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+            "Verification": {"Mode": "required", "Samples": 8, "Seed": 23},
+        },
+    )
+
+    assert project.manifest["source_model"]["model_family"] == {
+        "id": "hgq-conv-pool-dense",
+        "version": 1,
+    }
     assert project.manifest["verification"][
         "source_conversion_consistency"
     ] == "passed"

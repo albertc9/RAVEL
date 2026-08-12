@@ -17,6 +17,14 @@ RETRAINED_ROOT = (
     / "references"
     / "fLow_0.08-fhigh_0.23-rate_0.5"
 )
+REFERENCE_MODELS = sorted(
+    path
+    for path in (Path(__file__).parents[2] / "references").glob("**/*.keras")
+    if "cnn_for_arianna" not in path.parts
+)
+SNAPSHOT_ROOT = Path(__file__).with_name("analysis_snapshots")
+
+assert len(REFERENCE_MODELS) == 12
 
 
 def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
@@ -214,3 +222,20 @@ def test_same_topology_accepts_extracted_geometry_instead_of_arianna_constants(
         "values_per_input_word": 8,
         "input_words_per_inference": 64,
     }
+
+
+@pytest.mark.parametrize(
+    "model_path", REFERENCE_MODELS, ids=lambda path: path.parent.name
+)
+def test_retrained_model_analysis_matches_its_reviewed_snapshot(
+    model_path: Path,
+) -> None:
+    import json
+
+    report = analyze(
+        model_path,
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+    snapshot_path = SNAPSHOT_ROOT / f"{model_path.parent.name}.json"
+
+    assert report == json.loads(snapshot_path.read_text(encoding="utf-8"))
