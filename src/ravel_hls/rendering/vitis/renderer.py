@@ -87,6 +87,9 @@ def render_aria_project(
         "input_words_per_inference": plan["input_words_per_inference"],
         "width_lanes": plan["width_lanes"],
         "filter_lanes": plan["filter_lanes"],
+        "first_conv_multiplier_limit": plan["first_convolution"][
+            "multiplier_limit"
+        ],
         "values_per_internal_word": plan["values_per_internal_word"],
         "first_conv_function": rendering["first_convolution_function"],
         "conv_stream": streams["convolution"],

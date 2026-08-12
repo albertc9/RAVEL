@@ -2,7 +2,7 @@
 
 ## Model profile
 
-Aria 1.5.0 recognizes a single-input, single-output homogeneous HGQ2 family with
+Aria 1.5.1 recognizes a single-input, single-output homogeneous HGQ2 family with
 this semantic sequence. Dimensions are symbols extracted from the converted
 `ModelGraph`, not constants copied from one training archive:
 
@@ -66,6 +66,12 @@ adapter. RAVEL removes hls4ml's unsupported
 `config_array_partition -maximum_size` command before publication. The default
 stage profile resets the HLS project and runs synthesis only.
 
+The first-convolution implementation plan budgets the complete set of products
+needed by every unrolled output-width window. The budget is derived from model
+geometry and remains stable across parameter refreshes; it does not shrink with
+the current weight sparsity. RAVEL applies that budget through an owned derived
+configuration rather than modifying hls4ml's generated `parameters.h`.
+
 Successful synthesis is imported automatically. A report is accepted only when
 its tool version, top, part, target clock, and expected stream port widths match
 the immutable project identity. II, latency, estimated clock, and resources are
@@ -73,6 +79,9 @@ measurements: RAVEL does not require a particular II, does not require estimated
 clock to beat the target, and does not define matrix-specific release gates.
 If `Vitis.Stages.CoSim` is true, recording additionally requires a passing
 top-level Verilog CoSim report and binds its hash into the qualification record.
+For generated designs that declare the owned first-convolution function,
+recording also requires its unique synthesis report and stores the module
+interval plus the pipeline loop's trip count, II, and depth.
 
 This support does not strengthen the RTL proof boundary. CoSim, validation,
 export, Vivado synthesis, implementation, and board tests run only when selected

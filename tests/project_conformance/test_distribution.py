@@ -77,7 +77,7 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
         )
     )
 
-    assert schema["title"] == "RAVEL Aria 1.5.0 configuration"
+    assert schema["title"] == "RAVEL Aria 1.5.1 configuration"
     assert schema["required"] == ["HLS"]
     assert set(schema["properties"]) == {
         "Project",
@@ -103,7 +103,7 @@ def test_manifest_schema_describes_the_v4_resolved_design() -> None:
 
     assert schema["properties"]["schema_version"] == {"const": 4}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
-        "const": "1.5.0"
+        "const": "1.5.1"
     }
     assert "source_closure" in schema["required"]
     assert "source_closure_sha256" in schema["required"]
@@ -133,7 +133,7 @@ def test_parameter_package_schema_describes_portable_inference_state() -> None:
     } <= set(schema["required"])
 
 
-def test_qualification_schema_binds_v2_evidence_identity() -> None:
+def test_qualification_schema_binds_v3_evidence_identity_and_stages() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_qualification.schema.json").read_text(
@@ -141,13 +141,14 @@ def test_qualification_schema_binds_v2_evidence_identity() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 2}
+    assert schema["properties"]["schema_version"] == {"const": 3}
     assert {
         "manifest_sha256",
         "generation_fingerprint",
         "source_closure_sha256",
         "top",
         "rtl_cosimulation",
+        "stages",
     } <= set(schema["required"])
     assert schema["properties"]["rtl_cosimulation"] == {
         "enum": ["not_run", "passed"]

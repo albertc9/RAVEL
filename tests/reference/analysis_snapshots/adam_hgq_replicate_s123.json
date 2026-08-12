@@ -105,7 +105,7 @@
   },
   "generation": {
     "id": "aria",
-    "version": "1.5.0"
+    "version": "1.5.1"
   },
   "model_facts": {
     "dense": [
@@ -526,64 +526,64 @@
     "executed_passes": [
       {
         "id": "pack-temporal-input",
-        "input_design_sha256": "d6c2413712f2f79980559079cd3920d91f2c511d171c85a59117a76cc9827a5a",
+        "input_design_sha256": "4b3c61069bfc8806e15fbc53bcbf6904710a65d000d699c4c4c7b07f19ab7955",
         "order": 1,
-        "output_design_sha256": "7345e4947dbfaca9129ac28693395cdd8e3ce68ae9a43d64a52e55594a76c430",
+        "output_design_sha256": "65e03a7c615240e53cf190427946e1e9866d17463830c6ecf4c628032062a891",
         "result": "applied",
         "version": 1
       },
       {
         "id": "fuse-repack-into-first-conv",
-        "input_design_sha256": "7345e4947dbfaca9129ac28693395cdd8e3ce68ae9a43d64a52e55594a76c430",
+        "input_design_sha256": "65e03a7c615240e53cf190427946e1e9866d17463830c6ecf4c628032062a891",
         "order": 2,
-        "output_design_sha256": "ab203840f70cae5b8f9ce256a5d34e51cc87fc8d6e6c2ad19fa37bbffb28827e",
+        "output_design_sha256": "f6ca57d48d9d69ada5711d8fdc9efa7d35cbd224860f509f4a19c80b664376a9",
         "result": "applied",
-        "version": 1
+        "version": 2
       },
       {
         "id": "propagate-wide-relu-stream",
-        "input_design_sha256": "ab203840f70cae5b8f9ce256a5d34e51cc87fc8d6e6c2ad19fa37bbffb28827e",
+        "input_design_sha256": "f6ca57d48d9d69ada5711d8fdc9efa7d35cbd224860f509f4a19c80b664376a9",
         "order": 3,
-        "output_design_sha256": "e7118b8357873145f20b260955c9cbf6d0e3d1731df699b828123a1771efe49a",
+        "output_design_sha256": "049862275c3e328672c6f1cb917768b6163b19d22134c1b84062acc1cf59fb18",
         "result": "applied",
         "version": 1
       },
       {
         "id": "specialize-nonoverlapping-maxpool",
-        "input_design_sha256": "e7118b8357873145f20b260955c9cbf6d0e3d1731df699b828123a1771efe49a",
+        "input_design_sha256": "049862275c3e328672c6f1cb917768b6163b19d22134c1b84062acc1cf59fb18",
         "order": 4,
-        "output_design_sha256": "26b46011301e265ff2469d39af6c3a9dae4c074c9f07a23b21803d8c5d6dea66",
+        "output_design_sha256": "bb64c7d640f4dfc1d853e739f55b552ccdcaebf97b7a50a9860c7add75d99dc6",
         "result": "applied",
         "version": 1
       },
       {
         "id": "stream-flatten-into-dense",
-        "input_design_sha256": "26b46011301e265ff2469d39af6c3a9dae4c074c9f07a23b21803d8c5d6dea66",
+        "input_design_sha256": "bb64c7d640f4dfc1d853e739f55b552ccdcaebf97b7a50a9860c7add75d99dc6",
         "order": 5,
-        "output_design_sha256": "3c79cd19e7b97f82975f4bbaa432a8b196bad20904e12cf22e244c1a3f62465a",
+        "output_design_sha256": "a33b8e86c00cf0a98edfcdc26f097345391ccbab13e9a66f53c3f38f8992157e",
         "result": "applied",
         "version": 1
       },
       {
         "id": "bind-shallow-internal-fifos",
-        "input_design_sha256": "3c79cd19e7b97f82975f4bbaa432a8b196bad20904e12cf22e244c1a3f62465a",
+        "input_design_sha256": "a33b8e86c00cf0a98edfcdc26f097345391ccbab13e9a66f53c3f38f8992157e",
         "order": 6,
-        "output_design_sha256": "c6c9a6c036a647c781d69b972c4e0733ef230261912c22d0e884ac68e2088421",
+        "output_design_sha256": "d557eea3006dffd0c48f0a7584639bb2b13822ab4da947aa4f3646a3eb2d789d",
         "result": "applied",
         "version": 1
       },
       {
         "id": "elide-dataflow-start-propagation",
-        "input_design_sha256": "c6c9a6c036a647c781d69b972c4e0733ef230261912c22d0e884ac68e2088421",
+        "input_design_sha256": "d557eea3006dffd0c48f0a7584639bb2b13822ab4da947aa4f3646a3eb2d789d",
         "order": 7,
-        "output_design_sha256": "4174b928940a3e6e2d725f7cf6a4eac437b5f0398fd998e4fb751faa1df8e4bb",
+        "output_design_sha256": "a07414ddfb3a6feb03b8274ab63cf51e39e2423838bd6099ba9f01e664094145",
         "result": "applied",
         "version": 1
       }
     ],
     "generation": {
       "id": "aria",
-      "version": "1.5.0"
+      "version": "1.5.1"
     },
     "implementation_plan": {
       "channels_per_row": 4,
@@ -592,9 +592,17 @@
       "dense_parallelism": 2,
       "dense_steps": 84,
       "filter_lanes": 7,
+      "first_convolution": {
+        "id": "full-width-latency",
+        "multiplier_limit": 140,
+        "parallel_windows": 4,
+        "products_per_window": 35,
+        "target_loop_ii": 1,
+        "version": 1
+      },
       "input_words_per_inference": 64,
       "internal_fifo_depth": 4,
-      "template_profile": "aria-p4-d2-v2",
+      "template_profile": "aria-p4-d2-v3",
       "temporal_pack": 4,
       "values_per_input_word": 16,
       "values_per_internal_word": 28,
@@ -797,10 +805,10 @@
         "pooling_wide": "max_pooling2d_x4_t"
       }
     },
-    "resolved_design_sha256": "4174b928940a3e6e2d725f7cf6a4eac437b5f0398fd998e4fb751faa1df8e4bb",
+    "resolved_design_sha256": "a07414ddfb3a6feb03b8274ab63cf51e39e2423838bd6099ba9f01e664094145",
     "resolver": {
       "id": "aria-explicit-pd",
-      "version": 1
+      "version": 2
     },
     "schema_version": 1,
     "specialization": {
@@ -809,7 +817,7 @@
     },
     "strategy": {
       "id": "aria-wide-stream",
-      "version": 1
+      "version": 2
     },
     "streaming": {
       "activation": {

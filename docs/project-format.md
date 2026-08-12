@@ -11,7 +11,8 @@ specialization. Vendor tools may or may not have run.
   resolved `Optimization` section. Its
   published output directory is also `.`.
 - `ravel_manifest.json` is the immutable schema-v4 generation record.
-- `ravel_qualification.json` is optional schema-v2 measured Vitis evidence.
+- `ravel_qualification.json` is optional schema-v3 measured Vitis evidence;
+  schema-v2 records from earlier Aria releases remain readable.
 - `build_opt.tcl` contains explicit Vitis stage booleans.
 
 Published records contain no original source filename, username, hostname, or

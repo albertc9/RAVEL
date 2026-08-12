@@ -41,7 +41,7 @@ def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
     )
 
     report = analysis.to_dict()
-    assert report["generation"] == {"id": "aria", "version": "1.5.0"}
+    assert report["generation"] == {"id": "aria", "version": "1.5.1"}
     assert report["model_family"] == {
         "id": "hgq-conv-pool-dense",
         "version": 1,
@@ -222,6 +222,14 @@ def test_same_topology_accepts_extracted_geometry_instead_of_arianna_constants(
         "values_per_input_word": 8,
         "input_words_per_inference": 64,
     }
+    assert design["implementation_plan"]["first_convolution"] == {
+        "id": "full-width-latency",
+        "version": 1,
+        "parallel_windows": 4,
+        "products_per_window": 15,
+        "multiplier_limit": 60,
+        "target_loop_ii": 1,
+    }
 
 
 def test_same_family_reports_an_unsupported_strategy_before_rendering(
@@ -333,9 +341,9 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         },
     ).to_dict()["resolved_design"]
 
-    assert design["strategy"] == {"id": "aria-wide-stream", "version": 1}
-    assert design["resolver"] == {"id": "aria-explicit-pd", "version": 1}
-    assert design["implementation_plan"]["template_profile"] == "aria-p4-d2-v2"
+    assert design["strategy"] == {"id": "aria-wide-stream", "version": 2}
+    assert design["resolver"] == {"id": "aria-explicit-pd", "version": 2}
+    assert design["implementation_plan"]["template_profile"] == "aria-p4-d2-v3"
     assert [binding["id"] for binding in design["parameter_bindings"]] == [
         "conv2d_0:bias",
         "conv2d_0:weight",
@@ -353,6 +361,7 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         "elide-dataflow-start-propagation",
     ]
     assert all(item["result"] == "applied" for item in passes)
+    assert passes[1]["version"] == 2
     assert all(
         previous["output_design_sha256"] == current["input_design_sha256"]
         for previous, current in zip(passes, passes[1:])

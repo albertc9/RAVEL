@@ -14,6 +14,7 @@
     "part",
     "timing",
     "performance",
+    "stages",
     "resources",
     "rtl_ports",
     "rtl_cosimulation",
@@ -21,7 +22,7 @@
     "status"
   ],
   "properties": {
-    "schema_version": {"const": 2},
+    "schema_version": {"const": 3},
     "manifest_sha256": {"$ref": "#/$defs/sha256"},
     "generation_fingerprint": {"$ref": "#/$defs/sha256"},
     "source_closure_sha256": {"$ref": "#/$defs/sha256"},
@@ -52,6 +53,33 @@
       "properties": {
         "initiation_interval": {"type": "integer", "minimum": 0},
         "latency_cycles": {"type": "integer", "minimum": 0}
+      }
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "first_convolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["top", "initiation_interval", "latency_cycles", "loop"],
+          "properties": {
+            "top": {"type": "string", "minLength": 1},
+            "initiation_interval": {"type": "integer", "minimum": 0},
+            "latency_cycles": {"type": "integer", "minimum": 0},
+            "loop": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "trip_count", "pipeline_ii", "pipeline_depth"],
+              "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "trip_count": {"type": "integer", "minimum": 1},
+                "pipeline_ii": {"type": "integer", "minimum": 1},
+                "pipeline_depth": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        }
       }
     },
     "resources": {

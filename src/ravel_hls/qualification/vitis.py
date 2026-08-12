@@ -26,6 +26,7 @@ class QualificationRecord:
     estimated_clock_ns: float
     initiation_interval: int
     latency_cycles: int
+    stages: dict[str, dict[str, Any]]
     resources: dict[str, int]
     rtl_ports: dict[str, dict[str, int | str]]
     rtl_cosimulation: str
@@ -33,7 +34,7 @@ class QualificationRecord:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 2,
+            "schema_version": 3,
             "manifest_sha256": self.manifest_sha256,
             "generation_fingerprint": self.generation_fingerprint,
             "source_closure_sha256": self.source_closure_sha256,
@@ -48,6 +49,7 @@ class QualificationRecord:
                 "initiation_interval": self.initiation_interval,
                 "latency_cycles": self.latency_cycles,
             },
+            "stages": self.stages,
             "resources": self.resources,
             "rtl_ports": self.rtl_ports,
             "rtl_cosimulation": self.rtl_cosimulation,
@@ -176,6 +178,17 @@ def import_vitis_reports(
         report_files[
             cosim_report.relative_to(report_root).as_posix()
         ] = _file_sha256(cosim_report)
+    stages, stage_reports = _stage_evidence(
+        report_root,
+        project_view.manifest,
+        expected_tool_version=tool_version,
+        expected_part=reported_part,
+        expected_clock=reported_clock,
+    )
+    for stage_report in stage_reports:
+        report_files[stage_report.relative_to(report_root).as_posix()] = _file_sha256(
+            stage_report
+        )
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         generation_fingerprint=_required_manifest_sha256(
@@ -206,6 +219,7 @@ def import_vitis_reports(
                 "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency",
             )
         ),
+        stages=stages,
         resources=resources,
         rtl_ports=rtl_ports,
         rtl_cosimulation=rtl_cosimulation,
@@ -219,6 +233,88 @@ def import_vitis_reports(
     )
     os.replace(temporary_path, qualification_path)
     return record
+
+
+def _stage_evidence(
+    report_root: Path,
+    manifest: dict[str, Any],
+    *,
+    expected_tool_version: str,
+    expected_part: str,
+    expected_clock: float,
+) -> tuple[dict[str, dict[str, Any]], list[Path]]:
+    function_name = (
+        manifest.get("resolved_design", {})
+        .get("rendering", {})
+        .get("first_convolution_function")
+    )
+    if not isinstance(function_name, str):
+        return {}, []
+    matches: list[tuple[Path, ET.Element]] = []
+    for candidate in sorted(report_root.rglob("*_csynth.xml")):
+        try:
+            root = ET.parse(candidate).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        top = root.findtext("./UserAssignments/TopModelName", "").strip()
+        if top == function_name or top.startswith(f"{function_name}_"):
+            matches.append((candidate, root))
+    if len(matches) != 1:
+        raise ProjectGenerationError(
+            "Expected exactly one first-convolution Vitis csynth XML report"
+        )
+    report_path, root = matches[0]
+    for field, expected, observed in (
+        (
+            "version",
+            expected_tool_version,
+            _required_text(root, "./ReportVersion/Version"),
+        ),
+        ("part", expected_part, _required_text(root, "./UserAssignments/Part")),
+        (
+            "clock",
+            expected_clock,
+            float(_required_text(root, "./UserAssignments/TargetClockPeriod")),
+        ),
+    ):
+        if expected != observed:
+            raise ProjectGenerationError(
+                f"First-convolution Vitis {field} expected {expected} "
+                f"but measured {observed}"
+            )
+    loops = root.findall("./PerformanceEstimates/SummaryOfLoopLatency/*")
+    pipelined = [loop for loop in loops if loop.findtext("./PipelineII") is not None]
+    if len(pipelined) != 1:
+        raise ProjectGenerationError(
+            "Expected exactly one pipelined first-convolution loop"
+        )
+    loop = pipelined[0]
+    return (
+        {
+            "first_convolution": {
+                "top": _required_text(root, "./UserAssignments/TopModelName"),
+                "initiation_interval": int(
+                    _required_text(
+                        root,
+                        "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min",
+                    )
+                ),
+                "latency_cycles": int(
+                    _required_text(
+                        root,
+                        "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency",
+                    )
+                ),
+                "loop": {
+                    "name": loop.tag,
+                    "trip_count": int(_required_text(loop, "./TripCount")),
+                    "pipeline_ii": int(_required_text(loop, "./PipelineII")),
+                    "pipeline_depth": int(_required_text(loop, "./PipelineDepth")),
+                },
+            }
+        },
+        [report_path],
+    )
 
 
 def _rtl_cosimulation_report(report_root: Path, top: str) -> Path | None:

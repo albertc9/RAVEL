@@ -1,0 +1,97 @@
+{
+  "generation_fingerprint": "b958bedb8c7feaf1c240957695af4053697f050a3f3ed3206036db1a8cae1da3",
+  "manifest_sha256": "e2e89cae3644d6acba48045da87a03195704228ab0b64448f5d853c97d5315df",
+  "part": "xcku5p-ffvb676-2-e",
+  "performance": {
+    "initiation_interval": 94,
+    "latency_cycles": 100
+  },
+  "report_files": {
+    "project_prj/solution1/sim/report/project_cosim.rpt": "12f2868241090964d0d95e815986831bc82082aadafae39e0cd981807a2c34ed",
+    "project_prj/solution1/syn/report/first_conv_4row_4lane_temporal_wide_cl_array_array_ap_fixed_28u_config4_s_csynth.xml": "099ff270a767e74d0975fe01d9ad32ce0f8b410795194cfc4f3edcf307a37984",
+    "project_prj/solution1/syn/report/project_csynth.xml": "4b3b512d73c3622f325150085e6283b637573eea07976316d0c1e7b9fc0eb357"
+  },
+  "resources": {
+    "BRAM_18K": 4,
+    "DSP": 8,
+    "FF": 7826,
+    "LUT": 24964,
+    "URAM": 0
+  },
+  "rtl_cosimulation": "passed",
+  "rtl_ports": {
+    "ap_clk": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_done": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_idle": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_ready": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_rst_n": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_start": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "input_layer_TDATA": {
+      "bits": 256,
+      "direction": "in"
+    },
+    "input_layer_TREADY": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "input_layer_TVALID": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer9_out_TDATA": {
+      "bits": 32,
+      "direction": "out"
+    },
+    "layer9_out_TREADY": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer9_out_TVALID": {
+      "bits": 1,
+      "direction": "out"
+    }
+  },
+  "schema_version": 3,
+  "source_closure_sha256": "7f0b8d670cea622210e3b9283c6943820cbcc0e2f94e6b317bf94300b49913e8",
+  "stages": {
+    "first_convolution": {
+      "initiation_interval": 89,
+      "latency_cycles": 89,
+      "loop": {
+        "name": "ReadAndDrainP4",
+        "pipeline_depth": 4,
+        "pipeline_ii": 1,
+        "trip_count": 85
+      },
+      "top": "first_conv_4row_4lane_temporal_wide_cl_array_array_ap_fixed_28u_config4_s"
+    }
+  },
+  "status": "recorded",
+  "timing": {
+    "estimated_clock_ns": 3.613,
+    "target_clock_ns": 5.0
+  },
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "top": "project"
+}

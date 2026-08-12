@@ -44,7 +44,7 @@ def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
     assert isinstance(project, Project)
     assert project.path == output_dir
     assert project.manifest["schema_version"] == 4
-    assert project.manifest["ravel"]["release"] == "1.5.0"
+    assert project.manifest["ravel"]["release"] == "1.5.1"
     assert project.manifest["source_model"]["model_family"] == {
         "id": "hgq-conv-pool-dense",
         "version": 1,
@@ -108,6 +108,13 @@ def test_extracted_geometry_drives_generated_cpp_and_consistency(
         "source_conversion_consistency"
     ] == "passed"
     assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    generated_convolution = (
+        project.path / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "static const unsigned multiplier_limit = 60;" in generated_convolution
+    assert generated_convolution.count(
+        "using mult_config = aria_first_conv_mult_config"
+    ) == 2
 
 
 @pytest.mark.parametrize(
@@ -156,7 +163,9 @@ def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
     )
     kernel = updated_model.layers[1].kernel
     changed = kernel.numpy()
-    changed.reshape(-1)[0] += 0.125
+    flattened = changed.reshape(-1)
+    assert flattened[0] != 0
+    flattened[0] = 0
     kernel.assign(changed)
 
     refreshed = refresh(project, updated_model)
@@ -180,6 +189,10 @@ def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
     assert refreshed.manifest["implementation_plan"] == original[
         "implementation_plan"
     ]
+    generated_convolution = (
+        refreshed.path / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "static const unsigned multiplier_limit = 140;" in generated_convolution
 
 
 def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(

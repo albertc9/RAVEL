@@ -5,7 +5,7 @@ project while preserving the model semantics. Training remains outside RAVEL.
 
 ## Aria workflow
 
-Aria 1.5.0 exposes three Python operations over one configuration:
+Aria 1.5.1 exposes three Python operations over one configuration:
 
 1. `analyze(model, config)` converts to a clean hls4ml `ModelGraph`, extracts
    immutable model facts, matches a versioned family, and resolves a design
@@ -46,6 +46,14 @@ convolution uses a 28-value internal stream. Widths for other applicable models
 are derived from model facts. P4 may deassert input `TREADY` while draining a
 second convolution output row. Dense x1 consumes one extracted filter group per
 step and Dense x2 consumes two while retaining fixed-point accumulation order.
+
+P2 and P4 fully unroll the first convolution across the extracted output width.
+The implementation plan therefore records a structural multiplier budget equal
+to `out_width * kernel_height * kernel_width * input_channels * filters` and
+targets loop II=1. This budget is an upper bound: Vitis may still fold constant
+products into LUT, shift, or add logic. It deliberately does not depend on the
+current zero count, so refreshing learned parameters cannot silently reduce the
+declared architecture and reintroduce a resource-limited loop II.
 
 Before rendering, RAVEL extracts Dense connectivity, dimensions, numeric
 semantics, parameter representation, and coefficient statistics from the
@@ -92,5 +100,5 @@ clock, tool version, and expected RTL port widths.
   pass/fail limits.
 
 RTL simulation, IP export, implementation timing, and board validation remain
-separate activities. Aria 1.5.0 does not promote HLS synthesis into proof of any
+separate activities. Aria 1.5.1 does not promote HLS synthesis into proof of any
 of those layers.
