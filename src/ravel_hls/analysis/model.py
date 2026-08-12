@@ -652,7 +652,15 @@ def _extract_model_facts(
             parameter.pop("content_sha256")
     return facts, {
         "model_structure_sha256": _canonical_sha256(structure),
-        "parameter_state_sha256": _canonical_sha256(parameter_identities),
+        "parameter_state_sha256": _canonical_sha256(
+            sorted(
+                parameter_identities,
+                key=lambda parameter: (
+                    parameter["operation_id"],
+                    parameter["role"],
+                ),
+            )
+        ),
     }
 
 

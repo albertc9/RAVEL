@@ -116,6 +116,27 @@ def _convert_analyzed_model(
     if not analyzed.analysis.applicable:
         messages = [finding["message"] for finding in analyzed.analysis.findings]
         raise CompatibilityError("; ".join(messages))
+    return _publish_analyzed_graph(
+        graph=analyzed.graph,
+        analysis_report=analyzed.analysis.to_dict(),
+        parameter_payload=analyzed.parameter_payload,
+        output_dir=output_dir,
+        config=config,
+        verification_inputs=verification_inputs,
+        source_consistency_available=True,
+    )
+
+
+def _publish_analyzed_graph(
+    *,
+    graph: Any,
+    analysis_report: Mapping[str, Any],
+    parameter_payload: Any,
+    output_dir: Path,
+    config: Mapping[str, Any],
+    verification_inputs: Any | None,
+    source_consistency_available: bool,
+) -> RavelProject:
     hls = config.get("HLS", {})
     project = config.get("Project", {})
     if not isinstance(project, Mapping):
@@ -128,7 +149,7 @@ def _convert_analyzed_model(
         raise ConfigurationError(
             "output_dir name must be a valid C++ project identifier"
         )
-    graph_config = analyzed.graph.config.config
+    graph_config = graph.config.config
     graph_config["OutputDir"] = str(output_dir)
     graph_config["ProjectName"] = project_name
     run_config = RavelConfig(
@@ -151,12 +172,13 @@ def _convert_analyzed_model(
         }
     )
     generated = optimize_project(
-        analyzed.graph,
+        graph,
         run_config,
         force_replace=force_replace,
         verification_inputs=verification_inputs,
-        model_analysis=analyzed.analysis.to_dict(),
-        parameter_payload=analyzed.parameter_payload,
+        model_analysis=analysis_report,
+        parameter_payload=parameter_payload,
+        source_consistency_available=source_consistency_available,
     )
     if run_config["Vitis"]["Run"]:
         generated.build()
@@ -171,7 +193,7 @@ def refresh(
 ) -> RavelProject:
     """Atomically refresh a schema-v4 project without changing its architecture."""
 
-    from .analysis.model import analyze
+    from .analysis.model import _analyze_model, analyze
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
     if project_view.manifest.get("schema_version") != 4:
@@ -179,8 +201,48 @@ def refresh(
             "Aria 1.5 refresh requires a schema-v4 generated project"
         )
     if isinstance(model_or_parameters, Parameters):
-        raise ConfigurationError(
-            "Compiled .ravelparams refresh is not available in this implementation slice"
+        config = _refresh_configuration(project_view)
+        if (
+            config["Verification"]["Mode"] == "required"
+            and model_or_parameters._manifest.get("known_answer_evidence") is None
+        ):
+            raise VerificationError(
+                "Required package refresh verification needs known-answer evidence"
+            )
+        if (
+            model_or_parameters.model_structure_sha256
+            != project_view.manifest["source_model"]["fingerprints"][
+                "model_structure_sha256"
+            ]
+        ):
+            raise CompatibilityError(
+                "Parameter package changes the recorded architecture contract; "
+                "use ordinary conversion"
+            )
+        import keras
+        from hgq.layers import QConv2D, QDense
+
+        template = keras.models.load_model(
+            project_view.path / "keras_model.keras",
+            custom_objects={"QConv2D": QConv2D, "QDense": QDense},
+        )
+        analyzed = _analyze_model(template, config)
+        payload, report = model_or_parameters._apply_to_analysis(analyzed)
+        if architecture_contract_sha256(report) != project_view.manifest.get(
+            "architecture_contract_sha256"
+        ):
+            raise CompatibilityError(
+                "Parameter package changes the recorded architecture contract; "
+                "use ordinary conversion"
+            )
+        return _publish_analyzed_graph(
+            graph=analyzed.graph,
+            analysis_report=report,
+            parameter_payload=payload,
+            output_dir=project_view.path,
+            config=config,
+            verification_inputs=verification_inputs,
+            source_consistency_available=False,
         )
     config = _refresh_configuration(project_view)
     analysis = analyze(model_or_parameters, config).to_dict()
@@ -315,6 +377,7 @@ def optimize_project(
     preserved_implementation_plan: Mapping[str, Any] | None = None,
     model_analysis: Mapping[str, Any] | None = None,
     parameter_payload: Any | None = None,
+    source_consistency_available: bool = True,
 ) -> RavelProject:
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
@@ -427,6 +490,7 @@ def optimize_project(
         verification_inputs=verification_inputs,
         model_analysis=model_analysis,
         parameter_payload=parameter_payload,
+        source_consistency_available=source_consistency_available,
     )
 
 
@@ -451,6 +515,7 @@ def _generate_project(
     verification_inputs: Any | None,
     model_analysis: Mapping[str, Any] | None,
     parameter_payload: Any | None,
+    source_consistency_available: bool,
 ) -> RavelProject:
     output_value = hls_config.get("OutputDir")
     if not isinstance(output_value, (str, os.PathLike)):
@@ -550,7 +615,7 @@ def _generate_project(
             )
             require_bit_exact(baseline_predictions, optimized_predictions)
             verification_report["transformation_equivalence"] = "passed"
-            if model_analysis is not None:
+            if model_analysis is not None and source_consistency_available:
                 source_consistency = require_source_consistency(
                     hls_config.get("KerasModel"),
                     stimuli,
@@ -561,12 +626,13 @@ def _generate_project(
                 )
                 verification_report["source_conversion_consistency"] = "passed"
                 verification_report["source_conversion_report"] = source_consistency
-            fidelity = report_model_fidelity(
-                hls_config.get("KerasModel"), stimuli, optimized_predictions
-            )
-            if fidelity is not None:
-                verification_report["model_fidelity"] = "reported"
-                verification_report["model_fidelity_report"] = fidelity
+            if source_consistency_available:
+                fidelity = report_model_fidelity(
+                    hls_config.get("KerasModel"), stimuli, optimized_predictions
+                )
+                if fidelity is not None:
+                    verification_report["model_fidelity"] = "reported"
+                    verification_report["model_fidelity_report"] = fidelity
         mutable_hls_config["OutputDir"] = original_output
         _rewrite_published_hls_config(staging_path, output_path)
         published_ravel_config = _published_ravel_config(ravel_config)

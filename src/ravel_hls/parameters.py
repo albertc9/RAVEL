@@ -16,6 +16,7 @@ import zipfile
 import numpy as np
 
 from .exceptions import ConfigurationError
+from .domain import ParameterPayload, ParameterTensor
 
 
 _MANIFEST_NAME = "parameter_package.json"
@@ -55,12 +56,28 @@ class Parameters:
         return self._manifest["parameter_state_sha256"]
 
     @property
+    def model_structure_sha256(self) -> str:
+        """Canonical ModelGraph structure and numeric-contract identity."""
+
+        value = self._manifest.get("model_structure_sha256")
+        if not isinstance(value, str):
+            raise ConfigurationError(
+                "Legacy parameter packages have no ModelGraph structure identity"
+            )
+        return value
+
+    @property
     def package_content_sha256(self) -> str:
         return self._manifest["package_content_sha256"]
 
     @classmethod
     def extract(cls, model: Any) -> "Parameters":
         """Extract generation-relevant inference state from a loaded model."""
+
+        if isinstance(model, (str, os.PathLike)) or (
+            hasattr(model, "inputs") and hasattr(model, "outputs")
+        ):
+            return cls._extract_modelgraph(model)
 
         if isinstance(model, (str, os.PathLike)):
             import keras
@@ -131,6 +148,74 @@ class Parameters:
         manifest["package_content_sha256"] = _package_content_sha256(manifest, arrays)
         return cls(manifest, tuple(arrays))
 
+    @classmethod
+    def _extract_modelgraph(cls, model: Any) -> "Parameters":
+        from .analysis.model import _analyze_model
+
+        analyzed = _analyze_model(
+            model, {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}}
+        )
+        report = analyzed.analysis.to_dict()
+        arrays = []
+        entries = []
+        for index, tensor in enumerate(analyzed.parameter_payload.tensors):
+            values = np.ascontiguousarray(tensor.values)
+            payload = _npy_bytes(values)
+            storage = f"arrays/{index:04d}.npy"
+            entries.append(
+                {
+                    "id": tensor.id,
+                    "operation_id": tensor.operation_id,
+                    "role": tensor.role,
+                    "shape": list(values.shape),
+                    "dtype": values.dtype.str,
+                    "numeric_type": dict(tensor.numeric_type),
+                    "storage": storage,
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                }
+            )
+            arrays.append(values)
+        compatibility = {
+            "model_family": report["model_family"],
+            "model_structure_sha256": report["fingerprints"][
+                "model_structure_sha256"
+            ],
+            "entries": [
+                {
+                    key: entry[key]
+                    for key in (
+                        "id",
+                        "operation_id",
+                        "role",
+                        "shape",
+                        "numeric_type",
+                    )
+                }
+                for entry in entries
+            ],
+        }
+        manifest = {
+            "schema_version": 2,
+            "format": "ravel-modelgraph-parameters",
+            "generation": report["generation"],
+            "model_family": report["model_family"],
+            "model_structure_sha256": report["fingerprints"][
+                "model_structure_sha256"
+            ],
+            "frontend_provenance": report["frontend_provenance"],
+            "model_facts": report["model_facts"],
+            "entries": entries,
+            "compatibility_sha256": _canonical_sha256(compatibility),
+            "parameter_state_sha256": report["fingerprints"][
+                "parameter_state_sha256"
+            ],
+            "known_answer_evidence": None,
+        }
+        manifest["package_content_sha256"] = _package_content_sha256(
+            manifest, arrays
+        )
+        return cls(manifest, tuple(arrays))
+
     def save(self, path: str | Path) -> None:
         """Write this package as a deterministic `.ravelparams` archive."""
 
@@ -193,9 +278,9 @@ class Parameters:
                     "Parameter package manifest exceeds the 8 MiB safety limit"
                 )
             manifest = json.loads(archive.read(_MANIFEST_NAME))
-            if manifest.get("schema_version") != 1:
+            if manifest.get("schema_version") not in {1, 2}:
                 raise ConfigurationError(
-                    "Parameter package schema_version must be 1"
+                    "Parameter package schema_version must be 1 or 2"
                 )
             arrays = []
             for entry in manifest.get("entries", []):
@@ -228,29 +313,119 @@ class Parameters:
                     )
                 arrays.append(np.ascontiguousarray(values))
         expected_content = _package_content_sha256(manifest, arrays)
-        expected_compatibility = _canonical_sha256(
-            {
-                "frontend_contract": manifest.get("frontend_contract"),
-                "topology": manifest.get("topology"),
-                "slots": [
-                    {key: entry.get(key) for key in ("slot", "kind", "shape", "dtype")}
-                    for entry in manifest.get("entries", [])
-                ],
-            }
-        )
+        if manifest["schema_version"] == 2:
+            expected_compatibility = _canonical_sha256(
+                {
+                    "model_family": manifest.get("model_family"),
+                    "model_structure_sha256": manifest.get(
+                        "model_structure_sha256"
+                    ),
+                    "entries": [
+                        {
+                            key: entry.get(key)
+                            for key in (
+                                "id",
+                                "operation_id",
+                                "role",
+                                "shape",
+                                "numeric_type",
+                            )
+                        }
+                        for entry in manifest.get("entries", [])
+                    ],
+                }
+            )
+        else:
+            expected_compatibility = _canonical_sha256(
+                {
+                    "frontend_contract": manifest.get("frontend_contract"),
+                    "topology": manifest.get("topology"),
+                    "slots": [
+                        {
+                            key: entry.get(key)
+                            for key in ("slot", "kind", "shape", "dtype")
+                        }
+                        for entry in manifest.get("entries", [])
+                    ],
+                }
+            )
         if expected_compatibility != manifest.get("compatibility_sha256"):
             raise ConfigurationError("Parameter package compatibility digest mismatch")
-        expected_parameter_state = _canonical_sha256(
-            [
-                {"slot": entry.get("slot"), "sha256": entry.get("sha256")}
-                for entry in manifest.get("entries", [])
-            ]
+        expected_parameter_state = (
+            _modelgraph_parameter_state(manifest, arrays)
+            if manifest["schema_version"] == 2
+            else _canonical_sha256(
+                [
+                    {"slot": entry.get("slot"), "sha256": entry.get("sha256")}
+                    for entry in manifest.get("entries", [])
+                ]
+            )
         )
         if expected_parameter_state != manifest.get("parameter_state_sha256"):
             raise ConfigurationError("Parameter package state digest mismatch")
         if expected_content != manifest.get("package_content_sha256"):
             raise ConfigurationError("Parameter package content digest mismatch")
         return cls(manifest, tuple(arrays))
+
+    def _payload_for(self, template: ParameterPayload) -> ParameterPayload:
+        if self._manifest.get("schema_version") != 2:
+            raise ConfigurationError(
+                "Architecture refresh requires a schema-v2 parameter package"
+            )
+        template_by_id = template.by_id()
+        tensors = []
+        for entry, values in zip(self._manifest["entries"], self._arrays):
+            template_tensor = template_by_id.get(entry["id"])
+            if template_tensor is None:
+                raise ConfigurationError(
+                    f"Parameter package binding is absent from template: {entry['id']}"
+                )
+            tensors.append(
+                ParameterTensor(
+                    id=entry["id"],
+                    operation_id=entry["operation_id"],
+                    role=entry["role"],
+                    symbol=template_tensor.symbol,
+                    type_name=template_tensor.type_name,
+                    numeric_type=entry["numeric_type"],
+                    values=values,
+                )
+            )
+        return ParameterPayload(tuple(tensors))
+
+    def _apply_to_analysis(self, analyzed: Any) -> tuple[ParameterPayload, dict[str, Any]]:
+        """Replace one analyzed ModelGraph payload by canonical operation bindings."""
+
+        payload = self._payload_for(analyzed.parameter_payload)
+        replacements = payload.by_id()
+        from .analysis.model import _semantic_kind
+
+        ordinals: dict[str, int] = {}
+        for layer in analyzed.graph.get_layers():
+            kind = _semantic_kind(layer)
+            ordinal = ordinals.get(kind, 0)
+            ordinals[kind] = ordinal + 1
+            operation_id = f"{kind}_{ordinal}"
+            for role, weight in layer.weights.items():
+                tensor = replacements.get(f"{operation_id}:{role}")
+                if tensor is None:
+                    continue
+                if tuple(weight.data.shape) != tuple(tensor.values.shape):
+                    raise ConfigurationError(
+                        f"Parameter payload shape changed for {tensor.id}"
+                    )
+                weight.data[...] = tensor.values
+                weight.nzeros = int(np.count_nonzero(weight.data == 0))
+                weight.nonzeros = int(weight.data.size - weight.nzeros)
+                weight.min = np.min(weight.data)
+                weight.max = np.max(weight.data)
+        report = analyzed.analysis.to_dict()
+        report["frontend_provenance"] = self._manifest["frontend_provenance"]
+        report["model_facts"] = self._manifest["model_facts"]
+        report["fingerprints"]["parameter_state_sha256"] = self._manifest[
+            "parameter_state_sha256"
+        ]
+        return payload, report
 
 
 def _quantizer_contract(value: Any) -> Any:
@@ -318,6 +493,30 @@ def _package_content_sha256(
         digest.update(b"\0")
         digest.update(_npy_bytes(values))
     return digest.hexdigest()
+
+
+def _modelgraph_parameter_state(
+    manifest: dict[str, Any], arrays: list[np.ndarray]
+) -> str:
+    identities = []
+    for entry, values in zip(manifest.get("entries", []), arrays):
+        numeric_type = entry["numeric_type"]
+        fractional = numeric_type["width"] - numeric_type["integer"]
+        codes = np.rint(np.asarray(values) * (2**fractional)).astype(
+            "<i8", copy=False
+        )
+        identities.append(
+            {
+                "operation_id": entry["operation_id"],
+                "role": entry["role"],
+                "shape": entry["shape"],
+                "numeric_type": numeric_type,
+                "content_sha256": hashlib.sha256(
+                    codes.tobytes(order="C")
+                ).hexdigest(),
+            }
+        )
+    return _canonical_sha256(identities)
 
 
 def _write_zip_entry(archive: zipfile.ZipFile, name: str, payload: bytes) -> None:

@@ -6,7 +6,7 @@
   "fingerprints": {
     "frontend_provenance_sha256": "16579514306e905a8188e7db27cba5783c384eaf8032de15e3308dd686c4aedc",
     "model_structure_sha256": "8aae58ed7c9e248eee020f24371595a8fd6d11904c5fa1e92ee7a8c2831e91a2",
-    "parameter_state_sha256": "ba09d12c6343ceed3966ac5f4d60df2bb6ee2aeb6611d07dd74357a45f3207b8"
+    "parameter_state_sha256": "43896d06846964b22f10397e3f2ae2be3a1a655695bec3412682d99bdc5ad3c6"
   },
   "frontend_provenance": {
     "adapter": {

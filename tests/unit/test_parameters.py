@@ -3,8 +3,7 @@ from io import BytesIO
 import hashlib
 import json
 import stat
-import sys
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 import zipfile
 
 import numpy as np
@@ -115,50 +114,18 @@ def test_parameters_reject_an_oversized_manifest(tmp_path: Path) -> None:
         Parameters.load(oversized)
 
 
-def test_parameters_extract_loads_a_keras_path_with_hgq2_objects(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    model_path = tmp_path / "model.keras"
-    model_path.write_bytes(b"model")
-    model = _Model()
-    load_call: dict[str, object] = {}
-    qconv2d = object()
-    qdense = object()
-
-    def fake_load(path: Path, **kwargs: object) -> _Model:
-        load_call.update({"path": path, **kwargs})
-        return model
-
-    fake_keras = ModuleType("keras")
-    fake_keras.models = SimpleNamespace(load_model=fake_load)
-    fake_hgq = ModuleType("hgq")
-    fake_hgq_layers = ModuleType("hgq.layers")
-    fake_hgq_layers.QConv2D = qconv2d
-    fake_hgq_layers.QDense = qdense
-    monkeypatch.setitem(sys.modules, "keras", fake_keras)
-    monkeypatch.setitem(sys.modules, "hgq", fake_hgq)
-    monkeypatch.setitem(sys.modules, "hgq.layers", fake_hgq_layers)
-
-    Parameters.extract(model_path)
-
-    assert load_call == {
-        "path": model_path,
-        "custom_objects": {"QConv2D": qconv2d, "QDense": qdense},
-    }
-
-
 def test_parameters_reject_an_unknown_schema_version(tmp_path: Path) -> None:
     valid = tmp_path / "valid.ravelparams"
     Parameters.extract(_Model()).save(valid)
     unknown = tmp_path / "unknown.ravelparams"
     with zipfile.ZipFile(valid) as source, zipfile.ZipFile(unknown, "w") as target:
         manifest = json.loads(source.read("parameter_package.json"))
-        manifest["schema_version"] = 2
+        manifest["schema_version"] = 99
         target.writestr("parameter_package.json", json.dumps(manifest))
         for entry in manifest["entries"]:
             target.writestr(entry["storage"], source.read(entry["storage"]))
 
-    with pytest.raises(ConfigurationError, match="schema_version.*1"):
+    with pytest.raises(ConfigurationError, match="schema_version.*1 or 2"):
         Parameters.load(unknown)
 
 
