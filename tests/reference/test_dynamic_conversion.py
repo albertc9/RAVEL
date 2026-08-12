@@ -163,7 +163,9 @@ def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
     )
     kernel = updated_model.layers[1].kernel
     changed = kernel.numpy()
-    changed.reshape(-1)[0] += 0.125
+    flattened = changed.reshape(-1)
+    assert flattened[0] != 0
+    flattened[0] = 0
     kernel.assign(changed)
 
     refreshed = refresh(project, updated_model)
@@ -187,6 +189,10 @@ def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
     assert refreshed.manifest["implementation_plan"] == original[
         "implementation_plan"
     ]
+    generated_convolution = (
+        refreshed.path / "firmware" / "nnet_utils" / "nnet_aria.h"
+    ).read_text(encoding="utf-8")
+    assert "static const unsigned multiplier_limit = 140;" in generated_convolution
 
 
 def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(
