@@ -14,6 +14,20 @@ def build_implementation_plan(
     temporal_pack = optimization["TemporalPacking"]
     dense_parallelism = optimization["DenseParallelism"]
     dense_facts = model_facts["dense"][0]
+    operations = {
+        operation["id"]: operation
+        for operation in model_facts.get("operations", ())
+    }
+    input_shape = (
+        operations["input_0"]["outputs"][0]["shape"]
+        if operations
+        else [256, 4]
+    )
+    convolution = (
+        operations["conv2d_0"]["attributes"]
+        if operations
+        else {"out_width": 4, "n_filt": dense_facts["input_group_size"]}
+    )
     dense_inputs = dense_facts["n_in"]
     dense_outputs = dense_facts["n_out"]
     dense_group_size = dense_facts["input_group_size"]
@@ -56,12 +70,14 @@ def build_implementation_plan(
     return {
         "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v2",
         "temporal_pack": temporal_pack,
-        "channels_per_row": 4,
-        "values_per_input_word": temporal_pack * 4,
-        "input_words_per_inference": 256 // temporal_pack,
-        "width_lanes": 4,
-        "filter_lanes": dense_group_size,
-        "values_per_internal_word": 4 * dense_group_size,
+        "channels_per_row": input_shape[1],
+        "values_per_input_word": temporal_pack * input_shape[1],
+        "input_words_per_inference": input_shape[0] // temporal_pack,
+        "width_lanes": convolution["out_width"],
+        "filter_lanes": convolution["n_filt"],
+        "values_per_internal_word": (
+            convolution["out_width"] * convolution["n_filt"]
+        ),
         "dense_inputs": dense_inputs,
         "dense_parallelism": dense_parallelism,
         "dense_steps": dense_steps,

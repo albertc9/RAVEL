@@ -169,8 +169,8 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     resolved_design = None
     if model_family is not None:
         dense_facts = {"dense": analyze_dense_facts(layers)}
-        plan = build_implementation_plan(choices, dense_facts)
-        interface = _predicted_interface(layers, plan)
+        plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
+        interface = _predicted_interface(model_facts, plan)
         resolved_design = {
             "specialization": {
                 "temporal_packing": plan["temporal_pack"],
@@ -219,46 +219,6 @@ _CANONICAL_SEQUENCE = (
     "dense",
 )
 
-_CANONICAL_ATTRIBUTES = {
-    "repack_0": {"target_shape": [256, 4, 1]},
-    "conv2d_0": {
-        "in_height": 256,
-        "in_width": 4,
-        "n_chan": 1,
-        "filt_height": 5,
-        "filt_width": 1,
-        "n_filt": 7,
-        "stride_height": 3,
-        "stride_width": 1,
-        "pad_top": 0,
-        "pad_bottom": 0,
-        "pad_left": 0,
-        "pad_right": 0,
-        "out_height": 84,
-        "out_width": 4,
-    },
-    "relu_0": {"activation": "relu", "n_in": 2352},
-    "max_pool2d_0": {
-        "in_height": 84,
-        "in_width": 4,
-        "n_filt": 7,
-        "pool_height": 2,
-        "pool_width": 1,
-        "stride_height": 2,
-        "stride_width": 1,
-        "pad_top": 0,
-        "pad_bottom": 0,
-        "pad_left": 0,
-        "pad_right": 0,
-        "pool_op": "Max",
-        "out_height": 42,
-        "out_width": 4,
-    },
-    "reshape_0": {"target_shape": [1176]},
-    "dense_0": {"n_in": 1176, "n_out": 1},
-}
-
-
 def _match_model_family(
     facts: Mapping[str, Any], provenance: Mapping[str, Any]
 ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
@@ -289,22 +249,7 @@ def _match_model_family(
             }
         )
     else:
-        for operation in operations:
-            expected_attributes = _CANONICAL_ATTRIBUTES.get(operation["id"], {})
-            for name, expected in expected_attributes.items():
-                observed = operation["attributes"].get(name)
-                if observed != expected:
-                    findings.append(
-                        {
-                            "code": "family.geometry.attribute",
-                            "severity": "error",
-                            "operation_id": operation["id"],
-                            "field": name,
-                            "expected": expected,
-                            "observed": observed,
-                            "message": f"{operation['id']}.{name} is outside this family",
-                        }
-                    )
+        findings.extend(_family_geometry_findings(operations))
         for previous, current in zip(operations, operations[1:]):
             if current["inputs"] != [previous["outputs"][0]["id"]]:
                 findings.append(
@@ -342,6 +287,88 @@ def _match_model_family(
         {"id": "hgq-conv-pool-dense", "version": 1},
         {"status": "applicable", "findings": []},
     )
+
+
+def _family_geometry_findings(
+    operations: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Validate cross-operation geometry without fixing one trained instance."""
+
+    by_id = {operation["id"]: operation for operation in operations}
+    input_shape = by_id["input_0"]["outputs"][0]["shape"]
+    repack_shape = by_id["repack_0"]["outputs"][0]["shape"]
+    convolution_shape = by_id["conv2d_0"]["outputs"][0]["shape"]
+    activation_shape = by_id["relu_0"]["outputs"][0]["shape"]
+    pooling_shape = by_id["max_pool2d_0"]["outputs"][0]["shape"]
+    reshape_shape = by_id["reshape_0"]["outputs"][0]["shape"]
+    output_shape = by_id["dense_0"]["outputs"][0]["shape"]
+    convolution = by_id["conv2d_0"]["attributes"]
+    activation = by_id["relu_0"]["attributes"]
+    pooling = by_id["max_pool2d_0"]["attributes"]
+    dense = by_id["dense_0"]["attributes"]
+    expected = {
+        ("repack_0", "shape"): [*input_shape, 1],
+        ("conv2d_0", "input_geometry"): repack_shape,
+        ("conv2d_0", "output_geometry"): [
+            convolution["out_height"],
+            convolution["out_width"],
+            convolution["n_filt"],
+        ],
+        ("relu_0", "shape"): convolution_shape,
+        ("relu_0", "n_in"): _shape_size(convolution_shape),
+        ("max_pool2d_0", "input_geometry"): convolution_shape,
+        ("max_pool2d_0", "output_geometry"): [
+            pooling["out_height"],
+            pooling["out_width"],
+            pooling["n_filt"],
+        ],
+        ("reshape_0", "shape"): [_shape_size(pooling_shape)],
+        ("dense_0", "n_in"): _shape_size(reshape_shape),
+        ("dense_0", "output_geometry"): [dense["n_out"]],
+    }
+    observed = {
+        ("repack_0", "shape"): repack_shape,
+        ("conv2d_0", "input_geometry"): [
+            convolution["in_height"],
+            convolution["in_width"],
+            convolution["n_chan"],
+        ],
+        ("conv2d_0", "output_geometry"): convolution_shape,
+        ("relu_0", "shape"): activation_shape,
+        ("relu_0", "n_in"): activation["n_in"],
+        ("max_pool2d_0", "input_geometry"): [
+            pooling["in_height"],
+            pooling["in_width"],
+            pooling["n_filt"],
+        ],
+        ("max_pool2d_0", "output_geometry"): pooling_shape,
+        ("reshape_0", "shape"): reshape_shape,
+        ("dense_0", "n_in"): dense["n_in"],
+        ("dense_0", "output_geometry"): output_shape,
+    }
+    findings = []
+    for (operation_id, field), expected_value in expected.items():
+        observed_value = observed[(operation_id, field)]
+        if observed_value != expected_value:
+            findings.append(
+                {
+                    "code": "family.geometry.relation",
+                    "severity": "error",
+                    "operation_id": operation_id,
+                    "field": field,
+                    "expected": expected_value,
+                    "observed": observed_value,
+                    "message": f"{operation_id}.{field} is inconsistent",
+                }
+            )
+    return findings
+
+
+def _shape_size(shape: list[int]) -> int:
+    result = 1
+    for dimension in shape:
+        result *= dimension
+    return result
 
 
 _QUANTIZER_ROLES = {
@@ -546,14 +573,20 @@ def _canonical_sha256(value: Any) -> str:
 
 
 def _predicted_interface(
-    layers: list[Any], plan: Mapping[str, Any]
+    model_facts: Mapping[str, Any], plan: Mapping[str, Any]
 ) -> dict[str, Any]:
-    input_width = layers[0].get_output_variable().type.precision.width
-    output_width = layers[-1].get_output_variable().type.precision.width
+    operations = model_facts["operations"]
+    input_tensor = operations[0]["outputs"][0]
+    output_tensor = operations[-1]["outputs"][0]
+    input_width = input_tensor["numeric_type"]["width"]
+    output_width = output_tensor["numeric_type"]["width"]
     input_slot_width = max(8, 1 << (input_width - 1).bit_length())
     output_slot_width = max(8, 1 << (output_width - 1).bit_length())
     return {
-        "logical": {"input_shape": [256, 4], "output_shape": [1]},
+        "logical": {
+            "input_shape": input_tensor["shape"],
+            "output_shape": output_tensor["shape"],
+        },
         "hls_stream": {
             "input_rows_per_word": plan["temporal_pack"],
             "values_per_input_word": plan["values_per_input_word"],
@@ -561,6 +594,7 @@ def _predicted_interface(
         },
         "rtl": {
             "input_tdata_bits": plan["values_per_input_word"] * input_slot_width,
-            "output_tdata_bits": output_slot_width,
+            "output_tdata_bits": _shape_size(output_tensor["shape"])
+            * output_slot_width,
         },
     }

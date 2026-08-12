@@ -186,3 +186,58 @@ def test_model_analysis_exposes_read_only_public_properties() -> None:
     mutable_copy = analysis.to_dict()
     mutable_copy["model_facts"]["schema_version"] = 99
     assert analysis.model_facts["schema_version"] == 1
+
+
+def test_same_topology_accepts_extracted_geometry_instead_of_arianna_constants() -> None:
+    import keras
+    from hgq.layers import QConv2D, QDense
+
+    base = keras.models.load_model(
+        RETRAINED_ROOT / "adam_p1_step2" / "adam_p1_step2_best.keras",
+        custom_objects={"QConv2D": QConv2D, "QDense": QDense},
+    )
+    inputs = keras.Input((128, 4), name="input_layer")
+    x = keras.layers.Reshape((128, 4, 1), name="reshape")(inputs)
+    convolution = base.layers[1].get_config()
+    convolution.update(
+        {
+            "name": "q_conv2d",
+            "filters": 5,
+            "kernel_size": (3, 1),
+            "strides": (2, 1),
+        }
+    )
+    x = QConv2D.from_config(convolution)(x)
+    x = keras.layers.MaxPooling2D(
+        (2, 1), strides=(2, 1), name="max_pooling2d"
+    )(x)
+    x = keras.layers.Flatten(name="flatten")(x)
+    dense = base.layers[-1].get_config()
+    dense.update(
+        {"name": "q_dense", "units": 1, "enable_iq": False, "iq_conf": None}
+    )
+    model = keras.Model(inputs, QDense.from_config(dense)(x))
+
+    report = analyze(
+        model,
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 2, "DenseParallelism": 2},
+        },
+    ).to_dict()
+
+    assert report["applicability"] == {"status": "applicable", "findings": []}
+    operations = {item["id"]: item for item in report["model_facts"]["operations"]}
+    assert operations["conv2d_0"]["attributes"]["filt_height"] == 3
+    assert operations["conv2d_0"]["attributes"]["n_filt"] == 5
+    assert operations["dense_0"]["attributes"] == {"n_in": 620, "n_out": 1}
+    design = report["resolved_design"]
+    assert design["interfaces"]["logical"] == {
+        "input_shape": [128, 4],
+        "output_shape": [1],
+    }
+    assert design["interfaces"]["hls_stream"] == {
+        "input_rows_per_word": 2,
+        "values_per_input_word": 8,
+        "input_words_per_inference": 64,
+    }
