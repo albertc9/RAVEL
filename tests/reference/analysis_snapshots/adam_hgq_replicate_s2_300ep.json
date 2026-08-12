@@ -523,6 +523,107 @@
     "version": 1
   },
   "resolved_design": {
+    "executed_passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "705ce4e25ceca40318ffc33ad0b9dcdc4b3c7a2d4a1c84b21a11fa1f314a158b",
+        "order": 1,
+        "output_design_sha256": "840df714e4d20950ea9cb78737a80d81c5274a5be0b96cfa864cf415bcf87de8",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "840df714e4d20950ea9cb78737a80d81c5274a5be0b96cfa864cf415bcf87de8",
+        "order": 2,
+        "output_design_sha256": "7ae89171ecb2f85de0fbde3c4e8660649578b2a8500ed01f7cafeb70dca9dd5e",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "7ae89171ecb2f85de0fbde3c4e8660649578b2a8500ed01f7cafeb70dca9dd5e",
+        "order": 3,
+        "output_design_sha256": "2d090d22b0e2dcb1cb06b086946eac85fbb31cb213caf094beb8aeb0b148fed2",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "2d090d22b0e2dcb1cb06b086946eac85fbb31cb213caf094beb8aeb0b148fed2",
+        "order": 4,
+        "output_design_sha256": "8397fb4eca48023502871f947ee908343d7eeb2e1084ed7c0cd357b3e7dfcb5a",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "8397fb4eca48023502871f947ee908343d7eeb2e1084ed7c0cd357b3e7dfcb5a",
+        "order": 5,
+        "output_design_sha256": "068e8edb096739a8ae18f10ca049b9584db37ae5c774c95d33773a52f094b883",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "068e8edb096739a8ae18f10ca049b9584db37ae5c774c95d33773a52f094b883",
+        "order": 6,
+        "output_design_sha256": "f7d27c9733f93d4fe03a3f43da3a27bf7219549459bf548c80850c674c0fa5da",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "f7d27c9733f93d4fe03a3f43da3a27bf7219549459bf548c80850c674c0fa5da",
+        "order": 7,
+        "output_design_sha256": "77c7ca005625f1a2be8c8296960bd36fcf8ad340347920d0d2fb6d978dd67db8",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "generation": {
+      "id": "aria",
+      "version": "1.5.0"
+    },
+    "implementation_plan": {
+      "channels_per_row": 4,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 1176,
+      "dense_parallelism": 2,
+      "dense_steps": 84,
+      "filter_lanes": 7,
+      "input_words_per_inference": 64,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p4-d2-v2",
+      "temporal_pack": 4,
+      "values_per_input_word": 16,
+      "values_per_internal_word": 28,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 84,
+        "id": "wide-sequential",
+        "mac_lanes": 14,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 14
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 16383,
+        "version": 1,
+        "word_bits": 126
+      },
+      "width_lanes": 4
+    },
     "interfaces": {
       "hls_stream": {
         "input_rows_per_word": 4,
@@ -543,9 +644,182 @@
         "output_tdata_bits": 32
       }
     },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 2,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "role": "bias",
+          "shape": [
+            7
+          ]
+        },
+        "id": "conv2d_0:bias",
+        "operation_id": "conv2d_0",
+        "role": "bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 10
+          },
+          "role": "weight",
+          "shape": [
+            5,
+            1,
+            1,
+            7
+          ]
+        },
+        "id": "conv2d_0:weight",
+        "operation_id": "conv2d_0",
+        "role": "weight"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 3
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias",
+        "operation_id": "dense_0",
+        "role": "bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 2,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "role": "weight",
+          "shape": [
+            1176,
+            1
+          ]
+        },
+        "id": "dense_0:weight",
+        "operation_id": "dense_0",
+        "role": "weight"
+      }
+    ],
+    "resolved_design_sha256": "77c7ca005625f1a2be8c8296960bd36fcf8ad340347920d0d2fb6d978dd67db8",
+    "resolver": {
+      "id": "aria-explicit-pd",
+      "version": 1
+    },
+    "schema_version": 1,
     "specialization": {
       "dense_parallelism": 2,
       "temporal_packing": 4
+    },
+    "strategy": {
+      "id": "aria-wide-stream",
+      "version": 1
+    },
+    "streaming": {
+      "activation": {
+        "operation_id": "relu_0",
+        "values_per_word": 28
+      },
+      "buffers": {
+        "depth": 4,
+        "storage": "srl"
+      },
+      "dataflow_control": {
+        "block_control": "ap_ctrl_hs",
+        "start_propagation": false
+      },
+      "dense": {
+        "inputs": 1176,
+        "operation_id": "dense_0",
+        "parallelism": 2,
+        "steps": 84,
+        "weight_delivery": {
+          "accumulation": {
+            "policy": "ordered"
+          },
+          "applicability": {
+            "reasons": [],
+            "status": "applicable"
+          },
+          "depth": 84,
+          "id": "wide-sequential",
+          "mac_lanes": 14,
+          "multipliers": {
+            "implementation": "dsp",
+            "instances": 14
+          },
+          "storage": {
+            "implementation": "bram",
+            "type": "rom_1p"
+          },
+          "tail_elements": 0,
+          "tail_mask": 16383,
+          "version": 1,
+          "word_bits": 126
+        }
+      },
+      "first_convolution": {
+        "filter_lanes": 7,
+        "kernel": [
+          5,
+          1
+        ],
+        "operation_id": "conv2d_0",
+        "stride": [
+          3,
+          1
+        ],
+        "width_lanes": 4
+      },
+      "input": {
+        "rows_per_word": 4,
+        "values_per_word": 16,
+        "words_per_inference": 64
+      },
+      "pooling": {
+        "operation_id": "max_pool2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "window": [
+          2,
+          1
+        ]
+      }
     }
   },
   "schema_version": 1

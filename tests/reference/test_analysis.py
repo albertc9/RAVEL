@@ -239,3 +239,39 @@ def test_retrained_model_analysis_matches_its_reviewed_snapshot(
     snapshot_path = SNAPSHOT_ROOT / f"{model_path.parent.name}.json"
 
     assert report == json.loads(snapshot_path.read_text(encoding="utf-8"))
+
+
+def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain() -> None:
+    design = analyze(
+        REFERENCE_MODEL,
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+        },
+    ).to_dict()["resolved_design"]
+
+    assert design["strategy"] == {"id": "aria-wide-stream", "version": 1}
+    assert design["resolver"] == {"id": "aria-explicit-pd", "version": 1}
+    assert design["implementation_plan"]["template_profile"] == "aria-p4-d2-v2"
+    assert [binding["id"] for binding in design["parameter_bindings"]] == [
+        "conv2d_0:bias",
+        "conv2d_0:weight",
+        "dense_0:bias",
+        "dense_0:weight",
+    ]
+    passes = design["executed_passes"]
+    assert [item["id"] for item in passes] == [
+        "pack-temporal-input",
+        "fuse-repack-into-first-conv",
+        "propagate-wide-relu-stream",
+        "specialize-nonoverlapping-maxpool",
+        "stream-flatten-into-dense",
+        "bind-shallow-internal-fifos",
+        "elide-dataflow-start-propagation",
+    ]
+    assert all(item["result"] == "applied" for item in passes)
+    assert all(
+        previous["output_design_sha256"] == current["input_design_sha256"]
+        for previous, current in zip(passes, passes[1:])
+    )
+    assert passes[-1]["output_design_sha256"] == design["resolved_design_sha256"]

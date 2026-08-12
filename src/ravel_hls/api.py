@@ -315,6 +315,10 @@ def optimize_project(
     implementation_plan = build_implementation_plan(
         ravel_config["Optimization"], model_facts
     )
+    if model_analysis is not None:
+        implementation_plan = deepcopy(
+            model_analysis["resolved_design"]["implementation_plan"]
+        )
     if preserved_implementation_plan is not None:
         preserved_weight_delivery = preserved_implementation_plan.get(
             "weight_delivery"
@@ -440,7 +444,11 @@ def _generate_project(
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
-        pass_records = build_pass_records(implementation_plan)
+        pass_records = (
+            deepcopy(model_analysis["resolved_design"]["executed_passes"])
+            if model_analysis is not None
+            else build_pass_records(implementation_plan)
+        )
         project_name = hls_config.get("ProjectName")
         if not isinstance(project_name, str) or not project_name.isidentifier():
             raise ProjectGenerationError(

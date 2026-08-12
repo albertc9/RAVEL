@@ -13,6 +13,7 @@ from typing import Any
 from ..analysis.dense import analyze_dense_facts
 from ..compatibility.dependencies import inspect_dependencies
 from ..exceptions import CompatibilityError, ConfigurationError
+from ..generations.aria import resolve_aria_design
 from ..profiles.aria.plan import build_implementation_plan
 
 
@@ -171,13 +172,12 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
         interface = _predicted_interface(model_facts, plan)
-        resolved_design = {
-            "specialization": {
-                "temporal_packing": plan["temporal_pack"],
-                "dense_parallelism": plan["dense_parallelism"],
-            },
-            "interfaces": interface,
-        }
+        resolved_design = resolve_aria_design(
+            model_facts=model_facts,
+            implementation_plan=plan,
+            interfaces=interface,
+            parameter_bindings=_parameter_bindings(model_facts),
+        )
     analysis = ModelAnalysis._from_report(
         {
             "schema_version": 1,
@@ -369,6 +369,26 @@ def _shape_size(shape: list[int]) -> int:
     for dimension in shape:
         result *= dimension
     return result
+
+
+def _parameter_bindings(model_facts: Mapping[str, Any]) -> list[dict[str, Any]]:
+    bindings = []
+    for operation in model_facts["operations"]:
+        for parameter in operation["parameters"]:
+            descriptor = {
+                key: deepcopy(value)
+                for key, value in parameter.items()
+                if key != "content_sha256"
+            }
+            bindings.append(
+                {
+                    "id": f"{operation['id']}:{parameter['role']}",
+                    "operation_id": operation["id"],
+                    "role": parameter["role"],
+                    "descriptor": descriptor,
+                }
+            )
+    return sorted(bindings, key=lambda binding: binding["id"])
 
 
 _QUANTIZER_ROLES = {
