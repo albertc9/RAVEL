@@ -12,6 +12,7 @@ from typing import Any
 
 from ..analysis.dense import analyze_dense_facts
 from ..compatibility.dependencies import inspect_dependencies
+from ..config import validate_public_config
 from ..domain import ParameterPayload, ParameterTensor
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..generations import builtin_generation
@@ -98,10 +99,8 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     """Return the private graph-bearing analysis used by conversion."""
 
     generation = builtin_generation("aria", "1.5.0")
-
-    hls_values = config.get("HLS")
-    if not isinstance(hls_values, Mapping):
-        raise ConfigurationError("HLS must be a mapping")
+    config = validate_public_config(config)
+    hls_values = config["HLS"]
     backend = hls_values.get("Backend", "Vitis")
     io_type = hls_values.get("IOType", "io_stream")
     if backend != "Vitis":
@@ -109,28 +108,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     if io_type != "io_stream":
         raise ConfigurationError("HLS.IOType must be io_stream")
 
-    optimization = config.get("Optimization", {})
-    if not isinstance(optimization, Mapping):
-        raise ConfigurationError("Optimization must be a mapping")
-    unknown_optimization = sorted(
-        set(optimization) - {"TemporalPacking", "DenseParallelism"}
-    )
-    if unknown_optimization:
-        raise ConfigurationError(
-            f"Unknown optimization field: {unknown_optimization[0]}"
-        )
-    choices = {
-        "TemporalPacking": optimization.get("TemporalPacking", 4),
-        "DenseParallelism": optimization.get("DenseParallelism", 2),
-    }
-    for field, allowed in (
-        ("TemporalPacking", {2, 4}),
-        ("DenseParallelism", {1, 2}),
-    ):
-        value = choices[field]
-        if isinstance(value, bool) or not isinstance(value, int) or value not in allowed:
-            options = ", ".join(str(item) for item in sorted(allowed))
-            raise ConfigurationError(f"Optimization.{field} must be one of {options}")
+    choices = config["Optimization"]
 
     dependencies = inspect_dependencies()
     if dependencies["dependency_qualification"] != "qualified":

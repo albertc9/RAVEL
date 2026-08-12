@@ -248,7 +248,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     [
         ({"TemporalPacking": 3}, "TemporalPacking"),
         ({"DenseParallelism": 4}, "DenseParallelism"),
-        ({"Unknown": 1}, "Unknown optimization field"),
+        ({"Unknown": 1}, "Optimization.Unknown"),
     ],
 )
 def test_analysis_rejects_unregistered_strategy_choices(
@@ -262,6 +262,49 @@ def test_analysis_rejects_unregistered_strategy_choices(
                 "Optimization": optimization,
             },
         )
+
+
+@pytest.mark.parametrize(
+    ("config", "message"),
+    [
+        (
+            {
+                "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+                "Unknown": {},
+            },
+            "Unknown RAVEL configuration field",
+        ),
+        (
+            {
+                "HLS": {
+                    "Backend": "Vitis",
+                    "IOType": "io_stream",
+                    "Config": {},
+                }
+            },
+            "HLS.Config",
+        ),
+        (
+            {
+                "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+                "Verification": {"Samples": 0},
+            },
+            "Verification.Samples",
+        ),
+        (
+            {
+                "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+                "Vitis": {"Stages": {"CoSim": "yes"}},
+            },
+            "Vitis.Stages.CoSim",
+        ),
+    ],
+)
+def test_analysis_validates_the_complete_public_configuration(
+    config: dict[str, object], message: str,
+) -> None:
+    with pytest.raises(ConfigurationError, match=message):
+        analyze(REFERENCE_MODEL, config)
 
 
 @pytest.mark.parametrize(
