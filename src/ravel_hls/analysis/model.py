@@ -12,6 +12,7 @@ from typing import Any
 
 from ..analysis.dense import analyze_dense_facts
 from ..compatibility.dependencies import inspect_dependencies
+from ..domain import ParameterPayload, ParameterTensor
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..generations.aria import resolve_aria_design
 from ..profiles.aria.plan import build_implementation_plan
@@ -84,6 +85,7 @@ class _AnalyzedModel:
     graph: Any
     source_model: Any
     analysis: ModelAnalysis
+    parameter_payload: ParameterPayload
 
 
 def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
@@ -152,6 +154,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     graph = hls4ml.converters.convert_from_keras_model(**conversion)
     layers = list(graph.get_layers())
     model_facts, fingerprints = _extract_model_facts(layers)
+    parameter_payload = _extract_parameter_payload(layers)
     fingerprints["frontend_provenance_sha256"] = _canonical_sha256(
         frontend_provenance
     )
@@ -176,7 +179,8 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             model_facts=model_facts,
             implementation_plan=plan,
             interfaces=interface,
-            parameter_bindings=_parameter_bindings(model_facts),
+            parameter_bindings=_parameter_bindings(model_facts, parameter_payload),
+            rendering=_rendering_contract(layers, plan),
         )
     analysis = ModelAnalysis._from_report(
         {
@@ -190,7 +194,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             "fingerprints": fingerprints,
         }
     )
-    return _AnalyzedModel(graph, normalized_model, analysis)
+    return _AnalyzedModel(graph, normalized_model, analysis, parameter_payload)
 
 
 def _semantic_kind(layer: Any) -> str:
@@ -371,10 +375,14 @@ def _shape_size(shape: list[int]) -> int:
     return result
 
 
-def _parameter_bindings(model_facts: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _parameter_bindings(
+    model_facts: Mapping[str, Any], parameter_payload: ParameterPayload
+) -> list[dict[str, Any]]:
+    payload = parameter_payload.by_id()
     bindings = []
     for operation in model_facts["operations"]:
         for parameter in operation["parameters"]:
+            binding_id = f"{operation['id']}:{parameter['role']}"
             descriptor = {
                 key: deepcopy(value)
                 for key, value in parameter.items()
@@ -382,13 +390,100 @@ def _parameter_bindings(model_facts: Mapping[str, Any]) -> list[dict[str, Any]]:
             }
             bindings.append(
                 {
-                    "id": f"{operation['id']}:{parameter['role']}",
+                    "id": binding_id,
                     "operation_id": operation["id"],
                     "role": parameter["role"],
+                    "symbol": payload[binding_id].symbol,
+                    "type_name": payload[binding_id].type_name,
                     "descriptor": descriptor,
                 }
             )
     return sorted(bindings, key=lambda binding: binding["id"])
+
+
+def _extract_parameter_payload(layers: list[Any]) -> ParameterPayload:
+    tensors = []
+    ordinals: dict[str, int] = {}
+    for layer in layers:
+        kind = _semantic_kind(layer)
+        ordinal = ordinals.get(kind, 0)
+        ordinals[kind] = ordinal + 1
+        operation_id = f"{kind}_{ordinal}"
+        for role, weight in layer.weights.items():
+            tensors.append(
+                ParameterTensor(
+                    id=f"{operation_id}:{role}",
+                    operation_id=operation_id,
+                    role=role,
+                    symbol=weight.name,
+                    type_name=weight.type.name,
+                    numeric_type=_numeric_type(weight.type.precision),
+                    values=weight.data,
+                )
+            )
+    return ParameterPayload(tuple(sorted(tensors, key=lambda tensor: tensor.id)))
+
+
+def _rendering_contract(
+    layers: list[Any], implementation_plan: Mapping[str, Any]
+) -> dict[str, Any]:
+    operations: dict[str, dict[str, Any]] = {}
+    ordinals: dict[str, int] = {}
+    for layer in layers:
+        kind = _semantic_kind(layer)
+        ordinal = ordinals.get(kind, 0)
+        ordinals[kind] = ordinal + 1
+        operation_id = f"{kind}_{ordinal}"
+        output = layer.get_output_variable()
+        operation = {
+            "output_symbol": output.name,
+            "output_type": output.type.name,
+            "output_precision_cpp": output.type.precision.definition_cpp(),
+        }
+        index = layer.get_attr("index")
+        if operation_id == "conv2d_0":
+            operation["config_symbol"] = f"config{index}"
+        elif operation_id == "relu_0":
+            operation["config_symbol"] = f"relu_config{index}"
+        elif operation_id in {"max_pool2d_0", "dense_0"}:
+            operation["config_symbol"] = f"config{index}"
+        operations[operation_id] = operation
+    temporal_pack = implementation_plan["temporal_pack"]
+    width_lanes = implementation_plan["width_lanes"]
+    return {
+        "operations": operations,
+        "types": {
+            "input_wide": _wide_type_name(
+                operations["input_0"]["output_type"], f"x{temporal_pack}"
+            ),
+            "convolution_wide": _wide_type_name(
+                operations["conv2d_0"]["output_type"], f"x{width_lanes}"
+            ),
+            "activation_wide": _wide_type_name(
+                operations["relu_0"]["output_type"], f"x{width_lanes}"
+            ),
+            "pooling_wide": _wide_type_name(
+                operations["max_pool2d_0"]["output_type"], f"x{width_lanes}"
+            ),
+        },
+        "streams": {
+            "convolution": (
+                f"{operations['conv2d_0']['output_symbol']}_x{width_lanes}"
+            ),
+            "activation": f"{operations['relu_0']['output_symbol']}_x{width_lanes}",
+            "pooling": (
+                f"{operations['max_pool2d_0']['output_symbol']}_x{width_lanes}"
+            ),
+        },
+        "first_convolution_function": (
+            f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
+        ),
+    }
+
+
+def _wide_type_name(type_name: str, suffix: str) -> str:
+    stem = type_name[:-2] if type_name.endswith("_t") else type_name
+    return f"{stem}_{suffix}_t"
 
 
 _QUANTIZER_ROLES = {

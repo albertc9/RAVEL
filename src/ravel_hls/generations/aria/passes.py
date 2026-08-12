@@ -15,6 +15,7 @@ def resolve_aria_design(
     implementation_plan: Mapping[str, Any],
     interfaces: Mapping[str, Any],
     parameter_bindings: list[dict[str, Any]],
+    rendering: Mapping[str, Any],
 ) -> dict[str, Any]:
     """Resolve and execute the versioned Aria strategy over one design value."""
 
@@ -34,6 +35,7 @@ def resolve_aria_design(
         "implementation_plan": deepcopy(dict(implementation_plan)),
         "interfaces": deepcopy(dict(interfaces)),
         "parameter_bindings": deepcopy(parameter_bindings),
+        "rendering": deepcopy(dict(rendering)),
         "streaming": {},
     }
     transformations: tuple[tuple[str, int, PassEffect], ...] = (

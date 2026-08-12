@@ -15,7 +15,7 @@ from .analysis.dense import analyze_dense_facts
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .compatibility.model_profile import validate_aria_model_profile
-from .backends.vitis.renderer import render_aria_project
+from .backends.vitis.renderer import render_aria_project as render_legacy_aria_project
 from .backends.vitis.build import normalize_build_script, write_build_options
 from .exceptions import (
     CompatibilityError,
@@ -28,6 +28,7 @@ from .manifest import build_generation_manifest
 from .parameters import Parameters
 from .profiles.aria.plan import build_implementation_plan, build_pass_records
 from .project import RavelProject, open_project
+from .rendering.vitis import render_aria_project as render_resolved_aria_project
 from .verification.equivalence import (
     predict_baseline,
     predict_optimized,
@@ -155,6 +156,7 @@ def _convert_analyzed_model(
         force_replace=force_replace,
         verification_inputs=verification_inputs,
         model_analysis=analyzed.analysis.to_dict(),
+        parameter_payload=analyzed.parameter_payload,
     )
     if run_config["Vitis"]["Run"]:
         generated.build()
@@ -259,6 +261,7 @@ def optimize_project(
     verification_inputs: Any | None = None,
     preserved_implementation_plan: Mapping[str, Any] | None = None,
     model_analysis: Mapping[str, Any] | None = None,
+    parameter_payload: Any | None = None,
 ) -> RavelProject:
     """Generate an Aria-optimized project from a compatible hls4ml model graph."""
 
@@ -370,6 +373,7 @@ def optimize_project(
         force_replace=force_replace,
         verification_inputs=verification_inputs,
         model_analysis=model_analysis,
+        parameter_payload=parameter_payload,
     )
 
 
@@ -393,6 +397,7 @@ def _generate_project(
     force_replace: bool,
     verification_inputs: Any | None,
     model_analysis: Mapping[str, Any] | None,
+    parameter_payload: Any | None,
 ) -> RavelProject:
     output_value = hls_config.get("OutputDir")
     if not isinstance(output_value, (str, os.PathLike)):
@@ -454,12 +459,24 @@ def _generate_project(
             raise ProjectGenerationError(
                 "hls4ml ProjectName must be a valid C++ identifier"
             )
-        managed_paths = render_aria_project(
-            staging_path,
-            project_name,
-            layers,
-            implementation_plan=implementation_plan,
-        )
+        if model_analysis is None:
+            managed_paths = render_legacy_aria_project(
+                staging_path,
+                project_name,
+                layers,
+                implementation_plan=implementation_plan,
+            )
+        else:
+            if parameter_payload is None:
+                raise ProjectGenerationError(
+                    "Aria 1.5 rendering requires a ModelGraph parameter payload"
+                )
+            managed_paths = render_resolved_aria_project(
+                staging_path,
+                project_name,
+                model_analysis["resolved_design"],
+                parameter_payload,
+            )
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {

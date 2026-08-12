@@ -526,57 +526,57 @@
     "executed_passes": [
       {
         "id": "pack-temporal-input",
-        "input_design_sha256": "b2dfc670a7cf424371aca1994c9c9014640dfa38d29bcfed65a0e23544ef1807",
+        "input_design_sha256": "4e85ecc9f76108a71ef984c2f60fdc17b5dcd79fd2428a42e2766a6d71ab1d45",
         "order": 1,
-        "output_design_sha256": "a836acc9e123bba121ffdd7a702a76871a9936b7469c429f7e549da4b37c2f54",
+        "output_design_sha256": "3dcb45aaff478c20947012d5432f70145a25521c1dbc8c6398928afb70070c10",
         "result": "applied",
         "version": 1
       },
       {
         "id": "fuse-repack-into-first-conv",
-        "input_design_sha256": "a836acc9e123bba121ffdd7a702a76871a9936b7469c429f7e549da4b37c2f54",
+        "input_design_sha256": "3dcb45aaff478c20947012d5432f70145a25521c1dbc8c6398928afb70070c10",
         "order": 2,
-        "output_design_sha256": "4199ac84b1ea0a57f554d62d2e2c826af62280e122f405062c850c3d8bdd9a4d",
+        "output_design_sha256": "fb327a33012c279c56f55174c4ce017b6ede7f8927c9db6669f1df92baf0f336",
         "result": "applied",
         "version": 1
       },
       {
         "id": "propagate-wide-relu-stream",
-        "input_design_sha256": "4199ac84b1ea0a57f554d62d2e2c826af62280e122f405062c850c3d8bdd9a4d",
+        "input_design_sha256": "fb327a33012c279c56f55174c4ce017b6ede7f8927c9db6669f1df92baf0f336",
         "order": 3,
-        "output_design_sha256": "5f4914e5b7d79cbdcb1e08eb33eda4c2e8171dcaa70985e58a0bbc96eeb960e7",
+        "output_design_sha256": "5ce88e4495d45e7be591d8dff7ba44b6309f3fde9ecaf4d0a6eee4a08d246eac",
         "result": "applied",
         "version": 1
       },
       {
         "id": "specialize-nonoverlapping-maxpool",
-        "input_design_sha256": "5f4914e5b7d79cbdcb1e08eb33eda4c2e8171dcaa70985e58a0bbc96eeb960e7",
+        "input_design_sha256": "5ce88e4495d45e7be591d8dff7ba44b6309f3fde9ecaf4d0a6eee4a08d246eac",
         "order": 4,
-        "output_design_sha256": "ccc03d96078d32701070a760237eaa74c852743eb393ad76ac50299497602f2a",
+        "output_design_sha256": "813634aec0c324bea5438bc5640c1a80addc6665992cfdd3166fa87876e79591",
         "result": "applied",
         "version": 1
       },
       {
         "id": "stream-flatten-into-dense",
-        "input_design_sha256": "ccc03d96078d32701070a760237eaa74c852743eb393ad76ac50299497602f2a",
+        "input_design_sha256": "813634aec0c324bea5438bc5640c1a80addc6665992cfdd3166fa87876e79591",
         "order": 5,
-        "output_design_sha256": "dffe49a18950af1e044cd9155737a959f779153ed0881357f908c478bd5f365b",
+        "output_design_sha256": "17694204bdad6d598c4d63f51771eb1bcfd8d6f3817c1710189b955c78946060",
         "result": "applied",
         "version": 1
       },
       {
         "id": "bind-shallow-internal-fifos",
-        "input_design_sha256": "dffe49a18950af1e044cd9155737a959f779153ed0881357f908c478bd5f365b",
+        "input_design_sha256": "17694204bdad6d598c4d63f51771eb1bcfd8d6f3817c1710189b955c78946060",
         "order": 6,
-        "output_design_sha256": "e636c18f19972bdd07d3494d4f6da3d89cb7a4d01099087738dbf66ff5f67170",
+        "output_design_sha256": "ccf27530976bee72ea9f5640eae3120461662d70a31e756a65971eb06392b275",
         "result": "applied",
         "version": 1
       },
       {
         "id": "elide-dataflow-start-propagation",
-        "input_design_sha256": "e636c18f19972bdd07d3494d4f6da3d89cb7a4d01099087738dbf66ff5f67170",
+        "input_design_sha256": "ccf27530976bee72ea9f5640eae3120461662d70a31e756a65971eb06392b275",
         "order": 7,
-        "output_design_sha256": "d843ba813fa2a48a79385a30a34dae0e669c3123b71c7e9ea39b63a6da8f13c3",
+        "output_design_sha256": "6cdc9ff36294b53efbdf8d94c8e6c8068875d5a640a7529c58bb6b68ed942861",
         "result": "applied",
         "version": 1
       }
@@ -667,7 +667,9 @@
         },
         "id": "conv2d_0:bias",
         "operation_id": "conv2d_0",
-        "role": "bias"
+        "role": "bias",
+        "symbol": "b4",
+        "type_name": "q_conv2d_bias_t"
       },
       {
         "descriptor": {
@@ -690,7 +692,9 @@
         },
         "id": "conv2d_0:weight",
         "operation_id": "conv2d_0",
-        "role": "weight"
+        "role": "weight",
+        "symbol": "w4",
+        "type_name": "q_conv2d_weight_t"
       },
       {
         "descriptor": {
@@ -710,7 +714,9 @@
         },
         "id": "dense_0:bias",
         "operation_id": "dense_0",
-        "role": "bias"
+        "role": "bias",
+        "symbol": "b9",
+        "type_name": "q_dense_bias_t"
       },
       {
         "descriptor": {
@@ -731,10 +737,67 @@
         },
         "id": "dense_0:weight",
         "operation_id": "dense_0",
-        "role": "weight"
+        "role": "weight",
+        "symbol": "w9",
+        "type_name": "q_dense_weight_t"
       }
     ],
-    "resolved_design_sha256": "d843ba813fa2a48a79385a30a34dae0e669c3123b71c7e9ea39b63a6da8f13c3",
+    "rendering": {
+      "first_convolution_function": "first_conv_4row_4lane_temporal_wide_cl",
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config4",
+          "output_precision_cpp": "ap_fixed<17,6>",
+          "output_symbol": "layer4_out",
+          "output_type": "q_conv2d_t"
+        },
+        "dense_0": {
+          "config_symbol": "config9",
+          "output_precision_cpp": "ap_fixed<22,11>",
+          "output_symbol": "layer9_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<9,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "input_layer",
+          "output_type": "input_layer_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config6",
+          "output_precision_cpp": "ap_fixed<8,3,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer6_out",
+          "output_type": "max_pooling2d_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config5",
+          "output_precision_cpp": "ap_ufixed<16,5>",
+          "output_symbol": "layer5_out",
+          "output_type": "q_conv2d_relu_t"
+        },
+        "repack_0": {
+          "output_precision_cpp": "ap_fixed<9,4>",
+          "output_symbol": "layer10_out",
+          "output_type": "reshape_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_fixed<8,3,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer7_out",
+          "output_type": "max_pooling2d_t"
+        }
+      },
+      "streams": {
+        "activation": "layer5_out_x4",
+        "convolution": "layer4_out_x4",
+        "pooling": "layer6_out_x4"
+      },
+      "types": {
+        "activation_wide": "q_conv2d_relu_x4_t",
+        "convolution_wide": "q_conv2d_x4_t",
+        "input_wide": "input_layer_x4_t",
+        "pooling_wide": "max_pooling2d_x4_t"
+      }
+    },
+    "resolved_design_sha256": "6cdc9ff36294b53efbdf8d94c8e6c8068875d5a640a7529c58bb6b68ed942861",
     "resolver": {
       "id": "aria-explicit-pd",
       "version": 1

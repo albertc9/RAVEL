@@ -526,57 +526,57 @@
     "executed_passes": [
       {
         "id": "pack-temporal-input",
-        "input_design_sha256": "34392dc2cb4eda2f74f0865be6f66326e1de17395dfbc5063c4e803813e836b8",
+        "input_design_sha256": "ccfe4a458c9593a132fc55e8607b7966c343caf2cd3b38d71c4ee77971ff528b",
         "order": 1,
-        "output_design_sha256": "8371cf00488e196be166a7643fc4b657f14770c561e53dd8f12cc8cd20bda639",
+        "output_design_sha256": "1bc272e37beb219186476b83c7bcedf38c5a2bdf3973ef9e9cbeadc026ef8377",
         "result": "applied",
         "version": 1
       },
       {
         "id": "fuse-repack-into-first-conv",
-        "input_design_sha256": "8371cf00488e196be166a7643fc4b657f14770c561e53dd8f12cc8cd20bda639",
+        "input_design_sha256": "1bc272e37beb219186476b83c7bcedf38c5a2bdf3973ef9e9cbeadc026ef8377",
         "order": 2,
-        "output_design_sha256": "3367478b12b9c318b3c160e013746f4a49eda849a5555530ff3856ebe69a4754",
+        "output_design_sha256": "25e67076c6a8b1e0db0e9e3bbbdb7df4b14072551ebfd3dcfa44639217565401",
         "result": "applied",
         "version": 1
       },
       {
         "id": "propagate-wide-relu-stream",
-        "input_design_sha256": "3367478b12b9c318b3c160e013746f4a49eda849a5555530ff3856ebe69a4754",
+        "input_design_sha256": "25e67076c6a8b1e0db0e9e3bbbdb7df4b14072551ebfd3dcfa44639217565401",
         "order": 3,
-        "output_design_sha256": "bb4f3b64e71453a4cddfae3f34762b69a82443aa81ea17dec6d08deb137aea0d",
+        "output_design_sha256": "d803efc28e332741afd238d8edfa381d6e94aec34482c32d251b228ae37c934b",
         "result": "applied",
         "version": 1
       },
       {
         "id": "specialize-nonoverlapping-maxpool",
-        "input_design_sha256": "bb4f3b64e71453a4cddfae3f34762b69a82443aa81ea17dec6d08deb137aea0d",
+        "input_design_sha256": "d803efc28e332741afd238d8edfa381d6e94aec34482c32d251b228ae37c934b",
         "order": 4,
-        "output_design_sha256": "2630de39d2e9f0228a63429f8f6cf7ec96aad15198dc52b9e5f899aefb781777",
+        "output_design_sha256": "a84793c0be01c2ed9a8929223ada9d3a58e33106c5c555e48499c47c8bd2db49",
         "result": "applied",
         "version": 1
       },
       {
         "id": "stream-flatten-into-dense",
-        "input_design_sha256": "2630de39d2e9f0228a63429f8f6cf7ec96aad15198dc52b9e5f899aefb781777",
+        "input_design_sha256": "a84793c0be01c2ed9a8929223ada9d3a58e33106c5c555e48499c47c8bd2db49",
         "order": 5,
-        "output_design_sha256": "2725f192f93095f44bdfa630412c8b0143cf4008aea6362e3687e236bc1c47c9",
+        "output_design_sha256": "15803fdcca32e3a3619865442756090a663d12fbc8c779ff517eb44eaf301531",
         "result": "applied",
         "version": 1
       },
       {
         "id": "bind-shallow-internal-fifos",
-        "input_design_sha256": "2725f192f93095f44bdfa630412c8b0143cf4008aea6362e3687e236bc1c47c9",
+        "input_design_sha256": "15803fdcca32e3a3619865442756090a663d12fbc8c779ff517eb44eaf301531",
         "order": 6,
-        "output_design_sha256": "28a69c6152a7291dd29878e897a345693d628c7f9b092eb6287ea680174ff148",
+        "output_design_sha256": "9c0f511044ea81e577cbb33b83dcedcabac03314ada29594b8a6539e2002a05b",
         "result": "applied",
         "version": 1
       },
       {
         "id": "elide-dataflow-start-propagation",
-        "input_design_sha256": "28a69c6152a7291dd29878e897a345693d628c7f9b092eb6287ea680174ff148",
+        "input_design_sha256": "9c0f511044ea81e577cbb33b83dcedcabac03314ada29594b8a6539e2002a05b",
         "order": 7,
-        "output_design_sha256": "443c92f9c44740610ef9f4095af99b6fa1e8711dad81ebe3ed43e1ecca06ad4b",
+        "output_design_sha256": "404fa6b31422f431cff53293fba6e1ea42d679bee40ff00986bb42700d7f1ae6",
         "result": "applied",
         "version": 1
       }
@@ -667,7 +667,9 @@
         },
         "id": "conv2d_0:bias",
         "operation_id": "conv2d_0",
-        "role": "bias"
+        "role": "bias",
+        "symbol": "b4",
+        "type_name": "q_conv2d_bias_t"
       },
       {
         "descriptor": {
@@ -690,7 +692,9 @@
         },
         "id": "conv2d_0:weight",
         "operation_id": "conv2d_0",
-        "role": "weight"
+        "role": "weight",
+        "symbol": "w4",
+        "type_name": "q_conv2d_weight_t"
       },
       {
         "descriptor": {
@@ -710,7 +714,9 @@
         },
         "id": "dense_0:bias",
         "operation_id": "dense_0",
-        "role": "bias"
+        "role": "bias",
+        "symbol": "b9",
+        "type_name": "q_dense_bias_t"
       },
       {
         "descriptor": {
@@ -731,10 +737,67 @@
         },
         "id": "dense_0:weight",
         "operation_id": "dense_0",
-        "role": "weight"
+        "role": "weight",
+        "symbol": "w9",
+        "type_name": "q_dense_weight_t"
       }
     ],
-    "resolved_design_sha256": "443c92f9c44740610ef9f4095af99b6fa1e8711dad81ebe3ed43e1ecca06ad4b",
+    "rendering": {
+      "first_convolution_function": "first_conv_4row_4lane_temporal_wide_cl",
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config4",
+          "output_precision_cpp": "ap_fixed<16,5>",
+          "output_symbol": "layer4_out",
+          "output_type": "q_conv2d_t"
+        },
+        "dense_0": {
+          "config_symbol": "config9",
+          "output_precision_cpp": "ap_fixed<22,11>",
+          "output_symbol": "layer9_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<9,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "input_layer",
+          "output_type": "input_layer_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config6",
+          "output_precision_cpp": "ap_fixed<9,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer6_out",
+          "output_type": "max_pooling2d_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config5",
+          "output_precision_cpp": "ap_ufixed<15,4>",
+          "output_symbol": "layer5_out",
+          "output_type": "q_conv2d_relu_t"
+        },
+        "repack_0": {
+          "output_precision_cpp": "ap_fixed<9,4>",
+          "output_symbol": "layer10_out",
+          "output_type": "reshape_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_fixed<9,4,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer7_out",
+          "output_type": "max_pooling2d_t"
+        }
+      },
+      "streams": {
+        "activation": "layer5_out_x4",
+        "convolution": "layer4_out_x4",
+        "pooling": "layer6_out_x4"
+      },
+      "types": {
+        "activation_wide": "q_conv2d_relu_x4_t",
+        "convolution_wide": "q_conv2d_x4_t",
+        "input_wide": "input_layer_x4_t",
+        "pooling_wide": "max_pooling2d_x4_t"
+      }
+    },
+    "resolved_design_sha256": "404fa6b31422f431cff53293fba6e1ea42d679bee40ff00986bb42700d7f1ae6",
     "resolver": {
       "id": "aria-explicit-pd",
       "version": 1
