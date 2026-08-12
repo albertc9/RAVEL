@@ -52,3 +52,24 @@ def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
         ]
         == 128
     )
+
+
+def test_conversion_checks_implementation_consistency_without_accuracy_labels(
+    tmp_path: Path,
+) -> None:
+    project = convert(
+        MODEL,
+        tmp_path / "aria_consistency",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Verification": {"Mode": "required", "Samples": 8, "Seed": 7},
+        },
+    )
+
+    verification = project.manifest["verification"]
+    assert verification["source_conversion_consistency"] == "passed"
+    assert verification["transformation_equivalence"] == "passed"
+    assert verification["stimuli"]["kind"] == "numeric_contract"
+    assert verification["stimuli"]["input_numeric_type"]["width"] == 8
+    assert verification["stimuli"]["sample_count"] == 8
+    assert "accuracy" not in verification

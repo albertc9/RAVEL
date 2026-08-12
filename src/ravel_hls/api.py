@@ -34,6 +34,7 @@ from .verification.equivalence import (
     prepare_stimuli,
     report_model_fidelity,
     require_bit_exact,
+    require_source_consistency,
 )
 
 
@@ -408,13 +409,25 @@ def _generate_project(
         verification_unavailable = None
         if verification_mode != "disabled":
             stimuli, stimuli_record = prepare_stimuli(
-                ravel_config, verification_inputs
+                ravel_config,
+                verification_inputs,
+                (
+                    model_analysis["model_facts"]["operations"][0]["outputs"][0][
+                        "numeric_type"
+                    ]
+                    if model_analysis is not None
+                    else None
+                ),
             )
             verification_unavailable = _verification_unavailable_reason(
                 hls_model, dependency_report
             )
             if verification_unavailable is None:
-                baseline_predictions = predict_baseline(hls_model, stimuli)
+                baseline_predictions = predict_baseline(
+                    hls_model,
+                    stimuli,
+                    dependency_report.get("compiler", {}).get("command"),
+                )
             else:
                 if verification_mode == "required":
                     raise VerificationError(verification_unavailable)
@@ -434,6 +447,7 @@ def _generate_project(
         write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
             "mode": verification_mode,
+            "source_conversion_consistency": "not_run",
             "transformation_equivalence": "not_run",
             "model_fidelity": "not_run",
         }
@@ -442,9 +456,24 @@ def _generate_project(
         if verification_unavailable is not None:
             verification_report["unavailable_reason"] = verification_unavailable
         if baseline_predictions is not None and stimuli is not None:
-            optimized_predictions = predict_optimized(staging_path, stimuli)
+            optimized_predictions = predict_optimized(
+                staging_path,
+                stimuli,
+                dependency_report.get("compiler", {}).get("command"),
+            )
             require_bit_exact(baseline_predictions, optimized_predictions)
             verification_report["transformation_equivalence"] = "passed"
+            if model_analysis is not None:
+                source_consistency = require_source_consistency(
+                    hls_config.get("KerasModel"),
+                    stimuli,
+                    baseline_predictions,
+                    model_analysis["model_facts"]["operations"][-1]["outputs"][0][
+                        "numeric_type"
+                    ],
+                )
+                verification_report["source_conversion_consistency"] = "passed"
+                verification_report["source_conversion_report"] = source_consistency
             fidelity = report_model_fidelity(
                 hls_config.get("KerasModel"), stimuli, optimized_predictions
             )

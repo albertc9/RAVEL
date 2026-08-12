@@ -57,7 +57,11 @@ def inspect_dependencies() -> dict[str, Any]:
         "Darwin": "generation_only",
     }.get(system, "unsupported")
     compiler = next(
-        (path for name in ("c++", "g++", "clang++") if (path := shutil.which(name))),
+        (
+            path
+            for name in ("g++-16", "g++-15", "g++-14", "g++", "c++", "clang++")
+            if (path := shutil.which(name))
+        ),
         None,
     )
     header_path = _hls_simulation_header()
