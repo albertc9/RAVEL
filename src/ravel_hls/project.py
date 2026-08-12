@@ -74,12 +74,18 @@ class Project:
 
     link_hls4ml = link
 
-    def refresh(self, model: Any) -> "Project":
+    def refresh(
+        self, model: Any, *, verification_inputs: Any | None = None
+    ) -> "Project":
         """Regenerate this project with a new compatible model."""
 
+        if self.manifest.get("schema_version") == 4:
+            from .api import refresh
+
+            return refresh(self, model, verification_inputs=verification_inputs)
         from .api import refresh_model
 
-        return refresh_model(self, model)
+        return refresh_model(self, model, verification_inputs=verification_inputs)
 
     def record(self, report_dir: str | Path) -> Any:
         """Attach measured Vitis HLS evidence without launching the tool."""

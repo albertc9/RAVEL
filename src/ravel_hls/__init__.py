@@ -15,7 +15,7 @@ from .exceptions import (
 
 if TYPE_CHECKING:
     from .analysis.model import ModelAnalysis, analyze
-    from .api import convert
+    from .api import convert, refresh
     from .parameters import Parameters
     from .project import Project
     from .qualification.vitis import QualificationRecord
@@ -34,6 +34,7 @@ __all__ = [
     "VerificationError",
     "analyze",
     "convert",
+    "refresh",
 ]
 
 
@@ -45,6 +46,7 @@ def __getattr__(name: str) -> Any:
         "QualificationRecord": (".qualification.vitis", "QualificationRecord"),
         "analyze": (".analysis.model", "analyze"),
         "convert": (".api", "convert"),
+        "refresh": (".api", "refresh"),
     }
     target = lazy_exports.get(name)
     if target is None:

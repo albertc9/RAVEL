@@ -26,6 +26,32 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def architecture_contract_sha256(model_analysis: dict[str, Any]) -> str:
+    """Hash the architecture-preserving refresh boundary without parameters."""
+
+    design = model_analysis["resolved_design"]
+    return canonical_sha256(
+        {
+            "generation": model_analysis["generation"],
+            "model_family": model_analysis["model_family"],
+            "model_structure_sha256": model_analysis["fingerprints"][
+                "model_structure_sha256"
+            ],
+            "strategy": design["strategy"],
+            "resolver": design["resolver"],
+            "implementation_plan": design["implementation_plan"],
+            "interfaces": design["interfaces"],
+            "parameter_bindings": [
+                {
+                    "id": binding["id"],
+                    "descriptor": binding["descriptor"],
+                }
+                for binding in design["parameter_bindings"]
+            ],
+        }
+    )
+
+
 def build_generation_manifest(
     *,
     project_path: Path,
@@ -83,6 +109,7 @@ def build_generation_manifest(
     schema_version = 3
     release = "1.4.0"
     profile: dict[str, Any] = {"id": "aria", "version": 1}
+    architecture_contract = None
     if model_analysis is not None:
         schema_version = 4
         release = "1.5.0"
@@ -98,7 +125,8 @@ def build_generation_manifest(
             "generation": model_analysis["generation"],
             "model_family": model_analysis["model_family"],
         }
-    return {
+        architecture_contract = architecture_contract_sha256(model_analysis)
+    manifest = {
         "schema_version": schema_version,
         "ravel": {
             "product": "RAVEL",
@@ -142,6 +170,10 @@ def build_generation_manifest(
         "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,
     }
+    if model_analysis is not None:
+        manifest["resolved_design"] = model_analysis["resolved_design"]
+        manifest["architecture_contract_sha256"] = architecture_contract
+    return manifest
 
 
 def _build_source_closure(project_path: Path) -> list[dict[str, Any]]:

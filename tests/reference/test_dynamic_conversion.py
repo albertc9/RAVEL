@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ravel_hls import Project, convert
+from ravel_hls import CompatibilityError, Project, convert, refresh
 
 
 MODEL = (
@@ -134,3 +134,72 @@ def test_every_retrained_reference_model_generates_consistent_default_cpp(
         "source_conversion_consistency"
     ] == "passed"
     assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+
+
+def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
+    tmp_path: Path,
+) -> None:
+    import keras
+    from hgq.layers import QConv2D, QDense
+
+    project = convert(
+        MODEL,
+        tmp_path / "aria_refresh",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+    original = project.manifest
+    updated_model = keras.models.load_model(
+        MODEL, custom_objects={"QConv2D": QConv2D, "QDense": QDense}
+    )
+    kernel = updated_model.layers[1].kernel
+    changed = kernel.numpy()
+    changed.reshape(-1)[0] += 0.125
+    kernel.assign(changed)
+
+    refreshed = refresh(project, updated_model)
+
+    assert refreshed.path == project.path
+    assert (
+        refreshed.manifest["source_model"]["fingerprints"][
+            "parameter_state_sha256"
+        ]
+        != original["source_model"]["fingerprints"]["parameter_state_sha256"]
+    )
+    assert (
+        refreshed.manifest["source_model"]["fingerprints"][
+            "model_structure_sha256"
+        ]
+        == original["source_model"]["fingerprints"]["model_structure_sha256"]
+    )
+    assert refreshed.manifest["architecture_contract_sha256"] == original[
+        "architecture_contract_sha256"
+    ]
+    assert refreshed.manifest["implementation_plan"] == original[
+        "implementation_plan"
+    ]
+
+
+def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(
+    tmp_path: Path,
+) -> None:
+    project = convert(
+        MODEL,
+        tmp_path / "aria_refresh_reject",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+    changed_precision_model = (
+        Path(__file__).parents[2]
+        / "references"
+        / "fLow_0.08-fhigh_0.23-rate_0.5"
+        / "adam_hgq_replicate_s2"
+        / "adam_hgq_replicate_s2_best.keras"
+    )
+
+    with pytest.raises(CompatibilityError, match="architecture contract"):
+        refresh(project, changed_precision_model)

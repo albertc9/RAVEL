@@ -24,7 +24,7 @@ from .exceptions import (
     RavelError,
     VerificationError,
 )
-from .manifest import build_generation_manifest
+from .manifest import architecture_contract_sha256, build_generation_manifest
 from .parameters import Parameters
 from .profiles.aria.plan import build_implementation_plan, build_pass_records
 from .project import RavelProject, open_project
@@ -161,6 +161,59 @@ def _convert_analyzed_model(
     if run_config["Vitis"]["Run"]:
         generated.build()
     return generated
+
+
+def refresh(
+    project: RavelProject | str | os.PathLike[str],
+    model_or_parameters: Any,
+    *,
+    verification_inputs: Any | None = None,
+) -> RavelProject:
+    """Atomically refresh a schema-v4 project without changing its architecture."""
+
+    from .analysis.model import analyze
+
+    project_view = project if isinstance(project, RavelProject) else open_project(project)
+    if project_view.manifest.get("schema_version") != 4:
+        raise CompatibilityError(
+            "Aria 1.5 refresh requires a schema-v4 generated project"
+        )
+    if isinstance(model_or_parameters, Parameters):
+        raise ConfigurationError(
+            "Compiled .ravelparams refresh is not available in this implementation slice"
+        )
+    config = _refresh_configuration(project_view)
+    analysis = analyze(model_or_parameters, config).to_dict()
+    observed_contract = architecture_contract_sha256(analysis)
+    expected_contract = project_view.manifest.get("architecture_contract_sha256")
+    if observed_contract != expected_contract:
+        raise CompatibilityError(
+            "Refresh model changes the recorded architecture contract; "
+            "use ordinary conversion"
+        )
+    return convert(
+        model_or_parameters,
+        project_view.path,
+        config,
+        verification_inputs=verification_inputs,
+    )
+
+
+def _refresh_configuration(project: RavelProject) -> dict[str, Any]:
+    recorded = project.config.to_dict()
+    hls = recorded["HLS"]
+    return {
+        "Project": {"ForceReplace": True},
+        "HLS": {
+            "Backend": hls["Backend"],
+            "IOType": hls["IOType"],
+            "Part": hls.get("Part"),
+            "ClockPeriod": hls.get("ClockPeriod"),
+        },
+        "Optimization": recorded["Optimization"],
+        "Verification": recorded["Verification"],
+        "Vitis": recorded["Vitis"],
+    }
 
 
 def refresh_model(
