@@ -18,6 +18,20 @@ def build_implementation_plan(
     }
     input_shape = operations["input_0"]["outputs"][0]["shape"]
     convolution = operations["conv2d_0"]["attributes"]
+    products_per_window = (
+        convolution["filt_height"]
+        * convolution["filt_width"]
+        * convolution["n_chan"]
+        * convolution["n_filt"]
+    )
+    first_convolution = {
+        "id": "full-width-latency",
+        "version": 1,
+        "parallel_windows": convolution["out_width"],
+        "products_per_window": products_per_window,
+        "multiplier_limit": products_per_window * convolution["out_width"],
+        "target_loop_ii": 1,
+    }
     dense_inputs = dense_facts["n_in"]
     dense_outputs = dense_facts["n_out"]
     dense_group_size = dense_facts["input_group_size"]
@@ -71,6 +85,7 @@ def build_implementation_plan(
         "dense_inputs": dense_inputs,
         "dense_parallelism": dense_parallelism,
         "dense_steps": dense_steps,
+        "first_convolution": first_convolution,
         "weight_delivery": weight_delivery,
         "internal_fifo_depth": 4,
         "dataflow_start_propagation": False,

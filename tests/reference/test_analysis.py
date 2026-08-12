@@ -222,6 +222,14 @@ def test_same_topology_accepts_extracted_geometry_instead_of_arianna_constants(
         "values_per_input_word": 8,
         "input_words_per_inference": 64,
     }
+    assert design["implementation_plan"]["first_convolution"] == {
+        "id": "full-width-latency",
+        "version": 1,
+        "parallel_windows": 4,
+        "products_per_window": 15,
+        "multiplier_limit": 60,
+        "target_loop_ii": 1,
+    }
 
 
 def test_same_family_reports_an_unsupported_strategy_before_rendering(
