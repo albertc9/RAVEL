@@ -18,9 +18,7 @@ The example model distinguishes in real time between neutrino signals generated 
 
 The table uses the same example model, KU5P target, and 5 ns clock constraint.
 Resources and WNS are single-core Vivado 2023.2 post-route results. Resource
-counts are followed by KU5P utilization. II means initiation interval. Fmax is
-estimated from the 5 ns route as `1000 / (5 - WNS)` and is not a separate
-tighter-clock implementation.
+counts are followed by KU5P utilization. II means initiation interval.
 
 | Flow | II | Latency (cycles) | BRAM tile | DSP | registers | LUTs | 1-core raw input (Gb/s) | 70% parallel raw input (Gb/s) | Fmax (MHz) | WNS (ns) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -30,7 +28,7 @@ tighter-clock implementation.
 | RAVEL Aria 1.4.0 P4/D2 | 94 | 99 | 1.5 (0.31%) | 15 (0.82%) | 3622 (0.83%) | 6981 (3.22%) | 19.5 | 409 | 223.4 | +0.524 |
 | RAVEL Aria 1.6.0 PHARA P8/D4 | 51 | 56 | 2.5 (0.52%) | 79 (4.33%) | 3840 (0.88%) | 4930 (2.27%) | 40.1 | 642 | 249.8 | +0.997 |
 
-The raw input columns use 8,192 bits per chunk. The single-core rate is
+The raw input chunk sized `4 x 256 x 8 bits`. The single-core rate is
 `Fmax / II * 8,192`, with the corresponding unit conversion. The parallel
 estimate allows up to 70% of every listed
 KU5P resource and linearly replicates 8/28/19/21/16 cores for the five rows.
