@@ -2,7 +2,7 @@
 
 ## Model profile
 
-Aria 1.5.1 recognizes a single-input, single-output homogeneous HGQ2 family with
+Aria 1.6.0 recognizes a single-input, single-output homogeneous HGQ2 family with
 this semantic sequence. Dimensions are symbols extracted from the converted
 `ModelGraph`, not constants copied from one training archive:
 
@@ -23,8 +23,9 @@ quantizer semantics remain compatibility requirements. Recognition is not a
 performance target.
 
 Family recognition and strategy applicability are separate. P2 currently
-requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 requires `H`
-divisible by 4 and the qualified `Kh=5`, `Sh=3` schedule. Both require one
+requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 and P8 require `H`
+divisible by their packing factor and the qualified `Kh=5`, `Sh=3` schedule.
+All strategies require one
 input channel, width-one convolution, valid padding, the shown non-overlapping
 MaxPool, one Dense output, and a Dense parallelism that divides the streamed
 convolution width. An unsupported strategy returns structured findings before
@@ -38,13 +39,13 @@ The optimized path requires the Vitis backend, `io_stream`, latency strategy,
 and reuse factor 1. Project name, output path, FPGA part, clock period, model
 parameters, verification inputs, and Vitis invocation remain user-selected.
 
-`Optimization.TemporalPacking` accepts 2 or 4 and
-`Optimization.DenseParallelism` accepts 1 or 2. Both are generation-time
-choices. Missing axes resolve independently to P4 and D2. P2/D1 preserves the
-Aria 1.1 input width and schedule semantics; P4 changes expected input TDATA
-from 128 to 256 bits. Refresh preserves the recorded selection.
+`Optimization.TemporalPacking` accepts 2, 4, or 8 and
+`Optimization.DenseParallelism` accepts 1, 2, or 4. The supported pairs are
+P2/D1, P2/D2, P4/D1, P4/D2, and P8/D4. Omission resolves to P8/D4. For the
+canonical model, P2/P4/P8 use 128-/256-/512-bit input `TDATA`. Refresh preserves
+the recorded selection.
 
-Aria 1.5 derives a sequential packed Dense weight ROM from the converted
+Aria 1.6 derives a sequential packed Dense weight ROM from the converted
 hls4ml graph. Word width, depth, MAC lanes, and tail handling are internal plan
 properties; they are not additional public configuration fields. Refresh may
 change parameter values but rejects changes to the recorded structural plan.
@@ -66,11 +67,11 @@ adapter. RAVEL removes hls4ml's unsupported
 `config_array_partition -maximum_size` command before publication. The default
 stage profile resets the HLS project and runs synthesis only.
 
-The first-convolution implementation plan budgets the complete set of products
-needed by every unrolled output-width window. The budget is derived from model
-geometry and remains stable across parameter refreshes; it does not shrink with
-the current weight sparsity. RAVEL applies that budget through an owned derived
-configuration rather than modifying hls4ml's generated `parameters.h`.
+The P2/P4 first-convolution plan budgets the complete set of products needed by
+every unrolled output-width window. PHARA instead records a fixed graph envelope
+and a coefficient-dependent hybrid realization. The realization is accepted
+only after modular symbolic equivalence is proven. Refresh preserves the
+envelope and regenerates the graph; it does not reuse stale coefficient logic.
 
 Successful synthesis is imported automatically. A report is accepted only when
 its tool version, top, part, target clock, and expected stream port widths match
@@ -79,9 +80,9 @@ measurements: RAVEL does not require a particular II, does not require estimated
 clock to beat the target, and does not define matrix-specific release gates.
 If `Vitis.Stages.CoSim` is true, recording additionally requires a passing
 top-level Verilog CoSim report and binds its hash into the qualification record.
-For generated designs that declare the owned first-convolution function,
-recording also requires its unique synthesis report and stores the module
-interval plus the pipeline loop's trip count, II, and depth.
+For PHARA designs, recording also requires the unique fused-region, Dense
+wrapper, and Dense pipeline reports. Their intervals and latencies are stored
+as stage evidence.
 
 This support does not strengthen the RTL proof boundary. CoSim, validation,
 export, Vivado synthesis, implementation, and board tests run only when selected
