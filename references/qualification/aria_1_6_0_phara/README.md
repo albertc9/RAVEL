@@ -52,12 +52,13 @@ without HLS errors.
 ## Multi-core estimate
 
 The following estimate applies the same utilization ceiling to every reported
-resource and uses the timing-estimated 249.8 MHz:
+resource and uses the timing-estimated 249.8 MHz. Each chunk contains 256 sample
+frames from four 8-bit channels, or 8,192 raw bits.
 
-| Resource ceiling | Cores | Limiting resource | LUT | DSP | Throughput |
-|---|---:|---|---:|---:|---:|
-| 60% | 13 | DSP | 29.5% | 56.3% | 16.3 GSa/s |
-| 70% | 16 | DSP | 36.4% | 69.3% | 20.1 GSa/s |
+| Resource ceiling | Cores | Limiting resource | LUT | DSP | Per-channel sample rate | Raw input rate |
+|---|---:|---|---:|---:|---:|---:|
+| 60% | 13 | DSP | 29.5% | 56.3% | 16.3 GSa/s | 522 Gb/s |
+| 70% | 16 | DSP | 36.4% | 69.3% | 20.1 GSa/s | 642 Gb/s |
 
 The estimate assumes linear replication. It excludes shared infrastructure,
 I/O limits, interconnect cost, clock degradation, and multi-core routing.
