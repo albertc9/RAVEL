@@ -215,12 +215,24 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
         ),
         encoding="utf-8",
     )
-    dense_report = report_dir / "dense_wide_stream_2_csynth.xml"
+    dense_report = report_dir / "dense_wide_stream_array_s_csynth.xml"
     dense_report.write_text(
+        _stage_wrapper_csynth_xml(
+            top="dense_wide_stream_array_s",
+            latency=50,
+            interval=50,
+        ),
+        encoding="utf-8",
+    )
+    dense_loop_report = (
+        report_dir
+        / "dense_wide_stream_array_Pipeline_DenseValues_csynth.xml"
+    )
+    dense_loop_report.write_text(
         _stage_csynth_xml(
-            top="dense_wide_stream_2",
-            latency=42,
-            interval=42,
+            top="dense_wide_stream_array_Pipeline_DenseValues",
+            latency=47,
+            interval=47,
             loop="DenseValues",
             trip_count=42,
             pipeline_ii=1,
@@ -245,9 +257,9 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
             },
         },
         "dense": {
-            "top": "dense_wide_stream_2",
-            "initiation_interval": 42,
-            "latency_cycles": 42,
+            "top": "dense_wide_stream_array_s",
+            "initiation_interval": 50,
+            "latency_cycles": 50,
             "loop": {
                 "name": "DenseValues",
                 "trip_count": 42,
@@ -256,6 +268,8 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
             },
         },
     }
+    assert dense_report.name in record.report_files
+    assert dense_loop_report.name in record.report_files
 
 
 def test_import_rejects_a_missing_requested_rtl_cosimulation_report(
@@ -477,6 +491,31 @@ def _stage_csynth_xml(
         <PipelineDepth>{pipeline_depth}</PipelineDepth>
       </{loop}>
     </SummaryOfLoopLatency>
+  </PerformanceEstimates>
+</profile>
+"""
+
+
+def _stage_wrapper_csynth_xml(
+    *,
+    top: str,
+    latency: int,
+    interval: int,
+) -> str:
+    return f"""\
+<profile>
+  <ReportVersion><Version>2023.2</Version></ReportVersion>
+  <UserAssignments>
+    <Part>xcku5p-ffvb676-2-e</Part>
+    <TopModelName>{top}</TopModelName>
+    <TargetClockPeriod>5.00</TargetClockPeriod>
+  </UserAssignments>
+  <PerformanceEstimates>
+    <SummaryOfOverallLatency>
+      <Best-caseLatency>{latency}</Best-caseLatency>
+      <Interval-min>{interval}</Interval-min>
+    </SummaryOfOverallLatency>
+    <SummaryOfLoopLatency />
   </PerformanceEstimates>
 </profile>
 """

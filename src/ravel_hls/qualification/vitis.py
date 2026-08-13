@@ -259,7 +259,7 @@ def _stage_evidence(
     stages = {}
     stage_reports = []
     for stage, function_name in stage_functions.items():
-        evidence, report_path = _one_stage_evidence(
+        evidence, report_paths = _one_stage_evidence(
             report_root,
             stage=stage,
             function_name=function_name,
@@ -268,7 +268,7 @@ def _stage_evidence(
             expected_clock=expected_clock,
         )
         stages[stage] = evidence
-        stage_reports.append(report_path)
+        stage_reports.extend(report_paths)
     return stages, stage_reports
 
 
@@ -280,7 +280,7 @@ def _one_stage_evidence(
     expected_tool_version: str,
     expected_part: str,
     expected_clock: float,
-) -> tuple[dict[str, Any], Path]:
+) -> tuple[dict[str, Any], list[Path]]:
     matches: list[tuple[Path, ET.Element]] = []
     for candidate in sorted(report_root.rglob("*_csynth.xml")):
         try:
@@ -290,36 +290,54 @@ def _one_stage_evidence(
         top = root.findtext("./UserAssignments/TopModelName", "").strip()
         if top == function_name or top.startswith(f"{function_name}_"):
             matches.append((candidate, root))
-    if len(matches) != 1:
+    if not matches:
         raise ProjectGenerationError(
-            f"Expected exactly one {stage} Vitis csynth XML report"
+            f"Expected at least one {stage} Vitis csynth XML report"
         )
-    report_path, root = matches[0]
-    for field, expected, observed in (
-        (
-            "version",
-            expected_tool_version,
-            _required_text(root, "./ReportVersion/Version"),
-        ),
-        ("part", expected_part, _required_text(root, "./UserAssignments/Part")),
-        (
-            "clock",
-            expected_clock,
-            float(_required_text(root, "./UserAssignments/TargetClockPeriod")),
-        ),
-    ):
-        if expected != observed:
-            raise ProjectGenerationError(
-                f"{stage} Vitis {field} expected {expected} "
-                f"but measured {observed}"
+    pipelined = []
+    for _, root in matches:
+        for field, expected, observed in (
+            (
+                "version",
+                expected_tool_version,
+                _required_text(root, "./ReportVersion/Version"),
+            ),
+            ("part", expected_part, _required_text(root, "./UserAssignments/Part")),
+            (
+                "clock",
+                expected_clock,
+                float(
+                    _required_text(
+                        root, "./UserAssignments/TargetClockPeriod"
+                    )
+                ),
+            ),
+        ):
+            if expected != observed:
+                raise ProjectGenerationError(
+                    f"{stage} Vitis {field} expected {expected} "
+                    f"but measured {observed}"
+                )
+        pipelined.extend(
+            loop
+            for loop in root.findall(
+                "./PerformanceEstimates/SummaryOfLoopLatency/*"
             )
-    loops = root.findall("./PerformanceEstimates/SummaryOfLoopLatency/*")
-    pipelined = [loop for loop in loops if loop.findtext("./PipelineII") is not None]
+            if loop.findtext("./PipelineII") is not None
+        )
     if len(pipelined) != 1:
         raise ProjectGenerationError(
             f"Expected exactly one pipelined {stage} loop"
         )
     loop = pipelined[0]
+    _, root = min(
+        matches,
+        key=lambda match: (
+            _required_text(match[1], "./UserAssignments/TopModelName").count("_"),
+            len(_required_text(match[1], "./UserAssignments/TopModelName")),
+            _required_text(match[1], "./UserAssignments/TopModelName"),
+        ),
+    )
     return {
         "top": _required_text(root, "./UserAssignments/TopModelName"),
         "initiation_interval": int(
@@ -340,7 +358,7 @@ def _one_stage_evidence(
             "pipeline_ii": int(_required_text(loop, "./PipelineII")),
             "pipeline_depth": int(_required_text(loop, "./PipelineDepth")),
         },
-    }, report_path
+    }, [path for path, _ in matches]
 
 
 def _rtl_cosimulation_report(report_root: Path, top: str) -> Path | None:
