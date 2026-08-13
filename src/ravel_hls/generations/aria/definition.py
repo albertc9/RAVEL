@@ -12,6 +12,7 @@ from ..registry import (
 from .matching import evaluate_aria_wide_stream, match_hgq_conv_pool_dense
 from .passes import (
     ARIA_PASS_DEFINITIONS,
+    PHARA_DATAFLOW_CONTROL_PASS,
     PHARA_FUSION_PASS,
     resolve_aria_design,
 )
@@ -42,7 +43,11 @@ ARIA_1_5_1 = GenerationDefinition(
         StrategyDefinition("phara", 1, evaluate_aria_wide_stream),
     ),
     resolver=ResolverDefinition("aria-explicit-pd", 2, resolve_aria_design),
-    passes=(*ARIA_PASS_DEFINITIONS, PHARA_FUSION_PASS),
+    passes=(
+        *ARIA_PASS_DEFINITIONS,
+        PHARA_FUSION_PASS,
+        PHARA_DATAFLOW_CONTROL_PASS,
+    ),
     backends=(
         BackendBindingDefinition(
             "Vitis", "io_stream", "aria-vitis-templates", 2, render_aria_project

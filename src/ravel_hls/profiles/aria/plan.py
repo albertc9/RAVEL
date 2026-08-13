@@ -156,4 +156,5 @@ def build_implementation_plan(
                 "read_cycles": sum(schedule.read_on_output),
             }
         plan["phara"] = phara_plan
+        plan["dataflow_start_propagation"] = True
     return plan

@@ -26,6 +26,9 @@ ARIA_PASS_DEFINITIONS = tuple(
 PHARA_FUSION_PASS = ComponentDefinition(
     "fuse-pool-aligned-conv-relu-maxpool", 1
 )
+PHARA_DATAFLOW_CONTROL_PASS = ComponentDefinition(
+    "preserve-phara-dataflow-start-propagation", 1
+)
 
 
 def resolve_aria_design(
@@ -200,7 +203,11 @@ def resolve_aria_design(
             ),
         ),
         (
-            ARIA_PASS_DEFINITIONS[6],
+            (
+                PHARA_DATAFLOW_CONTROL_PASS
+                if phara is not None
+                else ARIA_PASS_DEFINITIONS[6]
+            ),
             lambda current: _set_streaming(
                 current,
                 "dataflow_control",

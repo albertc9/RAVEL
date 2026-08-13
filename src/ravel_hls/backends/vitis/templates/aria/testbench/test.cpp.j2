@@ -58,12 +58,22 @@ int main() {
     }
 
     if (sample == 0) {
-        std::vector<float> zero_input({{ input_values_per_inference }}, 0.0f);
-        hls::stream<{{ input_wide_type }}> {{ input_name }}("{{ input_name }}");
-        hls::stream<{{ output_type }}> {{ output_name }}("{{ output_name }}");
-        pack_aria_test_input(zero_input, {{ input_name }});
-        {{ project_name }}({{ input_name }}, {{ output_name }});
-        nnet::print_result<{{ output_type }}, 1>({{ output_name }}, results);
+        for (unsigned default_sample = 0; default_sample < 3; default_sample++) {
+            std::vector<float> default_input({{ input_values_per_inference }}, 0.0f);
+            for (unsigned index = 0; index < default_input.size(); index++) {
+                if (default_sample == 1) {
+                    default_input[index] = 1.0f;
+                } else if (default_sample == 2) {
+                    const int code = static_cast<int>(index % 65) - 32;
+                    default_input[index] = static_cast<float>(code) / 32.0f;
+                }
+            }
+            hls::stream<{{ input_wide_type }}> {{ input_name }}("{{ input_name }}");
+            hls::stream<{{ output_type }}> {{ output_name }}("{{ output_name }}");
+            pack_aria_test_input(default_input, {{ input_name }});
+            {{ project_name }}({{ input_name }}, {{ output_name }});
+            nnet::print_result<{{ output_type }}, 1>({{ output_name }}, results);
+        }
     }
     std::cout << "INFO: Saved inference results to file: " << results_path << std::endl;
     return 0;

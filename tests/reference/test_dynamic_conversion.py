@@ -92,6 +92,11 @@ def test_conversion_checks_implementation_consistency_without_accuracy_labels(
         encoding="utf-8"
     )
     assert "phara_pool_aligned_hybrid_p8_cl" in top_source
+    assert "DATAFLOW disable_start_propagation" not in top_source
+    testbench = (project.path / "aria_consistency_test.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert "default_sample < 3" in testbench
 
 
 def test_extracted_geometry_drives_generated_cpp_and_consistency(

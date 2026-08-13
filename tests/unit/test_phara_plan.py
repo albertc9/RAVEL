@@ -74,6 +74,7 @@ def test_phara_p8_d4_plan_reaches_the_42_cycle_structural_bound() -> None:
     assert plan["template_profile"] == "aria-phara-p8-q1-d4-v1"
     assert plan["values_per_input_word"] == 32
     assert plan["input_words_per_inference"] == 32
+    assert plan["dataflow_start_propagation"] is True
     assert plan["phara"] == {
         "version": 1,
         "pool_rows_per_supertile": 2,
