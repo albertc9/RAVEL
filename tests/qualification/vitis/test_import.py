@@ -215,10 +215,13 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
         ),
         encoding="utf-8",
     )
-    dense_report = report_dir / "dense_wide_stream_array_s_csynth.xml"
+    dense_report = (
+        report_dir
+        / "dense_wide_stream_array_array_ap_fixed_22_11_5_3_0_1u_config9_s_csynth.xml"
+    )
     dense_report.write_text(
         _stage_wrapper_csynth_xml(
-            top="dense_wide_stream_array_s",
+            top="dense_wide_stream_array_array_ap_fixed_22_11_5_3_0_1u_config9_s",
             latency=50,
             interval=50,
         ),
@@ -226,11 +229,11 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
     )
     dense_loop_report = (
         report_dir
-        / "dense_wide_stream_array_Pipeline_DenseValues_csynth.xml"
+        / "dense_wide_stream_array_array_ap_fixed_1u_config9_Pipeline_DenseValues_csynth.xml"
     )
     dense_loop_report.write_text(
         _stage_csynth_xml(
-            top="dense_wide_stream_array_Pipeline_DenseValues",
+            top="dense_wide_stream_array_array_ap_fixed_1u_config9_Pipeline_DenseValues",
             latency=47,
             interval=47,
             loop="DenseValues",
@@ -257,7 +260,7 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
             },
         },
         "dense": {
-            "top": "dense_wide_stream_array_s",
+            "top": "dense_wide_stream_array_array_ap_fixed_22_11_5_3_0_1u_config9_s",
             "initiation_interval": 50,
             "latency_cycles": 50,
             "loop": {

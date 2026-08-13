@@ -330,12 +330,22 @@ def _one_stage_evidence(
             f"Expected exactly one pipelined {stage} loop"
         )
     loop = pipelined[0]
-    _, root = min(
+    _, root = max(
         matches,
         key=lambda match: (
-            _required_text(match[1], "./UserAssignments/TopModelName").count("_"),
-            len(_required_text(match[1], "./UserAssignments/TopModelName")),
-            _required_text(match[1], "./UserAssignments/TopModelName"),
+            int(
+                _required_text(
+                    match[1],
+                    "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min",
+                )
+            ),
+            int(
+                _required_text(
+                    match[1],
+                    "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency",
+                )
+            ),
+            -len(_required_text(match[1], "./UserAssignments/TopModelName")),
         ),
     )
     return {
