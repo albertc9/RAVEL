@@ -35,6 +35,7 @@ def resolve_aria_design(
     interfaces: Mapping[str, Any],
     parameter_bindings: list[dict[str, Any]],
     rendering: Mapping[str, Any],
+    coefficient_realization: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Resolve and execute the versioned Aria strategy over one design value."""
 
@@ -66,6 +67,10 @@ def resolve_aria_design(
         "rendering": deepcopy(dict(rendering)),
         "streaming": {},
     }
+    if coefficient_realization is not None:
+        state["coefficient_realization"] = deepcopy(
+            dict(coefficient_realization)
+        )
     input_transform = (
         ARIA_PASS_DEFINITIONS[0],
         lambda current: _set_streaming(

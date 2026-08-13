@@ -11,6 +11,7 @@ from types import MappingProxyType
 from typing import Any
 
 from ..analysis.dense import analyze_dense_facts
+from ..analysis.phara import analyze_direct_parameters
 from ..compatibility.dependencies import inspect_dependencies
 from ..config import validate_public_config
 from ..domain import ParameterPayload, ParameterTensor
@@ -184,6 +185,11 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             }
         else:
             interface = _predicted_interface(model_facts, plan)
+            coefficient_realization = (
+                analyze_direct_parameters(model_facts, parameter_payload)
+                if "phara" in plan
+                else None
+            )
             resolved_design = generation.resolver.resolve(
                 model_facts=model_facts,
                 implementation_plan=plan,
@@ -192,6 +198,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
                     model_facts, parameter_payload
                 ),
                 rendering=_rendering_contract(layers, plan),
+                coefficient_realization=coefficient_realization,
             )
     analysis = ModelAnalysis._from_report(
         {

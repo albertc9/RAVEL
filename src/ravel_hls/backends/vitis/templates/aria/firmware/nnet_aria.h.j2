@@ -269,7 +269,7 @@ PoolRows:
     }
 }
 
-template <
+{% if phara %}template <
     unsigned BUFFER_ROWS,
     class data_T,
     class conv_T,
@@ -503,6 +503,7 @@ ProduceP8Words:
         res.write(output);
     }
 }
+{% endif %}
 
 template <class data_T, class res_T, typename CONFIG_T>
 void dense_wide_stream(

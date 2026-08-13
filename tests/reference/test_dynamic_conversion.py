@@ -43,7 +43,7 @@ def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
 
     assert isinstance(project, Project)
     assert project.path == output_dir
-    assert project.manifest["schema_version"] == 4
+    assert project.manifest["schema_version"] == 5
     assert project.manifest["ravel"]["release"] == "1.5.1"
     assert project.manifest["source_model"]["model_family"] == {
         "id": "hgq-conv-pool-dense",
@@ -216,3 +216,35 @@ def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(
 
     with pytest.raises(CompatibilityError, match="architecture contract"):
         refresh(project, changed_precision_model)
+
+
+def test_phara_manifest_separates_the_envelope_from_coefficients(
+    tmp_path: Path,
+) -> None:
+    project = convert(
+        MODEL,
+        tmp_path / "aria_phara_manifest",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    manifest = project.manifest
+    assert manifest["schema_version"] == 5
+    envelope = manifest["architecture_envelope"]
+    assert envelope["schema_version"] == 1
+    assert envelope["strategy"] == {"id": "phara", "version": 1}
+    assert envelope["specialization"] == {
+        "temporal_packing": 8,
+        "dense_parallelism": 4,
+    }
+    assert "coefficient_realization" not in envelope
+    assert manifest["architecture_envelope_sha256"] == manifest[
+        "architecture_contract_sha256"
+    ]
+    realization = manifest["coefficient_realization"]
+    assert realization == manifest["resolved_design"]["coefficient_realization"]
+    assert realization["proof"]["status"] == "proven"
+    assert len(manifest["coefficient_realization_sha256"]) == 64

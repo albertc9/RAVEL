@@ -401,3 +401,20 @@ def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
     assert "fuse-pool-aligned-conv-relu-maxpool" in {
         item["id"] for item in design["executed_passes"]
     }
+    realization = design["coefficient_realization"]
+    assert realization["kind"] == "direct"
+    assert realization["policy"] == {"id": "phara-direct", "version": 1}
+    assert realization["proof"]["status"] == "proven"
+    assert len(realization["proof"]["identity"]) == 64
+    assert len(realization["graph_sha256"]) == 64
+    assert realization["graph_summary"] == {
+        "input_rows": 8,
+        "convolution_rows": 2,
+        "filter_lanes": 7,
+        "output_values": 14,
+        "constant_nodes": 14,
+        "multiply_nodes": 70,
+        "add_nodes": 70,
+        "depth": 6,
+        "max_fanout": 14,
+    }

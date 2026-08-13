@@ -165,7 +165,7 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
     assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
 
 
-def test_manifest_schema_describes_the_v4_resolved_design() -> None:
+def test_manifest_schema_describes_the_v5_envelope_and_realization() -> None:
     repository = Path(__file__).resolve().parents[2]
     schema = json.loads(
         (repository / "src/ravel_hls/schemas/ravel_manifest.schema.json").read_text(
@@ -173,7 +173,7 @@ def test_manifest_schema_describes_the_v4_resolved_design() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 4}
+    assert schema["properties"]["schema_version"] == {"const": 5}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
         "const": "1.5.1"
     }

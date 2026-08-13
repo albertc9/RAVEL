@@ -7,6 +7,10 @@ from types import MappingProxyType
 from collections.abc import Mapping
 from typing import Any
 
+import numpy as np
+
+from ..domain import ParameterPayload
+
 
 @dataclass(frozen=True)
 class AffineNode:
@@ -347,6 +351,52 @@ def analyze_direct_supertile(
             }
         ),
     )
+
+
+def analyze_direct_parameters(
+    model_facts: Mapping[str, Any], parameter_payload: ParameterPayload
+) -> dict[str, Any]:
+    """Analyze the selected direct realization from extracted model parameters."""
+
+    operations = {
+        operation["id"]: operation for operation in model_facts["operations"]
+    }
+    convolution = operations["conv2d_0"]
+    parameters = parameter_payload.by_id()
+    weight = parameters["conv2d_0:weight"]
+    bias = parameters["conv2d_0:bias"]
+    accumulator_type = convolution["outputs"][0]["numeric_type"]
+    accumulator_fractional = (
+        accumulator_type["width"] - accumulator_type["integer"]
+    )
+    weight_fractional = weight.numeric_type["width"] - weight.numeric_type["integer"]
+    weight_codes = np.rint(
+        np.asarray(weight.values) * (2**weight_fractional)
+    ).astype(np.int64)
+    weight_codes = weight_codes.reshape(
+        convolution["attributes"]["filt_height"],
+        convolution["attributes"]["n_filt"],
+    )
+    bias_codes = np.rint(
+        np.asarray(bias.values) * (2**accumulator_fractional)
+    ).astype(np.int64)
+    analysis = analyze_direct_supertile(
+        weight_codes=tuple(tuple(int(value) for value in row) for row in weight_codes),
+        aligned_bias_codes=tuple(int(value) for value in bias_codes),
+        convolution_stride=convolution["attributes"]["stride_height"],
+        modulus=1 << accumulator_type["width"],
+    )
+    return {
+        "kind": "direct",
+        "policy": {"id": "phara-direct", "version": 1},
+        "graph_sha256": analysis.proof.graph_sha256,
+        "proof": {
+            "status": analysis.proof.status,
+            "identity": analysis.proof.identity,
+            "modulus": analysis.proof.modulus,
+        },
+        "graph_summary": dict(analysis.summary),
+    }
 
 
 def analyze_da_supertile(
