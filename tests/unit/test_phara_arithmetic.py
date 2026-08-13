@@ -2,6 +2,7 @@ from ravel_hls.analysis.phara import (
     AffineGraph,
     AffineNode,
     AffineProof,
+    analyze_direct_supertile,
     evaluate,
     prove_equivalent,
 )
@@ -70,3 +71,37 @@ def test_phara_evaluates_integer_codes_with_explicit_wrap() -> None:
     )
 
     assert evaluate(graph, input_codes=(7, 3)) == (11,)
+
+
+def test_phara_direct_supertile_uses_the_pool_aligned_reference_matrix() -> None:
+    analysis = analyze_direct_supertile(
+        weight_codes=(
+            (1, 2),
+            (3, 4),
+            (5, 6),
+            (7, 8),
+            (9, 10),
+        ),
+        aligned_bias_codes=(11, 12),
+        convolution_stride=3,
+        modulus=256,
+    )
+
+    assert analysis.summary == {
+        "input_rows": 8,
+        "convolution_rows": 2,
+        "filter_lanes": 2,
+        "output_values": 4,
+        "constant_nodes": 4,
+        "multiply_nodes": 20,
+        "add_nodes": 20,
+        "depth": 6,
+        "max_fanout": 4,
+    }
+    assert analysis.proof.status == "proven"
+    assert analysis.proof.reference_coefficients == (
+        (1, 3, 5, 7, 9, 0, 0, 0, 11),
+        (2, 4, 6, 8, 10, 0, 0, 0, 12),
+        (0, 0, 0, 1, 3, 5, 7, 9, 11),
+        (0, 0, 0, 2, 4, 6, 8, 10, 12),
+    )
