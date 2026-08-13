@@ -354,7 +354,7 @@ void phara_affine_graph(
     accum_code_t {{ input_id }} = {{ input_id }}_input_code;
 {% endfor %}{% for node in phara_affine.nodes %}{% if node.operation == "constant" %}    accum_code_t {{ node.id }} = {{ node.value }};
 {% elif node.operation == "multiply" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} * {{ node.value }};
-    #pragma HLS BIND_OP variable={{ node.id }} op=mul impl=dsp
+    #pragma HLS BIND_OP variable={{ node.id }} op=mul impl=dsp latency=1
 {% elif node.operation == "shift" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} << {{ node.value }};
 {% elif node.operation == "add" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} + {{ node.inputs[1] }};
 {% elif node.operation == "subtract" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} - {{ node.inputs[1] }};
