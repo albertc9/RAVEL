@@ -215,7 +215,7 @@ def _qualification_matches_manifest(
         .get("ProjectName")
     )
     return (
-        qualification.get("schema_version") in {2, 3}
+        qualification.get("schema_version") in {2, 3, 4}
         and qualification.get("status") == "recorded"
         and qualification.get("manifest_sha256")
         == _file_sha256(project_path / "ravel_manifest.json")

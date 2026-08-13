@@ -34,7 +34,7 @@ class QualificationRecord:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 3,
+            "schema_version": 4,
             "manifest_sha256": self.manifest_sha256,
             "generation_fingerprint": self.generation_fingerprint,
             "source_closure_sha256": self.source_closure_sha256,
@@ -243,13 +243,44 @@ def _stage_evidence(
     expected_part: str,
     expected_clock: float,
 ) -> tuple[dict[str, dict[str, Any]], list[Path]]:
-    function_name = (
-        manifest.get("resolved_design", {})
-        .get("rendering", {})
-        .get("first_convolution_function")
-    )
-    if not isinstance(function_name, str):
+    resolved_design = manifest.get("resolved_design", {})
+    rendering = resolved_design.get("rendering", {})
+    if resolved_design.get("strategy", {}).get("id") == "phara":
+        stage_functions = {
+            "phara_fused_region": rendering.get("phara_fused_function"),
+            "dense": rendering.get("dense_function"),
+        }
+    else:
+        stage_functions = {
+            "first_convolution": rendering.get("first_convolution_function")
+        }
+    if not all(isinstance(name, str) for name in stage_functions.values()):
         return {}, []
+    stages = {}
+    stage_reports = []
+    for stage, function_name in stage_functions.items():
+        evidence, report_path = _one_stage_evidence(
+            report_root,
+            stage=stage,
+            function_name=function_name,
+            expected_tool_version=expected_tool_version,
+            expected_part=expected_part,
+            expected_clock=expected_clock,
+        )
+        stages[stage] = evidence
+        stage_reports.append(report_path)
+    return stages, stage_reports
+
+
+def _one_stage_evidence(
+    report_root: Path,
+    *,
+    stage: str,
+    function_name: str,
+    expected_tool_version: str,
+    expected_part: str,
+    expected_clock: float,
+) -> tuple[dict[str, Any], Path]:
     matches: list[tuple[Path, ET.Element]] = []
     for candidate in sorted(report_root.rglob("*_csynth.xml")):
         try:
@@ -261,7 +292,7 @@ def _stage_evidence(
             matches.append((candidate, root))
     if len(matches) != 1:
         raise ProjectGenerationError(
-            "Expected exactly one first-convolution Vitis csynth XML report"
+            f"Expected exactly one {stage} Vitis csynth XML report"
         )
     report_path, root = matches[0]
     for field, expected, observed in (
@@ -279,42 +310,37 @@ def _stage_evidence(
     ):
         if expected != observed:
             raise ProjectGenerationError(
-                f"First-convolution Vitis {field} expected {expected} "
+                f"{stage} Vitis {field} expected {expected} "
                 f"but measured {observed}"
             )
     loops = root.findall("./PerformanceEstimates/SummaryOfLoopLatency/*")
     pipelined = [loop for loop in loops if loop.findtext("./PipelineII") is not None]
     if len(pipelined) != 1:
         raise ProjectGenerationError(
-            "Expected exactly one pipelined first-convolution loop"
+            f"Expected exactly one pipelined {stage} loop"
         )
     loop = pipelined[0]
-    return (
-        {
-            "first_convolution": {
-                "top": _required_text(root, "./UserAssignments/TopModelName"),
-                "initiation_interval": int(
-                    _required_text(
-                        root,
-                        "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min",
-                    )
-                ),
-                "latency_cycles": int(
-                    _required_text(
-                        root,
-                        "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency",
-                    )
-                ),
-                "loop": {
-                    "name": loop.tag,
-                    "trip_count": int(_required_text(loop, "./TripCount")),
-                    "pipeline_ii": int(_required_text(loop, "./PipelineII")),
-                    "pipeline_depth": int(_required_text(loop, "./PipelineDepth")),
-                },
-            }
+    return {
+        "top": _required_text(root, "./UserAssignments/TopModelName"),
+        "initiation_interval": int(
+            _required_text(
+                root,
+                "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min",
+            )
+        ),
+        "latency_cycles": int(
+            _required_text(
+                root,
+                "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency",
+            )
+        ),
+        "loop": {
+            "name": loop.tag,
+            "trip_count": int(_required_text(loop, "./TripCount")),
+            "pipeline_ii": int(_required_text(loop, "./PipelineII")),
+            "pipeline_depth": int(_required_text(loop, "./PipelineDepth")),
         },
-        [report_path],
-    )
+    }, report_path
 
 
 def _rtl_cosimulation_report(report_root: Path, top: str) -> Path | None:

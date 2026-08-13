@@ -213,7 +213,7 @@ def test_qualification_schema_binds_v3_evidence_identity_and_stages() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 3}
+    assert schema["properties"]["schema_version"] == {"const": 4}
     assert {
         "manifest_sha256",
         "generation_fingerprint",

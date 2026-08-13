@@ -313,7 +313,7 @@ def _rendering_contract(
         operations[operation_id] = operation
     temporal_pack = implementation_plan["temporal_pack"]
     width_lanes = implementation_plan["width_lanes"]
-    return {
+    contract = {
         "operations": operations,
         "types": {
             "input_wide": _wide_type_name(
@@ -341,7 +341,13 @@ def _rendering_contract(
         "first_convolution_function": (
             f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
         ),
+        "dense_function": "dense_wide_stream",
     }
+    if "phara" in implementation_plan:
+        contract["phara_fused_function"] = (
+            f"phara_pool_aligned_direct_p{temporal_pack}_cl"
+        )
+    return contract
 
 
 def _wide_type_name(type_name: str, suffix: str) -> str:
