@@ -2,6 +2,7 @@ from ravel_hls.analysis.phara import (
     AffineGraph,
     AffineNode,
     AffineProof,
+    analyze_da_supertile,
     analyze_direct_supertile,
     evaluate,
     prove_equivalent,
@@ -105,3 +106,117 @@ def test_phara_direct_supertile_uses_the_pool_aligned_reference_matrix() -> None
         (0, 0, 0, 1, 3, 5, 7, 9, 11),
         (0, 0, 0, 2, 4, 6, 8, 10, 12),
     )
+
+
+def test_phara_da_reuses_csd_products_across_equal_filters() -> None:
+    analysis = analyze_da_supertile(
+        weight_codes=((3, 3),),
+        aligned_bias_codes=(0, 0),
+        convolution_stride=3,
+        modulus=256,
+    )
+
+    assert analysis.proof.status == "proven"
+    assert analysis.proof.reference_coefficients == (
+        (3, 0, 0, 0, 0),
+        (3, 0, 0, 0, 0),
+        (0, 0, 0, 3, 0),
+        (0, 0, 0, 3, 0),
+    )
+    assert analysis.summary == {
+        "input_rows": 4,
+        "convolution_rows": 2,
+        "filter_lanes": 2,
+        "output_values": 4,
+        "shift_nodes": 2,
+        "add_nodes": 0,
+        "subtract_nodes": 2,
+        "negate_nodes": 0,
+        "constant_nodes": 0,
+        "depth": 2,
+        "max_fanout": 2,
+        "shared_product_uses": 2,
+        "shared_pair_uses": 0,
+    }
+
+
+def test_phara_da_reuses_repeated_two_term_expressions() -> None:
+    analysis = analyze_da_supertile(
+        weight_codes=((1, 1), (1, 1)),
+        aligned_bias_codes=(0, 0),
+        convolution_stride=3,
+        modulus=256,
+    )
+
+    assert analysis.proof.status == "proven"
+    assert analysis.summary == {
+        "input_rows": 5,
+        "convolution_rows": 2,
+        "filter_lanes": 2,
+        "output_values": 4,
+        "shift_nodes": 0,
+        "add_nodes": 2,
+        "subtract_nodes": 0,
+        "negate_nodes": 0,
+        "constant_nodes": 0,
+        "depth": 1,
+        "max_fanout": 2,
+        "shared_product_uses": 4,
+        "shared_pair_uses": 2,
+    }
+
+
+def test_phara_da_greedily_shares_a_repeated_nonprefix_pair() -> None:
+    analysis = analyze_da_supertile(
+        weight_codes=((1, 1), (1, 2), (1, 1)),
+        aligned_bias_codes=(0, 0),
+        convolution_stride=3,
+        modulus=256,
+    )
+
+    assert analysis.proof.status == "proven"
+    assert analysis.summary == {
+        "input_rows": 6,
+        "convolution_rows": 2,
+        "filter_lanes": 2,
+        "output_values": 4,
+        "shift_nodes": 2,
+        "add_nodes": 6,
+        "subtract_nodes": 0,
+        "negate_nodes": 0,
+        "constant_nodes": 0,
+        "depth": 2,
+        "max_fanout": 2,
+        "shared_product_uses": 4,
+        "shared_pair_uses": 2,
+    }
+
+
+def test_phara_da_normalizes_modular_codes_before_csd() -> None:
+    analysis = analyze_da_supertile(
+        weight_codes=((255,),),
+        aligned_bias_codes=(0,),
+        convolution_stride=3,
+        modulus=256,
+    )
+
+    assert analysis.proof.status == "proven"
+    assert analysis.proof.reference_coefficients == (
+        (255, 0, 0, 0, 0),
+        (0, 0, 0, 255, 0),
+    )
+    assert analysis.summary == {
+        "input_rows": 4,
+        "convolution_rows": 2,
+        "filter_lanes": 1,
+        "output_values": 2,
+        "shift_nodes": 0,
+        "add_nodes": 0,
+        "subtract_nodes": 0,
+        "negate_nodes": 2,
+        "constant_nodes": 0,
+        "depth": 1,
+        "max_fanout": 1,
+        "shared_product_uses": 0,
+        "shared_pair_uses": 0,
+    }
