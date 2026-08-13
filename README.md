@@ -2,8 +2,7 @@
 # RAVEL
 
 RAVEL (Rate-Aware Vectorized Engine for Low-latency) generates a specialized,
-hls4ml-compatible FPGA inference project. Aria 1.6.0 adds PHARA, a pool-aligned
-P8/D4 specialization with proven hybrid constant arithmetic. New conversions
+hls4ml-compatible FPGA inference project. Aria 1.6.0 adds PHARA, Pool-Aligned Hybrid Arithmetic and Rate Allocation. New conversions
 default to P8/D4. P2 and P4 remain available through explicit configuration.
 Each sample frame contains one value from each of four 8-bit ADC channels.
 Each input chunk contains 256 such frames:
