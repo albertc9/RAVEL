@@ -38,11 +38,25 @@ def _resolve_optimization(values: Any) -> dict[str, int]:
         )
     resolved = {**_AGGRESSIVE_SPECIALIZATION, **values}
     temporal_packing = resolved["TemporalPacking"]
-    if temporal_packing not in {2, 4} or isinstance(temporal_packing, bool):
-        raise ConfigurationError("Optimization.TemporalPacking must be one of: 2, 4")
     dense_parallelism = resolved["DenseParallelism"]
-    if dense_parallelism not in {1, 2} or isinstance(dense_parallelism, bool):
-        raise ConfigurationError("Optimization.DenseParallelism must be one of: 1, 2")
+    if temporal_packing not in {2, 4, 8} or isinstance(temporal_packing, bool):
+        raise ConfigurationError(
+            "Optimization.TemporalPacking must be one of: 2, 4, 8"
+        )
+    if dense_parallelism not in {1, 2, 4} or isinstance(dense_parallelism, bool):
+        raise ConfigurationError(
+            "Optimization.DenseParallelism must be one of: 1, 2, 4"
+        )
+    if (temporal_packing, dense_parallelism) not in {
+        (2, 1),
+        (2, 2),
+        (4, 1),
+        (4, 2),
+        (8, 4),
+    }:
+        raise ConfigurationError(
+            "Optimization must select P2/D1, P2/D2, P4/D1, P4/D2, or P8/D4"
+        )
     return {
         "TemporalPacking": temporal_packing,
         "DenseParallelism": dense_parallelism,

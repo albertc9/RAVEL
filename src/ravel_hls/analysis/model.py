@@ -170,7 +170,10 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     if model_family is not None:
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
-        strategy = generation.strategy("aria-wide-stream", 2)
+        strategy = generation.strategy(
+            "phara" if "phara" in plan else "aria-wide-stream",
+            1 if "phara" in plan else 2,
+        )
         strategy_findings = strategy.evaluate(
             model_facts["operations"], choices, plan
         )

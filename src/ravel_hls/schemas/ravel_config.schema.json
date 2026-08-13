@@ -27,9 +27,31 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "TemporalPacking": {"enum": [2, 4], "default": 4},
-        "DenseParallelism": {"enum": [1, 2], "default": 2}
-      }
+        "TemporalPacking": {"enum": [2, 4, 8], "default": 4},
+        "DenseParallelism": {"enum": [1, 2, 4], "default": 2}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"TemporalPacking": {"const": 8}},
+            "required": ["TemporalPacking"]
+          },
+          "then": {
+            "properties": {"DenseParallelism": {"const": 4}},
+            "required": ["DenseParallelism"]
+          }
+        },
+        {
+          "if": {
+            "properties": {"DenseParallelism": {"const": 4}},
+            "required": ["DenseParallelism"]
+          },
+          "then": {
+            "properties": {"TemporalPacking": {"const": 8}},
+            "required": ["TemporalPacking"]
+          }
+        }
+      ]
     },
     "Verification": {
       "type": "object",

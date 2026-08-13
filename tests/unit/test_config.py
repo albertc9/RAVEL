@@ -109,3 +109,30 @@ def test_config_reports_invalid_yaml(text: str) -> None:
 def test_config_rejects_an_unknown_profile() -> None:
     with pytest.raises(ConfigurationError, match="Profile"):
         RavelConfig({"Profile": "future-profile"})
+
+
+def test_config_accepts_the_coupled_phara_p8_d4_specialization() -> None:
+    config = RavelConfig(
+        {"Optimization": {"TemporalPacking": 8, "DenseParallelism": 4}}
+    )
+
+    assert config["Optimization"] == {
+        "TemporalPacking": 8,
+        "DenseParallelism": 4,
+    }
+
+
+@pytest.mark.parametrize(
+    "optimization",
+    [
+        {"TemporalPacking": 8},
+        {"DenseParallelism": 4},
+        {"TemporalPacking": 8, "DenseParallelism": 2},
+        {"TemporalPacking": 4, "DenseParallelism": 4},
+    ],
+)
+def test_config_rejects_unqualified_partial_phara_specializations(
+    optimization: dict[str, int],
+) -> None:
+    with pytest.raises(ConfigurationError, match="P8/D4"):
+        RavelConfig({"Optimization": optimization})

@@ -255,7 +255,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     ("optimization", "message"),
     [
         ({"TemporalPacking": 3}, "TemporalPacking"),
-        ({"DenseParallelism": 4}, "DenseParallelism"),
+        ({"DenseParallelism": 5}, "DenseParallelism"),
         ({"Unknown": 1}, "Optimization.Unknown"),
     ],
 )
@@ -367,3 +367,37 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         for previous, current in zip(passes, passes[1:])
     )
     assert passes[-1]["output_design_sha256"] == design["resolved_design_sha256"]
+
+
+def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
+    design = analyze(
+        REFERENCE_MODEL,
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+        },
+    ).to_dict()["resolved_design"]
+
+    assert design["strategy"] == {"id": "phara", "version": 1}
+    assert design["resolver"] == {"id": "aria-aggressive-phara", "version": 1}
+    assert design["specialization"] == {
+        "temporal_packing": 8,
+        "dense_parallelism": 4,
+    }
+    assert design["streaming"]["phara_fused_region"] == {
+        "operation_ids": ["conv2d_0", "relu_0", "max_pool2d_0"],
+        "pool_rows_per_supertile": 2,
+        "supertile_input_rows": 8,
+        "pooled_words": 42,
+        "scheduler": {
+            "id": "row-credit",
+            "version": 1,
+            "buffer_rows": 16,
+            "max_live_rows": 14,
+            "read_cycles": 32,
+        },
+        "realization": "direct",
+    }
+    assert "fuse-pool-aligned-conv-relu-maxpool" in {
+        item["id"] for item in design["executed_passes"]
+    }
