@@ -341,24 +341,26 @@ ComputePooledWidth:
     }
 }
 
-{% if phara_da %}template <class input_value_T, class conv_value_T>
-void phara_da_affine_graph(
-    input_value_T inputs[{{ phara_da.input_ids | length }}],
-    conv_value_T outputs[{{ phara_da.output_ids | length }}]
+{% if phara_affine %}template <class input_value_T, class conv_value_T>
+void phara_affine_graph(
+    input_value_T inputs[{{ phara_affine.input_ids | length }}],
+    conv_value_T outputs[{{ phara_affine.output_ids | length }}]
 ) {
     #pragma HLS INLINE
-    typedef ap_int<{{ phara_da.accumulator_width }}> accum_code_t;
-{% for input_id in phara_da.input_ids %}    ap_int<input_value_T::width> {{ input_id }}_input_code;
+    typedef ap_int<{{ phara_affine.accumulator_width }}> accum_code_t;
+{% for input_id in phara_affine.input_ids %}    ap_int<input_value_T::width> {{ input_id }}_input_code;
     {{ input_id }}_input_code.range(input_value_T::width - 1, 0) =
         inputs[{{ loop.index0 }}].range(input_value_T::width - 1, 0);
     accum_code_t {{ input_id }} = {{ input_id }}_input_code;
-{% endfor %}{% for node in phara_da.nodes %}{% if node.operation == "constant" %}    accum_code_t {{ node.id }} = {{ node.value }};
+{% endfor %}{% for node in phara_affine.nodes %}{% if node.operation == "constant" %}    accum_code_t {{ node.id }} = {{ node.value }};
+{% elif node.operation == "multiply" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} * {{ node.value }};
+    #pragma HLS BIND_OP variable={{ node.id }} op=mul impl=dsp
 {% elif node.operation == "shift" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} << {{ node.value }};
 {% elif node.operation == "add" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} + {{ node.inputs[1] }};
 {% elif node.operation == "subtract" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} - {{ node.inputs[1] }};
 {% elif node.operation == "negate" %}    accum_code_t {{ node.id }} = -{{ node.inputs[0] }};
-{% endif %}{% endfor %}{% for output_id in phara_da.output_ids %}    outputs[{{ loop.index0 }}].range({{ phara_da.accumulator_width - 1 }}, 0) =
-        {{ output_id }}.range({{ phara_da.accumulator_width - 1 }}, 0);
+{% endif %}{% endfor %}{% for output_id in phara_affine.output_ids %}    outputs[{{ loop.index0 }}].range({{ phara_affine.accumulator_width - 1 }}, 0) =
+        {{ output_id }}.range({{ phara_affine.accumulator_width - 1 }}, 0);
 {% endfor %}}
 
 template <
@@ -368,7 +370,7 @@ template <
     class activation_T,
     class res_T,
     typename CONV_CONFIG_T>
-void phara_pool_aligned_da_compute(
+void phara_pool_aligned_{{ phara_realization }}_compute(
     typename data_T::value_type row_buffer[BUFFER_ROWS][CONV_CONFIG_T::in_width],
     unsigned supertile_start,
     res_T &output,
@@ -379,21 +381,21 @@ void phara_pool_aligned_da_compute(
 ) {
     #pragma HLS INLINE
     PRAGMA_DATA_PACK(output)
-ComputeDaPooledWidth:
+ComputeAffinePooledWidth:
     for (unsigned column = 0;
          column < CONV_CONFIG_T::out_width;
          column++) {
         #pragma HLS UNROLL
-        typename data_T::value_type graph_inputs[{{ phara_da.input_ids | length }}];
-        typename conv_T::value_type graph_outputs[{{ phara_da.output_ids | length }}];
+        typename data_T::value_type graph_inputs[{{ phara_affine.input_ids | length }}];
+        typename conv_T::value_type graph_outputs[{{ phara_affine.output_ids | length }}];
         #pragma HLS ARRAY_PARTITION variable=graph_inputs complete
         #pragma HLS ARRAY_PARTITION variable=graph_outputs complete
-        for (unsigned row = 0; row < {{ phara_da.input_ids | length }}; row++) {
+        for (unsigned row = 0; row < {{ phara_affine.input_ids | length }}; row++) {
             #pragma HLS UNROLL
             graph_inputs[row] =
                 row_buffer[(supertile_start + row) % BUFFER_ROWS][column];
         }
-        phara_da_affine_graph<
+        phara_affine_graph<
             typename data_T::value_type,
             typename conv_T::value_type>(graph_inputs, graph_outputs);
         for (unsigned filter = 0;

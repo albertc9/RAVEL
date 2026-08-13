@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import hashlib
 import json
 from types import MappingProxyType
+from collections import Counter
 from collections.abc import Mapping
 from typing import Any
 
@@ -56,6 +57,15 @@ class DirectSupertileAnalysis:
 @dataclass(frozen=True)
 class DaSupertileAnalysis:
     """Multiplierless realization of one pool-aligned supertile."""
+
+    graph: AffineGraph
+    proof: AffineProof
+    summary: Mapping[str, int]
+
+
+@dataclass(frozen=True)
+class HybridSupertileAnalysis:
+    """CSD/CSE realization with selected products assigned to DSPs."""
 
     graph: AffineGraph
     proof: AffineProof
@@ -408,6 +418,38 @@ def analyze_da_parameters(
     }
 
 
+def analyze_hybrid_parameters(
+    model_facts: Mapping[str, Any],
+    parameter_payload: ParameterPayload,
+    *,
+    dsp_product_budget: int,
+) -> dict[str, Any]:
+    """Analyze and serialize a DSP-bounded PHARA affine graph."""
+
+    weight_codes, bias_codes, convolution_stride, modulus = (
+        _parameter_supertile_inputs(model_facts, parameter_payload)
+    )
+    analysis = analyze_hybrid_supertile(
+        weight_codes=weight_codes,
+        aligned_bias_codes=bias_codes,
+        convolution_stride=convolution_stride,
+        modulus=modulus,
+        dsp_product_budget=dsp_product_budget,
+    )
+    return {
+        "kind": "hybrid",
+        "policy": {"id": "phara-hybrid-csd-cse-dsp", "version": 1},
+        "graph_sha256": analysis.proof.graph_sha256,
+        "proof": {
+            "status": analysis.proof.status,
+            "identity": analysis.proof.identity,
+            "modulus": analysis.proof.modulus,
+        },
+        "graph_summary": dict(analysis.summary),
+        "graph": _graph_to_dict(analysis.graph),
+    }
+
+
 def _parameter_supertile_inputs(
     model_facts: Mapping[str, Any], parameter_payload: ParameterPayload
 ) -> tuple[tuple[tuple[int, ...], ...], tuple[int, ...], int, int]:
@@ -465,7 +507,49 @@ def analyze_da_supertile(
     convolution_stride: int,
     modulus: int,
 ) -> DaSupertileAnalysis:
-    """Build and prove a CSD realization with deterministic product sharing."""
+    """Build and prove a multiplierless CSD/CSE realization."""
+
+    graph, proof, summary = _analyze_csd_supertile(
+        weight_codes=weight_codes,
+        aligned_bias_codes=aligned_bias_codes,
+        convolution_stride=convolution_stride,
+        modulus=modulus,
+        dsp_product_budget=0,
+    )
+    return DaSupertileAnalysis(graph, proof, summary)
+
+
+def analyze_hybrid_supertile(
+    *,
+    weight_codes: tuple[tuple[int, ...], ...],
+    aligned_bias_codes: tuple[int, ...],
+    convolution_stride: int,
+    modulus: int,
+    dsp_product_budget: int,
+) -> HybridSupertileAnalysis:
+    """Build and prove a DSP-bounded CSD/CSE realization."""
+
+    if dsp_product_budget < 0:
+        raise ValueError("PHARA hybrid DSP product budget must be non-negative")
+    graph, proof, summary = _analyze_csd_supertile(
+        weight_codes=weight_codes,
+        aligned_bias_codes=aligned_bias_codes,
+        convolution_stride=convolution_stride,
+        modulus=modulus,
+        dsp_product_budget=dsp_product_budget,
+    )
+    return HybridSupertileAnalysis(graph, proof, summary)
+
+
+def _analyze_csd_supertile(
+    *,
+    weight_codes: tuple[tuple[int, ...], ...],
+    aligned_bias_codes: tuple[int, ...],
+    convolution_stride: int,
+    modulus: int,
+    dsp_product_budget: int,
+) -> tuple[AffineGraph, AffineProof, Mapping[str, int]]:
+    """Build the shared affine graph used by DA and hybrid realizations."""
 
     kernel_rows = len(weight_codes)
     filter_lanes = len(aligned_bias_codes)
@@ -481,6 +565,34 @@ def analyze_da_supertile(
     reference = []
     product_uses = 0
     shared_pair_uses = 0
+    product_demands: Counter[tuple[str, int]] = Counter()
+    for convolution_row in range(convolution_rows):
+        input_offset = convolution_row * convolution_stride
+        for filter_lane in range(filter_lanes):
+            for kernel_row in range(kernel_rows):
+                coefficient = _centered_code(
+                    weight_codes[kernel_row][filter_lane], modulus
+                )
+                if coefficient:
+                    product_demands[
+                        (input_ids[input_offset + kernel_row], coefficient)
+                    ] += 1
+    dsp_products = {
+        product
+        for product in sorted(
+            (
+                product
+                for product in product_demands
+                if len(_canonical_signed_digits(product[1])) - 1 >= 2
+            ),
+            key=lambda product: (
+                -(len(_canonical_signed_digits(product[1])) - 1),
+                -product_demands[product],
+                product[0],
+                product[1],
+            ),
+        )[:dsp_product_budget]
+    }
 
     def combine(operation: str, left: str, right: str, node_id: str) -> str:
         nonlocal shared_pair_uses
@@ -514,6 +626,18 @@ def analyze_da_supertile(
         key = (input_id, coefficient)
         if key in product_nodes:
             return product_nodes[key]
+        if key in dsp_products:
+            node_id = f"{input_id}_c{coefficient}_dsp"
+            nodes.append(
+                AffineNode(
+                    id=node_id,
+                    operation="multiply",
+                    inputs=(input_id,),
+                    value=coefficient,
+                )
+            )
+            product_nodes[key] = node_id
+            return node_id
         digits = _canonical_signed_digits(coefficient)
         positive = [shifted(input_id, shift) for shift, sign in digits if sign > 0]
         negative = [shifted(input_id, shift) for shift, sign in digits if sign < 0]
@@ -612,7 +736,7 @@ def analyze_da_supertile(
 
     graph = AffineGraph(input_ids, tuple(nodes), tuple(output_ids), modulus)
     proof = prove_equivalent(graph, tuple(reference))
-    operations = ("shift", "add", "subtract", "negate", "constant")
+    operations = ("shift", "add", "subtract", "negate", "constant", "multiply")
     operation_counts = {
         operation: sum(node.operation == operation for node in graph.nodes)
         for operation in operations
@@ -628,27 +752,32 @@ def analyze_da_supertile(
             fanout[input_id] = fanout.get(input_id, 0) + 1
     for output_id in graph.output_ids:
         fanout[output_id] = fanout.get(output_id, 0) + 1
-    return DaSupertileAnalysis(
-        graph=graph,
-        proof=proof,
-        summary=MappingProxyType(
+    summary = {
+        "input_rows": input_rows,
+        "convolution_rows": convolution_rows,
+        "filter_lanes": filter_lanes,
+        "output_values": len(output_ids),
+        "shift_nodes": operation_counts["shift"],
+        "add_nodes": operation_counts["add"],
+        "subtract_nodes": operation_counts["subtract"],
+        "negate_nodes": operation_counts["negate"],
+        "constant_nodes": operation_counts["constant"],
+        "depth": max(depths[output_id] for output_id in graph.output_ids),
+        "max_fanout": max(fanout.values()),
+        "shared_product_uses": product_uses - len(product_nodes),
+        "shared_pair_uses": shared_pair_uses,
+    }
+    if dsp_product_budget:
+        summary.update(
             {
-                "input_rows": input_rows,
-                "convolution_rows": convolution_rows,
-                "filter_lanes": filter_lanes,
-                "output_values": len(output_ids),
-                "shift_nodes": operation_counts["shift"],
-                "add_nodes": operation_counts["add"],
-                "subtract_nodes": operation_counts["subtract"],
-                "negate_nodes": operation_counts["negate"],
-                "constant_nodes": operation_counts["constant"],
-                "depth": max(depths[output_id] for output_id in graph.output_ids),
-                "max_fanout": max(fanout.values()),
-                "shared_product_uses": product_uses - len(product_nodes),
-                "shared_pair_uses": shared_pair_uses,
+                "multiply_nodes": operation_counts["multiply"],
+                "dsp_product_budget": dsp_product_budget,
+                "dsp_product_uses": sum(
+                    product_demands[product] for product in dsp_products
+                ),
             }
-        ),
-    )
+        )
+    return graph, proof, MappingProxyType(summary)
 
 
 def _canonical_signed_digits(value: int) -> tuple[tuple[int, int], ...]:

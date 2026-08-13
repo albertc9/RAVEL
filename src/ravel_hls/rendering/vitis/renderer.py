@@ -47,20 +47,21 @@ def render_aria_project(
         )
     phara = plan.get("phara")
     coefficient_realization = resolved_design.get("coefficient_realization")
-    phara_da = None
-    if phara is not None and phara["realization"] == "da":
+    phara_affine = None
+    if phara is not None and phara["realization"] in {"da", "hybrid"}:
+        realization_kind = phara["realization"]
         if (
             not isinstance(coefficient_realization, Mapping)
-            or coefficient_realization.get("kind") != "da"
+            or coefficient_realization.get("kind") != realization_kind
         ):
             raise ProjectGenerationError(
-                "PHARA DA rendering requires a proven DA coefficient realization"
+                f"PHARA {realization_kind} rendering requires its coefficient realization"
             )
         if coefficient_realization.get("proof", {}).get("status") != "proven":
             raise ProjectGenerationError(
-                "PHARA DA rendering requires a proven affine graph"
+                f"PHARA {realization_kind} rendering requires a proven affine graph"
             )
-        phara_da = _phara_da_context(coefficient_realization)
+        phara_affine = _phara_affine_context(coefficient_realization)
 
     firmware = project_path / "firmware"
     defines_path = firmware / "defines.h"
@@ -117,7 +118,7 @@ def render_aria_project(
         "dense_packed": dense_packed,
         "dense_bias": _weight_context(parameters["dense_0:bias"]),
         "phara": phara,
-        "phara_da": phara_da,
+        "phara_affine": phara_affine,
         "phara_realization": phara["realization"] if phara is not None else None,
         "phara_function": (
             rendering.get(
@@ -154,10 +155,10 @@ def render_aria_project(
     return sorted(outputs)
 
 
-def _phara_da_context(realization: Mapping[str, Any]) -> dict[str, Any]:
+def _phara_affine_context(realization: Mapping[str, Any]) -> dict[str, Any]:
     graph = realization.get("graph")
     if not isinstance(graph, Mapping):
-        raise ProjectGenerationError("PHARA DA realization is missing its graph")
+        raise ProjectGenerationError("PHARA affine realization is missing its graph")
     identifiers = {
         identifier: _cpp_identifier(identifier)
         for identifier in (

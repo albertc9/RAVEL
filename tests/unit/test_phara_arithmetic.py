@@ -4,6 +4,7 @@ from ravel_hls.analysis.phara import (
     AffineProof,
     analyze_da_supertile,
     analyze_direct_supertile,
+    analyze_hybrid_supertile,
     evaluate,
     prove_equivalent,
 )
@@ -219,4 +220,40 @@ def test_phara_da_normalizes_modular_codes_before_csd() -> None:
         "max_fanout": 1,
         "shared_product_uses": 0,
         "shared_pair_uses": 0,
+    }
+
+
+def test_phara_hybrid_assigns_only_high_cost_products_to_its_dsp_budget() -> None:
+    analysis = analyze_hybrid_supertile(
+        weight_codes=((21, 1),),
+        aligned_bias_codes=(0, 0),
+        convolution_stride=3,
+        modulus=256,
+        dsp_product_budget=2,
+    )
+
+    assert analysis.proof.status == "proven"
+    assert analysis.proof.reference_coefficients == (
+        (21, 0, 0, 0, 0),
+        (1, 0, 0, 0, 0),
+        (0, 0, 0, 21, 0),
+        (0, 0, 0, 1, 0),
+    )
+    assert analysis.summary == {
+        "input_rows": 4,
+        "convolution_rows": 2,
+        "filter_lanes": 2,
+        "output_values": 4,
+        "shift_nodes": 0,
+        "add_nodes": 0,
+        "subtract_nodes": 0,
+        "negate_nodes": 0,
+        "constant_nodes": 0,
+        "depth": 1,
+        "max_fanout": 2,
+        "shared_product_uses": 0,
+        "shared_pair_uses": 0,
+        "multiply_nodes": 2,
+        "dsp_product_budget": 2,
+        "dsp_product_uses": 2,
     }
