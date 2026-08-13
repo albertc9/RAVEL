@@ -341,6 +341,83 @@ ComputePooledWidth:
     }
 }
 
+{% if phara_da %}template <class input_value_T, class conv_value_T>
+void phara_da_affine_graph(
+    input_value_T inputs[{{ phara_da.input_ids | length }}],
+    conv_value_T outputs[{{ phara_da.output_ids | length }}]
+) {
+    #pragma HLS INLINE
+    typedef ap_int<{{ phara_da.accumulator_width }}> accum_code_t;
+{% for input_id in phara_da.input_ids %}    ap_int<input_value_T::width> {{ input_id }}_input_code;
+    {{ input_id }}_input_code.range(input_value_T::width - 1, 0) =
+        inputs[{{ loop.index0 }}].range(input_value_T::width - 1, 0);
+    accum_code_t {{ input_id }} = {{ input_id }}_input_code;
+{% endfor %}{% for node in phara_da.nodes %}{% if node.operation == "constant" %}    accum_code_t {{ node.id }} = {{ node.value }};
+{% elif node.operation == "shift" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} << {{ node.value }};
+{% elif node.operation == "add" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} + {{ node.inputs[1] }};
+{% elif node.operation == "subtract" %}    accum_code_t {{ node.id }} = {{ node.inputs[0] }} - {{ node.inputs[1] }};
+{% elif node.operation == "negate" %}    accum_code_t {{ node.id }} = -{{ node.inputs[0] }};
+{% endif %}{% endfor %}{% for output_id in phara_da.output_ids %}    outputs[{{ loop.index0 }}].range({{ phara_da.accumulator_width - 1 }}, 0) =
+        {{ output_id }}.range({{ phara_da.accumulator_width - 1 }}, 0);
+{% endfor %}}
+
+template <
+    unsigned BUFFER_ROWS,
+    class data_T,
+    class conv_T,
+    class activation_T,
+    class res_T,
+    typename CONV_CONFIG_T>
+void phara_pool_aligned_da_compute(
+    typename data_T::value_type row_buffer[BUFFER_ROWS][CONV_CONFIG_T::in_width],
+    unsigned supertile_start,
+    res_T &output,
+    typename CONV_CONFIG_T::weight_t weights[
+        CONV_CONFIG_T::filt_height * CONV_CONFIG_T::filt_width *
+        CONV_CONFIG_T::n_chan * CONV_CONFIG_T::n_filt],
+    typename CONV_CONFIG_T::bias_t biases[CONV_CONFIG_T::n_filt]
+) {
+    #pragma HLS INLINE
+    PRAGMA_DATA_PACK(output)
+ComputeDaPooledWidth:
+    for (unsigned column = 0;
+         column < CONV_CONFIG_T::out_width;
+         column++) {
+        #pragma HLS UNROLL
+        typename data_T::value_type graph_inputs[{{ phara_da.input_ids | length }}];
+        typename conv_T::value_type graph_outputs[{{ phara_da.output_ids | length }}];
+        #pragma HLS ARRAY_PARTITION variable=graph_inputs complete
+        #pragma HLS ARRAY_PARTITION variable=graph_outputs complete
+        for (unsigned row = 0; row < {{ phara_da.input_ids | length }}; row++) {
+            #pragma HLS UNROLL
+            graph_inputs[row] =
+                row_buffer[(supertile_start + row) % BUFFER_ROWS][column];
+        }
+        phara_da_affine_graph<
+            typename data_T::value_type,
+            typename conv_T::value_type>(graph_inputs, graph_outputs);
+        for (unsigned filter = 0;
+             filter < CONV_CONFIG_T::n_filt;
+             filter++) {
+            #pragma HLS UNROLL
+            typename activation_T::value_type first_activation =
+                graph_outputs[filter] > 0
+                    ? (typename activation_T::value_type)graph_outputs[filter]
+                    : (typename activation_T::value_type)0;
+            typename activation_T::value_type second_activation =
+                graph_outputs[CONV_CONFIG_T::n_filt + filter] > 0
+                    ? (typename activation_T::value_type)
+                        graph_outputs[CONV_CONFIG_T::n_filt + filter]
+                    : (typename activation_T::value_type)0;
+            output[column * CONV_CONFIG_T::n_filt + filter] =
+                first_activation > second_activation
+                    ? first_activation
+                    : second_activation;
+        }
+    }
+}
+{% endif %}
+
 template <
     class data_T,
     class conv_T,
@@ -348,7 +425,7 @@ template <
     class res_T,
     typename CONV_CONFIG_T,
     typename POOL_CONFIG_T>
-void phara_pool_aligned_direct_p4_cl(
+void phara_pool_aligned_{{ phara_realization }}_p4_cl(
     hls::stream<data_T> &data,
     hls::stream<res_T> &res,
     typename CONV_CONFIG_T::weight_t weights[
@@ -412,7 +489,7 @@ ReadP4Words:
             const unsigned supertile_start =
                 next_pool * POOL_CONFIG_T::pool_height *
                 CONV_CONFIG_T::stride_height;
-            phara_pool_aligned_direct_compute<
+            phara_pool_aligned_{{ phara_realization }}_compute<
                 BUFFER_ROWS, data_T, conv_T, activation_T, res_T,
                 CONV_CONFIG_T>(
                     row_buffer, supertile_start, output, weights, biases);
@@ -429,7 +506,7 @@ template <
     class res_T,
     typename CONV_CONFIG_T,
     typename POOL_CONFIG_T>
-void phara_pool_aligned_direct_p8_cl(
+void phara_pool_aligned_{{ phara_realization }}_p8_cl(
     hls::stream<data_T> &data,
     hls::stream<res_T> &res,
     typename CONV_CONFIG_T::weight_t weights[
@@ -496,7 +573,7 @@ ProduceP8Words:
             input_words++;
         }
         res_T output;
-        phara_pool_aligned_direct_compute<
+        phara_pool_aligned_{{ phara_realization }}_compute<
             BUFFER_ROWS, data_T, conv_T, activation_T, res_T,
             CONV_CONFIG_T>(
                 row_buffer, supertile_start, output, weights, biases);

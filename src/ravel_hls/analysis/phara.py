@@ -358,6 +358,59 @@ def analyze_direct_parameters(
 ) -> dict[str, Any]:
     """Analyze the selected direct realization from extracted model parameters."""
 
+    weight_codes, bias_codes, convolution_stride, modulus = (
+        _parameter_supertile_inputs(model_facts, parameter_payload)
+    )
+    analysis = analyze_direct_supertile(
+        weight_codes=weight_codes,
+        aligned_bias_codes=bias_codes,
+        convolution_stride=convolution_stride,
+        modulus=modulus,
+    )
+    return {
+        "kind": "direct",
+        "policy": {"id": "phara-direct", "version": 1},
+        "graph_sha256": analysis.proof.graph_sha256,
+        "proof": {
+            "status": analysis.proof.status,
+            "identity": analysis.proof.identity,
+            "modulus": analysis.proof.modulus,
+        },
+        "graph_summary": dict(analysis.summary),
+    }
+
+
+def analyze_da_parameters(
+    model_facts: Mapping[str, Any], parameter_payload: ParameterPayload
+) -> dict[str, Any]:
+    """Analyze and serialize the coefficient-specific PHARA DA graph."""
+
+    weight_codes, bias_codes, convolution_stride, modulus = (
+        _parameter_supertile_inputs(model_facts, parameter_payload)
+    )
+    analysis = analyze_da_supertile(
+        weight_codes=weight_codes,
+        aligned_bias_codes=bias_codes,
+        convolution_stride=convolution_stride,
+        modulus=modulus,
+    )
+    return {
+        "kind": "da",
+        "policy": {"id": "phara-da-csd-cse", "version": 1},
+        "graph_sha256": analysis.proof.graph_sha256,
+        "proof": {
+            "status": analysis.proof.status,
+            "identity": analysis.proof.identity,
+            "modulus": analysis.proof.modulus,
+        },
+        "graph_summary": dict(analysis.summary),
+        "graph": _graph_to_dict(analysis.graph),
+    }
+
+
+def _parameter_supertile_inputs(
+    model_facts: Mapping[str, Any], parameter_payload: ParameterPayload
+) -> tuple[tuple[tuple[int, ...], ...], tuple[int, ...], int, int]:
     operations = {
         operation["id"]: operation for operation in model_facts["operations"]
     }
@@ -380,22 +433,28 @@ def analyze_direct_parameters(
     bias_codes = np.rint(
         np.asarray(bias.values) * (2**accumulator_fractional)
     ).astype(np.int64)
-    analysis = analyze_direct_supertile(
-        weight_codes=tuple(tuple(int(value) for value in row) for row in weight_codes),
-        aligned_bias_codes=tuple(int(value) for value in bias_codes),
-        convolution_stride=convolution["attributes"]["stride_height"],
-        modulus=1 << accumulator_type["width"],
+    return (
+        tuple(tuple(int(value) for value in row) for row in weight_codes),
+        tuple(int(value) for value in bias_codes),
+        convolution["attributes"]["stride_height"],
+        1 << accumulator_type["width"],
     )
+
+
+def _graph_to_dict(graph: AffineGraph) -> dict[str, Any]:
     return {
-        "kind": "direct",
-        "policy": {"id": "phara-direct", "version": 1},
-        "graph_sha256": analysis.proof.graph_sha256,
-        "proof": {
-            "status": analysis.proof.status,
-            "identity": analysis.proof.identity,
-            "modulus": analysis.proof.modulus,
-        },
-        "graph_summary": dict(analysis.summary),
+        "input_ids": list(graph.input_ids),
+        "nodes": [
+            {
+                "id": node.id,
+                "operation": node.operation,
+                "inputs": list(node.inputs),
+                "value": node.value,
+            }
+            for node in graph.nodes
+        ],
+        "output_ids": list(graph.output_ids),
+        "modulus": graph.modulus,
     }
 
 

@@ -45,6 +45,22 @@ def render_aria_project(
         dense_packed = _packed_weight_context(
             parameters["dense_0:weight"], weight_delivery
         )
+    phara = plan.get("phara")
+    coefficient_realization = resolved_design.get("coefficient_realization")
+    phara_da = None
+    if phara is not None and phara["realization"] == "da":
+        if (
+            not isinstance(coefficient_realization, Mapping)
+            or coefficient_realization.get("kind") != "da"
+        ):
+            raise ProjectGenerationError(
+                "PHARA DA rendering requires a proven DA coefficient realization"
+            )
+        if coefficient_realization.get("proof", {}).get("status") != "proven":
+            raise ProjectGenerationError(
+                "PHARA DA rendering requires a proven affine graph"
+            )
+        phara_da = _phara_da_context(coefficient_realization)
 
     firmware = project_path / "firmware"
     defines_path = firmware / "defines.h"
@@ -100,10 +116,15 @@ def render_aria_project(
         "dense_weight": _weight_context(parameters["dense_0:weight"]),
         "dense_packed": dense_packed,
         "dense_bias": _weight_context(parameters["dense_0:bias"]),
-        "phara": plan.get("phara"),
+        "phara": phara,
+        "phara_da": phara_da,
+        "phara_realization": phara["realization"] if phara is not None else None,
         "phara_function": (
-            f"phara_pool_aligned_direct_p{temporal_pack}_cl"
-            if plan.get("phara") is not None
+            rendering.get(
+                "phara_fused_function",
+                f"phara_pool_aligned_{phara['realization']}_p{temporal_pack}_cl",
+            )
+            if phara is not None
             else None
         ),
         "baseline_defines_body": defines_body.rstrip(),
@@ -131,6 +152,39 @@ def render_aria_project(
             environment.get_template(template_name).render(**context), encoding="utf-8"
         )
     return sorted(outputs)
+
+
+def _phara_da_context(realization: Mapping[str, Any]) -> dict[str, Any]:
+    graph = realization.get("graph")
+    if not isinstance(graph, Mapping):
+        raise ProjectGenerationError("PHARA DA realization is missing its graph")
+    identifiers = {
+        identifier: _cpp_identifier(identifier)
+        for identifier in (
+            *graph["input_ids"],
+            *(node["id"] for node in graph["nodes"]),
+        )
+    }
+    return {
+        "accumulator_width": int(graph["modulus"]).bit_length() - 1,
+        "input_ids": [identifiers[identifier] for identifier in graph["input_ids"]],
+        "nodes": [
+            {
+                **node,
+                "id": identifiers[node["id"]],
+                "inputs": [identifiers[identifier] for identifier in node["inputs"]],
+            }
+            for node in graph["nodes"]
+        ],
+        "output_ids": [identifiers[identifier] for identifier in graph["output_ids"]],
+    }
+
+
+def _cpp_identifier(identifier: str) -> str:
+    return "phara_" + "".join(
+        character if character.isalnum() else f"_{ord(character):02x}_"
+        for character in identifier
+    )
 
 
 def _weight_context(parameter: ParameterTensor) -> dict[str, Any]:

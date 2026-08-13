@@ -341,12 +341,13 @@ def _rendering_contract(
         "first_convolution_function": (
             f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
         ),
-        "dense_function": "dense_wide_stream",
     }
     if "phara" in implementation_plan:
+        realization = implementation_plan["phara"]["realization"]
         contract["phara_fused_function"] = (
-            f"phara_pool_aligned_direct_p{temporal_pack}_cl"
+            f"phara_pool_aligned_{realization}_p{temporal_pack}_cl"
         )
+        contract["dense_function"] = "dense_wide_stream"
     return contract
 
 
