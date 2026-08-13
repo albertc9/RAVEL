@@ -29,27 +29,46 @@ def file_sha256(path: Path) -> str:
 def architecture_contract_sha256(model_analysis: dict[str, Any]) -> str:
     """Hash the architecture-preserving refresh boundary without parameters."""
 
+    return canonical_sha256(build_architecture_envelope(model_analysis))
+
+
+def build_architecture_envelope(
+    model_analysis: dict[str, Any],
+) -> dict[str, Any]:
+    """Return the refresh-stable architecture identity for one resolved design."""
+
     design = model_analysis["resolved_design"]
-    return canonical_sha256(
-        {
-            "generation": model_analysis["generation"],
-            "model_family": model_analysis["model_family"],
-            "model_structure_sha256": model_analysis["fingerprints"][
-                "model_structure_sha256"
-            ],
-            "strategy": design["strategy"],
-            "resolver": design["resolver"],
-            "implementation_plan": design["implementation_plan"],
-            "interfaces": design["interfaces"],
-            "parameter_bindings": [
-                {
-                    "id": binding["id"],
-                    "descriptor": binding["descriptor"],
-                }
-                for binding in design["parameter_bindings"]
-            ],
-        }
-    )
+    return {
+        "schema_version": 1,
+        "generation": model_analysis["generation"],
+        "model_family": model_analysis["model_family"],
+        "model_structure_sha256": model_analysis["fingerprints"][
+            "model_structure_sha256"
+        ],
+        "strategy": design["strategy"],
+        "resolver": design["resolver"],
+        "specialization": design["specialization"],
+        "implementation_plan": design["implementation_plan"],
+        "interfaces": design["interfaces"],
+        "streaming": design["streaming"],
+        "rendering": design["rendering"],
+        "parameter_bindings": [
+            {
+                "id": binding["id"],
+                "descriptor": binding["descriptor"],
+            }
+            for binding in design["parameter_bindings"]
+        ],
+        "passes": [
+            {
+                "id": item["id"],
+                "version": item["version"],
+                "order": item["order"],
+                "result": item["result"],
+            }
+            for item in design["executed_passes"]
+        ],
+    }
 
 
 def build_generation_manifest(
@@ -118,9 +137,18 @@ def build_generation_manifest(
         "generation": model_analysis["generation"],
         "model_family": model_analysis["model_family"],
     }
-    architecture_contract = architecture_contract_sha256(model_analysis)
+    architecture_envelope = build_architecture_envelope(model_analysis)
+    architecture_contract = canonical_sha256(architecture_envelope)
+    coefficient_realization = model_analysis["resolved_design"].get(
+        "coefficient_realization"
+    )
+    coefficient_realization_sha256 = (
+        canonical_sha256(coefficient_realization)
+        if coefficient_realization is not None
+        else None
+    )
     manifest = {
-        "schema_version": 4,
+        "schema_version": 5,
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
@@ -162,6 +190,10 @@ def build_generation_manifest(
         "source_closure": source_closure,
         "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,
+        "architecture_envelope": architecture_envelope,
+        "architecture_envelope_sha256": architecture_contract,
+        "coefficient_realization": coefficient_realization,
+        "coefficient_realization_sha256": coefficient_realization_sha256,
     }
     manifest["resolved_design"] = model_analysis["resolved_design"]
     manifest["architecture_contract_sha256"] = architecture_contract

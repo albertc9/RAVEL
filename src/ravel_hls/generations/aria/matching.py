@@ -223,16 +223,23 @@ def evaluate_aria_wide_stream(
             observed=convolution[field],
             message=f"Aria streaming convolution does not support {field}={convolution[field]}",
         )
-    if temporal_pack == 4:
+    if temporal_pack in {4, 8}:
+        geometry_code = (
+            "strategy.geometry.phara"
+            if temporal_pack == 8
+            else "strategy.geometry.p4"
+        )
         for field, expected in {"filt_height": 5, "stride_height": 3}.items():
             require(
                 convolution[field] == expected,
-                code="strategy.geometry.p4",
+                code=geometry_code,
                 operation_id="conv2d_0",
                 field=field,
                 expected=expected,
                 observed=convolution[field],
-                message=f"Aria P4 requires Conv2D {field}={expected}",
+                message=(
+                    f"Aria P{temporal_pack} requires Conv2D {field}={expected}"
+                ),
             )
     else:
         require(

@@ -94,8 +94,8 @@ def test_retrained_models_share_a_family_while_exposing_learned_numeric_types() 
         },
     }
     assert wide_input["numeric_type"]["width"] == 11
-    assert narrow["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 128
-    assert wide["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
+    assert narrow["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
+    assert wide["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 512
     assert (
         narrow["fingerprints"]["model_structure_sha256"]
         != wide["fingerprints"]["model_structure_sha256"]
@@ -187,7 +187,7 @@ def test_model_analysis_exposes_read_only_public_properties() -> None:
     assert analysis.model_family == {"id": "hgq-conv-pool-dense", "version": 1}
     assert analysis.findings == ()
     assert analysis.model_facts["operations"][0]["id"] == "input_0"
-    assert analysis.resolved_design["specialization"]["temporal_packing"] == 4
+    assert analysis.resolved_design["specialization"]["temporal_packing"] == 8
     with pytest.raises(TypeError):
         analysis.model_facts["schema_version"] = 99
 
@@ -246,7 +246,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     }
     assert report["applicability"]["status"] == "unsupported"
     assert report["resolved_design"] is None
-    assert "strategy.geometry.p4" in {
+    assert "strategy.geometry.phara" in {
         finding["code"] for finding in report["applicability"]["findings"]
     }
 
@@ -255,7 +255,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     ("optimization", "message"),
     [
         ({"TemporalPacking": 3}, "TemporalPacking"),
-        ({"DenseParallelism": 4}, "DenseParallelism"),
+        ({"DenseParallelism": 5}, "DenseParallelism"),
         ({"Unknown": 1}, "Optimization.Unknown"),
     ],
 )
@@ -325,7 +325,13 @@ def test_retrained_model_analysis_matches_its_reviewed_snapshot(
 
     report = analyze(
         model_path,
-        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {
+                "TemporalPacking": 4,
+                "DenseParallelism": 2,
+            },
+        },
     ).to_dict()
     snapshot_path = SNAPSHOT_ROOT / f"{model_path.parent.name}.json"
 
@@ -367,3 +373,64 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         for previous, current in zip(passes, passes[1:])
     )
     assert passes[-1]["output_design_sha256"] == design["resolved_design_sha256"]
+
+
+def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
+    design = analyze(
+        REFERENCE_MODEL,
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+        },
+    ).to_dict()["resolved_design"]
+
+    assert design["strategy"] == {"id": "phara", "version": 1}
+    assert design["resolver"] == {"id": "aria-aggressive-phara", "version": 1}
+    assert design["specialization"] == {
+        "temporal_packing": 8,
+        "dense_parallelism": 4,
+    }
+    assert design["streaming"]["phara_fused_region"] == {
+        "operation_ids": ["conv2d_0", "relu_0", "max_pool2d_0"],
+        "pool_rows_per_supertile": 2,
+        "supertile_input_rows": 8,
+        "pooled_words": 42,
+        "scheduler": {
+            "id": "row-credit",
+            "version": 1,
+            "buffer_rows": 16,
+            "max_live_rows": 14,
+            "read_cycles": 32,
+        },
+        "realization": "hybrid",
+    }
+    assert "fuse-pool-aligned-conv-relu-maxpool" in {
+        item["id"] for item in design["executed_passes"]
+    }
+    realization = design["coefficient_realization"]
+    assert realization["kind"] == "hybrid"
+    assert realization["policy"] == {
+        "id": "phara-hybrid-csd-cse-dsp",
+        "version": 1,
+    }
+    assert realization["proof"]["status"] == "proven"
+    assert len(realization["proof"]["identity"]) == 64
+    assert len(realization["graph_sha256"]) == 64
+    assert realization["graph_summary"] == {
+        "input_rows": 8,
+        "convolution_rows": 2,
+        "filter_lanes": 7,
+        "output_values": 14,
+        "shift_nodes": 28,
+        "add_nodes": 78,
+        "subtract_nodes": 19,
+        "negate_nodes": 13,
+        "constant_nodes": 6,
+        "depth": 7,
+        "max_fanout": 11,
+        "shared_product_uses": 5,
+        "shared_pair_uses": 1,
+        "multiply_nodes": 14,
+        "dsp_product_budget": 16,
+        "dsp_product_uses": 14,
+    }

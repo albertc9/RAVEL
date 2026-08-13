@@ -11,6 +11,11 @@ from types import MappingProxyType
 from typing import Any
 
 from ..analysis.dense import analyze_dense_facts
+from ..analysis.phara import (
+    PHARA_HYBRID_DSP_PRODUCT_BUDGET,
+    analyze_direct_parameters,
+    analyze_hybrid_parameters,
+)
 from ..compatibility.dependencies import inspect_dependencies
 from ..config import validate_public_config
 from ..domain import ParameterPayload, ParameterTensor
@@ -170,7 +175,10 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     if model_family is not None:
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
-        strategy = generation.strategy("aria-wide-stream", 2)
+        strategy = generation.strategy(
+            "phara" if "phara" in plan else "aria-wide-stream",
+            1 if "phara" in plan else 2,
+        )
         strategy_findings = strategy.evaluate(
             model_facts["operations"], choices, plan
         )
@@ -181,6 +189,17 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             }
         else:
             interface = _predicted_interface(model_facts, plan)
+            coefficient_realization = None
+            if "phara" in plan:
+                coefficient_realization = (
+                    analyze_hybrid_parameters(
+                        model_facts,
+                        parameter_payload,
+                        dsp_product_budget=PHARA_HYBRID_DSP_PRODUCT_BUDGET,
+                    )
+                    if plan["phara"]["realization"] == "hybrid"
+                    else analyze_direct_parameters(model_facts, parameter_payload)
+                )
             resolved_design = generation.resolver.resolve(
                 model_facts=model_facts,
                 implementation_plan=plan,
@@ -189,6 +208,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
                     model_facts, parameter_payload
                 ),
                 rendering=_rendering_contract(layers, plan),
+                coefficient_realization=coefficient_realization,
             )
     analysis = ModelAnalysis._from_report(
         {
@@ -303,7 +323,7 @@ def _rendering_contract(
         operations[operation_id] = operation
     temporal_pack = implementation_plan["temporal_pack"]
     width_lanes = implementation_plan["width_lanes"]
-    return {
+    contract = {
         "operations": operations,
         "types": {
             "input_wide": _wide_type_name(
@@ -332,6 +352,13 @@ def _rendering_contract(
             f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
         ),
     }
+    if "phara" in implementation_plan:
+        realization = implementation_plan["phara"]["realization"]
+        contract["phara_fused_function"] = (
+            f"phara_pool_aligned_{realization}_p{temporal_pack}_cl"
+        )
+        contract["dense_function"] = "dense_wide_stream"
+    return contract
 
 
 def _wide_type_name(type_name: str, suffix: str) -> str:

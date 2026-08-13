@@ -147,14 +147,14 @@ def refresh(
     *,
     verification_inputs: Any | None = None,
 ) -> RavelProject:
-    """Atomically refresh a schema-v4 project without changing its architecture."""
+    """Atomically refresh a schema-v5 project without changing its architecture."""
 
     from .analysis.model import _analyze_model, analyze
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") != 4:
+    if project_view.manifest.get("schema_version") != 5:
         raise CompatibilityError(
-            "Aria 1.5 refresh requires a schema-v4 generated project"
+            "PHARA refresh requires a schema-v5 generated project"
         )
     if isinstance(model_or_parameters, Parameters):
         config = _refresh_configuration(project_view)

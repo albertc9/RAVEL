@@ -10,9 +10,9 @@ specialization. Vendor tools may or may not have run.
 - `ravel_config.yml` is the normalized RAVEL configuration, including the
   resolved `Optimization` section. Its
   published output directory is also `.`.
-- `ravel_manifest.json` is the immutable schema-v4 generation record.
-- `ravel_qualification.json` is optional schema-v3 measured Vitis evidence;
-  schema-v2 records from earlier Aria releases remain readable.
+- `ravel_manifest.json` is the immutable schema-v5 generation record.
+- `ravel_qualification.json` is optional schema-v4 measured Vitis evidence;
+  earlier supported records remain readable.
 - `build_opt.tcl` contains explicit Vitis stage booleans.
 
 Published records contain no original source filename, username, hostname, or
@@ -28,6 +28,10 @@ integrity and the ability to open, refresh, link, and build it.
 - `configuration_sha256` identifies normalized generation-affecting settings.
 - `implementation_sha256` identifies the resolved plan, passes, templates, and
   compatibility profile.
+- `architecture_envelope_sha256` identifies the PHARA rate, interface,
+  arithmetic, graph-bound, buffer, and scheduling contract.
+- `coefficient_realization_sha256` identifies the generated arithmetic graph
+  and its modular proof for the current coefficients.
 - `generation_fingerprint` combines the semantic, configuration, and
   implementation identities.
 - `source_closure_sha256` identifies the bounded list of published source,
@@ -51,6 +55,9 @@ tool version, part, target clock, measured timing/performance/resources, RTL
 ports, requested RTL CoSim status, and report-file hashes. When CoSim is
 selected, a qualification record is not written unless the top-level Verilog
 report says `Pass`; that report is included in the evidence hash closure.
+PHARA records also bind the fused-region, Dense wrapper, and Dense pipeline
+reports. Vivado implementation and board evidence remain separate from this
+Vitis qualification record.
 Foreign or edited evidence is `stale`. Recorded measurements have no universal
 performance pass/fail threshold.
 

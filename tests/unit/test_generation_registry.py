@@ -22,7 +22,8 @@ def test_aria_generation_declares_its_complete_builtin_extension_boundary() -> N
         "hgq-conv-pool-dense"
     ]
     assert [strategy.id for strategy in generation.strategies] == [
-        "aria-wide-stream"
+        "aria-wide-stream",
+        "phara",
     ]
     assert generation.strategies[0].version == 2
     assert generation.resolver.id == "aria-explicit-pd"
@@ -35,6 +36,8 @@ def test_aria_generation_declares_its_complete_builtin_extension_boundary() -> N
         "stream-flatten-into-dense",
         "bind-shallow-internal-fifos",
         "elide-dataflow-start-propagation",
+        "fuse-pool-aligned-conv-relu-maxpool",
+        "preserve-phara-dataflow-start-propagation",
     ]
     assert [(item.backend, item.io_type) for item in generation.backends] == [
         ("Vitis", "io_stream")

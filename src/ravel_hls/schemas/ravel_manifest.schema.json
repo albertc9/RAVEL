@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_manifest.schema.json",
-  "title": "RAVEL Aria 1.5.1 generation manifest",
+  "title": "RAVEL Aria generation manifest schema v5",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,10 +23,14 @@
     "source_closure_sha256",
     "generation_fingerprint",
     "resolved_design",
-    "architecture_contract_sha256"
+    "architecture_contract_sha256",
+    "architecture_envelope",
+    "architecture_envelope_sha256",
+    "coefficient_realization",
+    "coefficient_realization_sha256"
   ],
   "properties": {
-    "schema_version": {"const": 4},
+    "schema_version": {"const": 5},
     "ravel": {
       "type": "object",
       "required": ["product", "generation", "release", "package_version"],
@@ -103,7 +107,37 @@
         "resolved_design_sha256"
       ]
     },
-    "architecture_contract_sha256": {"$ref": "#/$defs/sha256"}
+    "architecture_contract_sha256": {"$ref": "#/$defs/sha256"},
+    "architecture_envelope": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "generation",
+        "model_family",
+        "model_structure_sha256",
+        "strategy",
+        "resolver",
+        "specialization",
+        "implementation_plan",
+        "interfaces",
+        "streaming",
+        "rendering",
+        "parameter_bindings",
+        "passes"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "model_structure_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "architecture_envelope_sha256": {"$ref": "#/$defs/sha256"},
+    "coefficient_realization": {"type": ["object", "null"]},
+    "coefficient_realization_sha256": {
+      "anyOf": [
+        {"$ref": "#/$defs/sha256"},
+        {"type": "null"}
+      ]
+    }
   },
   "$defs": {
     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}

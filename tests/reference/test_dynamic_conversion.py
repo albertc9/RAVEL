@@ -43,7 +43,7 @@ def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
 
     assert isinstance(project, Project)
     assert project.path == output_dir
-    assert project.manifest["schema_version"] == 4
+    assert project.manifest["schema_version"] == 5
     assert project.manifest["ravel"]["release"] == "1.5.1"
     assert project.manifest["source_model"]["model_family"] == {
         "id": "hgq-conv-pool-dense",
@@ -82,6 +82,21 @@ def test_conversion_checks_implementation_consistency_without_accuracy_labels(
     assert verification["stimuli"]["input_numeric_type"]["width"] == 8
     assert verification["stimuli"]["sample_count"] == 8
     assert "accuracy" not in verification
+    assert project.config["Optimization"] == {
+        "TemporalPacking": 8,
+        "DenseParallelism": 4,
+    }
+    assert project.manifest["coefficient_realization"]["kind"] == "hybrid"
+    assert project.manifest["coefficient_realization"]["proof"]["status"] == "proven"
+    top_source = (project.path / "firmware" / "aria_consistency.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert "phara_pool_aligned_hybrid_p8_cl" in top_source
+    assert "DATAFLOW disable_start_propagation" not in top_source
+    testbench = (project.path / "aria_consistency_test.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert "default_sample < 3" in testbench
 
 
 def test_extracted_geometry_drives_generated_cpp_and_consistency(
@@ -192,7 +207,12 @@ def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
     generated_convolution = (
         refreshed.path / "firmware" / "nnet_utils" / "nnet_aria.h"
     ).read_text(encoding="utf-8")
-    assert "static const unsigned multiplier_limit = 140;" in generated_convolution
+    assert "phara_pool_aligned_hybrid_p8_cl" in generated_convolution
+    assert "op=mul impl=dsp" in generated_convolution
+    assert refreshed.manifest["coefficient_realization"]["proof"]["status"] == "proven"
+    assert refreshed.manifest["coefficient_realization"]["proof"]["identity"] != original[
+        "coefficient_realization"
+    ]["proof"]["identity"]
 
 
 def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(
@@ -216,3 +236,35 @@ def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(
 
     with pytest.raises(CompatibilityError, match="architecture contract"):
         refresh(project, changed_precision_model)
+
+
+def test_phara_manifest_separates_the_envelope_from_coefficients(
+    tmp_path: Path,
+) -> None:
+    project = convert(
+        MODEL,
+        tmp_path / "aria_phara_manifest",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    manifest = project.manifest
+    assert manifest["schema_version"] == 5
+    envelope = manifest["architecture_envelope"]
+    assert envelope["schema_version"] == 1
+    assert envelope["strategy"] == {"id": "phara", "version": 1}
+    assert envelope["specialization"] == {
+        "temporal_packing": 8,
+        "dense_parallelism": 4,
+    }
+    assert "coefficient_realization" not in envelope
+    assert manifest["architecture_envelope_sha256"] == manifest[
+        "architecture_contract_sha256"
+    ]
+    realization = manifest["coefficient_realization"]
+    assert realization == manifest["resolved_design"]["coefficient_realization"]
+    assert realization["proof"]["status"] == "proven"
+    assert len(manifest["coefficient_realization_sha256"]) == 64

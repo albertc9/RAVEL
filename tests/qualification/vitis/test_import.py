@@ -36,7 +36,7 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 3
+    assert qualification["schema_version"] == 4
     assert qualification["stages"] == {}
     assert qualification["generation_fingerprint"] == "1" * 64
     assert qualification["source_closure_sha256"] == json.loads(
@@ -62,7 +62,7 @@ def test_import_vitis_reports_links_schema_v3_evidence_to_a_v3_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 3
+    assert qualification["schema_version"] == 4
     assert Project.open(project_path).status["performance_qualification"] == "recorded"
 
 
@@ -175,11 +175,104 @@ def test_import_records_first_convolution_pipeline_evidence(
         }
     }
     qualification = record.to_dict()
-    assert qualification["schema_version"] == 3
+    assert qualification["schema_version"] == 4
     assert qualification["stages"] == record.stages
     assert qualification["report_files"][stage_report.name] == hashlib.sha256(
         _FIRST_CONV_CSYNTH_XML.encode()
     ).hexdigest()
+
+
+def test_import_records_phara_fused_region_and_dense_stage_evidence(
+    tmp_path: Path,
+) -> None:
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=5)
+    manifest_path = project_path / "ravel_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["resolved_design"] = {
+        "strategy": {"id": "phara", "version": 1},
+        "rendering": {
+            "phara_fused_function": "phara_pool_aligned_direct_p8_cl",
+            "dense_function": "dense_wide_stream",
+        },
+    }
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(
+        _CSYNTH_XML, encoding="utf-8"
+    )
+    fused_report = report_dir / "phara_pool_aligned_direct_p8_cl_1_csynth.xml"
+    fused_report.write_text(
+        _stage_csynth_xml(
+            top="phara_pool_aligned_direct_p8_cl_1",
+            latency=42,
+            interval=42,
+            loop="ProduceP8Words",
+            trip_count=42,
+            pipeline_ii=1,
+            pipeline_depth=8,
+        ),
+        encoding="utf-8",
+    )
+    dense_report = (
+        report_dir
+        / "dense_wide_stream_array_array_ap_fixed_22_11_5_3_0_1u_config9_s_csynth.xml"
+    )
+    dense_report.write_text(
+        _stage_wrapper_csynth_xml(
+            top="dense_wide_stream_array_array_ap_fixed_22_11_5_3_0_1u_config9_s",
+            latency=50,
+            interval=50,
+        ),
+        encoding="utf-8",
+    )
+    dense_loop_report = (
+        report_dir
+        / "dense_wide_stream_array_array_ap_fixed_1u_config9_Pipeline_DenseValues_csynth.xml"
+    )
+    dense_loop_report.write_text(
+        _stage_csynth_xml(
+            top="dense_wide_stream_array_array_ap_fixed_1u_config9_Pipeline_DenseValues",
+            latency=47,
+            interval=47,
+            loop="DenseValues",
+            trip_count=42,
+            pipeline_ii=1,
+            pipeline_depth=4,
+        ),
+        encoding="utf-8",
+    )
+
+    record = Project.open(project_path).record(report_dir)
+
+    assert record.to_dict()["schema_version"] == 4
+    assert record.stages == {
+        "phara_fused_region": {
+            "top": "phara_pool_aligned_direct_p8_cl_1",
+            "initiation_interval": 42,
+            "latency_cycles": 42,
+            "loop": {
+                "name": "ProduceP8Words",
+                "trip_count": 42,
+                "pipeline_ii": 1,
+                "pipeline_depth": 8,
+            },
+        },
+        "dense": {
+            "top": "dense_wide_stream_array_array_ap_fixed_22_11_5_3_0_1u_config9_s",
+            "initiation_interval": 50,
+            "latency_cycles": 50,
+            "loop": {
+                "name": "DenseValues",
+                "trip_count": 42,
+                "pipeline_ii": 1,
+                "pipeline_depth": 4,
+            },
+        },
+    }
+    assert dense_report.name in record.report_files
+    assert dense_loop_report.name in record.report_files
 
 
 def test_import_rejects_a_missing_requested_rtl_cosimulation_report(
@@ -366,6 +459,66 @@ _FIRST_CONV_CSYNTH_XML = """\
         <TripCount>85</TripCount><PipelineII>3</PipelineII><PipelineDepth>5</PipelineDepth>
       </ReadAndDrainP4>
     </SummaryOfLoopLatency>
+  </PerformanceEstimates>
+</profile>
+"""
+
+
+def _stage_csynth_xml(
+    *,
+    top: str,
+    latency: int,
+    interval: int,
+    loop: str,
+    trip_count: int,
+    pipeline_ii: int,
+    pipeline_depth: int,
+) -> str:
+    return f"""\
+<profile>
+  <ReportVersion><Version>2023.2</Version></ReportVersion>
+  <UserAssignments>
+    <Part>xcku5p-ffvb676-2-e</Part>
+    <TopModelName>{top}</TopModelName>
+    <TargetClockPeriod>5.00</TargetClockPeriod>
+  </UserAssignments>
+  <PerformanceEstimates>
+    <SummaryOfOverallLatency>
+      <Best-caseLatency>{latency}</Best-caseLatency>
+      <Interval-min>{interval}</Interval-min>
+    </SummaryOfOverallLatency>
+    <SummaryOfLoopLatency>
+      <{loop}>
+        <TripCount>{trip_count}</TripCount>
+        <PipelineII>{pipeline_ii}</PipelineII>
+        <PipelineDepth>{pipeline_depth}</PipelineDepth>
+      </{loop}>
+    </SummaryOfLoopLatency>
+  </PerformanceEstimates>
+</profile>
+"""
+
+
+def _stage_wrapper_csynth_xml(
+    *,
+    top: str,
+    latency: int,
+    interval: int,
+) -> str:
+    return f"""\
+<profile>
+  <ReportVersion><Version>2023.2</Version></ReportVersion>
+  <UserAssignments>
+    <Part>xcku5p-ffvb676-2-e</Part>
+    <TopModelName>{top}</TopModelName>
+    <TargetClockPeriod>5.00</TargetClockPeriod>
+  </UserAssignments>
+  <PerformanceEstimates>
+    <SummaryOfOverallLatency>
+      <Best-caseLatency>{latency}</Best-caseLatency>
+      <Interval-min>{interval}</Interval-min>
+    </SummaryOfOverallLatency>
+    <SummaryOfLoopLatency />
   </PerformanceEstimates>
 </profile>
 """

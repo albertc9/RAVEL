@@ -54,7 +54,7 @@ def test_config_exports_an_independent_dictionary() -> None:
     assert exported == {
         "Profile": "aria",
         "Verification": {"Mode": "disabled", "Samples": 16, "Seed": 7},
-        "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
     }
     assert config["Verification"]["Mode"] == "required"
 
@@ -71,8 +71,8 @@ def test_config_exports_deterministic_yaml() -> None:
         "  Samples: 16\n"
         "  Seed: 7\n"
         "Optimization:\n"
-        "  TemporalPacking: 4\n"
-        "  DenseParallelism: 2\n"
+        "  TemporalPacking: 8\n"
+        "  DenseParallelism: 4\n"
     )
 
 
@@ -84,7 +84,7 @@ def test_config_loads_yaml_through_typed_validation() -> None:
     assert config.to_dict() == {
         "Profile": "aria",
         "Verification": {"Mode": "required", "Samples": 8, "Seed": 3},
-        "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
     }
 
 
@@ -109,3 +109,28 @@ def test_config_reports_invalid_yaml(text: str) -> None:
 def test_config_rejects_an_unknown_profile() -> None:
     with pytest.raises(ConfigurationError, match="Profile"):
         RavelConfig({"Profile": "future-profile"})
+
+
+def test_config_accepts_the_coupled_phara_p8_d4_specialization() -> None:
+    config = RavelConfig(
+        {"Optimization": {"TemporalPacking": 8, "DenseParallelism": 4}}
+    )
+
+    assert config["Optimization"] == {
+        "TemporalPacking": 8,
+        "DenseParallelism": 4,
+    }
+
+
+@pytest.mark.parametrize(
+    "optimization",
+    [
+        {"TemporalPacking": 8, "DenseParallelism": 2},
+        {"TemporalPacking": 4, "DenseParallelism": 4},
+    ],
+)
+def test_config_rejects_unqualified_partial_phara_specializations(
+    optimization: dict[str, int],
+) -> None:
+    with pytest.raises(ConfigurationError, match="P8/D4"):
+        RavelConfig({"Optimization": optimization})
