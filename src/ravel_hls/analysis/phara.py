@@ -69,6 +69,18 @@ class PoolAlignedSchedule:
     buffer_rows: int
 
 
+@dataclass(frozen=True)
+class RowCreditSchedule:
+    """One-output-per-cycle schedule with input reads derived from row credits."""
+
+    input_words: int
+    output_words: int
+    cycles: int
+    read_on_output: tuple[bool, ...]
+    max_live_rows: int
+    buffer_rows: int
+
+
 def build_pool_aligned_schedule(
     *,
     input_rows: int,
@@ -98,6 +110,45 @@ def build_pool_aligned_schedule(
         cycles=input_words,
         output_after_input_words=production,
         buffer_rows=kernel_rows + convolution_stride + temporal_pack,
+    )
+
+
+def build_row_credit_schedule(
+    *,
+    input_rows: int,
+    temporal_pack: int,
+    kernel_rows: int,
+    convolution_stride: int,
+    pool_rows: int,
+) -> RowCreditSchedule:
+    """Derive reads that keep q1 output continuous with a bounded row buffer."""
+
+    input_words = input_rows // temporal_pack
+    convolution_rows = (input_rows - kernel_rows) // convolution_stride + 1
+    output_words = convolution_rows // pool_rows
+    previous_required_words = 0
+    reads = []
+    live_rows = []
+    for pool_index in range(output_words):
+        first_row = pool_index * pool_rows * convolution_stride
+        required_last_row = (
+            first_row
+            + (pool_rows - 1) * convolution_stride
+            + kernel_rows
+            - 1
+        )
+        required_words = required_last_row // temporal_pack + 1
+        reads.append(required_words > previous_required_words)
+        previous_required_words = required_words
+        live_rows.append(required_words * temporal_pack - first_row)
+    supertile_rows = kernel_rows + (pool_rows - 1) * convolution_stride
+    return RowCreditSchedule(
+        input_words=input_words,
+        output_words=output_words,
+        cycles=output_words,
+        read_on_output=tuple(reads),
+        max_live_rows=max(live_rows),
+        buffer_rows=supertile_rows + temporal_pack,
     )
 
 

@@ -45,7 +45,7 @@ void {{ project_name }}(
     #pragma HLS BIND_STORAGE variable={{ dense_packed.name }} type=rom_1p impl=bram
 {% endif %}
 
-{% if phara %}    nnet::phara_pool_aligned_direct_p4_cl<
+{% if phara %}    nnet::{{ phara_function }}<
         {{ input_wide_type }}, {{ conv_wide_type }}, {{ activation_wide_type }},
         {{ pool_wide_type }}, {{ conv_config }}, {{ pool_config }}>(
         {{ input_name }}, {{ pool_stream }}, {{ conv_weight.name }}, {{ conv_bias.name }});

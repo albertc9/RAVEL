@@ -101,6 +101,11 @@ def render_aria_project(
         "dense_packed": dense_packed,
         "dense_bias": _weight_context(parameters["dense_0:bias"]),
         "phara": plan.get("phara"),
+        "phara_function": (
+            f"phara_pool_aligned_direct_p{temporal_pack}_cl"
+            if plan.get("phara") is not None
+            else None
+        ),
         "baseline_defines_body": defines_body.rstrip(),
     }
     environment = Environment(

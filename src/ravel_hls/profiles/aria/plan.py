@@ -3,7 +3,10 @@
 from collections.abc import Mapping
 from typing import Any
 
-from ...analysis.phara import build_pool_aligned_schedule
+from ...analysis.phara import (
+    build_pool_aligned_schedule,
+    build_row_credit_schedule,
+)
 
 
 def build_implementation_plan(
@@ -36,7 +39,12 @@ def build_implementation_plan(
     }
     if dense_parallelism == 4:
         pooling = operations["max_pool2d_0"]["attributes"]
-        schedule = build_pool_aligned_schedule(
+        schedule_builder = (
+            build_row_credit_schedule
+            if temporal_pack == 8
+            else build_pool_aligned_schedule
+        )
+        schedule = schedule_builder(
             input_rows=input_shape[0],
             temporal_pack=temporal_pack,
             kernel_rows=convolution["filt_height"],
@@ -120,7 +128,7 @@ def build_implementation_plan(
         "dataflow_start_propagation": False,
     }
     if dense_parallelism == 4:
-        plan["phara"] = {
+        phara_plan = {
             "version": 1,
             "pool_rows_per_supertile": pooling["pool_height"],
             "supertile_input_rows": (
@@ -139,4 +147,13 @@ def build_implementation_plan(
             ),
             "realization": "direct",
         }
+        if temporal_pack == 8:
+            phara_plan["scheduler"] = {
+                "id": "row-credit",
+                "version": 1,
+                "buffer_rows": schedule.buffer_rows,
+                "max_live_rows": schedule.max_live_rows,
+                "read_cycles": sum(schedule.read_on_output),
+            }
+        plan["phara"] = phara_plan
     return plan
