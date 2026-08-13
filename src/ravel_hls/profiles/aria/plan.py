@@ -145,7 +145,7 @@ def build_implementation_plan(
             "structural_ii_lower_bound": max(
                 schedule.input_words, schedule.cycles, dense_steps
             ),
-            "realization": "direct",
+            "realization": "hybrid" if temporal_pack == 8 else "direct",
         }
         if temporal_pack == 8:
             phara_plan["scheduler"] = {

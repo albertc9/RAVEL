@@ -27,8 +27,8 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "TemporalPacking": {"enum": [2, 4, 8], "default": 4},
-        "DenseParallelism": {"enum": [1, 2, 4], "default": 2}
+        "TemporalPacking": {"enum": [2, 4, 8], "default": 8},
+        "DenseParallelism": {"enum": [1, 2, 4], "default": 4}
       },
       "allOf": [
         {

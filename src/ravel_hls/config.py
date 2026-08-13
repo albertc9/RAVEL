@@ -9,10 +9,10 @@ from .exceptions import ConfigurationError
 
 
 _AGGRESSIVE_SPECIALIZATION = {
-    "TemporalPacking": 4,
-    "DenseParallelism": 2,
+    "TemporalPacking": 8,
+    "DenseParallelism": 4,
 }
-AGGRESSIVE_SPECIALIZATION_POLICY = "aria-aggressive-v1"
+AGGRESSIVE_SPECIALIZATION_POLICY = "aria-aggressive-phara-v1"
 
 _VITIS_STAGE_DEFAULTS = {
     "Reset": True,

@@ -13,6 +13,9 @@ import numpy as np
 from ..domain import ParameterPayload
 
 
+PHARA_HYBRID_DSP_PRODUCT_BUDGET = 16
+
+
 @dataclass(frozen=True)
 class AffineNode:
     """One immutable operation in a PHARA affine graph."""

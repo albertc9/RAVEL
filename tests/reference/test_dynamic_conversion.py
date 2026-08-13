@@ -82,6 +82,16 @@ def test_conversion_checks_implementation_consistency_without_accuracy_labels(
     assert verification["stimuli"]["input_numeric_type"]["width"] == 8
     assert verification["stimuli"]["sample_count"] == 8
     assert "accuracy" not in verification
+    assert project.config["Optimization"] == {
+        "TemporalPacking": 8,
+        "DenseParallelism": 4,
+    }
+    assert project.manifest["coefficient_realization"]["kind"] == "hybrid"
+    assert project.manifest["coefficient_realization"]["proof"]["status"] == "proven"
+    top_source = (project.path / "firmware" / "aria_consistency.cpp").read_text(
+        encoding="utf-8"
+    )
+    assert "phara_pool_aligned_hybrid_p8_cl" in top_source
 
 
 def test_extracted_geometry_drives_generated_cpp_and_consistency(
@@ -192,7 +202,12 @@ def test_refresh_replaces_parameters_while_preserving_the_recorded_architecture(
     generated_convolution = (
         refreshed.path / "firmware" / "nnet_utils" / "nnet_aria.h"
     ).read_text(encoding="utf-8")
-    assert "static const unsigned multiplier_limit = 140;" in generated_convolution
+    assert "phara_pool_aligned_hybrid_p8_cl" in generated_convolution
+    assert "op=mul impl=dsp" in generated_convolution
+    assert refreshed.manifest["coefficient_realization"]["proof"]["status"] == "proven"
+    assert refreshed.manifest["coefficient_realization"]["proof"]["identity"] != original[
+        "coefficient_realization"
+    ]["proof"]["identity"]
 
 
 def test_refresh_rejects_a_model_that_changes_the_recorded_architecture(

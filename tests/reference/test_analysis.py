@@ -94,8 +94,8 @@ def test_retrained_models_share_a_family_while_exposing_learned_numeric_types() 
         },
     }
     assert wide_input["numeric_type"]["width"] == 11
-    assert narrow["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 128
-    assert wide["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
+    assert narrow["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
+    assert wide["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 512
     assert (
         narrow["fingerprints"]["model_structure_sha256"]
         != wide["fingerprints"]["model_structure_sha256"]
@@ -187,7 +187,7 @@ def test_model_analysis_exposes_read_only_public_properties() -> None:
     assert analysis.model_family == {"id": "hgq-conv-pool-dense", "version": 1}
     assert analysis.findings == ()
     assert analysis.model_facts["operations"][0]["id"] == "input_0"
-    assert analysis.resolved_design["specialization"]["temporal_packing"] == 4
+    assert analysis.resolved_design["specialization"]["temporal_packing"] == 8
     with pytest.raises(TypeError):
         analysis.model_facts["schema_version"] = 99
 
@@ -246,7 +246,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     }
     assert report["applicability"]["status"] == "unsupported"
     assert report["resolved_design"] is None
-    assert "strategy.geometry.p4" in {
+    assert "strategy.geometry.phara" in {
         finding["code"] for finding in report["applicability"]["findings"]
     }
 
@@ -325,7 +325,13 @@ def test_retrained_model_analysis_matches_its_reviewed_snapshot(
 
     report = analyze(
         model_path,
-        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {
+                "TemporalPacking": 4,
+                "DenseParallelism": 2,
+            },
+        },
     ).to_dict()
     snapshot_path = SNAPSHOT_ROOT / f"{model_path.parent.name}.json"
 
@@ -396,14 +402,17 @@ def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
             "max_live_rows": 14,
             "read_cycles": 32,
         },
-        "realization": "direct",
+        "realization": "hybrid",
     }
     assert "fuse-pool-aligned-conv-relu-maxpool" in {
         item["id"] for item in design["executed_passes"]
     }
     realization = design["coefficient_realization"]
-    assert realization["kind"] == "direct"
-    assert realization["policy"] == {"id": "phara-direct", "version": 1}
+    assert realization["kind"] == "hybrid"
+    assert realization["policy"] == {
+        "id": "phara-hybrid-csd-cse-dsp",
+        "version": 1,
+    }
     assert realization["proof"]["status"] == "proven"
     assert len(realization["proof"]["identity"]) == 64
     assert len(realization["graph_sha256"]) == 64
@@ -412,9 +421,16 @@ def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
         "convolution_rows": 2,
         "filter_lanes": 7,
         "output_values": 14,
-        "constant_nodes": 14,
-        "multiply_nodes": 70,
-        "add_nodes": 70,
-        "depth": 6,
-        "max_fanout": 14,
+        "shift_nodes": 28,
+        "add_nodes": 78,
+        "subtract_nodes": 19,
+        "negate_nodes": 13,
+        "constant_nodes": 6,
+        "depth": 7,
+        "max_fanout": 11,
+        "shared_product_uses": 5,
+        "shared_pair_uses": 1,
+        "multiply_nodes": 14,
+        "dsp_product_budget": 16,
+        "dsp_product_uses": 14,
     }

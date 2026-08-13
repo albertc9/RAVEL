@@ -11,7 +11,11 @@ from types import MappingProxyType
 from typing import Any
 
 from ..analysis.dense import analyze_dense_facts
-from ..analysis.phara import analyze_direct_parameters
+from ..analysis.phara import (
+    PHARA_HYBRID_DSP_PRODUCT_BUDGET,
+    analyze_direct_parameters,
+    analyze_hybrid_parameters,
+)
 from ..compatibility.dependencies import inspect_dependencies
 from ..config import validate_public_config
 from ..domain import ParameterPayload, ParameterTensor
@@ -185,11 +189,17 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             }
         else:
             interface = _predicted_interface(model_facts, plan)
-            coefficient_realization = (
-                analyze_direct_parameters(model_facts, parameter_payload)
-                if "phara" in plan
-                else None
-            )
+            coefficient_realization = None
+            if "phara" in plan:
+                coefficient_realization = (
+                    analyze_hybrid_parameters(
+                        model_facts,
+                        parameter_payload,
+                        dsp_product_budget=PHARA_HYBRID_DSP_PRODUCT_BUDGET,
+                    )
+                    if plan["phara"]["realization"] == "hybrid"
+                    else analyze_direct_parameters(model_facts, parameter_payload)
+                )
             resolved_design = generation.resolver.resolve(
                 model_facts=model_facts,
                 implementation_plan=plan,

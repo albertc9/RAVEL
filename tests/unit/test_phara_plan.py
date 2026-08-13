@@ -81,7 +81,7 @@ def test_phara_p8_d4_plan_reaches_the_42_cycle_structural_bound() -> None:
         "pooled_words": 42,
         "stage_cycles": {"input": 32, "fused_region": 42, "dense": 42},
         "structural_ii_lower_bound": 42,
-        "realization": "direct",
+        "realization": "hybrid",
         "scheduler": {
             "id": "row-credit",
             "version": 1,

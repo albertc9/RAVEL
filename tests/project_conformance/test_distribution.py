@@ -158,8 +158,8 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
         "Vitis",
     }
     assert schema["properties"]["Optimization"]["properties"] == {
-        "TemporalPacking": {"enum": [2, 4, 8], "default": 4},
-        "DenseParallelism": {"enum": [1, 2, 4], "default": 2},
+        "TemporalPacking": {"enum": [2, 4, 8], "default": 8},
+        "DenseParallelism": {"enum": [1, 2, 4], "default": 4},
     }
     assert len(schema["properties"]["Optimization"]["allOf"]) == 2
     assert schema["properties"]["Vitis"]["properties"]["Run"]["default"] is False
