@@ -17,8 +17,8 @@ and board integration remain separate decisions.
 |---|---:|
 | HLS II | 51 |
 | HLS latency | 56 cycles |
-| HLS estimated clock | 4.289 ns |
 | RTL CoSim | Pass |
+| Post-route estimated Fmax | 249.8 MHz |
 | OOC WNS | +0.997 ns |
 | OOC TNS | 0 ns |
 | OOC BRAM tiles | 2.5 |
@@ -27,7 +27,8 @@ and board integration remain separate decisions.
 | OOC LUTs | 4,930 |
 
 The routed critical path has 3.883 ns data delay and nine logic levels. The
-reported WNS is from a complete out-of-context route at 200 MHz.
+reported WNS is from a complete out-of-context route at 200 MHz. Fmax is
+estimated as `1000 / (5 - WNS)`; it is not a separate tighter-clock route.
 
 HLS stage measurements are:
 
@@ -39,14 +40,27 @@ HLS stage measurements are:
 
 ## Three-model check
 
-| Model | II | Latency | HLS clock | HLS DSP | HLS LUT | RTL CoSim |
-|---|---:|---:|---:|---:|---:|---|
-| `adam_p1_step2` | 51 | 55 | 4.289 ns | 64 | 13,295 | Pass |
-| `adam_hgq_replicate_s2` | 51 | 56 | 4.289 ns | 80 | 19,108 | Pass |
-| `adam_hgq_replicate_s2_300ep` | 52 | 57 | 4.289 ns | 80 | 23,091 | Pass |
+| Model | II | Latency | HLS DSP | HLS LUT | RTL CoSim |
+|---|---:|---:|---:|---:|---|
+| `adam_p1_step2` | 51 | 55 | 64 | 13,295 | Pass |
+| `adam_hgq_replicate_s2` | 51 | 56 | 80 | 19,108 | Pass |
+| `adam_hgq_replicate_s2_300ep` | 52 | 57 | 80 | 23,091 | Pass |
 
 All three projects completed C simulation, synthesis, and Verilog RTL CoSim
 without HLS errors.
+
+## Multi-core estimate
+
+The following estimate applies the same utilization ceiling to every reported
+resource and uses the timing-estimated 249.8 MHz:
+
+| Resource ceiling | Cores | Limiting resource | LUT | DSP | Throughput |
+|---|---:|---|---:|---:|---:|
+| 60% | 13 | DSP | 29.5% | 56.3% | 16.3 GSa/s |
+| 70% | 16 | DSP | 36.4% | 69.3% | 20.1 GSa/s |
+
+The estimate assumes linear replication. It excludes shared infrastructure,
+I/O limits, interconnect cost, clock degradation, and multi-core routing.
 
 ## Numerical evidence
 
