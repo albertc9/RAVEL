@@ -546,7 +546,7 @@ void phara_pool_aligned_{{ phara_realization }}_p8_cl(
 
 ProduceP8Words:
     for (unsigned pool = 0; pool < OUTPUT_WORDS; pool++) {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS PIPELINE II=1 rewind=false
         const unsigned supertile_start =
             pool * POOL_CONFIG_T::pool_height *
             CONV_CONFIG_T::stride_height;

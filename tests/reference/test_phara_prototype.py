@@ -232,6 +232,7 @@ def test_phara_p8_hybrid_affine_graph_cpp_is_bit_exact(
     ).read_text(encoding="utf-8")
     assert "phara_pool_aligned_hybrid_p8_cl" in top_source
     assert "DATAFLOW disable_start_propagation" not in top_source
+    assert "PIPELINE II=1 rewind=false" in affine_source
     assert "op=mul impl=dsp" in affine_source
     optimized = predict_optimized(project_path, inputs, compiler)
     require_bit_exact(baseline, optimized)
