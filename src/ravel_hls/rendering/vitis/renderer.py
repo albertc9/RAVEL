@@ -100,6 +100,7 @@ def render_aria_project(
         "dense_weight": _weight_context(parameters["dense_0:weight"]),
         "dense_packed": dense_packed,
         "dense_bias": _weight_context(parameters["dense_0:bias"]),
+        "phara": plan.get("phara"),
         "baseline_defines_body": defines_body.rstrip(),
     }
     environment = Environment(

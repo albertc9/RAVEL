@@ -3,6 +3,8 @@
 from collections.abc import Mapping
 from typing import Any
 
+from ...analysis.phara import build_pool_aligned_schedule
+
 
 def build_implementation_plan(
     optimization: Mapping[str, int], model_facts: Mapping[str, Any]
@@ -32,6 +34,29 @@ def build_implementation_plan(
         "multiplier_limit": products_per_window * convolution["out_width"],
         "target_loop_ii": 1,
     }
+    if dense_parallelism == 4:
+        pooling = operations["max_pool2d_0"]["attributes"]
+        schedule = build_pool_aligned_schedule(
+            input_rows=input_shape[0],
+            temporal_pack=temporal_pack,
+            kernel_rows=convolution["filt_height"],
+            convolution_stride=convolution["stride_height"],
+            pool_rows=pooling["pool_height"],
+        )
+        first_convolution = {
+            "id": "pool-aligned-direct",
+            "version": 1,
+            "parallel_windows": (
+                convolution["out_width"] * pooling["pool_height"]
+            ),
+            "products_per_window": products_per_window,
+            "multiplier_limit": (
+                products_per_window
+                * convolution["out_width"]
+                * pooling["pool_height"]
+            ),
+            "target_loop_ii": 1,
+        }
     dense_inputs = dense_facts["n_in"]
     dense_outputs = dense_facts["n_out"]
     dense_group_size = dense_facts["input_group_size"]
@@ -71,8 +96,12 @@ def build_implementation_plan(
             "reasons": applicability_reasons,
         },
     }
-    return {
-        "template_profile": f"aria-p{temporal_pack}-d{dense_parallelism}-v3",
+    plan = {
+        "template_profile": (
+            f"aria-phara-p{temporal_pack}-q1-d4-v1"
+            if dense_parallelism == 4
+            else f"aria-p{temporal_pack}-d{dense_parallelism}-v3"
+        ),
         "temporal_pack": temporal_pack,
         "channels_per_row": input_shape[1],
         "values_per_input_word": temporal_pack * input_shape[1],
@@ -90,3 +119,24 @@ def build_implementation_plan(
         "internal_fifo_depth": 4,
         "dataflow_start_propagation": False,
     }
+    if dense_parallelism == 4:
+        plan["phara"] = {
+            "version": 1,
+            "pool_rows_per_supertile": pooling["pool_height"],
+            "supertile_input_rows": (
+                convolution["filt_height"]
+                + (pooling["pool_height"] - 1)
+                * convolution["stride_height"]
+            ),
+            "pooled_words": schedule.output_words,
+            "stage_cycles": {
+                "input": schedule.input_words,
+                "fused_region": schedule.cycles,
+                "dense": dense_steps,
+            },
+            "structural_ii_lower_bound": max(
+                schedule.input_words, schedule.cycles, dense_steps
+            ),
+            "realization": "direct",
+        }
+    return plan

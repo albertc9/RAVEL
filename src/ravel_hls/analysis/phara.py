@@ -58,6 +58,49 @@ class DaSupertileAnalysis:
     summary: Mapping[str, int]
 
 
+@dataclass(frozen=True)
+class PoolAlignedSchedule:
+    """Static production schedule for one pool-aligned temporal packing."""
+
+    input_words: int
+    output_words: int
+    cycles: int
+    output_after_input_words: tuple[int, ...]
+    buffer_rows: int
+
+
+def build_pool_aligned_schedule(
+    *,
+    input_rows: int,
+    temporal_pack: int,
+    kernel_rows: int,
+    convolution_stride: int,
+    pool_rows: int,
+) -> PoolAlignedSchedule:
+    """Derive the q1 production points for a valid convolution and pool."""
+
+    input_words = input_rows // temporal_pack
+    convolution_rows = (input_rows - kernel_rows) // convolution_stride + 1
+    output_words = convolution_rows // pool_rows
+    production = tuple(
+        (
+            pool_index * pool_rows * convolution_stride
+            + (pool_rows - 1) * convolution_stride
+            + kernel_rows
+            - 1
+        )
+        // temporal_pack
+        for pool_index in range(output_words)
+    )
+    return PoolAlignedSchedule(
+        input_words=input_words,
+        output_words=output_words,
+        cycles=input_words,
+        output_after_input_words=production,
+        buffer_rows=kernel_rows + convolution_stride + temporal_pack,
+    )
+
+
 def evaluate(graph: AffineGraph, input_codes: tuple[int, ...]) -> tuple[int, ...]:
     """Evaluate one PHARA graph over integer codes with explicit wrapping."""
 
