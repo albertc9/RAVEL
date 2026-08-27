@@ -158,6 +158,7 @@ def test_generated_project_can_be_linked_outside_its_output_directory(
     prediction = linked.predict(np.zeros((2, 256, 4), dtype=np.float32))
 
     assert prediction.shape == (2, 1)
+    assert project.status["source_integrity"] == "clean"
 
 
 def test_extracted_geometry_drives_generated_cpp_and_consistency(
