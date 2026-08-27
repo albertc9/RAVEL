@@ -130,6 +130,15 @@ def test_conversion_accepts_source_shaped_singleton_channel_stimuli(
     assert verification["stimuli"]["shape"] == [8, 256, 4]
     assert verification["source_conversion_consistency"] == "passed"
     assert verification["transformation_equivalence"] == "passed"
+    testbench_inputs = np.loadtxt(
+        project.path / "tb_data" / "tb_input_features.dat"
+    )
+    assert testbench_inputs.shape == (8, 256 * 4)
+    np.testing.assert_array_equal(
+        testbench_inputs,
+        inputs[..., 0].reshape(8, 256 * 4),
+    )
+    assert project.status["source_integrity"] == "clean"
 
 
 def test_generated_project_can_be_linked_outside_its_output_directory(
