@@ -239,6 +239,7 @@ def _excluded_from_source_closure(relative_path: str) -> bool:
     return (
         relative_path in {"ravel_manifest.json", "ravel_qualification.json"}
         or relative_path.endswith(".log")
+        or relative_path.endswith(".so")
         or any(part.endswith("_prj") for part in parts)
         or any(part.startswith(".") for part in parts)
     )
