@@ -11,6 +11,8 @@ import tempfile
 from typing import Any
 import uuid
 
+import numpy as np
+
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .backends.vitis.build import normalize_build_script, write_build_options
@@ -399,6 +401,8 @@ def _generate_project(
             model_analysis["resolved_design"],
             parameter_payload,
         )
+        if stimuli is not None:
+            _write_vitis_testbench_inputs(staging_path, stimuli)
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
@@ -511,6 +515,19 @@ def _verification_unavailable_reason(
     if not missing:
         return None
     return "Required verification capability is unavailable: " + ", ".join(missing)
+
+
+def _write_vitis_testbench_inputs(
+    project_path: Path, stimuli: np.ndarray
+) -> None:
+    sample_count = min(32, len(stimuli))
+    testbench_dir = project_path / "tb_data"
+    testbench_dir.mkdir(exist_ok=True)
+    np.savetxt(
+        testbench_dir / "tb_input_features.dat",
+        stimuli[:sample_count].reshape(sample_count, -1),
+        fmt="%.9g",
+    )
 
 
 def _semantic_attributes(layer: Any) -> dict[str, Any]:
