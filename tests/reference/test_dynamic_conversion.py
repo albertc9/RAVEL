@@ -132,6 +132,25 @@ def test_conversion_accepts_source_shaped_singleton_channel_stimuli(
     assert verification["transformation_equivalence"] == "passed"
 
 
+def test_generated_project_can_be_linked_outside_its_output_directory(
+    tmp_path: Path,
+) -> None:
+    project = convert(
+        MINI_CONTINUOUS_MODEL,
+        tmp_path / "aria_linked_project",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Verification": {"Mode": "disabled"},
+        },
+    )
+
+    linked = project.link()
+    linked.compile()
+    prediction = linked.predict(np.zeros((2, 256, 4), dtype=np.float32))
+
+    assert prediction.shape == (2, 1)
+
+
 def test_extracted_geometry_drives_generated_cpp_and_consistency(
     tmp_path: Path, noncanonical_geometry_model,
 ) -> None:
