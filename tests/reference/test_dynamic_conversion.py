@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from ravel_hls import CompatibilityError, Project, convert, refresh
@@ -16,6 +17,9 @@ REFERENCE_MODELS = sorted(
     path
     for path in (Path(__file__).parents[2] / "references").glob("**/*.keras")
     if "cnn_for_arianna" not in path.parts
+)
+MINI_CONTINUOUS_MODEL = (
+    Path(__file__).with_name("fixtures") / "run_mini_es0.keras"
 )
 
 assert len(REFERENCE_MODELS) == 12
@@ -97,6 +101,35 @@ def test_conversion_checks_implementation_consistency_without_accuracy_labels(
         encoding="utf-8"
     )
     assert "default_sample < 3" in testbench
+
+
+def test_conversion_accepts_source_shaped_singleton_channel_stimuli(
+    tmp_path: Path,
+) -> None:
+    inputs = np.zeros((8, 256, 4, 1), dtype=np.float32)
+    inputs[1].fill(-1.0)
+    inputs[2].fill(1.0)
+    inputs[3, 0, 0, 0] = 1.0 / 32.0
+    inputs[4, 0, 0, 0] = -1.0 / 32.0
+
+    project = convert(
+        MINI_CONTINUOUS_MODEL,
+        tmp_path / "aria_mini_continuous",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Verification": {"Mode": "required"},
+        },
+        verification_inputs=inputs,
+    )
+
+    assert project.manifest["interfaces"]["logical_model_interface"] == {
+        "input_shape": [256, 4],
+        "output_shape": [1],
+    }
+    verification = project.manifest["verification"]
+    assert verification["stimuli"]["shape"] == [8, 256, 4]
+    assert verification["source_conversion_consistency"] == "passed"
+    assert verification["transformation_equivalence"] == "passed"
 
 
 def test_extracted_geometry_drives_generated_cpp_and_consistency(
