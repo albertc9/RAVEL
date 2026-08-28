@@ -45,6 +45,12 @@ def prepare_stimuli(
         kind = "synthetic"
     else:
         inputs = np.asarray(verification_inputs)
+        if (
+            inputs.ndim == len(input_shape) + 2
+            and tuple(inputs.shape[1:-1]) == input_shape
+            and inputs.shape[-1] == 1
+        ):
+            inputs = inputs[..., 0]
         seed = None
         kind = "supplied"
     if (

@@ -1,12 +1,14 @@
 """Side-effect-free public model analysis."""
 
 from collections.abc import Mapping
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass
 import hashlib
 import json
 import os
 from pathlib import Path
+from threading import RLock
 from types import MappingProxyType
 from typing import Any
 
@@ -22,6 +24,10 @@ from ..domain import ParameterPayload, ParameterTensor
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..generations import builtin_generation
 from ..profiles.aria.plan import build_implementation_plan
+
+
+_HLS4ML_CONVERSION_LOCK = RLock()
+_DIRECT_ARIA_LAYERS = ("QConv2D", "MaxPooling2D", "Flatten", "QDense")
 
 
 def _freeze(value: Any) -> Any:
@@ -140,6 +146,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             model_path,
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
+    normalized_model = _normalize_singleton_channel_input(normalized_model)
 
     frontend_provenance = _frontend_provenance(normalized_model)
 
@@ -159,7 +166,8 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
         conversion["part"] = hls_values["Part"]
     if hls_values.get("ClockPeriod") is not None:
         conversion["clock_period"] = hls_values["ClockPeriod"]
-    graph = hls4ml.converters.convert_from_keras_model(**conversion)
+    with _homogeneous_stream_quantizer_compatibility():
+        graph = hls4ml.converters.convert_from_keras_model(**conversion)
     layers = list(graph.get_layers())
     model_facts, fingerprints = _extract_model_facts(layers)
     parameter_payload = _extract_parameter_payload(layers)
@@ -223,6 +231,81 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
         }
     )
     return _AnalyzedModel(graph, normalized_model, analysis, parameter_payload)
+
+
+def _normalize_singleton_channel_input(model: Any) -> Any:
+    inputs = tuple(getattr(model, "inputs", ()))
+    outputs = tuple(getattr(model, "outputs", ()))
+    if len(inputs) != 1 or len(outputs) != 1:
+        return model
+    input_shape = tuple(inputs[0].shape[1:])
+    if (
+        len(input_shape) != 3
+        or input_shape[-1] != 1
+        or any(dimension is None for dimension in input_shape)
+    ):
+        return model
+    layers = [
+        layer for layer in model.layers if type(layer).__name__ != "InputLayer"
+    ]
+    if tuple(type(layer).__name__ for layer in layers) != _DIRECT_ARIA_LAYERS:
+        return model
+
+    import keras
+
+    input_name = str(inputs[0].name).split(":", maxsplit=1)[0]
+    canonical_input = keras.Input(shape=input_shape[:-1], name=input_name)
+    value = keras.layers.Reshape(input_shape, name="ravel_repack")(
+        canonical_input
+    )
+    for layer in layers:
+        value = layer(value)
+    return keras.Model(canonical_input, value, name=model.name)
+
+
+@contextmanager
+def _homogeneous_stream_quantizer_compatibility():
+    from hls4ml.backends.fpga.passes.hgq_proxy_model import (
+        ProcessFixedPointQuantizerLayer,
+    )
+    from hls4ml.model.optimizer.passes.bit_exact import (
+        get_input_layers,
+        get_output_layers,
+    )
+    from hls4ml.model.optimizer.passes.hgq_proxy_model import (
+        FuseFixedPointQuantizer,
+    )
+    from hls4ml.model.types import FixedPrecisionType
+
+    original_transform = ProcessFixedPointQuantizerLayer.transform
+
+    def transform(pass_instance, graph, node):
+        if (
+            graph.config.config["IOType"] != "io_stream"
+            or not node.get_attr("fusible", False)
+        ):
+            return original_transform(pass_instance, graph, node)
+        input_layer = get_input_layers(node)[0]
+        if len(get_output_layers(input_layer)) != 1:
+            return original_transform(pass_instance, graph, node)
+        output_precision = node.get_output_variable().type.precision
+        precision = FixedPrecisionType(
+            output_precision.width,
+            output_precision.integer,
+            output_precision.signed,
+            node.RND,
+            node.SAT,
+        )
+        FuseFixedPointQuantizer().propagate(input_layer, precision)
+        graph.remove_node(node)
+        return True
+
+    with _HLS4ML_CONVERSION_LOCK:
+        ProcessFixedPointQuantizerLayer.transform = transform
+        try:
+            yield
+        finally:
+            ProcessFixedPointQuantizerLayer.transform = original_transform
 
 
 def _semantic_kind(layer: Any) -> str:

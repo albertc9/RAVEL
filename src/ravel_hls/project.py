@@ -70,7 +70,9 @@ class Project:
 
         from hls4ml.utils.link import FilesystemModelGraph
 
-        return FilesystemModelGraph(self.path)
+        linked = FilesystemModelGraph(self.path)
+        linked.config.config["OutputDir"] = str(self.path.resolve())
+        return linked
 
     link_hls4ml = link
 

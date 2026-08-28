@@ -23,6 +23,9 @@ REFERENCE_MODELS = sorted(
     if "cnn_for_arianna" not in path.parts
 )
 SNAPSHOT_ROOT = Path(__file__).with_name("analysis_snapshots")
+MINI_CONTINUOUS_MODEL = (
+    Path(__file__).with_name("fixtures") / "run_mini_es0.keras"
+)
 
 assert len(REFERENCE_MODELS) == 12
 
@@ -62,6 +65,36 @@ def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
     }
     assert report["resolved_design"]["interfaces"]["rtl"]["input_tdata_bits"] == 256
     assert report["resolved_design"]["interfaces"]["rtl"]["output_tdata_bits"] == 32
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_user_can_analyze_a_direct_singleton_channel_model(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    report = analyze(
+        MINI_CONTINUOUS_MODEL,
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+    ).to_dict()
+
+    assert report["applicability"] == {"status": "applicable", "findings": []}
+    operations = report["model_facts"]["operations"]
+    assert [operation["id"] for operation in operations] == [
+        "input_0",
+        "repack_0",
+        "conv2d_0",
+        "relu_0",
+        "max_pool2d_0",
+        "reshape_0",
+        "dense_0",
+    ]
+    assert operations[0]["outputs"][0]["shape"] == [256, 4]
+    assert operations[1]["outputs"][0]["shape"] == [256, 4, 1]
+    assert report["resolved_design"]["interfaces"]["logical"] == {
+        "input_shape": [256, 4],
+        "output_shape": [1],
+    }
     assert list(tmp_path.iterdir()) == []
 
 
