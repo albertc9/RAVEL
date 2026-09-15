@@ -35,12 +35,7 @@ void first_conv_2row_4lane_temporal_wide_cl(
     data_value_t row_buf[CONFIG_T::filt_height][CONFIG_T::in_width];
     #pragma HLS ARRAY_PARTITION variable=row_buf complete dim=0
 
-    constexpr unsigned EMIT_ROW0_PHASE =
-        ((CONFIG_T::filt_height - 1) / 2) % CONFIG_T::stride_height;
-    constexpr unsigned EMIT_ROW1_PHASE =
-        ((CONFIG_T::filt_height - 1 + CONFIG_T::stride_height) / 2) % CONFIG_T::stride_height;
-    constexpr unsigned PAIR_WINDOW_START = CONFIG_T::filt_height / 2;
-    unsigned pair_phase = 0;
+    unsigned next_window_end = CONFIG_T::filt_height - 1;
 
 ReadPairsWide:
     for (unsigned i_pair = 0; i_pair < CONFIG_T::in_height / 2; i_pair++) {
@@ -78,9 +73,9 @@ ReadPairsWide:
             }
         }
 
-        const bool have_window = i_pair >= PAIR_WINDOW_START;
-        const bool emit_row0 = have_window && pair_phase == EMIT_ROW0_PHASE;
-        const bool emit_row1 = have_window && pair_phase == EMIT_ROW1_PHASE;
+        const unsigned pair_row0 = i_pair * 2;
+        const bool emit_row0 = next_window_end == pair_row0;
+        const bool emit_row1 = next_window_end == pair_row0 + 1;
         if (emit_row0 || emit_row1) {
             res_T res_pack;
             PRAGMA_DATA_PACK(res_pack)
@@ -111,8 +106,8 @@ ReadPairsWide:
                 }
             }
             res.write(res_pack);
+            next_window_end += CONFIG_T::stride_height;
         }
-        pair_phase = pair_phase == CONFIG_T::stride_height - 1 ? 0 : pair_phase + 1;
     }
 }
 

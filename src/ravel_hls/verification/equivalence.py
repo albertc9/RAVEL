@@ -4,6 +4,8 @@ import hashlib
 from contextlib import contextmanager
 import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 from typing import Any
 
@@ -144,24 +146,42 @@ def predict_baseline(
 def predict_optimized(
     project_path: Path, inputs: np.ndarray, compiler: str | None = None
 ) -> np.ndarray:
-    """Compile and predict through hls4ml's existing-project boundary."""
+    """Compile and predict the rendered project in a fresh process."""
 
-    from hls4ml.utils.link import FilesystemModelGraph
-
-    try:
-        linked = FilesystemModelGraph(project_path)
+    with tempfile.TemporaryDirectory(prefix="ravel-predict-") as directory:
+        interchange_path = Path(directory)
+        input_path = interchange_path / "inputs.npy"
+        output_path = interchange_path / "outputs.npy"
+        np.save(input_path, inputs, allow_pickle=False)
+        command = [
+            sys.executable,
+            "-m",
+            "ravel_hls.verification._predict_project",
+            str(project_path.resolve()),
+            str(input_path),
+            str(output_path),
+        ]
         with _compiler_environment(compiler):
-            linked.compile()
-    except Exception as error:
-        raise VerificationError(
-            f"RAVEL optimized project compilation failed: {error}"
-        ) from error
-    try:
-        return np.asarray(linked.predict(inputs))
-    except Exception as error:
-        raise VerificationError(
-            f"RAVEL optimized project prediction failed: {error}"
-        ) from error
+            result = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        if result.returncode != 0:
+            detail = result.stderr.strip() or result.stdout.strip()
+            stage = {10: "compilation", 11: "prediction"}.get(
+                result.returncode, "worker"
+            )
+            raise VerificationError(
+                f"RAVEL optimized project {stage} failed: {detail}"
+            )
+        try:
+            return np.load(output_path, allow_pickle=False)
+        except Exception as error:
+            raise VerificationError(
+                f"RAVEL optimized project prediction failed: {error}"
+            ) from error
 
 
 def require_bit_exact(baseline: np.ndarray, optimized: np.ndarray) -> None:
