@@ -405,13 +405,13 @@ def _generate_project(
         if baseline_predictions is not None and "stages" in model_analysis["resolved_design"]:
             baseline_boundaries = capture_boundaries(staging_path, project_name, model_analysis["resolved_design"], model_analysis["model_facts"], corpora[0].inputs, dependency_report.get("compiler", {}).get("command"), baseline=True)
         ownership = SourceOwnership(staging_path)
-        managed_paths = binding.render(
+        source_steps = binding.render(
             staging_path,
             project_name,
             model_analysis["resolved_design"],
             parameter_payload,
         )
-        ownership.record("render-selected-stages", 1, managed_paths)
+        ownership.record_steps(source_steps)
         if stimuli is not None:
             _write_vitis_testbench_inputs(staging_path, corpora[0].inputs)
             ownership.record("write-verification-corpus", 2, ["tb_data/tb_input_features.dat"])

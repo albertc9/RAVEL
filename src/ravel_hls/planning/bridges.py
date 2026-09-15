@@ -1,8 +1,8 @@
 """Versioned lossless stream-layout bridges and their finite token events."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import gcd
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from .chain import StreamContract
@@ -60,3 +60,19 @@ def bridge_for(source: "StreamContract", target: "StreamContract") -> Bridge | N
             or source.reset != target.reset or not source.numeric.preserves_codes_in(target.numeric)):
         return None
     return Bridge(source, target)
+
+
+@dataclass(frozen=True)
+class BridgeStrategy:
+    id: str
+    version: int
+    evaluator: Callable[["StreamContract", "StreamContract"], Bridge | None] = field(compare=False, repr=False)
+
+    def evaluate(self, source: "StreamContract", target: "StreamContract") -> Bridge | None:
+        bridge = self.evaluator(source, target)
+        if bridge is not None and (bridge.id, bridge.version) != (self.id, self.version):
+            raise ValueError("Bridge capability returned a different registered identity")
+        return bridge
+
+
+LOSSLESS_BRIDGES = (BridgeStrategy("lossless-stream-repack", 2, bridge_for),)

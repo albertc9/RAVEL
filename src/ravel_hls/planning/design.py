@@ -68,6 +68,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
                 input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
+                bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
             if composed.findings:
                 resolved_design = None

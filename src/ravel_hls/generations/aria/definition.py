@@ -2,6 +2,8 @@
 
 from ...identity import ARIA_ID, ARIA_VERSION
 from ...planning.strategies import TEMPORAL_STRATEGIES
+from ...planning.bridges import LOSSLESS_BRIDGES
+from ...planning.chain import TEMPORAL_RESOLVER
 
 from ...rendering.vitis.composed import render_project
 from ..registry import (
@@ -52,8 +54,8 @@ ARIA = GenerationDefinition(
         PHARA_DATAFLOW_CONTROL_PASS,
     ),
     stage_strategies=TEMPORAL_STRATEGIES,
-    bridge_strategies=(ComponentDefinition("lossless-stream-repack", 2),),
-    chain_resolver=ComponentDefinition("bounded-temporal-dp", 1),
+    bridge_strategies=LOSSLESS_BRIDGES,
+    chain_resolver=TEMPORAL_RESOLVER,
     backends=(
         BackendBindingDefinition(
             "Vitis", "io_stream", "aria-vitis-templates", 3, render_project

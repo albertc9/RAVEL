@@ -1,14 +1,15 @@
 """Enumerate typed capabilities and resolve the complete temporal chain."""
 
 from ..domain.temporal import TemporalChain, Finding
-from .chain import ChainPlan, resolve_chain
+from .chain import ChainPlan, TEMPORAL_RESOLVER
+from .bridges import LOSSLESS_BRIDGES
 from .strategies import StageContext, StageRequest, TEMPORAL_STRATEGIES
 
 
 def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
                         dense_parallelism: int, input_strategy: str,
                         input_cycles: int, dense_cycles: int,
-                        strategies=TEMPORAL_STRATEGIES) -> ChainPlan:
+                        strategies=TEMPORAL_STRATEGIES, bridges=LOSSLESS_BRIDGES, resolver=TEMPORAL_RESOLVER) -> ChainPlan:
     context = StageContext(chain.blocks[0].input.id, input_strategy, temporal_packing,
                            dense_parallelism, input_cycles, dense_cycles)
     findings = []
@@ -28,4 +29,4 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
                     for candidate in candidates(StageRequest(chain.layout, context, previous=preceding.output)))
     domains.append(layouts)
     domains.append(candidates(StageRequest(chain.head, context, layout=chain.layout)))
-    return resolve_chain(tuple(domains))
+    return resolver.resolve(tuple(domains), bridge_strategies=bridges)

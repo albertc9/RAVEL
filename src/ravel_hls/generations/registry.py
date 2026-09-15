@@ -7,6 +7,10 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from ..domain import ParameterPayload
+from ..rendering.ownership import SourceStep
+from ..planning.strategies import StageStrategy
+from ..planning.bridges import BridgeStrategy
+from ..planning.chain import ChainResolver
 
 
 @dataclass(frozen=True)
@@ -57,7 +61,7 @@ class BackendBindingDefinition:
     renderer_id: str
     renderer_version: int
     renderer: Callable[
-        [Path, str, Mapping[str, Any], ParameterPayload], list[str]
+        [Path, str, Mapping[str, Any], ParameterPayload], tuple[SourceStep, ...]
     ] = field(repr=False, compare=False)
 
     def render(
@@ -66,7 +70,7 @@ class BackendBindingDefinition:
         project_name: str,
         resolved_design: Mapping[str, Any],
         parameter_payload: ParameterPayload,
-    ) -> list[str]:
+    ) -> tuple[SourceStep, ...]:
         return self.renderer(
             project_path, project_name, resolved_design, parameter_payload
         )
@@ -82,9 +86,9 @@ class GenerationDefinition:
     resolver: ResolverDefinition
     passes: tuple[ComponentDefinition, ...]
     backends: tuple[BackendBindingDefinition, ...]
-    stage_strategies: tuple[Any, ...] = ()
-    bridge_strategies: tuple[ComponentDefinition, ...] = ()
-    chain_resolver: ComponentDefinition | None = None
+    stage_strategies: tuple[StageStrategy, ...] = ()
+    bridge_strategies: tuple[BridgeStrategy, ...] = ()
+    chain_resolver: ChainResolver | None = None
 
     @property
     def identity(self) -> dict[str, str]:

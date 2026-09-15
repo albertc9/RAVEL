@@ -1,11 +1,12 @@
 """Bounded dynamic programming over typed stream endpoints and stage costs."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import prod
+from typing import Callable
 
 from ..domain.graph import NumericType
 from ..domain.temporal import Finding
-from .bridges import Bridge, bridge_for
+from .bridges import Bridge, BridgeStrategy, LOSSLESS_BRIDGES
 from .schedules import TokenSchedule
 
 
@@ -91,7 +92,7 @@ class ChainPlan:
         return tuple(stage.identity for stage in self.stages)
 
 
-def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates: int = 32, max_frontier: int = 128) -> ChainPlan:
+def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates: int = 32, max_frontier: int = 128, bridge_strategies: tuple[BridgeStrategy, ...] = LOSSLESS_BRIDGES) -> ChainPlan:
     """Keep non-dominated partial plans at each compatible stream endpoint."""
     frontier = [ChainPlan()]
     for domain in domains:
@@ -103,7 +104,9 @@ def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates:
                 bridges = partial.bridges
                 cost = partial.cost
                 if partial.stages and partial.stages[-1].output != candidate.input:
-                    bridge = bridge_for(partial.stages[-1].output, candidate.input)
+                    applicable = tuple(bridge for strategy in bridge_strategies
+                                       if (bridge := strategy.evaluate(partial.stages[-1].output, candidate.input)) is not None)
+                    bridge = min(applicable, key=lambda entry: (entry.cycles, entry.input.lanes + entry.output.lanes, entry.id, entry.version), default=None)
                     if bridge is None:
                         continue
                     bridges = (*bridges, bridge)
@@ -122,3 +125,16 @@ def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates:
     if not qualified:
         return ChainPlan(findings=(Finding("planner.no_qualified_plan", "No compatible chain containing a RAVEL specialization exists"),))
     return min(qualified, key=lambda item: (item.conservative_cost, item.identity))
+
+
+@dataclass(frozen=True)
+class ChainResolver:
+    id: str
+    version: int
+    evaluator: Callable[..., ChainPlan] = field(compare=False, repr=False)
+
+    def resolve(self, domains, *, bridge_strategies=LOSSLESS_BRIDGES) -> ChainPlan:
+        return self.evaluator(domains, bridge_strategies=bridge_strategies)
+
+
+TEMPORAL_RESOLVER = ChainResolver("bounded-temporal-dp", 1, resolve_chain)

@@ -65,3 +65,14 @@ def test_planner_ranks_unknown_cycle_estimates_conservatively_without_making_the
     calibrated = Candidate("calibrated", 1, ("stage",), stream, stream, Cost(8, 2, 8), True, "calibrated")
     assert resolve_chain(((uncalibrated, calibrated),)).stages == (calibrated,)
     assert resolve_chain(((uncalibrated,),)).findings == ()
+
+
+def test_chain_uses_only_the_registered_bridge_capabilities():
+    numeric = NumericType("fixed", 8, 4, True, "RND", "SAT_SYM")
+    packed = StreamContract("features", (6,), numeric, 3)
+    narrow = StreamContract("features", (6,), numeric, 2)
+    producer = Candidate("producer", 1, ("conv",), packed, packed, Cost(4, 2, 4), True)
+    consumer = Candidate("consumer", 1, ("dense",), narrow, narrow, Cost(5, 3, 5), True)
+    disabled = resolve_chain(((producer,), (consumer,)), bridge_strategies=())
+    assert disabled.stages == ()
+    assert disabled.findings[0].code == "planner.no_qualified_plan"

@@ -8,6 +8,13 @@ from ..manifest import _build_source_closure
 
 
 @dataclass(frozen=True)
+class SourceStep:
+    id: str
+    version: int
+    paths: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class OwnedChange:
     path: str
     owner: str
@@ -32,14 +39,23 @@ class SourceOwnership:
         return {entry["path"]: entry["sha256"] for entry in _build_source_closure(self.root)}
 
     def record(self, owner: str, version: int, paths: list[str]) -> None:
+        self.record_steps((SourceStep(owner, version, tuple(paths)),))
+
+    def record_steps(self, steps: tuple[SourceStep, ...]) -> None:
+        owners = {}
+        for step in steps:
+            for path in step.paths:
+                if path in owners:
+                    raise ProjectGenerationError(f"Source composition has ambiguous ownership: {path}")
+                owners[path] = step
         observed = self._snapshot()
         changed = {path for path in observed.keys() | self._expected.keys()
                    if observed.get(path) != self._expected.get(path)}
-        undeclared = changed - set(paths)
+        undeclared = changed - owners.keys()
         deleted = self._expected.keys() - observed.keys()
         if undeclared or deleted:
             raise ProjectGenerationError("Source composition contains unrecorded mutations: " + ", ".join(sorted(undeclared | deleted)))
-        self._changes.extend(OwnedChange(path, owner, version, self._expected.get(path), observed[path]) for path in sorted(changed))
+        self._changes.extend(OwnedChange(path, owners[path].id, owners[path].version, self._expected.get(path), observed[path]) for path in sorted(changed))
         self._expected = observed
 
     def verify(self) -> list[dict[str, object]]:

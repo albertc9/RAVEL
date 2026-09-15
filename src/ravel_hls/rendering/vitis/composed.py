@@ -8,12 +8,13 @@ from typing import Any
 
 from ...domain import ParameterPayload
 from ...exceptions import ProjectGenerationError
+from ..ownership import SourceStep
 from .renderer import render_aria_project
 
 
-def render_project(path: Path, name: str, design: Mapping[str, Any], parameters: ParameterPayload) -> list[str]:
+def render_project(path: Path, name: str, design: Mapping[str, Any], parameters: ParameterPayload) -> tuple[SourceStep, ...]:
     if design["strategy"]["id"] != "aria-composed":
-        return render_aria_project(path, name, design, parameters)
+        return (SourceStep("legacy-template-adapter", 1, tuple(render_aria_project(path, name, design, parameters))),)
     managed = render_aria_project(path, name, design, parameters)
     rendering = design["rendering"]
     native = rendering["native_operations"]
@@ -129,7 +130,14 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
     defines.write_text(body + "\n".join(typedefs) + "\n#endif" + suffix)
     bridge_header = "firmware/nnet_utils/ravel_bridges.h"
     (path / bridge_header).write_text(BRIDGE_SOURCE)
-    return sorted({*managed, bridge_header})
+    top_paths = (f"firmware/{name}.cpp", "firmware/defines.h")
+    dense_path = f"firmware/weights/{dense_weight.symbol}_ravel_packed.h"
+    return (
+        SourceStep("legacy-template-adapter", 1, tuple(sorted(set(managed) - {*top_paths, dense_path}))),
+        SourceStep("compose-top-and-contracts", 1, top_paths),
+        SourceStep("lossless-stream-repack", 2, (bridge_header,)),
+        SourceStep("dense-rom-packing", 1, (dense_path,)),
+    )
 
 
 BRIDGE_SOURCE = '''#ifndef RAVEL_BRIDGES_H_
