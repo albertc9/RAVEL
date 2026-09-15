@@ -9,6 +9,7 @@ def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="ren
     import keras
     from hgq.layers import QConv2D, QDense
 
+    keras.utils.set_random_seed(1700)
     reference = Path(__file__).parents[2] / "references/cnn_for_arianna/models/cnn_for_arianna.keras"
     base = keras.models.load_model(reference, custom_objects={"QConv2D": QConv2D, "QDense": QDense})
     convolution = next(layer for layer in base.layers if isinstance(layer, QConv2D)).get_config()
@@ -224,7 +225,13 @@ def test_fresh_process_generation_preserves_complete_source_and_plan_fingerprint
     import subprocess
     import sys
     model_path = tmp_path / "model.keras"
-    make_temporal_model(height=64, width=2, filters=3).save(model_path)
+    import keras
+    model = make_temporal_model(height=64, width=2, filters=3)
+    shared_initializer = keras.initializers.GlorotUniform(seed=1700)
+    for layer in model.layers:
+        if hasattr(layer, "kernel_initializer"):
+            layer.kernel_initializer = shared_initializer
+    model.save(model_path)
     code = '''import sys
 from ravel_hls import convert
 convert(sys.argv[1], sys.argv[2], {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}, "Verification": {"Mode": "disabled"}})
@@ -236,6 +243,10 @@ convert(sys.argv[1], sys.argv[2], {"HLS": {}, "Optimization": {"TemporalPacking"
         results.append(json.loads((output / "ravel_manifest.json").read_text()))
     for key in ("generated_plan_sha256", "source_closure_sha256", "generation_fingerprint", "architecture_envelope_sha256"):
         assert results[0][key] == results[1][key], key
+    restored = keras.models.load_model(output / "keras_model.keras")
+    initializers = [layer.kernel_initializer for layer in restored.layers if hasattr(layer, "kernel_initializer")]
+    assert len(initializers) == 3
+    assert [initializer.get_config() for initializer in initializers] == [{"seed": 1700}] * 3
 
 
 def test_generated_bridge_preserves_codes_and_zeroes_tail_padding_across_consecutive_calls(tmp_path):
