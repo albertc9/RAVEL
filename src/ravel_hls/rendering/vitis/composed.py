@@ -32,7 +32,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
 
     def stream(type_name, symbol):
         declarations.extend([f'    hls::stream<{type_name}> {symbol}("{symbol}");',
-                             f'    #pragma HLS STREAM variable={symbol} depth=4'])
+                             f'    #pragma HLS STREAM variable={symbol} depth={design["streaming"]["fifo_depth_words"]}'])
 
     def observe(tensor_id, symbol, shape):
         calls.append(f"    // RAVEL_OBSERVE {tensor_id} {symbol} {prod(shape)}")

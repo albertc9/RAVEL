@@ -7,6 +7,7 @@ from typing import Callable
 from ..domain.temporal import Finding, LayoutView, TemporalBlock
 from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
+from .schedules import temporal_schedule
 
 
 @dataclass(frozen=True)
@@ -68,10 +69,17 @@ def _temporal(request, strategy, version):
     target = StreamContract(pooled.id, pooled.shape, pooled.numeric_type, output_lanes)
     weight = next((parameter for parameter in convolution.parameters if parameter.role == "weight"), None)
     multipliers = prod(weight.shape) if weight is not None else 0
+    for operation in (block.convolution, block.pooling):
+        if any(operation.attribute(name, 0) != 0 for name in ("pad_top", "pad_bottom", "pad_left", "pad_right")):
+            return Capability(findings=(Finding("strategy.geometry.padding", "The qualified temporal schedule requires valid unpadded windows", operation.id),))
+    try:
+        schedule = temporal_schedule(block, input_lanes, output_lanes)
+    except ValueError as error:
+        return Capability(findings=(Finding("strategy.schedule.event_bound", str(error), convolution.id),))
     lower_bound = max(source.words, target.words)
     return Capability((Candidate(strategy, version, (convolution.id, block.activation.id, block.pooling.id), source, target,
                                 Cost(context.input_cycles if specialized else lower_bound, multipliers, lower_bound), specialized,
-                                "analytical" if specialized else "uncalibrated-native"),))
+                                "analytical" if specialized else "uncalibrated-native", schedule),))
 
 
 def _layout(request, strategy, version):

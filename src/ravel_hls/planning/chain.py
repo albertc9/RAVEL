@@ -6,6 +6,7 @@ from math import prod
 from ..domain.graph import NumericType
 from ..domain.temporal import Finding
 from .bridges import Bridge, bridge_for
+from .schedules import TokenSchedule
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,7 @@ class Candidate:
     cost: Cost
     specialized: bool
     confidence: str = "analytical"
+    schedule: TokenSchedule | None = None
 
     @property
     def identity(self) -> tuple[str, int]:
@@ -64,7 +66,8 @@ class Candidate:
                 "operation_ids": list(self.operation_ids), "input": self.input.to_dict(),
                 "output": self.output.to_dict(), "specialized": self.specialized,
                 "estimate": {"cycles": self.cost.cycles, "resource_proxy": self.cost.resource,
-                             "latency": self.cost.latency, "status": "estimated", "confidence": self.confidence}}
+                             "latency": self.cost.latency, "status": "estimated", "confidence": self.confidence},
+                **({"schedule": self.schedule.to_dict()} if self.schedule else {})}
 
 
 @dataclass(frozen=True)

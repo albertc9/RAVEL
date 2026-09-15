@@ -139,5 +139,8 @@ def test_each_block_owns_its_own_channel_and_filter_geometry(tmp_path):
     assert stages[0]["output"]["shape"] == [15, 2, 3]
     assert stages[1]["input"]["lanes"] == 3
     assert stages[1]["output"]["shape"] == [3, 2, 4]
+    assert stages[1]["schedule"]["production_after_input_words"] == [9, 10, 17, 18, 25, 26]
+    assert stages[1]["schedule"]["drain_input_words"] == 4
+    assert project.manifest["resolved_design"]["semantic_stages"][1]["dropped_pool_rows"] == 1
     assert stages[-1]["input"]["lanes"] == 8
     assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
