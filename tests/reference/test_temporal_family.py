@@ -5,7 +5,7 @@ import pytest
 from ravel_hls import analyze, convert
 
 
-def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed"):
+def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed", padding="valid"):
     import keras
     from hgq.layers import QConv2D, QDense
 
@@ -17,7 +17,8 @@ def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="ren
     value = inputs
     for block in range(blocks):
         config = {**convolution, "name": f"{prefix}_conv_{block}", "filters": filters[block] if isinstance(filters, tuple) else filters,
-                  "kernel_size": (3, 1), "strides": (2, 1)}
+                  "kernel_size": (3, 1), "strides": (2, 1),
+                  "padding": padding[block] if isinstance(padding, tuple) else padding}
         value = QConv2D.from_config(config)(value)
         value = keras.layers.MaxPool2D((2, 1), strides=(2, 1), name=f"{prefix}_pool_{block}")(value)
     value = keras.layers.Flatten(name=f"{prefix}_view")(value)
@@ -144,3 +145,35 @@ def test_each_block_owns_its_own_channel_and_filter_geometry(tmp_path):
     assert project.manifest["resolved_design"]["semantic_stages"][1]["dropped_pool_rows"] == 1
     assert stages[-1]["input"]["lanes"] == 8
     assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+def test_padding_remains_visible_as_an_opaque_operation_in_family_diagnostics():
+    report = analyze(make_temporal_model(height=64, width=2, filters=3, padding=("valid", "same")), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+    assert report["applicability"]["status"] == "unsupported"
+    assert any(operation["kind"] == "zeropadding2d" for operation in report["model_facts"]["operations"])
+    assert any(finding["code"] == "family.topology.sequence" and finding["operation_id"] == "zeropadding2d_0"
+               for finding in report["applicability"]["findings"])
+
+
+def test_conversion_failure_carries_the_same_structured_findings_as_analysis(tmp_path):
+    from ravel_hls import CompatibilityError
+
+    model = make_temporal_model(blocks=3, height=512, width=2, filters=3)
+    config = {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    expected = analyze(model, config).to_dict()["applicability"]["findings"]
+    with pytest.raises(CompatibilityError) as caught:
+        convert(model, tmp_path / "unsupported", config)
+    assert list(caught.value.findings) == expected
+    assert not (tmp_path / "unsupported").exists()
+
+
+def test_declared_schedule_bound_is_a_local_failure_without_truncating_the_chain():
+    report = analyze(make_temporal_model(height=8192, width=16, filters=3), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+    assert report["recognition"]["block_count"] == 2
+    assert report["resolved_design"] is None
+    assert any(finding["code"] == "strategy.schedule.event_bound" and finding["operation_id"] == "conv2d_1"
+               for finding in report["applicability"]["findings"])

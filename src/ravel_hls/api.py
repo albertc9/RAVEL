@@ -80,7 +80,7 @@ def _convert_analyzed_model(
     analyzed = _analyze_model(model, config)
     if not analyzed.analysis.applicable:
         messages = [finding["message"] for finding in analyzed.analysis.findings]
-        raise CompatibilityError("; ".join(messages))
+        raise CompatibilityError("; ".join(messages), findings=analyzed.analysis.to_dict()["applicability"]["findings"])
     return _publish_analyzed_graph(
         graph=analyzed.graph,
         analysis_report=analyzed.analysis.to_dict(),

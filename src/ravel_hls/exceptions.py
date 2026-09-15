@@ -1,5 +1,8 @@
 """Public RAVEL exception categories."""
 
+from copy import deepcopy
+from types import MappingProxyType
+
 
 class RavelError(Exception):
     """Base class for expected RAVEL failures."""
@@ -11,6 +14,10 @@ class ConfigurationError(RavelError, ValueError):
 
 class CompatibilityError(RavelError):
     """Raised when an input or dependency is outside a qualified profile."""
+
+    def __init__(self, message: str, *, findings=()):
+        super().__init__(message)
+        self.findings = tuple(MappingProxyType(deepcopy(dict(finding))) for finding in findings)
 
 
 class ProjectGenerationError(RavelError):
