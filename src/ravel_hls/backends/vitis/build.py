@@ -52,7 +52,7 @@ def write_build_options(project_path: Path, config: Mapping[str, Any]) -> None:
     )
 
 
-def normalize_build_script(project_path: Path) -> None:
+def normalize_build_script(project_path: Path, *, reset_all: bool = False) -> None:
     """Remove hls4ml commands that Vitis HLS 2023.2 does not support."""
 
     script_path = project_path / "build_prj.tcl"
@@ -65,4 +65,9 @@ def normalize_build_script(project_path: Path) -> None:
     normalized = [
         line for line in lines if _UNSUPPORTED_ARRAY_PARTITION.fullmatch(line) is None
     ]
+    if reset_all:
+        marker = "set_part $part"
+        if normalized.count(marker) != 1:
+            raise ProjectGenerationError("Cannot bind composed state reset to the qualified Vitis solution")
+        normalized.insert(normalized.index(marker) + 1, "config_rtl -reset all")
     script_path.write_text("\n".join(normalized) + "\n", encoding="utf-8")

@@ -60,6 +60,7 @@ def test_two_blocks_resolve_existing_specializations_and_explicit_delegation():
     assert stages[0]["strategy"]["version"] == 2
     assert stages[1]["operation_ids"] == ["conv2d_1", "relu_1", "max_pool2d_1"]
     assert report["resolved_design"]["components"]["bridge_strategies"] == [{"id": "lossless-stream-repack", "version": 2}]
+    assert report["resolved_design"]["control"]["reset"]["scope"] == "all-registers"
     assert report["resolved_design"]["bridges"]
     assert report["resolved_design"]["delegation"]["hls4ml_version"] == "1.2.0"
 

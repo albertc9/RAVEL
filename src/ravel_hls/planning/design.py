@@ -79,6 +79,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                     components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],
                                 "bridge_strategies": [{"id": entry.id, "version": entry.version} for entry in generation.bridge_strategies],
                                 "cost_policy": {"id": "temporal-lexicographic", "version": 1, "unknown_cycles": "rank-after-finite-estimates"}},
+                    control={"protocol": "ap_ctrl_hs", "reset": {"level": "active-low", "scope": "all-registers", "abort": "discard-in-flight"}},
                     stages=[item.to_dict() for item in composed.stages],
                     bridges=[item.to_dict() for item in composed.bridges],
                     delegation={"hls4ml_version": "1.2.0", "policy": "native-latency-v1",

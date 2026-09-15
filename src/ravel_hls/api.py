@@ -415,7 +415,7 @@ def _generate_project(
         if stimuli is not None:
             _write_vitis_testbench_inputs(staging_path, corpora[0].inputs)
             ownership.record("write-verification-corpus", 2, ["tb_data/tb_input_features.dat"])
-        normalize_build_script(staging_path)
+        normalize_build_script(staging_path, reset_all="stages" in model_analysis["resolved_design"])
         write_build_options(staging_path, ravel_config)
         ownership.record("configure-vendor-build", 1, ["build_prj.tcl", "build_opt.tcl"])
         verification_report: dict[str, Any] = {

@@ -81,7 +81,7 @@ task reset_dut;
 begin
  @(negedge clk); rst=0; start=0; in_valid=0; out_ready=0;
  repeat(8) @(posedge clk);
- @(negedge clk); rst=1; start=1;
+ @(negedge clk); rst=1; start=0;
 end
 endtask
 task epoch(input integer samples);
@@ -96,7 +96,7 @@ begin
    if(!pending && sent < samples*{words} && cycles%7 != 0) begin
      pending=1; in_data=inputs[sent];
    end
-   in_valid=pending;
+   in_valid=pending; start=(sent < samples*{words});
    out_ready=(cycles%17 >= 5);
    @(posedge clk);
    if(blocked && (!out_valid || out_data !== held)) $fatal(1, "AXI output changed while stalled");
@@ -112,7 +112,7 @@ begin
    cycles=cycles+1;
    if(cycles > 10000000) $fatal(1, "Protocol deadlock or incomplete output");
  end
- @(negedge clk); in_valid=0; out_ready=1;
+ @(negedge clk); in_valid=0; start=0; out_ready=1;
  repeat(32) begin @(posedge clk); if(out_valid) $fatal(1, "Extra output after inference drain"); end
 end
 endtask
@@ -123,7 +123,7 @@ initial begin
  reset_dut;
  sent_prefix=0; cycles_prefix=0;
  while(sent_prefix < {max(1, words//2)}) begin
-   @(negedge clk); in_valid=1; in_data=inputs[sent_prefix]; out_ready=0;
+   @(negedge clk); start=1; in_valid=1; in_data=inputs[sent_prefix]; out_ready=0;
    @(posedge clk); if(in_ready) sent_prefix=sent_prefix+1;
    cycles_prefix=cycles_prefix+1;
    if(cycles_prefix > 100000) $fatal(1, "Prefix deadlock");

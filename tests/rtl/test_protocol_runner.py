@@ -23,7 +23,7 @@ def test_protocol_runner_checks_stalls_reset_abort_and_consecutive_code_outputs(
         assign input_TREADY = ap_start && (!output_TVALID || output_TREADY);
         always @(posedge ap_clk) begin
           if (!ap_rst_n) begin output_TVALID <= 0; output_TDATA <= 0; end
-          else if (input_TREADY) begin output_TVALID <= input_TVALID; output_TDATA <= input_TDATA; end
+          else if (!output_TVALID || output_TREADY) begin output_TVALID <= input_TVALID && ap_start; output_TDATA <= input_TDATA; end
         end
         endmodule''')
     report = run_protocol(rtl, vectors, tmp_path / "run", top="identity", input_port="input", output_port="output")
