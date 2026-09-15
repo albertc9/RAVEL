@@ -78,11 +78,11 @@ reg clk=0; always #2.5 clk=~clk;
 reg rst=0, start=0, in_valid=0, out_ready=0;
 reg [{bits_in-1}:0] in_data=0;
 wire [{bits_out-1}:0] out_data;
-wire in_ready, out_valid;
+wire in_ready, out_valid, control_ready;
 reg [{bits_in-1}:0] inputs[0:{count*words-1}];
 reg [{bits_out-1}:0] expected[0:{count-1}];
 integer stalls=0, gaps=0, completed=0;
-{top} dut(.ap_clk(clk), .ap_rst_n(rst), .ap_start(start),
+{top} dut(.ap_clk(clk), .ap_rst_n(rst), .ap_start(start), .ap_ready(control_ready),
  .{input_port}_TDATA(in_data), .{input_port}_TVALID(in_valid), .{input_port}_TREADY(in_ready),
  .{output_port}_TDATA(out_data), .{output_port}_TVALID(out_valid), .{output_port}_TREADY(out_ready));
 task reset_dut;
@@ -93,20 +93,21 @@ begin
 end
 endtask
 task epoch(input integer samples);
-integer sent, received, cycles;
+integer sent, received, cycles, launched;
 reg pending, blocked;
 reg [{bits_out-1}:0] held;
 begin
- sent=0; received=0; cycles=0; pending=0; blocked=0;
+ sent=0; received=0; cycles=0; launched=0; pending=0; blocked=0;
  $display("RAVEL_EPOCH samples=%0d", samples);
- while(sent < samples*{words} || received < samples) begin
+ while(sent < samples*{words} || received < samples || launched < samples) begin
    @(negedge clk);
    if(!pending && sent < samples*{words} && cycles%7 != 0) begin
      pending=1; in_data=inputs[sent];
    end
-   in_valid=pending; start=(sent < samples*{words});
+   in_valid=pending; start=(launched < samples);
    out_ready=(cycles%17 >= 5);
    @(posedge clk);
+   if(start && control_ready) launched=launched+1;
    if(blocked && (!out_valid || out_data !== held)) $fatal(1, "AXI output changed while stalled");
    blocked=out_valid && !out_ready; held=out_data;
    if(blocked) stalls=stalls+1;
