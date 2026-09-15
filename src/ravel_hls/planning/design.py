@@ -67,7 +67,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 recognition.chain, temporal_packing=plan["temporal_pack"],
                 dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
                 input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
-                dense_cycles=plan["dense_steps"],
+                dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
             )
             if composed.findings:
                 resolved_design = None
@@ -75,7 +75,10 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
             else:
                 resolved_design.update(
                     model_family=model_family, strategy={"id": "aria-composed", "version": 1},
-                    resolver={"id": "bounded-temporal-dp", "version": 1},
+                    resolver={"id": generation.chain_resolver.id, "version": generation.chain_resolver.version},
+                    components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],
+                                "bridge_strategies": [{"id": entry.id, "version": entry.version} for entry in generation.bridge_strategies],
+                                "cost_policy": {"id": "temporal-lexicographic", "version": 1, "unknown_cycles": "rank-after-finite-estimates"}},
                     stages=[item.to_dict() for item in composed.stages],
                     bridges=[item.to_dict() for item in composed.bridges],
                     delegation={"hls4ml_version": "1.2.0", "policy": "native-latency-v1",

@@ -79,6 +79,11 @@ class ChainPlan:
         return any(stage.specialized for stage in self.stages)
 
     @property
+    def conservative_cost(self) -> tuple[float, int, int]:
+        unknown = any(stage.confidence not in {"analytical", "calibrated"} for stage in self.stages)
+        return (float("inf") if unknown else self.cost.cycles, self.cost.resource, self.cost.latency)
+
+    @property
     def identity(self) -> tuple[tuple[str, int], ...]:
         return tuple(stage.identity for stage in self.stages)
 
@@ -102,12 +107,10 @@ def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates:
                     cost = cost.extend(Cost(bridge.cycles, bridge.input.lanes + bridge.output.lanes, bridge.cycles))
                 extended.append(ChainPlan((*partial.stages, candidate), cost.extend(candidate.cost), bridges=bridges))
         frontier = []
-        for plan in sorted(extended, key=lambda item: (item.cost, item.identity)):
+        for plan in sorted(extended, key=lambda item: (item.conservative_cost, item.identity)):
             endpoint = plan.stages[-1].output
             dominated = any(previous.stages[-1].output == endpoint and previous.specialized == plan.specialized
-                            and previous.cost.cycles <= plan.cost.cycles
-                            and previous.cost.resource <= plan.cost.resource
-                            and previous.cost.latency <= plan.cost.latency for previous in frontier)
+                            and all(left <= right for left, right in zip(previous.conservative_cost, plan.conservative_cost)) for previous in frontier)
             if not dominated:
                 frontier.append(plan)
         if len(frontier) > max_frontier:
@@ -115,4 +118,4 @@ def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates:
     qualified = [plan for plan in frontier if plan.specialized]
     if not qualified:
         return ChainPlan(findings=(Finding("planner.no_qualified_plan", "No compatible chain containing a RAVEL specialization exists"),))
-    return min(qualified, key=lambda item: (item.cost, item.identity))
+    return min(qualified, key=lambda item: (item.conservative_cost, item.identity))

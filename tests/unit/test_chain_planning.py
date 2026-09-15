@@ -56,3 +56,12 @@ def test_bridge_schedule_moves_shared_lanes_together_and_drains_a_partial_word()
     assert bridge.to_dict()["schedule"]["cycles"] == 3
     assert bridge.events == ((0, "consume"), (0, "produce"), (1, "produce"), (2, "consume"), (2, "produce"))
     assert bridge.transfer(((11, 12, 13, 14), (15, 99, 99, 99))) == ((11, 12), (13, 14), (15, 0))
+
+
+def test_planner_ranks_unknown_cycle_estimates_conservatively_without_making_them_illegal():
+    numeric = NumericType("fixed", 8, 4, True, "RND", "SAT_SYM")
+    stream = StreamContract("features", (8,), numeric, 2)
+    uncalibrated = Candidate("uncalibrated", 1, ("stage",), stream, stream, Cost(4, 1, 4), True, "uncalibrated-native")
+    calibrated = Candidate("calibrated", 1, ("stage",), stream, stream, Cost(8, 2, 8), True, "calibrated")
+    assert resolve_chain(((uncalibrated, calibrated),)).stages == (calibrated,)
+    assert resolve_chain(((uncalibrated,),)).findings == ()

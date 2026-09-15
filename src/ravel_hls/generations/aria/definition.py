@@ -1,6 +1,7 @@
 """The closed, explicit current Aria built-in generation definition."""
 
 from ...identity import ARIA_ID, ARIA_VERSION
+from ...planning.strategies import TEMPORAL_STRATEGIES
 
 from ...rendering.vitis.composed import render_project
 from ..registry import (
@@ -50,6 +51,9 @@ ARIA = GenerationDefinition(
         PHARA_FUSION_PASS,
         PHARA_DATAFLOW_CONTROL_PASS,
     ),
+    stage_strategies=TEMPORAL_STRATEGIES,
+    bridge_strategies=(ComponentDefinition("lossless-stream-repack", 2),),
+    chain_resolver=ComponentDefinition("bounded-temporal-dp", 1),
     backends=(
         BackendBindingDefinition(
             "Vitis", "io_stream", "aria-vitis-templates", 3, render_project

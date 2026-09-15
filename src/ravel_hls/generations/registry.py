@@ -82,6 +82,9 @@ class GenerationDefinition:
     resolver: ResolverDefinition
     passes: tuple[ComponentDefinition, ...]
     backends: tuple[BackendBindingDefinition, ...]
+    stage_strategies: tuple[Any, ...] = ()
+    bridge_strategies: tuple[ComponentDefinition, ...] = ()
+    chain_resolver: ComponentDefinition | None = None
 
     @property
     def identity(self) -> dict[str, str]:
