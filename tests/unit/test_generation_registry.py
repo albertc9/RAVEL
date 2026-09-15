@@ -53,3 +53,25 @@ def test_builtin_generation_registry_is_immutable_and_closed() -> None:
         generation.version = "next"
     with pytest.raises(LookupError, match="unknown RAVEL generation"):
         builtin_generation("aria", "9.9.9")
+
+
+def test_ambiguous_family_matches_return_structured_findings_without_priority():
+    from dataclasses import replace
+    from ravel_hls.generations.registry import FamilyMatcherDefinition
+
+    def first(facts, provenance):
+        return {"id": "first", "version": 1}, {"status": "applicable", "findings": []}
+
+    def second(facts, provenance):
+        return {"id": "second", "version": 1}, {"status": "applicable", "findings": []}
+
+    matchers = (FamilyMatcherDefinition("first", 1, first), FamilyMatcherDefinition("second", 1, second))
+    generation = builtin_generation("aria", "1.7.0")
+    forward = replace(generation, family_matchers=matchers).match_model_family({}, {})
+    backward = replace(generation, family_matchers=matchers[::-1]).match_model_family({}, {})
+
+    assert forward == backward
+    family, applicability = forward
+    assert family is None
+    assert applicability["status"] == "ambiguous"
+    assert applicability["findings"][0]["code"] == "family.ambiguous"

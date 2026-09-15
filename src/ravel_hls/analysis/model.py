@@ -21,6 +21,8 @@ from ..analysis.phara import (
 from ..compatibility.dependencies import inspect_dependencies
 from ..config import validate_public_config
 from ..domain import ParameterPayload, ParameterTensor
+from ..domain.graph import GraphFacts
+from ..domain.temporal import recognize_temporal_chain
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..generations import builtin_generation
 from ..identity import ARIA_ID, ARIA_VERSION
@@ -181,7 +183,8 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
 
     dense_facts: dict[str, Any] = {}
     resolved_design = None
-    if model_family is not None:
+    recognition = recognize_temporal_chain(GraphFacts.from_dict(model_facts))
+    if model_family is not None and model_family["id"] == "hgq-conv-pool-dense":
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
         strategy = generation.strategy(
@@ -219,8 +222,19 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
                 rendering=_rendering_contract(layers, plan),
                 coefficient_realization=coefficient_realization,
             )
+    multi_report = {}
+    if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
+        multi_report["recognition"] = recognition.chain.to_dict()
+        outside_release = len(recognition.chain.blocks) > 2
+        applicability = {"status": "unsupported", "findings": [{
+            "code": "family.support.block_count" if outside_release else "planner.no_qualified_plan",
+            "severity": "error", "operation_id": None,
+            "message": ("Aria 1.7 qualifies only one- and two-block plans" if outside_release else
+                        "Temporal chain recognized; no qualified composed implementation is available"),
+        }]}
     analysis = ModelAnalysis._from_report(
         {
+            **multi_report,
             "schema_version": 1,
             "generation": generation.identity,
             "model_family": model_family,

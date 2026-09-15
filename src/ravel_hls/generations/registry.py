@@ -93,8 +93,12 @@ class GenerationDefinition:
         results = [matcher.evaluate(facts, provenance) for matcher in self.family_matchers]
         matches = [result for result in results if result[0] is not None]
         if len(matches) > 1:
-            identities = [result[0] for result in matches]
-            raise RuntimeError(f"Ambiguous model-family match: {identities}")
+            identities = sorted((result[0] for result in matches), key=lambda value: (value["id"], value["version"]))
+            return None, {"status": "ambiguous", "findings": [{
+                "code": "family.ambiguous", "severity": "error", "operation_id": None,
+                "message": "Multiple model families match without a declared resolution relation",
+                "candidates": identities,
+            }]}
         if matches:
             return matches[0]
         findings = [
