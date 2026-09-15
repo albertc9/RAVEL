@@ -14,6 +14,23 @@ from .manifest import _build_source_closure
 
 
 @dataclass(frozen=True)
+class _CompilerBoundModelGraph:
+    """Delegate hls4ml project access with RAVEL's detected compiler."""
+
+    graph: Any
+    compiler: str | None
+
+    def compile(self, *args: Any, **kwargs: Any) -> Any:
+        from .verification.equivalence import _compiler_environment
+
+        with _compiler_environment(self.compiler):
+            return self.graph.compile(*args, **kwargs)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.graph, name)
+
+
+@dataclass(frozen=True)
 class Project:
     """Read-only view of a generated RAVEL project."""
 
@@ -69,10 +86,12 @@ class Project:
         """Return hls4ml's restricted existing-project compile/predict/build view."""
 
         from hls4ml.utils.link import FilesystemModelGraph
+        from .compatibility.dependencies import inspect_dependencies
 
         linked = FilesystemModelGraph(self.path)
         linked.config.config["OutputDir"] = str(self.path.resolve())
-        return linked
+        compiler = inspect_dependencies().get("compiler", {}).get("command")
+        return _CompilerBoundModelGraph(linked, compiler)
 
     link_hls4ml = link
 

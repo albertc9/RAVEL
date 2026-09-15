@@ -173,8 +173,7 @@ def predict_optimized(
         np.save(input_path, inputs, allow_pickle=False)
         command = [
             sys.executable,
-            "-m",
-            "ravel_hls.verification._predict_project",
+            str(Path(__file__).with_name("_predict_project.py")),
             str(project_path.resolve()),
             str(input_path),
             str(output_path),
