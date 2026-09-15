@@ -186,7 +186,7 @@ def predict_optimized(
                 text=True,
             )
         if result.returncode != 0:
-            detail = result.stderr.strip() or result.stdout.strip()
+            detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
             stage = {10: "compilation", 11: "prediction"}.get(
                 result.returncode, "worker"
             )

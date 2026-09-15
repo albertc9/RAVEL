@@ -497,6 +497,7 @@ def _native_rendering_contract(layers: list[Any]) -> dict[str, Any]:
         result[f"{kind}_{ordinal}"] = {
             "output_symbol": output.name, "output_type": output.type.name,
             "output_precision_cpp": output.type.precision.definition_cpp(),
+            "output_shape": [int(value) for value in output.shape],
             "native_call": layer.get_attr("function_cpp"),
             "config_symbol": f"config{layer.get_attr('index')}",
             "input_symbol": layer.get_input_variable().name if layer.inputs and kind != "input" else None,

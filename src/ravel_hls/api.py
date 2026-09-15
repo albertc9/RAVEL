@@ -39,6 +39,7 @@ from .verification.equivalence import (
     require_source_consistency,
 )
 from .verification.corpora import prepare_corpora
+from .verification.boundaries import capture_boundaries, compare_boundaries
 
 
 def convert(
@@ -398,6 +399,9 @@ def _generate_project(
         binding = generation.backend_binding(
             hls_config["Backend"], hls_config["IOType"]
         )
+        baseline_boundaries = None
+        if baseline_predictions is not None and "stages" in model_analysis["resolved_design"]:
+            baseline_boundaries = capture_boundaries(staging_path, project_name, model_analysis["resolved_design"], model_analysis["model_facts"], corpora[0].inputs, dependency_report.get("compiler", {}).get("command"), baseline=True)
         ownership = SourceOwnership(staging_path)
         managed_paths = binding.render(
             staging_path,
@@ -435,6 +439,9 @@ def _generate_project(
             output_numeric = model_analysis["model_facts"]["operations"][-1]["outputs"][0]["numeric_type"]
             require_bit_exact(baseline_predictions, optimized_predictions, output_numeric)
             verification_report["transformation_equivalence"] = "passed"
+            if baseline_boundaries is not None:
+                observed_boundaries = capture_boundaries(staging_path, project_name, model_analysis["resolved_design"], model_analysis["model_facts"], corpora[0].inputs, dependency_report.get("compiler", {}).get("command"), baseline=False)
+                verification_report["stage_boundaries"] = compare_boundaries(baseline_boundaries, observed_boundaries)
             if source_consistency_available:
                 source_consistency = require_source_consistency(
                     hls_config.get("KerasModel"),

@@ -1,3 +1,5 @@
+import pytest
+from ravel_hls.exceptions import VerificationError
 import numpy as np
 
 from ravel_hls.config import RavelConfig
@@ -40,3 +42,11 @@ def test_numeric_contract_sweeps_spatial_and_boundary_rows_with_impulses() -> No
         "negative_impulse_row_31",
     ]
     assert record["patterns"][-1] == "seeded_random"
+
+
+def test_boundary_verification_rejects_a_permutation_even_when_final_outputs_could_match():
+    from ravel_hls.verification.boundaries import compare_boundaries
+
+    reference = [("max_pool2d_0:out0", np.array([[1, 2, 3]], dtype=np.uint64))]
+    with pytest.raises(VerificationError, match="max_pool2d_0:out0"):
+        compare_boundaries(reference, [("max_pool2d_0:out0", np.array([[2, 1, 3]], dtype=np.uint64))])

@@ -99,7 +99,7 @@ def resolve_chain(domains: tuple[tuple[Candidate, ...], ...], *, max_candidates:
                     if bridge is None:
                         continue
                     bridges = (*bridges, bridge)
-                    cost = cost.extend(Cost(bridge.input.values, bridge.input.lanes + bridge.output.lanes, bridge.input.values))
+                    cost = cost.extend(Cost(bridge.cycles, bridge.input.lanes + bridge.output.lanes, bridge.cycles))
                 extended.append(ChainPlan((*partial.stages, candidate), cost.extend(candidate.cost), bridges=bridges))
         frontier = []
         for plan in sorted(extended, key=lambda item: (item.cost, item.identity)):

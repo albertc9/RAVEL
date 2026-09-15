@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from pathlib import Path
 import re
+from math import prod
 from typing import Any
 
 from ...domain import ParameterPayload
@@ -33,6 +34,9 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
         declarations.extend([f'    hls::stream<{type_name}> {symbol}("{symbol}");',
                              f'    #pragma HLS STREAM variable={symbol} depth=4'])
 
+    def observe(tensor_id, symbol, shape):
+        calls.append(f"    // RAVEL_OBSERVE {tensor_id} {symbol} {prod(shape)}")
+
     for stage in design["stages"]:
         if current_contract != stage["input"]:
             bridge = next((item for item in design["bridges"] if item["input"] == current_contract and item["output"] == stage["input"]), None)
@@ -49,6 +53,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
                 count *= extent
             calls.append(f"    ravel::repack<{current_type}, {bridge_type}, {count}>({current_symbol}, {symbol});")
             current_symbol, current_type = symbol, bridge_type
+            observe(target["tensor_id"], current_symbol, target["shape"])
             bridge_index += 1
         strategy = stage["strategy"]["id"]
         if strategy in {"aria-wide-stream", "phara"}:
@@ -71,7 +76,9 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
                 stream(relu_type, relu_symbol)
                 calls.extend([
                     f"    nnet::{rendering['first_convolution_function']}<{current_type}, {conv_type}, {conv['config_symbol']}>({current_symbol}, {conv_symbol}, {weight.symbol}, {bias.symbol});",
+                    f"    // RAVEL_OBSERVE {convolution}:out0 {conv_symbol} {prod(native[convolution]['output_shape'])}",
                     f"    nnet::relu<{conv_type}, {relu_type}, {relu['config_symbol']}>({conv_symbol}, {relu_symbol});",
+                    f"    // RAVEL_OBSERVE {activation}:out0 {relu_symbol} {prod(native[activation]['output_shape'])}",
                     f"    nnet::maxpool2d_wide_nonoverlap_cl<{relu_type}, {pool_type}, {pool['config_symbol']}>({relu_symbol}, {pool_symbol});",
                 ])
             current_symbol, current_type = pool_symbol, pool_type
@@ -85,6 +92,10 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
                 native_call = re.sub(r"\b" + re.escape(binding["input_symbol"]) + r"\b", current_symbol, native_call)
                 calls.append("    " + native_call)
                 current_symbol, current_type = binding["output_symbol"], binding["output_type"]
+                if operation_id != stage["operation_ids"][-1]:
+                    # Native intermediates are also observed when checking a composed block.
+                    output_count = rendering["native_operations"][operation_id]["output_shape"]
+                    observe(f"{operation_id}:out0", current_symbol, output_count)
         elif strategy == "identity-layout-view":
             pass
         elif strategy == "aria-dense-wide":
@@ -96,6 +107,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
         else:
             raise ProjectGenerationError(f"Unknown composed strategy: {strategy}")
         current_contract = stage["output"]
+        observe(current_contract["tensor_id"], current_symbol, current_contract["shape"])
 
     dense_weight = payload[f"{design['stages'][-1]['operation_ids'][0]}:weight"]
     loads = [f'        nnet::load_weights_from_txt<{tensor.type_name}, {tensor.values.size}>({tensor.symbol}, "{tensor.symbol}.txt");'
@@ -124,6 +136,7 @@ BRIDGE_SOURCE = '''#ifndef RAVEL_BRIDGES_H_
 #define RAVEL_BRIDGES_H_
 #include "hls_stream.h"
 namespace ravel {
+constexpr unsigned gcd(unsigned a, unsigned b) { return b == 0 ? a : gcd(b, a % b); }
 template<class IN, class OUT, unsigned COUNT>
 void repack(hls::stream<IN>& input, hls::stream<OUT>& output) {
     typedef typename IN::value_type input_value;
@@ -131,8 +144,11 @@ void repack(hls::stream<IN>& input, hls::stream<OUT>& output) {
     static_assert(input_value::width == output_value::width, "Bridge must preserve scalar bits");
     IN incoming;
     OUT outgoing;
+    #pragma HLS ARRAY_PARTITION variable=incoming complete dim=0
+    #pragma HLS ARRAY_PARTITION variable=outgoing complete dim=0
+    const unsigned LANES = gcd(IN::size, OUT::size);
 BridgeCodes:
-    for (unsigned i = 0; i < COUNT; ++i) {
+    for (unsigned i = 0; i < COUNT; i += LANES) {
         #pragma HLS PIPELINE II=1
         if (i % IN::size == 0) incoming = input.read();
         if (i % OUT::size == 0) {
@@ -141,8 +157,12 @@ BridgeCodes:
                 outgoing[lane] = 0;
             }
         }
-        outgoing[i % OUT::size].range(input_value::width - 1, 0) = incoming[i % IN::size].range(input_value::width - 1, 0);
-        if (i % OUT::size == OUT::size - 1 || i == COUNT - 1) output.write(outgoing);
+        for (unsigned lane = 0; lane < LANES; ++lane) {
+            #pragma HLS UNROLL
+            if (i + lane < COUNT)
+                outgoing[(i + lane) % OUT::size].range(input_value::width - 1, 0) = incoming[(i + lane) % IN::size].range(input_value::width - 1, 0);
+        }
+        if ((i + LANES) % OUT::size == 0 || i + LANES >= COUNT) output.write(outgoing);
     }
 }
 }

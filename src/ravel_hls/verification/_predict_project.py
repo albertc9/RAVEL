@@ -15,6 +15,7 @@ def main() -> int:
 
     try:
         linked = FilesystemModelGraph(project_path)
+        linked.config.config["OutputDir"] = str(project_path.resolve())
         linked.compile()
     except Exception as error:
         print(error, file=sys.stderr)

@@ -45,3 +45,14 @@ def test_planner_inserts_a_qualified_bridge_and_rejects_truncating_candidate_bou
     bounded = resolve_chain(((producer, producer), (consumer,)), max_candidates=1)
     assert bounded.findings[0].code == "planner.candidate_bound"
     assert bounded.stages == ()
+
+
+def test_bridge_schedule_moves_shared_lanes_together_and_drains_a_partial_word():
+    from ravel_hls.planning.bridges import bridge_for
+
+    numeric = NumericType("fixed", 8, 4, True, "RND", "SAT_SYM")
+    bridge = bridge_for(StreamContract("features", (5,), numeric, 4),
+                        StreamContract("features", (5,), numeric, 2))
+    assert bridge.to_dict()["schedule"]["cycles"] == 3
+    assert bridge.events == ((0, "consume"), (0, "produce"), (1, "produce"), (2, "consume"), (2, "produce"))
+    assert bridge.transfer(((11, 12, 13, 14), (15, 99, 99, 99))) == ((11, 12), (13, 14), (15, 0))

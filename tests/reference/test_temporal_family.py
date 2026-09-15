@@ -71,6 +71,9 @@ def test_composed_two_block_project_is_bit_exact_against_its_clean_baseline(tmp_
     assert project.status["correctness_verification"] == "passed"
     assert project.manifest["verification"]["source_conversion_consistency"] == "passed"
     assert project.manifest["resolved_design"]["strategy"]["id"] == "aria-composed"
+    boundaries = project.manifest["verification"]["stage_boundaries"]
+    assert boundaries["status"] == "passed"
+    assert {entry["tensor_id"] for entry in boundaries["observations"]} >= {"max_pool2d_0:out0", "max_pool2d_1:out0", "reshape_0:out0", "dense_0:out0"}
     assert "nnet::conv_2d_cl" in (project.path / "firmware/composed.cpp").read_text()
     owned = {item["path"] for item in project.manifest["source_ownership"]}
     assert "firmware/nnet_utils/ravel_bridges.h" in owned

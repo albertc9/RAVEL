@@ -1,6 +1,7 @@
 """Versioned lossless stream-layout bridges and their finite token events."""
 
 from dataclasses import dataclass
+from math import gcd
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,16 +13,24 @@ class Bridge:
     input: "StreamContract"
     output: "StreamContract"
     id: str = "lossless-stream-repack"
-    version: int = 1
+    version: int = 2
+
+    @property
+    def lanes_per_cycle(self) -> int:
+        return gcd(self.input.lanes, self.output.lanes)
+
+    @property
+    def cycles(self) -> int:
+        return (self.input.values + self.lanes_per_cycle - 1) // self.lanes_per_cycle
 
     @property
     def events(self) -> tuple[tuple[int, str], ...]:
         events = []
-        for scalar in range(self.input.values):
+        for cycle, scalar in enumerate(range(0, self.input.values, self.lanes_per_cycle)):
             if scalar % self.input.lanes == 0:
-                events.append((scalar, "consume"))
-            if scalar % self.output.lanes == self.output.lanes - 1 or scalar == self.input.values - 1:
-                events.append((scalar, "produce"))
+                events.append((cycle, "consume"))
+            if (scalar + self.lanes_per_cycle) % self.output.lanes == 0 or scalar + self.lanes_per_cycle >= self.input.values:
+                events.append((cycle, "produce"))
         return tuple(events)
 
     def transfer(self, words: tuple[tuple[int, ...], ...]) -> tuple[tuple[int, ...], ...]:
@@ -36,9 +45,10 @@ class Bridge:
     def to_dict(self) -> dict[str, object]:
         return {"strategy": {"id": self.id, "version": self.version},
                 "input": self.input.to_dict(), "output": self.output.to_dict(),
-                "schedule": {"id": "scalar-repack-events", "version": 1,
-                             "cycles": self.input.values, "consume_every": self.input.lanes,
-                             "produce_every": self.output.lanes, "drains_tail": True},
+                "schedule": {"id": "shared-lane-repack-events", "version": 2,
+                             "cycles": self.cycles, "lanes_per_cycle": self.lanes_per_cycle,
+                             "consume_every": self.input.lanes // self.lanes_per_cycle,
+                             "produce_every": self.output.lanes // self.lanes_per_cycle, "drains_tail": True},
                 "storage_scalars": self.input.lanes + self.output.lanes,
                 "proof": "identical-code-layout-and-order"}
 
