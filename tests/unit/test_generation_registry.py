@@ -42,7 +42,7 @@ def test_aria_generation_declares_its_complete_builtin_extension_boundary() -> N
     assert [(item.backend, item.io_type) for item in generation.backends] == [
         ("Vitis", "io_stream")
     ]
-    assert generation.backends[0].renderer_version == 2
+    assert generation.backends[0].renderer_version == 3
     assert generation.passes[1].version == 2
 
 

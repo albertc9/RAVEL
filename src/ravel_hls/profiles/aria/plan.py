@@ -7,6 +7,7 @@ from ...analysis.phara import (
     build_pool_aligned_schedule,
     build_row_credit_schedule,
 )
+from ...analysis.streaming import build_two_row_convolution_schedule
 
 
 def build_implementation_plan(
@@ -37,6 +38,33 @@ def build_implementation_plan(
         "multiplier_limit": products_per_window * convolution["out_width"],
         "target_loop_ii": 1,
     }
+    if temporal_pack == 2:
+        schedule = build_two_row_convolution_schedule(
+            input_rows=input_shape[0],
+            kernel_rows=convolution["filt_height"],
+            stride_rows=convolution["stride_height"],
+        )
+        schedule_proven = (
+            input_shape[0] % 2 == 0
+            and schedule.output_rows == convolution["out_height"]
+            and schedule.maximum_outputs_per_input_word <= 1
+        )
+        first_convolution["schedule"] = {
+            "id": "next-window-end",
+            "version": 1,
+            "status": "proven" if schedule_proven else "rejected",
+            "input_words": schedule.input_words,
+            "output_rows": schedule.output_rows,
+            "first_window_end": (
+                schedule.window_end_rows[0] if schedule.window_end_rows else None
+            ),
+            "last_window_end": (
+                schedule.window_end_rows[-1] if schedule.window_end_rows else None
+            ),
+            "maximum_outputs_per_input_word": (
+                schedule.maximum_outputs_per_input_word
+            ),
+        }
     if dense_parallelism == 4:
         pooling = operations["max_pool2d_0"]["attributes"]
         schedule_builder = (
@@ -108,7 +136,11 @@ def build_implementation_plan(
         "template_profile": (
             f"aria-phara-p{temporal_pack}-q1-d4-v1"
             if dense_parallelism == 4
-            else f"aria-p{temporal_pack}-d{dense_parallelism}-v3"
+            else (
+                f"aria-p2-d{dense_parallelism}-v4"
+                if temporal_pack == 2
+                else f"aria-p{temporal_pack}-d{dense_parallelism}-v3"
+            )
         ),
         "temporal_pack": temporal_pack,
         "channels_per_row": input_shape[1],

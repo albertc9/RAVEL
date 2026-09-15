@@ -262,6 +262,16 @@ def test_same_topology_accepts_extracted_geometry_instead_of_arianna_constants(
         "products_per_window": 15,
         "multiplier_limit": 60,
         "target_loop_ii": 1,
+        "schedule": {
+            "id": "next-window-end",
+            "version": 1,
+            "status": "proven",
+            "input_words": 64,
+            "output_rows": 63,
+            "first_window_end": 2,
+            "last_window_end": 126,
+            "maximum_outputs_per_input_word": 1,
+        },
     }
 
 
@@ -406,6 +416,30 @@ def test_resolved_design_records_the_actual_versioned_resolution_and_pass_chain(
         for previous, current in zip(passes, passes[1:])
     )
     assert passes[-1]["output_design_sha256"] == design["resolved_design_sha256"]
+
+
+def test_analysis_records_a_proven_stride_two_window_schedule(
+    stride_two_position_model,
+) -> None:
+    design = analyze(
+        stride_two_position_model,
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 2, "DenseParallelism": 2},
+        },
+    ).to_dict()["resolved_design"]
+
+    assert design["implementation_plan"]["template_profile"] == "aria-p2-d2-v4"
+    assert design["implementation_plan"]["first_convolution"]["schedule"] == {
+        "id": "next-window-end",
+        "version": 1,
+        "status": "proven",
+        "input_words": 16,
+        "output_rows": 13,
+        "first_window_end": 6,
+        "last_window_end": 30,
+        "maximum_outputs_per_input_word": 1,
+    }
 
 
 def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
