@@ -13,6 +13,8 @@ import uuid
 
 import numpy as np
 
+from .identity import ARIA_VERSION
+
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .backends.vitis.build import normalize_build_script, write_build_options
@@ -257,7 +259,7 @@ def _generate_analyzed_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.5.1 dependency stack is not qualified: " + ", ".join(failures)
+            f"Aria {ARIA_VERSION} dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -268,14 +270,14 @@ def _generate_analyzed_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml Backend must be Vitis for Aria {ARIA_VERSION}")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml IOType must be io_stream for Aria {ARIA_VERSION}")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml Strategy must be Latency for Aria {ARIA_VERSION}")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml ReuseFactor must be 1 for Aria {ARIA_VERSION}")
     layers = list(hls_model.get_layers())
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     output_shapes = list(hls_config.get("OutputShapes", {}).values())

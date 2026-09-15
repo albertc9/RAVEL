@@ -1,4 +1,6 @@
-"""The closed, explicit Aria 1.5 built-in generation definition."""
+"""The closed, explicit current Aria built-in generation definition."""
+
+from ...identity import ARIA_ID, ARIA_VERSION
 
 from ...rendering.vitis import render_aria_project
 from ..registry import (
@@ -18,9 +20,9 @@ from .passes import (
 )
 
 
-ARIA_1_5_1 = GenerationDefinition(
-    id="aria",
-    version="1.5.1",
+ARIA = GenerationDefinition(
+    id=ARIA_ID,
+    version=ARIA_VERSION,
     operation_extractors=tuple(
         ComponentDefinition(operation_id, 1)
         for operation_id in (

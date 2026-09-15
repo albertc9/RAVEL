@@ -23,6 +23,7 @@ from ..config import validate_public_config
 from ..domain import ParameterPayload, ParameterTensor
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..generations import builtin_generation
+from ..identity import ARIA_ID, ARIA_VERSION
 from ..profiles.aria.plan import build_implementation_plan
 
 
@@ -109,7 +110,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
 def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     """Return the private graph-bearing analysis used by conversion."""
 
-    generation = builtin_generation("aria", "1.5.1")
+    generation = builtin_generation(ARIA_ID, ARIA_VERSION)
     config = validate_public_config(config)
     hls_values = config["HLS"]
     backend = hls_values.get("Backend", "Vitis")
@@ -129,7 +130,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.5.1 dependency stack is not qualified: " + ", ".join(failed)
+            f"Aria {ARIA_VERSION} dependency stack is not qualified: " + ", ".join(failed)
         )
 
     import hls4ml

@@ -6,9 +6,9 @@ from ravel_hls.generations import builtin_generation
 
 
 def test_aria_generation_declares_its_complete_builtin_extension_boundary() -> None:
-    generation = builtin_generation("aria", "1.5.1")
+    generation = builtin_generation("aria", "1.7.0")
 
-    assert generation.identity == {"id": "aria", "version": "1.5.1"}
+    assert generation.identity == {"id": "aria", "version": "1.7.0"}
     assert [component.id for component in generation.operation_extractors] == [
         "input",
         "repack",
@@ -47,7 +47,7 @@ def test_aria_generation_declares_its_complete_builtin_extension_boundary() -> N
 
 
 def test_builtin_generation_registry_is_immutable_and_closed() -> None:
-    generation = builtin_generation("aria", "1.5.1")
+    generation = builtin_generation("aria", "1.7.0")
 
     with pytest.raises(FrozenInstanceError):
         generation.version = "next"

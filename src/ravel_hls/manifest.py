@@ -9,6 +9,7 @@ from typing import Any
 
 from .compatibility.dependencies import inspect_dependencies
 from .config import AGGRESSIVE_SPECIALIZATION_POLICY, RavelConfig
+from .identity import ARIA_VERSION
 
 
 def canonical_sha256(value: Any) -> str:
@@ -152,7 +153,7 @@ def build_generation_manifest(
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.5.1",
+            "release": ARIA_VERSION,
             "package_version": package_version,
         },
         "source_model": source_model,
