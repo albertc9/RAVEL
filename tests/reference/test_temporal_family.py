@@ -113,10 +113,12 @@ def test_refresh_preserves_the_composed_plan_and_binds_it_in_the_architecture(tm
     config = {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
               "Verification": {"Mode": "disabled"}}
     project = convert(model, tmp_path / "refreshable", config)
+    assert len(project.manifest["generated_plan_sha256"]) == 64
     architecture = project.manifest["architecture_envelope"]
     assert architecture["stages"] == project.manifest["resolved_design"]["stages"]
     assert architecture["bridges"] == project.manifest["resolved_design"]["bridges"]
     renewed = refresh(project, model)
+    assert renewed.manifest["generated_plan_sha256"] == project.manifest["generated_plan_sha256"]
     assert renewed.manifest["architecture_envelope_sha256"] == project.manifest["architecture_envelope_sha256"]
     assert renewed.manifest["resolved_design"]["stages"] == project.manifest["resolved_design"]["stages"]
 
@@ -195,3 +197,22 @@ def test_every_selected_stage_declares_schedule_layout_control_and_source_owners
     layout = next(stage for stage in design["semantic_stages"] if stage["kind"] == "layout-view")
     assert layout["mapping"]["input"]["axes"][-1] == {"name": "channel", "extent": 3, "stride": 1}
     assert design["semantic_stages"][-1]["kind"] == "dense-head"
+
+
+def test_parameter_package_refreshes_second_block_codes_without_changing_the_selected_plan(tmp_path):
+    from ravel_hls import Parameters, refresh
+    model = make_temporal_model(height=64, width=2, filters=3)
+    config = {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+              "Verification": {"Mode": "auto", "Samples": 16}}
+    original = convert(model, tmp_path / "parameter_refresh", config)
+    kernel = [layer.kernel for layer in model.layers if hasattr(layer, "kernel")][1]
+    values = kernel.numpy()
+    values.reshape(-1)[0] += 0.125
+    kernel.assign(values)
+    package = Parameters.extract(model)
+    renewed = refresh(original, package)
+    assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
+    assert renewed.manifest["source_model"]["fingerprints"]["parameter_state_sha256"] != original.manifest["source_model"]["fingerprints"]["parameter_state_sha256"]
+    assert renewed.manifest["verification"]["transformation_equivalence"] == "passed"
+    assert renewed.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+    assert renewed.manifest["verification"]["source_conversion_consistency"] == "not_run"

@@ -2,8 +2,10 @@
 
 ## Model profile
 
-The Aria 1.6 series recognizes a single-input, single-output homogeneous HGQ2
-family with this semantic sequence. Dimensions are symbols extracted from the
+Aria 1.7.0 recognizes a single-input, single-output homogeneous HGQ2
+family with one or more repeated temporal blocks. One and two blocks are
+qualified; three or more are recognized and reported as unsupported. The
+single-block compatibility form is: Dimensions are symbols extracted from the
 converted `ModelGraph`, not constants copied from one training archive:
 
 ```text
@@ -28,10 +30,11 @@ divisible by their packing factor and the qualified `Kh=5`, `Sh=3` schedule.
 P2 analysis derives a next-window-end schedule and accepts it only when the
 calculated output count agrees with the extracted convolution geometry and no
 two outputs require the same two-row input word.
-All strategies require one
-input channel, width-one convolution, valid padding, the shown non-overlapping
-MaxPool, one Dense output, and a Dense parallelism that divides the streamed
-convolution width. An unsupported strategy returns structured findings before
+The first-block specializations require one input channel, width-one
+convolution, valid padding, and the shown non-overlapping MaxPool. The later
+block accepts channel mixing through the pinned native hls4ml Latency/ReuseFactor
+1 implementation. Dense parallelism must divide the final streamed filter
+group, and the graph must have one Dense output. An unsupported strategy returns structured findings before
 rendering. The regression suite includes a P2 case with `[128,4]`, five filters,
 a 3x1/stride-2 convolution, and `N=620`, in addition to the 12 retrained
 canonical-geometry models.
@@ -51,7 +54,7 @@ P2/D1, P2/D2, P4/D1, P4/D2, and P8/D4. Omission resolves to P8/D4. For the
 canonical model, P2/P4/P8 use 128-/256-/512-bit input `TDATA`. Refresh preserves
 the recorded selection.
 
-Aria 1.6 derives a sequential packed Dense weight ROM from the converted
+Aria 1.7 derives a sequential packed Dense weight ROM from the converted
 hls4ml graph. Word width, depth, MAC lanes, and tail handling are internal plan
 properties; they are not additional public configuration fields. Refresh may
 change parameter values but rejects changes to the recorded structural plan.
@@ -105,3 +108,37 @@ conversion.
 Packages contain no pickle or custom executable objects and reject traversal,
 absolute paths, symlinks, duplicate entries, object arrays, invalid digests, and
 oversized payloads. The archive is portable but unencrypted.
+
+
+## Composed plans and protocol verification
+
+Planning uses canonical connectivity and dimensions. Layer names, archive names,
+and target-specific extents do not select strategies. Flatten is a C-order
+layout view with a reversible temporal/feature/channel index mapping. Padding,
+branches, merges, extra outputs, opaque arithmetic, heterogeneous quantizers,
+and unsupported schedules produce structured local findings before publication.
+A complete production trace is bounded to 4096 output-word events per temporal
+stage; exceeding the bound rejects that capability without truncation.
+
+Internal bridges preserve scalar integer codes and channel order. They mask
+only the final padding lanes. The composed linear blocking chain uses positive
+FIFO capacity and assumes eventual input and output readiness. Native-stage
+cycle estimates are uncalibrated lower bounds; HLS and routed measurements are
+separate evidence. There is no universal II or clock-closure threshold.
+
+Composed Vitis builds use `config_rtl -reset all` to clear the native streaming
+coordinates and discard an interrupted inference. Existing single-block
+renderer and reset settings remain unchanged. The optional executable protocol
+checker drives `ap_start` until `ap_ready` accepts each transaction independently
+of AXI input buffering; it checks exact output words, stable stalled outputs,
+input gaps, mid-inference reset, reset between epochs, and consecutive frames.
+It prefers Vivado 2023.2 XSim, then Verilator with timing support, then Icarus.
+Verilator 5.040 encountered active-region convergence failures on the vendor's
+full-reset RTL, so qualification uses XSim.
+
+The mandatory `numeric-contract-v2` corpus is always present when C verification
+runs. Supplied inputs are additive and are quantized once using the input
+contract. Separate sample counts and hashes are recorded. Synthesized-RTL
+reference words come from the clean C baseline and use the built-in corpus by
+default. C stage observations are temporary instrumentation and are not emitted
+in the published RTL interface.

@@ -5,7 +5,7 @@ project while preserving the model semantics. Training remains outside RAVEL.
 
 ## Aria workflow
 
-Aria 1.6.0 exposes three Python operations over one configuration:
+Aria 1.7.0 exposes three Python operations over one configuration:
 
 1. `analyze(model, config)` converts to a clean hls4ml `ModelGraph`, extracts
    immutable model facts, matches a versioned family, and resolves a design
@@ -85,7 +85,7 @@ RAVEL renders owned files from the resolved design and read-only parameter
 payload through strict templates. The renderer cannot inspect a `ModelGraph`;
 unaffected project files remain hls4ml-owned.
 
-The internal built-in generation registry is immutable and closed. Aria 1.6
+The internal built-in generation registry is immutable and closed. Aria 1.7
 explicitly composes its operation extractors, family matcher, strategy,
 resolver, executed passes, and Vitis/io_stream renderer binding. Matching checks
 all declared families and rejects ambiguity; there is no import-time plugin
@@ -100,7 +100,7 @@ and whether Vitis was invoked do not change the generation fingerprint.
 The aggressive-policy identity and resolved P/D values do. Refresh reuses the
 recorded resolved values and changes model state without changing architecture.
 
-Manifest schema v5 separates the parameter-invariant `architecture_envelope`
+Manifest schema v6 separates the parameter-invariant `architecture_envelope`
 from the coefficient-dependent `coefficient_realization`. Refresh preserves
 the envelope, regenerates the arithmetic graph deterministically, and requires
 a new modular proof.
@@ -129,5 +129,36 @@ clock, tool version, and expected RTL port widths.
   CoSim report.
 
 RTL simulation, IP export, implementation timing, and board validation remain
-separate activities. The Aria 1.6 series does not promote HLS synthesis into
+separate activities. Aria 1.7 does not promote HLS synthesis into
 proof of any of those layers.
+
+
+## Typed multi-block pipeline
+
+The frontend owns conversion and native symbol bindings; the single-block input
+reshape compatibility adapter is isolated. Canonical immutable facts retain
+operations, declared ports, tensors, numeric types, attributes, and parameters.
+IDs follow declared graph-port traversal, independent of incidental layer names.
+The temporal grammar follows edges and reports geometry separately from strategy
+legality. Its layout view declares named axes and C-order scalar strides.
+
+Versioned pure stage capabilities enumerate complete endpoint contracts. A
+bounded dynamic program retains non-dominated partial chains by endpoint and
+specialization status. It prioritizes legality, conservative bottleneck cost,
+resource proxy, latency, and stable identity. Unknown cycle confidence sorts
+after finite analytical estimates and does not change legality. Candidate and
+frontier bounds fail explicitly. Registered lossless bridges participate in
+resolution; no vendor measurements or persistent caches are consulted.
+
+The immutable selected plan contains stages, bridges, schedules, control,
+source ownership, delegation settings, and policy identities. The clean hls4ml
+correctness baseline is separate from selected delegate settings. Composition
+uses the unchanged legacy template adapter, top-level wiring, shared-lane
+bridges, and packed Dense weights. Every changed or added source has one owning
+step/version and before/after hashes. Undeclared mutations fail publication.
+
+Temporary C instrumentation compares canonical codes at available unfused
+boundaries, bridge outputs, layout, and Dense. Production sources retain the
+ordinary interface. Qualification v5 can additionally bind independent RTL
+protocol traces and routed Vivado OOC reports to the exact source and manifest.
+Model accuracy and board-level validation remain separate.

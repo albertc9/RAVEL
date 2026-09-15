@@ -10,9 +10,9 @@ specialization. Vendor tools may or may not have run.
 - `ravel_config.yml` is the normalized RAVEL configuration, including the
   resolved `Optimization` section. Its
   published output directory is also `.`.
-- `ravel_manifest.json` is the immutable schema-v5 generation record.
-- `ravel_qualification.json` is optional schema-v4 measured Vitis evidence;
-  earlier supported records remain readable.
+- `ravel_manifest.json` is the immutable schema-v6 generation record.
+- `ravel_qualification.json` is optional schema-v5 measured Vitis evidence;
+  manifest v1–v5 and qualification v2–v4 remain readable.
 - `build_opt.tcl` contains explicit Vitis stage booleans.
 
 Published records contain no original source filename, username, hostname, or
@@ -28,6 +28,7 @@ integrity and the ability to open, refresh, link, and build it.
 - `configuration_sha256` identifies normalized generation-affecting settings.
 - `implementation_sha256` identifies the resolved plan, passes, templates, and
   compatibility profile.
+- `generated_plan_sha256` identifies the complete serialized resolved design.
 - `architecture_envelope_sha256` identifies the PHARA rate, interface,
   arithmetic, graph-bound, buffer, and scheduling contract.
 - `coefficient_realization_sha256` identifies the generated arithmetic graph
@@ -56,8 +57,9 @@ ports, requested RTL CoSim status, and report-file hashes. When CoSim is
 selected, a qualification record is not written unless the top-level Verilog
 report says `Pass`; that report is included in the evidence hash closure.
 PHARA records also bind the fused-region, Dense wrapper, and Dense pipeline
-reports. Vivado implementation and board evidence remain separate from this
-Vitis qualification record.
+reports. Optional OOC evidence records routed timing and resources, and optional
+RTL protocol evidence records reset/backpressure/consecutive-inference checks.
+Board evidence remains separate.
 Foreign or edited evidence is `stale`. Recorded measurements have no universal
 performance pass/fail threshold.
 
@@ -82,3 +84,28 @@ place.
 
 The JSON Schemas for configuration, manifest, qualification, and parameter
 packages ship under `ravel_hls/schemas` in the installed distribution.
+
+
+## Aria 1.7 composition records
+
+`resolved_design` records ordered semantic and implementation stages, logical
+layouts, explicit bridges, finite token dependencies, reset/control contracts,
+backend delegation, and versioned planner/cost policies. The architecture
+envelope includes these parameter-invariant contracts. `source_ownership`
+records per-file generation steps and before/after hashes; untouched native
+sources remain delegated. Built-in and supplied verification corpora have
+separate provenance, sample counts, and integer-code hashes.
+
+Use `project.record(report_dir, ooc_dir=..., protocol_report=...)` to bind
+optional routed reports and executable protocol evidence. An OOC directory
+contains `binding.json`, `timing.rpt`, and `utilization.rpt`; its binding names
+the manifest/source hashes, top, part, requested clock, and tool version.
+The importer also checks report headers, routed state, device, and actual clock
+period. A negative WNS is recorded with a warning. Evidence directories belong
+outside the generated project to preserve the source closure.
+
+Refresh requires the same generation and architecture contract. Historical
+projects remain inspectable; ordinary conversion creates a project for the new
+generation when a historical generation identity differs. Parameter-package v2
+refresh runs the same clean-baseline and composition pipeline. Packages without
+known-answer evidence cannot satisfy required source-model fidelity verification.

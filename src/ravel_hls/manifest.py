@@ -110,7 +110,7 @@ def build_generation_manifest(
             "plan": implementation_plan,
             "passes": pass_records,
             "compatibility_profile": "hls4ml-1.2.0-hgq2-0.1.7",
-            **({"stages": model_analysis["resolved_design"]["stages"], "bridges": model_analysis["resolved_design"]["bridges"], "delegation": model_analysis["resolved_design"]["delegation"]} if "stages" in model_analysis["resolved_design"] else {}),
+            **({key: model_analysis["resolved_design"][key] for key in ("stages", "bridges", "delegation", "control", "components", "semantic_stages")} if "stages" in model_analysis["resolved_design"] else {}),
         }
     )
     generation_fingerprint = canonical_sha256(
@@ -205,6 +205,7 @@ def build_generation_manifest(
         "coefficient_realization_sha256": coefficient_realization_sha256,
     }
     manifest["resolved_design"] = model_analysis["resolved_design"]
+    manifest["generated_plan_sha256"] = canonical_sha256(model_analysis["resolved_design"])
     manifest["architecture_contract_sha256"] = architecture_contract
     return manifest
 

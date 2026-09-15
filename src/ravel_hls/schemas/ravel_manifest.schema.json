@@ -63,6 +63,7 @@
     "profile": {"type": "object"},
     "implementation_plan": {"type": "object"},
     "implementation_sha256": {"$ref": "#/$defs/sha256"},
+    "generated_plan_sha256": {"$ref": "#/$defs/sha256"},
     "pipeline": {"type": "object"},
     "interfaces": {"type": "object"},
     "verification": {"type": "object"},

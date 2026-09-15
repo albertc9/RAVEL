@@ -502,3 +502,12 @@ def test_public_analysis_reports_the_selected_phara_fused_region() -> None:
         "dsp_product_budget": 16,
         "dsp_product_uses": 14,
     }
+
+
+@pytest.mark.parametrize("model", [REFERENCE_MODEL, MINI_CONTINUOUS_MODEL, *REFERENCE_MODELS], ids=lambda path: path.stem)
+def test_existing_single_block_models_agree_with_the_frozen_family_oracle(model):
+    from ravel_hls.generations.aria.matching import legacy_match_hgq_conv_pool_dense
+    report = analyze(model, {"HLS": {}}).to_dict()
+    family, applicability = legacy_match_hgq_conv_pool_dense(report["model_facts"], report["frontend_provenance"])
+    assert family == report["model_family"]
+    assert applicability == report["applicability"]
