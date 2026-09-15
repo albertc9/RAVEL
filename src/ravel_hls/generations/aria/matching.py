@@ -260,6 +260,16 @@ def evaluate_aria_wide_stream(
             observed=convolution["stride_height"],
             message="Aria P2 requires Conv2D stride_height>=2",
         )
+        schedule = plan["first_convolution"]["schedule"]
+        require(
+            schedule["status"] == "proven",
+            code="strategy.schedule.p2",
+            operation_id="conv2d_0",
+            field="window_schedule",
+            expected="one complete output schedule over two-row input words",
+            observed=schedule,
+            message="Aria P2 could not prove the first-convolution window schedule",
+        )
     for field, expected in {
         "pool_height": 2,
         "pool_width": 1,

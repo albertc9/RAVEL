@@ -50,7 +50,7 @@ ARIA_1_5_1 = GenerationDefinition(
     ),
     backends=(
         BackendBindingDefinition(
-            "Vitis", "io_stream", "aria-vitis-templates", 2, render_aria_project
+            "Vitis", "io_stream", "aria-vitis-templates", 3, render_aria_project
         ),
     ),
 )

@@ -184,7 +184,9 @@ def test_extracted_geometry_drives_generated_cpp_and_consistency(
     assert project.manifest["verification"][
         "source_conversion_consistency"
     ] == "passed"
-    assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    assert (
+        project.manifest["verification"]["transformation_equivalence"] == "passed"
+    )
     generated_convolution = (
         project.path / "firmware" / "nnet_utils" / "nnet_aria.h"
     ).read_text(encoding="utf-8")
@@ -192,6 +194,27 @@ def test_extracted_geometry_drives_generated_cpp_and_consistency(
     assert generated_convolution.count(
         "using mult_config = aria_first_conv_mult_config"
     ) == 2
+
+
+def test_user_can_convert_a_position_sensitive_stride_two_model(
+    tmp_path: Path, stride_two_position_model,
+) -> None:
+    project = convert(
+        stride_two_position_model,
+        tmp_path / "aria_stride_two",
+        {
+            "HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+            "Optimization": {"TemporalPacking": 2, "DenseParallelism": 2},
+            "Verification": {"Mode": "required", "Samples": 10},
+        },
+    )
+
+    assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    assert "positive_impulse_row_2" in project.manifest["verification"]["stimuli"][
+        "patterns"
+    ]
+    assert project.status["source_integrity"] == "clean"
+    assert project.link().config.get_output_dir() == str(project.path.resolve())
 
 
 @pytest.mark.parametrize(

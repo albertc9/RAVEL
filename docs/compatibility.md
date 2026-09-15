@@ -2,9 +2,9 @@
 
 ## Model profile
 
-Aria 1.6.0 recognizes a single-input, single-output homogeneous HGQ2 family with
-this semantic sequence. Dimensions are symbols extracted from the converted
-`ModelGraph`, not constants copied from one training archive:
+The Aria 1.6 series recognizes a single-input, single-output homogeneous HGQ2
+family with this semantic sequence. Dimensions are symbols extracted from the
+converted `ModelGraph`, not constants copied from one training archive:
 
 ```text
 Input [H, W]
@@ -25,6 +25,9 @@ performance target.
 Family recognition and strategy applicability are separate. P2 currently
 requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 and P8 require `H`
 divisible by their packing factor and the qualified `Kh=5`, `Sh=3` schedule.
+P2 analysis derives a next-window-end schedule and accepts it only when the
+calculated output count agrees with the extracted convolution geometry and no
+two outputs require the same two-row input word.
 All strategies require one
 input channel, width-one convolution, valid padding, the shown non-overlapping
 MaxPool, one Dense output, and a Dense parallelism that divides the streamed
@@ -32,6 +35,9 @@ convolution width. An unsupported strategy returns structured findings before
 rendering. The regression suite includes a P2 case with `[128,4]`, five filters,
 a 3x1/stride-2 convolution, and `N=620`, in addition to the 12 retrained
 canonical-geometry models.
+Position-sensitive P2 regression coverage includes `Kh=7`, `Sh=2`, leading and
+trailing row impulses, and schedule-property checks across `Kh=3..8` and
+`Sh=2..5`.
 
 ## hls4ml and host profile
 
