@@ -28,15 +28,15 @@ def run_protocol(rtl_dir: Path, vectors: Path, output: Path, *, top: str, input_
         shutil.copyfile(vectors / name, output / name)
     testbench = output / "ravel_protocol_tb.sv"
     testbench.write_text(_testbench(top, input_port, output_port, reference))
-    if shutil.which("iverilog"):
+    if shutil.which("verilator"):
+        tool = "verilator"
+        compile_command = [tool, "--binary", "--timing", "-Wno-fatal", "--top-module", "ravel_protocol_tb", "--Mdir", str(output / "obj"), str(testbench), *map(str, files)]
+        run_command = [str(output / "obj/Vravel_protocol_tb")]
+    elif shutil.which("iverilog"):
         tool = "iverilog"
         binary = output / "simulation.vvp"
         compile_command = [tool, "-g2012", "-s", "ravel_protocol_tb", "-o", str(binary), str(testbench), *map(str, files)]
         run_command = ["vvp", str(binary)]
-    elif shutil.which("verilator"):
-        tool = "verilator"
-        compile_command = [tool, "--binary", "--timing", "-Wno-fatal", "--top-module", "ravel_protocol_tb", "--Mdir", str(output / "obj"), str(testbench), *map(str, files)]
-        run_command = [str(output / "obj/Vravel_protocol_tb")]
     else:
         raise VerificationError("RTL protocol verification requires Icarus Verilog or Verilator")
     for label, command in (("compile", compile_command), ("simulation", run_command)):
@@ -90,6 +90,7 @@ reg pending, blocked;
 reg [{bits_out-1}:0] held;
 begin
  sent=0; received=0; cycles=0; pending=0; blocked=0;
+ $display("RAVEL_EPOCH samples=%0d", samples);
  while(sent < samples*{words} || received < samples) begin
    @(negedge clk);
    if(!pending && sent < samples*{words} && cycles%7 != 0) begin
