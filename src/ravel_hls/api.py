@@ -37,6 +37,7 @@ from .verification.equivalence import (
     require_bit_exact,
     require_source_consistency,
 )
+from .verification.corpora import prepare_corpora
 
 
 def convert(
@@ -364,12 +365,11 @@ def _generate_project(
         stimuli_record = None
         baseline_predictions = None
         verification_unavailable = None
+        corpora = ()
         if verification_mode != "disabled":
-            stimuli, stimuli_record = prepare_stimuli(
-                ravel_config,
-                verification_inputs,
-                model_analysis["model_facts"]["operations"][0]["outputs"][0],
-            )
+            corpora = prepare_corpora(ravel_config, verification_inputs, model_analysis["model_facts"])
+            stimuli = np.concatenate([corpus.inputs for corpus in corpora])
+            stimuli_record = corpora[0].record
             verification_unavailable = _verification_unavailable_reason(
                 hls_model, dependency_report
             )
@@ -404,7 +404,7 @@ def _generate_project(
             parameter_payload,
         )
         if stimuli is not None:
-            _write_vitis_testbench_inputs(staging_path, stimuli)
+            _write_vitis_testbench_inputs(staging_path, corpora[0].inputs)
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
         verification_report: dict[str, Any] = {
@@ -415,6 +415,10 @@ def _generate_project(
         }
         if stimuli_record is not None:
             verification_report["stimuli"] = stimuli_record
+            verification_report["corpora"] = {
+                corpus.name: {**corpus.record, "transformation_equivalence": "not_run",
+                              "source_conversion_consistency": "not_run"} for corpus in corpora
+            }
         if verification_unavailable is not None:
             verification_report["unavailable_reason"] = verification_unavailable
         if baseline_predictions is not None and stimuli is not None:
@@ -423,7 +427,8 @@ def _generate_project(
                 stimuli,
                 dependency_report.get("compiler", {}).get("command"),
             )
-            require_bit_exact(baseline_predictions, optimized_predictions)
+            output_numeric = model_analysis["model_facts"]["operations"][-1]["outputs"][0]["numeric_type"]
+            require_bit_exact(baseline_predictions, optimized_predictions, output_numeric)
             verification_report["transformation_equivalence"] = "passed"
             if source_consistency_available:
                 source_consistency = require_source_consistency(
@@ -443,6 +448,15 @@ def _generate_project(
                 if fidelity is not None:
                     verification_report["model_fidelity"] = "reported"
                     verification_report["model_fidelity_report"] = fidelity
+            offset = 0
+            for corpus in corpora:
+                record = verification_report["corpora"][corpus.name]
+                count = len(corpus.inputs)
+                codes = np.rint(baseline_predictions[offset:offset + count] * 2 ** (output_numeric["width"] - output_numeric["integer"])).astype("<i8")
+                record.update(transformation_equivalence="passed",
+                              source_conversion_consistency="passed" if source_consistency_available else "not_run",
+                              output_integer_code_sha256=hashlib.sha256(codes.tobytes()).hexdigest())
+                offset += count
         mutable_hls_config["OutputDir"] = original_output
         _rewrite_published_hls_config(staging_path, output_path)
         published_ravel_config = _published_ravel_config(ravel_config)
@@ -522,7 +536,7 @@ def _verification_unavailable_reason(
 def _write_vitis_testbench_inputs(
     project_path: Path, stimuli: np.ndarray
 ) -> None:
-    sample_count = min(32, len(stimuli))
+    sample_count = len(stimuli)
     testbench_dir = project_path / "tb_data"
     testbench_dir.mkdir(exist_ok=True)
     np.savetxt(

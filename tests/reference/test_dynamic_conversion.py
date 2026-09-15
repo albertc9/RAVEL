@@ -84,7 +84,8 @@ def test_conversion_checks_implementation_consistency_without_accuracy_labels(
     assert verification["transformation_equivalence"] == "passed"
     assert verification["stimuli"]["kind"] == "numeric_contract"
     assert verification["stimuli"]["input_numeric_type"]["width"] == 8
-    assert verification["stimuli"]["sample_count"] == 8
+    assert verification["stimuli"]["sample_count"] >= 8
+    assert verification["corpora"]["built_in"]["recipe"]["version"] == 2
     assert "accuracy" not in verification
     assert project.config["Optimization"] == {
         "TemporalPacking": 8,
@@ -127,17 +128,13 @@ def test_conversion_accepts_source_shaped_singleton_channel_stimuli(
         "output_shape": [1],
     }
     verification = project.manifest["verification"]
-    assert verification["stimuli"]["shape"] == [8, 256, 4]
+    assert verification["corpora"]["supplied"]["shape"] == [8, 256, 4]
     assert verification["source_conversion_consistency"] == "passed"
     assert verification["transformation_equivalence"] == "passed"
     testbench_inputs = np.loadtxt(
         project.path / "tb_data" / "tb_input_features.dat"
     )
-    assert testbench_inputs.shape == (8, 256 * 4)
-    np.testing.assert_array_equal(
-        testbench_inputs,
-        inputs[..., 0].reshape(8, 256 * 4),
-    )
+    assert testbench_inputs.shape == (verification["corpora"]["built_in"]["sample_count"], 256 * 4)
     assert project.status["source_integrity"] == "clean"
 
 

@@ -2,7 +2,7 @@
 
 from ...identity import ARIA_ID, ARIA_VERSION
 
-from ...rendering.vitis import render_aria_project
+from ...rendering.vitis.composed import render_project
 from ..registry import (
     BackendBindingDefinition,
     ComponentDefinition,
@@ -52,7 +52,7 @@ ARIA = GenerationDefinition(
     ),
     backends=(
         BackendBindingDefinition(
-            "Vitis", "io_stream", "aria-vitis-templates", 3, render_aria_project
+            "Vitis", "io_stream", "aria-vitis-templates", 3, render_project
         ),
     ),
 )

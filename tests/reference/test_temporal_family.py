@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ravel_hls import analyze
+from ravel_hls import analyze, convert
 
 
 def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed"):
@@ -45,3 +45,48 @@ def test_three_blocks_are_recognized_but_outside_the_qualified_release_domain():
     assert report["recognition"]["block_count"] == 3
     assert report["applicability"]["status"] == "unsupported"
     assert "family.support.block_count" in {item["code"] for item in report["applicability"]["findings"]}
+
+
+def test_two_blocks_resolve_existing_specializations_and_explicit_delegation():
+    report = analyze(make_temporal_model(), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+
+    assert report["applicability"] == {"status": "applicable", "findings": []}
+    stages = report["resolved_design"]["stages"]
+    assert [stage["strategy"]["id"] for stage in stages] == [
+        "aria-wide-stream", "hls4ml-temporal-block", "identity-layout-view", "aria-dense-wide",
+    ]
+    assert stages[1]["operation_ids"] == ["conv2d_1", "relu_1", "max_pool2d_1"]
+    assert report["resolved_design"]["bridges"]
+    assert report["resolved_design"]["delegation"]["hls4ml_version"] == "1.2.0"
+
+
+def test_composed_two_block_project_is_bit_exact_against_its_clean_baseline(tmp_path):
+    project = convert(make_temporal_model(height=64, width=2, filters=3), tmp_path / "composed", {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+        "Verification": {"Mode": "required", "Samples": 16},
+    })
+
+    assert project.status["correctness_verification"] == "passed"
+    assert project.manifest["verification"]["source_conversion_consistency"] == "passed"
+    assert project.manifest["resolved_design"]["strategy"]["id"] == "aria-composed"
+    assert "nnet::conv_2d_cl" in (project.path / "firmware/composed.cpp").read_text()
+
+
+def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
+    import numpy as np
+
+    supplied = np.zeros((2, 64, 2, 1), dtype=np.float32)
+    project = convert(make_temporal_model(height=64, width=2, filters=3), tmp_path / "corpora", {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+        "Verification": {"Mode": "required", "Samples": 8},
+    }, verification_inputs=supplied)
+
+    corpora = project.manifest["verification"]["corpora"]
+    assert corpora["built_in"]["recipe"] == {"id": "numeric-contract", "version": 2}
+    assert corpora["built_in"]["sample_count"] >= 8
+    assert corpora["supplied"]["sample_count"] == 2
+    assert all(record["transformation_equivalence"] == "passed" for record in corpora.values())
+    rtl_inputs = np.loadtxt(project.path / "tb_data/tb_input_features.dat")
+    assert rtl_inputs.shape[0] == corpora["built_in"]["sample_count"]

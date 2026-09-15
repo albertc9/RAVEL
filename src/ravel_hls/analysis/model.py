@@ -27,6 +27,7 @@ from ..exceptions import CompatibilityError, ConfigurationError
 from ..generations import builtin_generation
 from ..identity import ARIA_ID, ARIA_VERSION
 from ..profiles.aria.plan import build_implementation_plan
+from ..planning.temporal import plan_temporal_chain
 
 
 _HLS4ML_CONVERSION_LOCK = RLock()
@@ -184,7 +185,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     dense_facts: dict[str, Any] = {}
     resolved_design = None
     recognition = recognize_temporal_chain(GraphFacts.from_dict(model_facts))
-    if model_family is not None and model_family["id"] == "hgq-conv-pool-dense":
+    if model_family is not None and len(recognition.chain.blocks) <= 2:
         dense_facts = {"dense": analyze_dense_facts(layers)}
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
         strategy = generation.strategy(
@@ -226,12 +227,35 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
         multi_report["recognition"] = recognition.chain.to_dict()
         outside_release = len(recognition.chain.blocks) > 2
-        applicability = {"status": "unsupported", "findings": [{
-            "code": "family.support.block_count" if outside_release else "planner.no_qualified_plan",
+        if outside_release:
+            applicability = {"status": "unsupported", "findings": [{
+            "code": "family.support.block_count",
             "severity": "error", "operation_id": None,
-            "message": ("Aria 1.7 qualifies only one- and two-block plans" if outside_release else
-                        "Temporal chain recognized; no qualified composed implementation is available"),
+            "message": "Aria 1.7 qualifies only one- and two-block plans",
         }]}
+        elif resolved_design is not None:
+            composed = plan_temporal_chain(
+                recognition.chain, temporal_packing=plan["temporal_pack"],
+                dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
+                input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
+                dense_cycles=plan["dense_steps"],
+            )
+            if composed.findings:
+                resolved_design = None
+                applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
+            else:
+                resolved_design.update(
+                    model_family=model_family, strategy={"id": "aria-composed", "version": 1},
+                    resolver={"id": "bounded-temporal-dp", "version": 1},
+                    stages=[item.to_dict() for item in composed.stages],
+                    bridges=[item.to_dict() for item in composed.bridges],
+                    delegation={"hls4ml_version": "1.2.0", "policy": "native-latency-v1",
+                                "settings": {"Strategy": "Latency", "ReuseFactor": 1}},
+                    warnings=[{"code": "estimate.uncalibrated_native", "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"}],
+                )
+                resolved_design["rendering"]["native_operations"] = _native_rendering_contract(layers)
+                resolved_design["rendering"]["dense_filter_lanes"] = recognition.chain.layout.input.shape[-1]
+                resolved_design["resolved_design_sha256"] = _canonical_sha256({key: value for key, value in resolved_design.items() if key != "resolved_design_sha256"})
     analysis = ModelAnalysis._from_report(
         {
             **multi_report,
@@ -457,6 +481,25 @@ def _rendering_contract(
         )
         contract["dense_function"] = "dense_wide_stream"
     return contract
+
+
+def _native_rendering_contract(layers: list[Any]) -> dict[str, Any]:
+    """Capture qualified native bindings before the renderer boundary."""
+    result = {}
+    ordinals = {}
+    for layer in layers:
+        kind = _semantic_kind(layer)
+        ordinal = ordinals.get(kind, 0)
+        ordinals[kind] = ordinal + 1
+        output = layer.get_output_variable()
+        result[f"{kind}_{ordinal}"] = {
+            "output_symbol": output.name, "output_type": output.type.name,
+            "output_precision_cpp": output.type.precision.definition_cpp(),
+            "native_call": layer.get_attr("function_cpp"),
+            "config_symbol": f"config{layer.get_attr('index')}",
+            "input_symbol": layer.get_input_variable().name if layer.inputs and kind != "input" else None,
+        }
+    return result
 
 
 def _wide_type_name(type_name: str, suffix: str) -> str:
