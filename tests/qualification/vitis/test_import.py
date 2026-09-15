@@ -525,3 +525,54 @@ def _stage_wrapper_csynth_xml(
   </PerformanceEstimates>
 </profile>
 """
+
+
+def test_composed_reports_follow_selected_stage_bindings_not_legacy_function_names(tmp_path):
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    manifest_path = project_path / "ravel_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["resolved_design"] = {
+        "strategy": {"id": "aria-composed", "version": 1},
+        "stages": [{"operation_ids": ["conv2d_1", "relu_1", "max_pool2d_1"],
+                    "strategy": {"id": "hls4ml-temporal-block", "version": 1}}],
+        "rendering": {"first_convolution_function": "unused_legacy_function"},
+        "report_bindings": [{"stage_id": "conv2d_1", "functions": [{"name": "conv_2d_cl", "config": "config7"}]}],
+    }
+    manifest_path.write_text(json.dumps(manifest))
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    (report_dir / "native_csynth.xml").write_text(_stage_wrapper_csynth_xml(
+        top="conv_2d_cl_array_config7_s", latency=230, interval=228))
+    record = Project.open(project_path).record(report_dir).to_dict()
+    assert record["stage_plan"] == manifest["resolved_design"]["stages"]
+    assert record["stages"]["conv2d_1"]["functions"][0]["initiation_interval"] == 228
+    assert "native_csynth.xml" in record["report_files"]
+
+
+def test_ooc_measurements_are_bound_and_a_timing_miss_is_recorded_as_warning(tmp_path):
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    ooc = tmp_path / "ooc"
+    ooc.mkdir()
+    timing = "| Tool Version : Vivado v.2023.2\n| Design : aria_top\n| Design State : Routed\nWNS(ns) TNS(ns) TNS Failing Endpoints\n------- ------- -------\n-0.125 -2.000 16\n"
+    (ooc / "timing.rpt").write_text(timing)
+    (ooc / "utilization.rpt").write_text("| CLB LUTs | 321 |\n| CLB Registers | 456 |\n| Block RAM Tile | 2.5 |\n| DSPs | 12 |\n")
+    manifest = Project.open(project_path).manifest
+    binding = {"manifest_sha256": hashlib.sha256((project_path / 'ravel_manifest.json').read_bytes()).hexdigest(),
+               "source_closure_sha256": manifest["source_closure_sha256"], "top": "aria_top",
+               "part": "xcku5p-ffvb676-2-e", "clock_period_ns": 5.0, "tool_version": "2023.2"}
+    (ooc / "binding.json").write_text(json.dumps(binding))
+    record = Project.open(project_path).record(report_dir, ooc_dir=ooc).to_dict()
+    assert record["ooc"]["timing"]["wns_ns"] == -0.125
+    assert record["ooc"]["resources"]["BRAM_TILES"] == 2.5
+    assert record["ooc"]["manifest_sha256"] == binding["manifest_sha256"]
+    assert "ooc.timing_miss" in {warning["code"] for warning in record["warnings"]}
+    binding["source_closure_sha256"] = "f" * 64
+    (ooc / "binding.json").write_text(json.dumps(binding))
+    with pytest.raises(ProjectGenerationError, match="source_closure_sha256"):
+        Project.open(project_path).record(report_dir, ooc_dir=ooc)

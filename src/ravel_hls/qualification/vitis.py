@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 import xml.etree.ElementTree as ET
@@ -35,6 +36,7 @@ class QualificationRecord:
     stage_plan: tuple[dict[str, Any], ...] = ()
     interfaces: dict[str, Any] = field(default_factory=dict)
     warnings: tuple[dict[str, Any], ...] = ()
+    ooc: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -62,6 +64,7 @@ class QualificationRecord:
             "interfaces": self.interfaces,
             "warnings": list(self.warnings),
             "status": "recorded",
+            "ooc": self.ooc,
         }
 
 
@@ -69,6 +72,7 @@ def import_vitis_reports(
     project: RavelProject | str | os.PathLike[str],
     *,
     report_dir: str | os.PathLike[str],
+    ooc_dir: str | os.PathLike[str] | None = None,
 ) -> QualificationRecord:
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
@@ -196,6 +200,15 @@ def import_vitis_reports(
         report_files[stage_report.relative_to(report_root).as_posix()] = _file_sha256(
             stage_report
         )
+    ooc = None
+    warnings = list(project_view.manifest.get("resolved_design", {}).get("warnings", ()))
+    if ooc_dir is not None:
+        from .ooc import import_ooc
+        ooc = import_ooc(Path(ooc_dir), {"manifest_sha256": manifest_sha256,
+            "source_closure_sha256": project_view.manifest["source_closure_sha256"],
+            "top": reported_top, "part": reported_part, "clock_period_ns": reported_clock, "tool_version": "2023.2"})
+        if ooc["timing"]["wns_ns"] < 0:
+            warnings.append({"code": "ooc.timing_miss", "message": "Routed design misses the requested clock period"})
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         generation_fingerprint=_required_manifest_sha256(
@@ -233,7 +246,8 @@ def import_vitis_reports(
         report_files=report_files,
         stage_plan=tuple(project_view.manifest.get("resolved_design", {}).get("stages", ())),
         interfaces=project_view.manifest.get("interfaces", {}),
-        warnings=tuple(project_view.manifest.get("resolved_design", {}).get("warnings", ())),
+        warnings=tuple(warnings),
+        ooc=ooc,
     )
     qualification_path = project_view.path / "ravel_qualification.json"
     temporary_path = qualification_path.with_name(".ravel_qualification.json.tmp")
@@ -254,6 +268,8 @@ def _stage_evidence(
     expected_clock: float,
 ) -> tuple[dict[str, dict[str, Any]], list[Path]]:
     resolved_design = manifest.get("resolved_design", {})
+    if resolved_design.get("strategy", {}).get("id") == "aria-composed":
+        return _composed_stage_evidence(report_root, resolved_design, expected_tool_version, expected_part, expected_clock)
     rendering = resolved_design.get("rendering", {})
     if resolved_design.get("strategy", {}).get("id") == "phara":
         stage_functions = {
@@ -421,3 +437,38 @@ def _required_manifest_sha256(manifest: dict[str, Any], key: str) -> str:
     if not isinstance(value, str) or len(value) != 64:
         raise ProjectGenerationError(f"RAVEL manifest has no valid {key}")
     return value
+
+
+def _composed_stage_evidence(report_root, design, version, part, clock):
+    bindings = design.get("report_bindings")
+    if not bindings:
+        raise ProjectGenerationError("Composed manifest has no stage report bindings")
+    reports = []
+    for path in sorted(report_root.rglob("*_csynth.xml")):
+        try:
+            root = ET.parse(path).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        reports.append((path, root))
+    stages, used = {}, []
+    for binding in bindings:
+        functions = []
+        for selector in binding["functions"]:
+            matches = [(path, root) for path, root in reports
+                       if (top := root.findtext("./UserAssignments/TopModelName", "")).startswith(selector["name"] + "_")
+                       and ("config" not in selector or re.search(r"(?:^|_)" + re.escape(selector["config"]) + r"(?:_|$)", top))]
+            if not matches:
+                raise ProjectGenerationError(f"No Vitis report for selected stage {binding['stage_id']}: {selector}")
+            for path, root in matches:
+                if (_required_text(root, "./ReportVersion/Version") != version
+                        or _required_text(root, "./UserAssignments/Part") != part
+                        or float(_required_text(root, "./UserAssignments/TargetClockPeriod")) != clock):
+                    raise ProjectGenerationError(f"Selected stage report disagrees with top environment: {path.name}")
+                functions.append({"top": _required_text(root, "./UserAssignments/TopModelName"),
+                                  "initiation_interval": int(_required_text(root, "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min")),
+                                  "latency_cycles": int(_required_text(root, "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency")),
+                                  "loops": [{"name": loop.tag, "pipeline_ii": int(loop.findtext("PipelineII"))}
+                                            for loop in root.findall("./PerformanceEstimates/SummaryOfLoopLatency/*") if loop.findtext("PipelineII") is not None]})
+                used.append(path)
+        stages[binding["stage_id"]] = {"functions": functions, "realization": binding.get("realization", "measured")}
+    return stages, used

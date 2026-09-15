@@ -22,7 +22,8 @@
     "status",
     "stage_plan",
     "interfaces",
-    "warnings"
+    "warnings",
+    "ooc"
   ],
   "properties": {
     "schema_version": {
@@ -99,7 +100,9 @@
     },
     "stages": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": {
+        "type": "object"
+      },
       "properties": {
         "first_convolution": {
           "$ref": "#/$defs/stage"
@@ -172,6 +175,12 @@
       "items": {
         "type": "object"
       }
+    },
+    "ooc": {
+      "type": [
+        "object",
+        "null"
+      ]
     }
   },
   "$defs": {

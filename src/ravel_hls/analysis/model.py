@@ -254,6 +254,8 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
                     warnings=[{"code": "estimate.uncalibrated_native", "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"}],
                 )
                 resolved_design["rendering"]["native_operations"] = _native_rendering_contract(layers)
+                from ..rendering.vitis.reports import report_bindings
+                resolved_design["report_bindings"] = report_bindings(resolved_design)
                 resolved_design["rendering"]["dense_filter_lanes"] = recognition.chain.layout.input.shape[-1]
                 resolved_design["resolved_design_sha256"] = _canonical_sha256({key: value for key, value in resolved_design.items() if key != "resolved_design_sha256"})
     analysis = ModelAnalysis._from_report(
