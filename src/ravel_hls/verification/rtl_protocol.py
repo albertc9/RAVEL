@@ -28,7 +28,11 @@ def run_protocol(rtl_dir: Path, vectors: Path, output: Path, *, top: str, input_
         shutil.copyfile(vectors / name, output / name)
     testbench = output / "ravel_protocol_tb.sv"
     testbench.write_text(_testbench(top, input_port, output_port, reference))
-    if shutil.which("verilator"):
+    if all(shutil.which(command) for command in ("xvlog", "xelab", "xsim")):
+        tool = "xsim"
+        compile_command = ["xvlog", "--sv", str(testbench), *map(str, files)]
+        run_command = ["xsim", "ravel_protocol_snapshot", "-runall"]
+    elif shutil.which("verilator"):
         tool = "verilator"
         compile_command = [tool, "--binary", "--timing", "-Wno-fatal", "--top-module", "ravel_protocol_tb", "--Mdir", str(output / "obj"), str(testbench), *map(str, files)]
         run_command = [str(output / "obj/Vravel_protocol_tb")]
@@ -39,7 +43,11 @@ def run_protocol(rtl_dir: Path, vectors: Path, output: Path, *, top: str, input_
         run_command = ["vvp", str(binary)]
     else:
         raise VerificationError("RTL protocol verification requires Icarus Verilog or Verilator")
-    for label, command in (("compile", compile_command), ("simulation", run_command)):
+    commands = [("compile", compile_command)]
+    if tool == "xsim":
+        commands.append(("elaborate", ["xelab", "ravel_protocol_tb", "--snapshot", "ravel_protocol_snapshot", "--timescale", "1ns/1ps"]))
+    commands.append(("simulation", run_command))
+    for label, command in commands:
         with (output / f"{label}.log").open("w") as log:
             result = subprocess.run(command, cwd=output, stdout=log, stderr=subprocess.STDOUT, check=False)
         if result.returncode:
@@ -49,7 +57,7 @@ def run_protocol(rtl_dir: Path, vectors: Path, output: Path, *, top: str, input_
     if not matched or int(matched[2]) < 1:
         raise VerificationError("RTL protocol run has no complete passing handshake evidence")
     report = {"schema_version": 1, "status": "passed", "top": top,
-              "simulator": {"name": tool, "version": subprocess.run([tool, "-V" if tool == "iverilog" else "--version"], capture_output=True, text=True).stdout.splitlines()[0]},
+              "simulator": {"name": tool, "version": subprocess.run([tool, "-V" if tool == "iverilog" else ("-version" if tool == "xsim" else "--version")], capture_output=True, text=True).stdout.splitlines()[0]},
               "completed_samples": int(matched[1]), "output_stall_cycles": int(matched[2]), "input_gap_cycles": int(matched[3]),
               "reset_aborts": 1, "reset_between_epochs": 1, "consecutive_samples": reference["sample_count"],
               "vector_files": reference["files"], "testbench_sha256": file_sha256(testbench),
