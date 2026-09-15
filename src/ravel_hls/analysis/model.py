@@ -11,7 +11,7 @@ from ..domain import ParameterPayload
 from ..domain.graph import GraphFacts
 from ..exceptions import CompatibilityError, ConfigurationError
 from ..frontend.hls4ml import convert_model
-from ..frontend.extraction import _extract_model_facts, _extract_parameter_payload, _native_rendering_contract
+from ..frontend.extraction import _extract_model_facts, _extract_parameter_payload, _native_rendering_contract, ordered_layers
 from ..generations import builtin_generation
 from ..identity import ARIA_ID, ARIA_VERSION
 from ..manifest import canonical_sha256
@@ -115,8 +115,9 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
         )
 
     graph, normalized_model, frontend_provenance = convert_model(model, hls_values)
-    layers = list(graph.get_layers())
-    projected, fingerprints = _extract_model_facts(layers)
+    layers = ordered_layers(graph)
+    by_name = {layer.name: layer for layer in layers}
+    projected, fingerprints = _extract_model_facts(layers, input_ports=tuple(by_name[name].outputs[0] for name in graph.inputs), output_ports=tuple(graph.outputs))
     typed_facts = GraphFacts.from_dict(projected)
     model_facts = typed_facts.to_dict()
     parameter_payload = _extract_parameter_payload(layers)
@@ -124,7 +125,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     native = _native_rendering_contract(layers)
     dense_facts = {"dense": analyze_dense_facts(layers)}
     model_family, applicability, resolved_design, multi_report = resolve_model_design(
-        generation, model_facts, frontend_provenance, choices, parameter_payload, native, dense_facts)
+        generation, typed_facts, frontend_provenance, choices, parameter_payload, native, dense_facts)
     if resolved_design is None:
         dense_facts = {} if model_family is None else dense_facts
     analysis = ModelAnalysis._from_report(

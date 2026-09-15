@@ -133,7 +133,7 @@ _OPERATION_ATTRIBUTES = {
 
 
 def _extract_model_facts(
-    layers: list[Any],
+    layers: list[Any], *, input_ports: tuple[str, ...], output_ports: tuple[str, ...],
 ) -> tuple[dict[str, Any], dict[str, str]]:
     import numpy as np
 
@@ -146,7 +146,7 @@ def _extract_model_facts(
         ordinal = ordinals.get(kind, 0)
         ordinals[kind] = ordinal + 1
         operation_id = f"{kind}_{ordinal}"
-        inputs = [raw_outputs[name] for name in layer.inputs if name in raw_outputs]
+        inputs = [] if kind == "input" else [raw_outputs.get(name, f"unresolved:port{port}") for port, name in enumerate(layer.inputs)]
         outputs = []
         for port, raw_name in enumerate(layer.outputs):
             variable = layer.get_output_variable(raw_name)
@@ -197,8 +197,8 @@ def _extract_model_facts(
 
     facts = {
         "schema_version": 1,
-        "inputs": [operations[0]["outputs"][0]["id"]],
-        "outputs": [operations[-1]["outputs"][0]["id"]],
+        "inputs": [raw_outputs[name] for name in input_ports],
+        "outputs": [raw_outputs[name] for name in output_ports],
         "operations": operations,
     }
     structure = deepcopy(facts)
@@ -217,3 +217,32 @@ def _extract_model_facts(
             )
         ),
     }
+
+
+def ordered_layers(graph) -> list[Any]:
+    """Traverse declared graph ports and their dependencies, independent of names/list order."""
+    nodes = list(graph.get_layers())
+    by_name = {layer.name: layer for layer in nodes}
+    producers = {output: layer for layer in nodes for output in layer.outputs}
+    ordered, active, visited = [], set(), set()
+    def visit(layer):
+        if id(layer) in visited:
+            return
+        if id(layer) in active:
+            from ..exceptions import CompatibilityError
+            raise CompatibilityError("Compiler graph contains a directed cycle")
+        active.add(id(layer))
+        for name in layer.inputs:
+            if name in producers and producers[name] is not layer:
+                visit(producers[name])
+        active.remove(id(layer))
+        visited.add(id(layer))
+        ordered.append(layer)
+    for name in graph.inputs:
+        visit(by_name[name])
+    for output in graph.outputs:
+        visit(producers[output])
+    # Disconnected opaque compiler nodes remain visible to family diagnostics.
+    for layer in sorted(nodes, key=lambda item: (_semantic_kind(item), tuple(tuple(item.get_output_variable(name).shape) for name in item.outputs))):
+        visit(layer)
+    return ordered

@@ -7,13 +7,14 @@ from ..planning.temporal import plan_temporal_chain
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
 
-def resolve_model_design(generation, model_facts, frontend_provenance, choices, parameter_payload, native, dense_facts):
+def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts):
+    model_facts = facts.to_dict()
     model_family, applicability = generation.match_model_family(
         model_facts, frontend_provenance
     )
 
     resolved_design = None
-    recognition = recognize_temporal_chain(GraphFacts.from_dict(model_facts))
+    recognition = recognize_temporal_chain(facts)
     if model_family is not None and len(recognition.chain.blocks) <= 2:
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
         strategy = generation.strategy(

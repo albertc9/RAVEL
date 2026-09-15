@@ -113,3 +113,15 @@ def test_refresh_preserves_the_composed_plan_and_binds_it_in_the_architecture(tm
     renewed = refresh(project, model)
     assert renewed.manifest["architecture_envelope_sha256"] == project.manifest["architecture_envelope_sha256"]
     assert renewed.manifest["resolved_design"]["stages"] == project.manifest["resolved_design"]["stages"]
+
+
+def test_analysis_preserves_all_declared_ports_before_reporting_a_multi_input_graph_unsupported():
+    import keras
+
+    left = keras.Input((8,), name="port_left")
+    right = keras.Input((8,), name="port_right")
+    model = keras.Model([left, right], keras.layers.Dense(1)(keras.layers.Add()([right, left])))
+    report = analyze(model, {"HLS": {}}).to_dict()
+    assert report["model_facts"]["inputs"] == ["input_0:out0", "input_1:out0"]
+    assert report["applicability"]["status"] == "unsupported"
+    assert "family.topology.io" in {finding["code"] for finding in report["applicability"]["findings"]}
