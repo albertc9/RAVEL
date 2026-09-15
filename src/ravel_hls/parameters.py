@@ -276,7 +276,7 @@ class Parameters:
 
         payload = self._payload_for(analyzed.parameter_payload)
         replacements = payload.by_id()
-        from .analysis.model import _semantic_kind
+        from .frontend.extraction import _semantic_kind
 
         ordinals: dict[str, int] = {}
         for layer in analyzed.graph.get_layers():

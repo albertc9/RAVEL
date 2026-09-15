@@ -1,38 +1,21 @@
-"""Side-effect-free public model analysis."""
-
+"""Thin public orchestration over conversion, projection, capability and planning."""
 from collections.abc import Mapping
-from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import dataclass
-import hashlib
-import json
-import os
-from pathlib import Path
-from threading import RLock
 from types import MappingProxyType
 from typing import Any
-
 from ..analysis.dense import analyze_dense_facts
-from ..analysis.phara import (
-    PHARA_HYBRID_DSP_PRODUCT_BUDGET,
-    analyze_direct_parameters,
-    analyze_hybrid_parameters,
-)
 from ..compatibility.dependencies import inspect_dependencies
 from ..config import validate_public_config
-from ..domain import ParameterPayload, ParameterTensor
+from ..domain import ParameterPayload
 from ..domain.graph import GraphFacts
-from ..domain.temporal import recognize_temporal_chain
 from ..exceptions import CompatibilityError, ConfigurationError
+from ..frontend.hls4ml import convert_model
+from ..frontend.extraction import _extract_model_facts, _extract_parameter_payload, _native_rendering_contract
 from ..generations import builtin_generation
 from ..identity import ARIA_ID, ARIA_VERSION
-from ..profiles.aria.plan import build_implementation_plan
-from ..planning.temporal import plan_temporal_chain
-
-
-_HLS4ML_CONVERSION_LOCK = RLock()
-_DIRECT_ARIA_LAYERS = ("QConv2D", "MaxPooling2D", "Flatten", "QDense")
-
+from ..manifest import canonical_sha256
+from ..planning.design import resolve_model_design
 
 def _freeze(value: Any) -> Any:
     if isinstance(value, Mapping):
@@ -41,14 +24,12 @@ def _freeze(value: Any) -> Any:
         return tuple(_freeze(item) for item in value)
     return value
 
-
 def _thaw(value: Any) -> Any:
     if isinstance(value, Mapping):
         return {key: _thaw(item) for key, item in value.items()}
     if isinstance(value, tuple):
         return [_thaw(item) for item in value]
     return deepcopy(value)
-
 
 @dataclass(frozen=True)
 class ModelAnalysis:
@@ -95,7 +76,6 @@ class ModelAnalysis:
 
         return _thaw(self._report)
 
-
 @dataclass(frozen=True)
 class _AnalyzedModel:
     graph: Any
@@ -103,12 +83,10 @@ class _AnalyzedModel:
     analysis: ModelAnalysis
     parameter_payload: ParameterPayload
 
-
 def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
     """Analyze a qualified Keras/HGQ2 model without publishing a project."""
 
     return _analyze_model(model, config).analysis
-
 
 def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     """Return the private graph-bearing analysis used by conversion."""
@@ -136,128 +114,19 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
             f"Aria {ARIA_VERSION} dependency stack is not qualified: " + ", ".join(failed)
         )
 
-    import hls4ml
-
-    normalized_model = model
-    if isinstance(model, (str, os.PathLike)):
-        import keras
-        from hgq.layers import QConv2D, QDense
-
-        model_path = Path(model)
-        if not model_path.is_file():
-            raise CompatibilityError(f"Keras model file does not exist: {model_path}")
-        normalized_model = keras.models.load_model(
-            model_path,
-            custom_objects={"QConv2D": QConv2D, "QDense": QDense},
-        )
-    normalized_model = _normalize_singleton_channel_input(normalized_model)
-
-    frontend_provenance = _frontend_provenance(normalized_model)
-
-    hls_config = hls4ml.utils.config_from_keras_model(
-        normalized_model, granularity="name", backend=backend
-    )
-    hls_config["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
-    conversion: dict[str, Any] = {
-        "model": normalized_model,
-        "output_dir": str(Path.cwd() / "ravel_analysis"),
-        "project_name": "ravel_analysis",
-        "hls_config": hls_config,
-        "backend": backend,
-        "io_type": io_type,
-    }
-    if hls_values.get("Part") is not None:
-        conversion["part"] = hls_values["Part"]
-    if hls_values.get("ClockPeriod") is not None:
-        conversion["clock_period"] = hls_values["ClockPeriod"]
-    with _homogeneous_stream_quantizer_compatibility():
-        graph = hls4ml.converters.convert_from_keras_model(**conversion)
+    graph, normalized_model, frontend_provenance = convert_model(model, hls_values)
     layers = list(graph.get_layers())
-    model_facts, fingerprints = _extract_model_facts(layers)
+    projected, fingerprints = _extract_model_facts(layers)
+    typed_facts = GraphFacts.from_dict(projected)
+    model_facts = typed_facts.to_dict()
     parameter_payload = _extract_parameter_payload(layers)
-    fingerprints["frontend_provenance_sha256"] = _canonical_sha256(
-        frontend_provenance
-    )
-    model_family, applicability = generation.match_model_family(
-        model_facts, frontend_provenance
-    )
-
-    dense_facts: dict[str, Any] = {}
-    resolved_design = None
-    recognition = recognize_temporal_chain(GraphFacts.from_dict(model_facts))
-    if model_family is not None and len(recognition.chain.blocks) <= 2:
-        dense_facts = {"dense": analyze_dense_facts(layers)}
-        plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
-        strategy = generation.strategy(
-            "phara" if "phara" in plan else "aria-wide-stream",
-            1 if "phara" in plan else 2,
-        )
-        strategy_findings = strategy.evaluate(
-            model_facts["operations"], choices, plan
-        )
-        if strategy_findings:
-            applicability = {
-                "status": "unsupported",
-                "findings": strategy_findings,
-            }
-        else:
-            interface = _predicted_interface(model_facts, plan)
-            coefficient_realization = None
-            if "phara" in plan:
-                coefficient_realization = (
-                    analyze_hybrid_parameters(
-                        model_facts,
-                        parameter_payload,
-                        dsp_product_budget=PHARA_HYBRID_DSP_PRODUCT_BUDGET,
-                    )
-                    if plan["phara"]["realization"] == "hybrid"
-                    else analyze_direct_parameters(model_facts, parameter_payload)
-                )
-            resolved_design = generation.resolver.resolve(
-                model_facts=model_facts,
-                implementation_plan=plan,
-                interfaces=interface,
-                parameter_bindings=_parameter_bindings(
-                    model_facts, parameter_payload
-                ),
-                rendering=_rendering_contract(layers, plan),
-                coefficient_realization=coefficient_realization,
-            )
-    multi_report = {}
-    if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
-        multi_report["recognition"] = recognition.chain.to_dict()
-        outside_release = len(recognition.chain.blocks) > 2
-        if outside_release:
-            applicability = {"status": "unsupported", "findings": [{
-            "code": "family.support.block_count",
-            "severity": "error", "operation_id": None,
-            "message": "Aria 1.7 qualifies only one- and two-block plans",
-        }]}
-        elif resolved_design is not None:
-            composed = plan_temporal_chain(
-                recognition.chain, temporal_packing=plan["temporal_pack"],
-                dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
-                input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
-                dense_cycles=plan["dense_steps"],
-            )
-            if composed.findings:
-                resolved_design = None
-                applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
-            else:
-                resolved_design.update(
-                    model_family=model_family, strategy={"id": "aria-composed", "version": 1},
-                    resolver={"id": "bounded-temporal-dp", "version": 1},
-                    stages=[item.to_dict() for item in composed.stages],
-                    bridges=[item.to_dict() for item in composed.bridges],
-                    delegation={"hls4ml_version": "1.2.0", "policy": "native-latency-v1",
-                                "settings": {"Strategy": "Latency", "ReuseFactor": 1}},
-                    warnings=[{"code": "estimate.uncalibrated_native", "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"}],
-                )
-                resolved_design["rendering"]["native_operations"] = _native_rendering_contract(layers)
-                from ..rendering.vitis.reports import report_bindings
-                resolved_design["report_bindings"] = report_bindings(resolved_design)
-                resolved_design["rendering"]["dense_filter_lanes"] = recognition.chain.layout.input.shape[-1]
-                resolved_design["resolved_design_sha256"] = _canonical_sha256({key: value for key, value in resolved_design.items() if key != "resolved_design_sha256"})
+    fingerprints["frontend_provenance_sha256"] = canonical_sha256(frontend_provenance)
+    native = _native_rendering_contract(layers)
+    dense_facts = {"dense": analyze_dense_facts(layers)}
+    model_family, applicability, resolved_design, multi_report = resolve_model_design(
+        generation, model_facts, frontend_provenance, choices, parameter_payload, native, dense_facts)
+    if resolved_design is None:
+        dense_facts = {} if model_family is None else dense_facts
     analysis = ModelAnalysis._from_report(
         {
             **multi_report,
@@ -272,476 +141,3 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
         }
     )
     return _AnalyzedModel(graph, normalized_model, analysis, parameter_payload)
-
-
-def _normalize_singleton_channel_input(model: Any) -> Any:
-    inputs = tuple(getattr(model, "inputs", ()))
-    outputs = tuple(getattr(model, "outputs", ()))
-    if len(inputs) != 1 or len(outputs) != 1:
-        return model
-    input_shape = tuple(inputs[0].shape[1:])
-    if (
-        len(input_shape) != 3
-        or input_shape[-1] != 1
-        or any(dimension is None for dimension in input_shape)
-    ):
-        return model
-    layers = [
-        layer for layer in model.layers if type(layer).__name__ != "InputLayer"
-    ]
-    if tuple(type(layer).__name__ for layer in layers) != _DIRECT_ARIA_LAYERS:
-        return model
-
-    import keras
-
-    input_name = str(inputs[0].name).split(":", maxsplit=1)[0]
-    canonical_input = keras.Input(shape=input_shape[:-1], name=input_name)
-    value = keras.layers.Reshape(input_shape, name="ravel_repack")(
-        canonical_input
-    )
-    for layer in layers:
-        value = layer(value)
-    return keras.Model(canonical_input, value, name=model.name)
-
-
-@contextmanager
-def _homogeneous_stream_quantizer_compatibility():
-    from hls4ml.backends.fpga.passes.hgq_proxy_model import (
-        ProcessFixedPointQuantizerLayer,
-    )
-    from hls4ml.model.optimizer.passes.bit_exact import (
-        get_input_layers,
-        get_output_layers,
-    )
-    from hls4ml.model.optimizer.passes.hgq_proxy_model import (
-        FuseFixedPointQuantizer,
-    )
-    from hls4ml.model.types import FixedPrecisionType
-
-    original_transform = ProcessFixedPointQuantizerLayer.transform
-
-    def transform(pass_instance, graph, node):
-        if (
-            graph.config.config["IOType"] != "io_stream"
-            or not node.get_attr("fusible", False)
-        ):
-            return original_transform(pass_instance, graph, node)
-        input_layer = get_input_layers(node)[0]
-        if len(get_output_layers(input_layer)) != 1:
-            return original_transform(pass_instance, graph, node)
-        output_precision = node.get_output_variable().type.precision
-        precision = FixedPrecisionType(
-            output_precision.width,
-            output_precision.integer,
-            output_precision.signed,
-            node.RND,
-            node.SAT,
-        )
-        FuseFixedPointQuantizer().propagate(input_layer, precision)
-        graph.remove_node(node)
-        return True
-
-    with _HLS4ML_CONVERSION_LOCK:
-        ProcessFixedPointQuantizerLayer.transform = transform
-        try:
-            yield
-        finally:
-            ProcessFixedPointQuantizerLayer.transform = original_transform
-
-
-def _semantic_kind(layer: Any) -> str:
-    if layer.class_name == "Activation" and layer.get_attr("activation") == "relu":
-        return "relu"
-    if layer.class_name == "Pooling2D" and layer.get_attr("pool_op") == "Max":
-        return "max_pool2d"
-    names = {
-        "Input": "input",
-        "Repack": "repack",
-        "Conv2D": "conv2d",
-        "PointwiseConv2D": "conv2d",
-        "Reshape": "reshape",
-        "Dense": "dense",
-    }
-    return names.get(layer.class_name, layer.class_name.lower())
-
-
-def _shape_size(shape: list[int]) -> int:
-    result = 1
-    for dimension in shape:
-        result *= dimension
-    return result
-
-
-def _parameter_bindings(
-    model_facts: Mapping[str, Any], parameter_payload: ParameterPayload
-) -> list[dict[str, Any]]:
-    payload = parameter_payload.by_id()
-    bindings = []
-    for operation in model_facts["operations"]:
-        for parameter in operation["parameters"]:
-            binding_id = f"{operation['id']}:{parameter['role']}"
-            descriptor = {
-                key: deepcopy(value)
-                for key, value in parameter.items()
-                if key != "content_sha256"
-            }
-            bindings.append(
-                {
-                    "id": binding_id,
-                    "operation_id": operation["id"],
-                    "role": parameter["role"],
-                    "symbol": payload[binding_id].symbol,
-                    "type_name": payload[binding_id].type_name,
-                    "descriptor": descriptor,
-                }
-            )
-    return sorted(bindings, key=lambda binding: binding["id"])
-
-
-def _extract_parameter_payload(layers: list[Any]) -> ParameterPayload:
-    tensors = []
-    ordinals: dict[str, int] = {}
-    for layer in layers:
-        kind = _semantic_kind(layer)
-        ordinal = ordinals.get(kind, 0)
-        ordinals[kind] = ordinal + 1
-        operation_id = f"{kind}_{ordinal}"
-        for role, weight in layer.weights.items():
-            tensors.append(
-                ParameterTensor(
-                    id=f"{operation_id}:{role}",
-                    operation_id=operation_id,
-                    role=role,
-                    symbol=weight.name,
-                    type_name=weight.type.name,
-                    numeric_type=_numeric_type(weight.type.precision),
-                    values=weight.data,
-                )
-            )
-    return ParameterPayload(tuple(sorted(tensors, key=lambda tensor: tensor.id)))
-
-
-def _rendering_contract(
-    layers: list[Any], implementation_plan: Mapping[str, Any]
-) -> dict[str, Any]:
-    operations: dict[str, dict[str, Any]] = {}
-    ordinals: dict[str, int] = {}
-    for layer in layers:
-        kind = _semantic_kind(layer)
-        ordinal = ordinals.get(kind, 0)
-        ordinals[kind] = ordinal + 1
-        operation_id = f"{kind}_{ordinal}"
-        output = layer.get_output_variable()
-        operation = {
-            "output_symbol": output.name,
-            "output_type": output.type.name,
-            "output_precision_cpp": output.type.precision.definition_cpp(),
-        }
-        index = layer.get_attr("index")
-        if operation_id == "conv2d_0":
-            operation["config_symbol"] = f"config{index}"
-        elif operation_id == "relu_0":
-            operation["config_symbol"] = f"relu_config{index}"
-        elif operation_id in {"max_pool2d_0", "dense_0"}:
-            operation["config_symbol"] = f"config{index}"
-        operations[operation_id] = operation
-    temporal_pack = implementation_plan["temporal_pack"]
-    width_lanes = implementation_plan["width_lanes"]
-    contract = {
-        "operations": operations,
-        "types": {
-            "input_wide": _wide_type_name(
-                operations["input_0"]["output_type"], f"x{temporal_pack}"
-            ),
-            "convolution_wide": _wide_type_name(
-                operations["conv2d_0"]["output_type"], f"x{width_lanes}"
-            ),
-            "activation_wide": _wide_type_name(
-                operations["relu_0"]["output_type"], f"x{width_lanes}"
-            ),
-            "pooling_wide": _wide_type_name(
-                operations["max_pool2d_0"]["output_type"], f"x{width_lanes}"
-            ),
-        },
-        "streams": {
-            "convolution": (
-                f"{operations['conv2d_0']['output_symbol']}_x{width_lanes}"
-            ),
-            "activation": f"{operations['relu_0']['output_symbol']}_x{width_lanes}",
-            "pooling": (
-                f"{operations['max_pool2d_0']['output_symbol']}_x{width_lanes}"
-            ),
-        },
-        "first_convolution_function": (
-            f"first_conv_{temporal_pack}row_4lane_temporal_wide_cl"
-        ),
-    }
-    if "phara" in implementation_plan:
-        realization = implementation_plan["phara"]["realization"]
-        contract["phara_fused_function"] = (
-            f"phara_pool_aligned_{realization}_p{temporal_pack}_cl"
-        )
-        contract["dense_function"] = "dense_wide_stream"
-    return contract
-
-
-def _native_rendering_contract(layers: list[Any]) -> dict[str, Any]:
-    """Capture qualified native bindings before the renderer boundary."""
-    result = {}
-    ordinals = {}
-    for layer in layers:
-        kind = _semantic_kind(layer)
-        ordinal = ordinals.get(kind, 0)
-        ordinals[kind] = ordinal + 1
-        output = layer.get_output_variable()
-        result[f"{kind}_{ordinal}"] = {
-            "output_symbol": output.name, "output_type": output.type.name,
-            "output_precision_cpp": output.type.precision.definition_cpp(),
-            "output_shape": [int(value) for value in output.shape],
-            "native_call": layer.get_attr("function_cpp"),
-            "config_symbol": f"config{layer.get_attr('index')}",
-            "input_symbol": layer.get_input_variable().name if layer.inputs and kind != "input" else None,
-        }
-    return result
-
-
-def _wide_type_name(type_name: str, suffix: str) -> str:
-    stem = type_name[:-2] if type_name.endswith("_t") else type_name
-    return f"{stem}_{suffix}_t"
-
-
-_QUANTIZER_ROLES = {
-    "iq_conf": "input",
-    "kq_conf": "weight",
-    "bq_conf": "bias",
-    "oq_conf": "output",
-}
-
-
-def _frontend_provenance(model: Any) -> dict[str, Any]:
-    source_layers = []
-    quantizer_contracts = []
-    for ordinal, layer in enumerate(model.layers):
-        source_layers.append(
-            {
-                "ordinal": ordinal,
-                "module": type(layer).__module__,
-                "class_name": type(layer).__name__,
-            }
-        )
-        config = layer.get_config()
-        for field, role in _QUANTIZER_ROLES.items():
-            serialized = config.get(field)
-            if not isinstance(serialized, Mapping):
-                continue
-            quantizer = serialized.get("config")
-            if not isinstance(quantizer, Mapping):
-                continue
-            quantizer_contracts.append(
-                {
-                    "source_ordinal": ordinal,
-                    "role": role,
-                    "q_type": quantizer.get("q_type"),
-                    "rounding": quantizer.get("round_mode"),
-                    "overflow": quantizer.get("overflow_mode"),
-                    "homogeneous_axis": _json_value(
-                        quantizer.get("homogeneous_axis")
-                    ),
-                    "heterogeneous_axis": _json_value(
-                        quantizer.get("heterogeneous_axis")
-                    ),
-                    "is_weight": quantizer.get("is_weight"),
-                }
-            )
-    return {
-        "adapter": {"id": "keras-hgq2", "version": 1},
-        "source_layers": source_layers,
-        "quantizer_contracts": quantizer_contracts,
-    }
-
-
-_OPERATION_ATTRIBUTES = {
-    "input": ("input_shape",),
-    "repack": ("target_shape",),
-    "conv2d": (
-        "in_height",
-        "in_width",
-        "n_chan",
-        "filt_height",
-        "filt_width",
-        "n_filt",
-        "stride_height",
-        "stride_width",
-        "pad_top",
-        "pad_bottom",
-        "pad_left",
-        "pad_right",
-        "out_height",
-        "out_width",
-    ),
-    "relu": ("activation", "n_in"),
-    "max_pool2d": (
-        "in_height",
-        "in_width",
-        "n_filt",
-        "pool_height",
-        "pool_width",
-        "stride_height",
-        "stride_width",
-        "pad_top",
-        "pad_bottom",
-        "pad_left",
-        "pad_right",
-        "pool_op",
-        "out_height",
-        "out_width",
-    ),
-    "reshape": ("target_shape",),
-    "dense": ("n_in", "n_out"),
-}
-
-
-def _extract_model_facts(
-    layers: list[Any],
-) -> tuple[dict[str, Any], dict[str, str]]:
-    import numpy as np
-
-    operations: list[dict[str, Any]] = []
-    raw_outputs: dict[str, str] = {}
-    ordinals: dict[str, int] = {}
-    parameter_identities: list[dict[str, Any]] = []
-    for layer in layers:
-        kind = _semantic_kind(layer)
-        ordinal = ordinals.get(kind, 0)
-        ordinals[kind] = ordinal + 1
-        operation_id = f"{kind}_{ordinal}"
-        inputs = [raw_outputs[name] for name in layer.inputs if name in raw_outputs]
-        outputs = []
-        for port, raw_name in enumerate(layer.outputs):
-            variable = layer.get_output_variable(raw_name)
-            tensor_id = f"{operation_id}:out{port}"
-            raw_outputs[raw_name] = tensor_id
-            outputs.append(
-                {
-                    "id": tensor_id,
-                    "shape": [int(dimension) for dimension in variable.shape],
-                    "numeric_type": _numeric_type(variable.type.precision),
-                }
-            )
-        parameters = []
-        for role, weight in layer.weights.items():
-            values = np.ascontiguousarray(weight.data)
-            numeric_type = _numeric_type(weight.type.precision)
-            fractional = numeric_type["width"] - numeric_type["integer"]
-            codes = np.rint(values * (2**fractional)).astype("<i8", copy=False)
-            content = hashlib.sha256(codes.tobytes(order="C")).hexdigest()
-            descriptor = {
-                "role": role,
-                "shape": [int(dimension) for dimension in values.shape],
-                "numeric_type": numeric_type,
-                "content_sha256": content,
-            }
-            parameters.append(descriptor)
-            parameter_identities.append(
-                {
-                    "operation_id": operation_id,
-                    **descriptor,
-                }
-            )
-        attributes = {
-            name: _json_value(layer.get_attr(name))
-            for name in _OPERATION_ATTRIBUTES.get(kind, ())
-            if layer.get_attr(name) is not None
-        }
-        operations.append(
-            {
-                "id": operation_id,
-                "kind": kind,
-                "inputs": inputs,
-                "outputs": outputs,
-                "attributes": attributes,
-                "parameters": parameters,
-            }
-        )
-
-    facts = {
-        "schema_version": 1,
-        "inputs": [operations[0]["outputs"][0]["id"]],
-        "outputs": [operations[-1]["outputs"][0]["id"]],
-        "operations": operations,
-    }
-    structure = deepcopy(facts)
-    for operation in structure["operations"]:
-        for parameter in operation["parameters"]:
-            parameter.pop("content_sha256")
-    return facts, {
-        "model_structure_sha256": _canonical_sha256(structure),
-        "parameter_state_sha256": _canonical_sha256(
-            sorted(
-                parameter_identities,
-                key=lambda parameter: (
-                    parameter["operation_id"],
-                    parameter["role"],
-                ),
-            )
-        ),
-    }
-
-
-def _numeric_type(precision: Any) -> dict[str, Any]:
-    rounding = getattr(precision, "rounding_mode", None)
-    saturation = getattr(precision, "saturation_mode", None)
-    return {
-        "kind": "fixed" if hasattr(precision, "integer") else "integer",
-        "width": int(precision.width),
-        "integer": int(getattr(precision, "integer", precision.width)),
-        "signed": bool(getattr(precision, "signed", True)),
-        "rounding": str(rounding) if rounding is not None else None,
-        "saturation": str(saturation) if saturation is not None else None,
-        "saturation_bits": int(getattr(precision, "saturation_bits", 0)),
-    }
-
-
-def _json_value(value: Any) -> Any:
-    if isinstance(value, tuple):
-        return [_json_value(item) for item in value]
-    if isinstance(value, list):
-        return [_json_value(item) for item in value]
-    if hasattr(value, "item"):
-        return value.item()
-    return value
-
-
-def _canonical_sha256(value: Any) -> str:
-    encoded = json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
-def _predicted_interface(
-    model_facts: Mapping[str, Any], plan: Mapping[str, Any]
-) -> dict[str, Any]:
-    operations = model_facts["operations"]
-    input_tensor = operations[0]["outputs"][0]
-    output_tensor = operations[-1]["outputs"][0]
-    input_width = input_tensor["numeric_type"]["width"]
-    output_width = output_tensor["numeric_type"]["width"]
-    input_slot_width = max(8, 1 << (input_width - 1).bit_length())
-    output_slot_width = max(8, 1 << (output_width - 1).bit_length())
-    return {
-        "logical": {
-            "input_shape": input_tensor["shape"],
-            "output_shape": output_tensor["shape"],
-        },
-        "hls_stream": {
-            "input_rows_per_word": plan["temporal_pack"],
-            "values_per_input_word": plan["values_per_input_word"],
-            "input_words_per_inference": plan["input_words_per_inference"],
-        },
-        "rtl": {
-            "input_tdata_bits": plan["values_per_input_word"] * input_slot_width,
-            "output_tdata_bits": _shape_size(output_tensor["shape"])
-            * output_slot_width,
-        },
-    }
