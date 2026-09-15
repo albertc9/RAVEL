@@ -39,7 +39,7 @@ def build_architecture_envelope(
     """Return the refresh-stable architecture identity for one resolved design."""
 
     design = model_analysis["resolved_design"]
-    return {
+    envelope = {
         "schema_version": 1,
         "generation": model_analysis["generation"],
         "model_family": model_analysis["model_family"],
@@ -70,6 +70,11 @@ def build_architecture_envelope(
             for item in design["executed_passes"]
         ],
     }
+
+    if "stages" in design:
+        envelope.update({key: design[key] for key in ("stages", "bridges", "delegation")})
+        envelope["cost_policy"] = {"id": "temporal-lexicographic", "version": 1}
+    return envelope
 
 
 def build_generation_manifest(
@@ -105,6 +110,7 @@ def build_generation_manifest(
             "plan": implementation_plan,
             "passes": pass_records,
             "compatibility_profile": "hls4ml-1.2.0-hgq2-0.1.7",
+            **({"stages": model_analysis["resolved_design"]["stages"], "bridges": model_analysis["resolved_design"]["bridges"], "delegation": model_analysis["resolved_design"]["delegation"]} if "stages" in model_analysis["resolved_design"] else {}),
         }
     )
     generation_fingerprint = canonical_sha256(

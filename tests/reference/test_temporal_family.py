@@ -93,3 +93,18 @@ def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_
     assert all(record["transformation_equivalence"] == "passed" for record in corpora.values())
     rtl_inputs = np.loadtxt(project.path / "tb_data/tb_input_features.dat")
     assert rtl_inputs.shape[0] == corpora["built_in"]["sample_count"]
+
+
+def test_refresh_preserves_the_composed_plan_and_binds_it_in_the_architecture(tmp_path):
+    from ravel_hls import refresh
+
+    model = make_temporal_model(height=64, width=2, filters=3)
+    config = {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+              "Verification": {"Mode": "disabled"}}
+    project = convert(model, tmp_path / "refreshable", config)
+    architecture = project.manifest["architecture_envelope"]
+    assert architecture["stages"] == project.manifest["resolved_design"]["stages"]
+    assert architecture["bridges"] == project.manifest["resolved_design"]["bridges"]
+    renewed = refresh(project, model)
+    assert renewed.manifest["architecture_envelope_sha256"] == project.manifest["architecture_envelope_sha256"]
+    assert renewed.manifest["resolved_design"]["stages"] == project.manifest["resolved_design"]["stages"]
