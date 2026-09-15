@@ -83,6 +83,7 @@ def build_generation_manifest(
     verification_report: dict[str, Any],
     interface_contract: dict[str, Any],
     model_analysis: dict[str, Any],
+    source_ownership: list[dict[str, Any]],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
     recorded_configuration = {
@@ -188,6 +189,7 @@ def build_generation_manifest(
             "source_integrity": "clean",
             "performance_qualification": "not_run",
         },
+        "source_ownership": source_ownership,
         "source_closure": source_closure,
         "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,

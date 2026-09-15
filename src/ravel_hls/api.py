@@ -26,6 +26,7 @@ from .exceptions import (
     VerificationError,
 )
 from .manifest import architecture_contract_sha256, build_generation_manifest
+from .rendering.ownership import SourceOwnership
 from .parameters import Parameters
 from .project import RavelProject, open_project
 from .generations import builtin_generation
@@ -397,16 +398,20 @@ def _generate_project(
         binding = generation.backend_binding(
             hls_config["Backend"], hls_config["IOType"]
         )
+        ownership = SourceOwnership(staging_path)
         managed_paths = binding.render(
             staging_path,
             project_name,
             model_analysis["resolved_design"],
             parameter_payload,
         )
+        ownership.record("render-selected-stages", 1, managed_paths)
         if stimuli is not None:
             _write_vitis_testbench_inputs(staging_path, corpora[0].inputs)
+            ownership.record("write-verification-corpus", 2, ["tb_data/tb_input_features.dat"])
         normalize_build_script(staging_path)
         write_build_options(staging_path, ravel_config)
+        ownership.record("configure-vendor-build", 1, ["build_prj.tcl", "build_opt.tcl"])
         verification_report: dict[str, Any] = {
             "mode": verification_mode,
             "source_conversion_consistency": "not_run",
@@ -464,6 +469,7 @@ def _generate_project(
         ravel_config_path.write_text(
             published_ravel_config.to_yaml(), encoding="utf-8"
         )
+        ownership.record("normalize-project-config", 1, ["hls4ml_config.yml", "ravel_config.yml"])
         semantic_model = {
             "facts": model_facts,
             "layers": [
@@ -488,6 +494,7 @@ def _generate_project(
             verification_report=verification_report,
             interface_contract=_interface_contract(layers, implementation_plan),
             model_analysis=dict(model_analysis),
+            source_ownership=ownership.verify(),
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

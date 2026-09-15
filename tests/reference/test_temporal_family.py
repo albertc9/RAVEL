@@ -72,6 +72,9 @@ def test_composed_two_block_project_is_bit_exact_against_its_clean_baseline(tmp_
     assert project.manifest["verification"]["source_conversion_consistency"] == "passed"
     assert project.manifest["resolved_design"]["strategy"]["id"] == "aria-composed"
     assert "nnet::conv_2d_cl" in (project.path / "firmware/composed.cpp").read_text()
+    owned = {item["path"] for item in project.manifest["source_ownership"]}
+    assert "firmware/nnet_utils/ravel_bridges.h" in owned
+    assert "firmware/nnet_utils/nnet_conv2d_stream.h" not in owned
 
 
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
