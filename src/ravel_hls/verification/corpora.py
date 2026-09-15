@@ -8,7 +8,7 @@ from typing import Any, Mapping
 import numpy as np
 
 from ..exceptions import ConfigurationError
-from .equivalence import prepare_stimuli
+from .equivalence import prepare_stimuli, _numeric_contract_codes
 
 
 @dataclass(frozen=True)
@@ -23,10 +23,9 @@ def prepare_corpora(config: Mapping[str, Any], supplied: Any, facts: Mapping[str
     tensor = facts["operations"][0]["outputs"][0]
     numeric = tensor["numeric_type"]
     shape = tuple(tensor["shape"])
-    initial, metadata = prepare_stimuli(config, None, tensor)
+    initial, patterns = _numeric_contract_codes(max(16, config["Verification"].get("Samples", 32)), shape, numeric, config["Verification"].get("Seed", 0))
     scale = 2 ** (numeric["width"] - numeric["integer"])
-    codes = [item.copy() for item in np.rint(initial.astype(np.float64) * scale).astype(np.int64)]
-    patterns = list(metadata["patterns"])
+    codes = [item.copy() for item in initial]
     limit = (1 << (numeric["width"] - int(numeric["signed"]))) - 1
     lower = -limit if numeric["signed"] and numeric["saturation"] == "SAT_SYM" else (-(limit + 1) if numeric["signed"] else 0)
     rows = {0, shape[0] - 1}
@@ -51,10 +50,22 @@ def prepare_corpora(config: Mapping[str, Any], supplied: Any, facts: Mapping[str
     for value, label in ((1, "positive_lsb"), (-1 if numeric["signed"] else 0, "negative_lsb")):
         codes.append(np.full(shape, value, dtype=np.int64))
         patterns.append(label)
+    fractional = numeric["width"] - numeric["integer"]
+    transition_codes = {lower, lower + 1, limit - 1, limit}
+    for operation in facts["operations"]:
+        for output in operation["outputs"]:
+            precision = output["numeric_type"]
+            delta = abs(fractional - (precision["width"] - precision["integer"]))
+            half_step = 1 << min(max(delta - 1, 0), numeric["width"] - 1)
+            for polarity in (-1, 1) if numeric["signed"] else (1,):
+                transition_codes.update(polarity * half_step + offset for offset in (-1, 0, 1))
+    for code in sorted(value for value in transition_codes if lower <= value <= limit):
+        codes.append(np.full(shape, code, dtype=np.int64))
+        patterns.append(f"quantization_neighbor_code_{code}")
     ordered = np.arange(prod(shape), dtype=np.int64).reshape(shape)
     codes.append(ordered % (limit - lower + 1) + lower)
     patterns.append("feature_channel_order")
-    builtin_codes = np.stack(codes)
+    builtin_codes = np.clip(np.stack(codes), lower, limit)
     builtin = builtin_codes.astype(np.float64) / scale
     builtin_record = _record(builtin, builtin_codes, numeric, "numeric_contract")
     builtin_record.update(recipe={"id": "numeric-contract", "version": 2},

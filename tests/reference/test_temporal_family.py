@@ -16,7 +16,7 @@ def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="ren
     inputs = keras.Input((height, width, 1), name=f"{prefix}_input")
     value = inputs
     for block in range(blocks):
-        config = {**convolution, "name": f"{prefix}_conv_{block}", "filters": filters,
+        config = {**convolution, "name": f"{prefix}_conv_{block}", "filters": filters[block] if isinstance(filters, tuple) else filters,
                   "kernel_size": (3, 1), "strides": (2, 1)}
         value = QConv2D.from_config(config)(value)
         value = keras.layers.MaxPool2D((2, 1), strides=(2, 1), name=f"{prefix}_pool_{block}")(value)
@@ -127,3 +127,16 @@ def test_analysis_preserves_all_declared_ports_before_reporting_a_multi_input_gr
     assert report["model_facts"]["inputs"] == ["input_0:out0", "input_1:out0"]
     assert report["applicability"]["status"] == "unsupported"
     assert "family.topology.io" in {finding["code"] for finding in report["applicability"]["findings"]}
+
+
+def test_each_block_owns_its_own_channel_and_filter_geometry(tmp_path):
+    project = convert(make_temporal_model(height=64, width=2, filters=(3, 4)), tmp_path / "mixed_filters", {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+        "Verification": {"Mode": "required", "Samples": 8},
+    })
+    stages = project.manifest["resolved_design"]["stages"]
+    assert stages[0]["output"]["shape"] == [15, 2, 3]
+    assert stages[1]["input"]["lanes"] == 3
+    assert stages[1]["output"]["shape"] == [3, 2, 4]
+    assert stages[-1]["input"]["lanes"] == 8
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"

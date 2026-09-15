@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verify that release artifacts use the version in the triggering Git tag."""
 
+import ast
 from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 import sys
@@ -55,6 +56,24 @@ def artifact_version(artifact: Path) -> str:
     raise ValueError(f"{artifact}: unsupported distribution format")
 
 
+def artifact_aria_version(artifact: Path) -> str:
+    if artifact.name.endswith(".whl"):
+        with zipfile.ZipFile(artifact) as archive:
+            source = archive.read("ravel_hls/identity.py")
+    else:
+        with tarfile.open(artifact, "r:gz") as archive:
+            members = [member for member in archive.getmembers() if member.name.endswith("/src/ravel_hls/identity.py") and member.isfile()]
+            if len(members) != 1:
+                raise ValueError(f"{artifact}: expected one code-owned Aria identity")
+            source = archive.extractfile(members[0]).read()
+    for statement in ast.parse(source).body:
+        if isinstance(statement, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "ARIA_VERSION" for target in statement.targets):
+            value = ast.literal_eval(statement.value)
+            if isinstance(value, str):
+                return value
+    raise ValueError(f"{artifact}: no literal Aria generation identity")
+
+
 def main(arguments: list[str]) -> int:
     if len(arguments) < 2:
         raise SystemExit("usage: verify_release_version.py TAG ARTIFACT [ARTIFACT ...]")
@@ -79,6 +98,12 @@ def main(arguments: list[str]) -> int:
     if actual != expected:
         raise SystemExit(f"tag {tag} does not match package version {actual}")
 
+    try:
+        generations = {artifact_aria_version(Path(name)) for name in artifact_names}
+    except (OSError, ValueError, KeyError, SyntaxError, tarfile.TarError, zipfile.BadZipFile) as error:
+        raise SystemExit(str(error)) from error
+    if generations != {expected}:
+        raise SystemExit(f"tag {tag} and package {actual} disagree with Aria generation: {', '.join(sorted(generations))}")
     print(f"release version verified: {actual}")
     return 0
 
