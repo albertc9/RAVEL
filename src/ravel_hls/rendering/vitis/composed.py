@@ -51,7 +51,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
             count = 1
             for extent in target["shape"]:
                 count *= extent
-            calls.append(f"    ravel::repack<{current_type}, {bridge_type}, {count}>({current_symbol}, {symbol});")
+            calls.append(f"    ravel::repack<{current_type}, {bridge_type}, {count}, {bridge['schedule']['lanes_per_cycle']}>({current_symbol}, {symbol});")
             current_symbol, current_type = symbol, bridge_type
             observe(target["tensor_id"], current_symbol, target["shape"])
             bridge_index += 1
@@ -136,8 +136,7 @@ BRIDGE_SOURCE = '''#ifndef RAVEL_BRIDGES_H_
 #define RAVEL_BRIDGES_H_
 #include "hls_stream.h"
 namespace ravel {
-constexpr unsigned gcd(unsigned a, unsigned b) { return b == 0 ? a : gcd(b, a % b); }
-template<class IN, class OUT, unsigned COUNT>
+template<class IN, class OUT, unsigned COUNT, unsigned LANES>
 void repack(hls::stream<IN>& input, hls::stream<OUT>& output) {
     typedef typename IN::value_type input_value;
     typedef typename OUT::value_type output_value;
@@ -146,7 +145,7 @@ void repack(hls::stream<IN>& input, hls::stream<OUT>& output) {
     OUT outgoing;
     #pragma HLS ARRAY_PARTITION variable=incoming complete dim=0
     #pragma HLS ARRAY_PARTITION variable=outgoing complete dim=0
-    const unsigned LANES = gcd(IN::size, OUT::size);
+    static_assert(LANES > 0 && IN::size % LANES == 0 && OUT::size % LANES == 0, "Invalid bridge lane schedule");
 BridgeCodes:
     for (unsigned i = 0; i < COUNT; i += LANES) {
         #pragma HLS PIPELINE II=1
