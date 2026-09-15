@@ -109,3 +109,9 @@ projects remain inspectable; ordinary conversion creates a project for the new
 generation when a historical generation identity differs. Parameter-package v2
 refresh runs the same clean-baseline and composition pipeline. Packages without
 known-answer evidence cannot satisfy required source-model fidelity verification.
+
+Published host artifacts are reproducible across fresh processes: the shared
+library stamp derives from model and plan fingerprints, and the project-local
+Keras ZIP uses fixed archive metadata and a normalized save timestamp. Model
+configuration and HDF5 parameter bytes are preserved. These normalization
+changes have their own source-ownership record; source inputs are not edited.

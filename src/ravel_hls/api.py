@@ -27,7 +27,8 @@ from .exceptions import (
     RavelError,
     VerificationError,
 )
-from .manifest import architecture_contract_sha256, build_generation_manifest
+from .manifest import architecture_contract_sha256, build_generation_manifest, canonical_sha256
+from .rendering.artifacts import normalize_host_artifacts
 from .rendering.ownership import SourceOwnership
 from .parameters import Parameters
 from .project import RavelProject, open_project
@@ -477,13 +478,15 @@ def _generate_project(
                               output_integer_code_sha256=hashlib.sha256(codes.tobytes()).hexdigest())
                 offset += count
         mutable_hls_config["OutputDir"] = original_output
-        _rewrite_published_hls_config(staging_path, output_path)
+        artifact_stamp = canonical_sha256({"fingerprints": model_analysis["fingerprints"], "design": model_analysis["resolved_design"]})[:16]
+        _rewrite_published_hls_config(staging_path, output_path, stamp=artifact_stamp)
+        normalize_host_artifacts(staging_path, artifact_stamp)
         published_ravel_config = _published_ravel_config(ravel_config)
         ravel_config_path = staging_path / "ravel_config.yml"
         ravel_config_path.write_text(
             published_ravel_config.to_yaml(), encoding="utf-8"
         )
-        ownership.record("normalize-project-config", 1, ["hls4ml_config.yml", "ravel_config.yml"])
+        ownership.record("normalize-project-artifacts", 2, ["hls4ml_config.yml", "ravel_config.yml", "build_lib.sh", "keras_model.keras"])
         semantic_model = {
             "facts": model_facts,
             "layers": [
@@ -689,7 +692,7 @@ class _KerasModelPath(str):
     pass
 
 
-def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None:
+def _rewrite_published_hls_config(staging_path: Path, output_path: Path, *, stamp: str) -> None:
     import yaml
 
     class Loader(yaml.SafeLoader):
@@ -718,6 +721,7 @@ def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None
     if not isinstance(values, dict):
         raise ProjectGenerationError("hls4ml_config.yml must contain a mapping")
     values["OutputDir"] = "."
+    values["Stamp"] = stamp
     if isinstance(values.get("KerasModel"), _KerasModelPath):
         values["KerasModel"] = _KerasModelPath("keras_model.keras")
     config_path.write_text(

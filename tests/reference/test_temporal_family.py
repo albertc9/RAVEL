@@ -216,3 +216,65 @@ def test_parameter_package_refreshes_second_block_codes_without_changing_the_sel
     assert renewed.manifest["verification"]["transformation_equivalence"] == "passed"
     assert renewed.manifest["verification"]["stage_boundaries"]["status"] == "passed"
     assert renewed.manifest["verification"]["source_conversion_consistency"] == "not_run"
+
+
+def test_fresh_process_generation_preserves_complete_source_and_plan_fingerprints(tmp_path):
+    import json
+    import os
+    import subprocess
+    import sys
+    model_path = tmp_path / "model.keras"
+    make_temporal_model(height=64, width=2, filters=3).save(model_path)
+    code = '''import sys
+from ravel_hls import convert
+convert(sys.argv[1], sys.argv[2], {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}, "Verification": {"Mode": "disabled"}})
+'''
+    results = []
+    for run in ("first", "second"):
+        output = tmp_path / run / "same_top"
+        subprocess.run([sys.executable, "-c", code, str(model_path), str(output)], env=os.environ.copy(), check=True, capture_output=True, text=True)
+        results.append(json.loads((output / "ravel_manifest.json").read_text()))
+    for key in ("generated_plan_sha256", "source_closure_sha256", "generation_fingerprint", "architecture_envelope_sha256"):
+        assert results[0][key] == results[1][key], key
+
+
+def test_generated_bridge_preserves_codes_and_zeroes_tail_padding_across_consecutive_calls(tmp_path):
+    import subprocess
+    from ravel_hls.compatibility.dependencies import inspect_dependencies
+    project = convert(make_temporal_model(height=64, width=2, filters=3), tmp_path / "bridge", {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+        "Verification": {"Mode": "disabled"},
+    })
+    source = tmp_path / "bridge_test.cpp"
+    source.write_text('''#include "defines.h"
+#include "nnet_utils/ravel_bridges.h"
+#include <cassert>
+template<unsigned IN, unsigned OUT, unsigned LANES> void check() {
+    using scalar = ap_fixed<8,4>;
+    using input_word = nnet::array<scalar, IN>;
+    using output_word = nnet::array<scalar, OUT>;
+    hls::stream<input_word> input;
+    hls::stream<output_word> output;
+    const unsigned codes[5] = {128, 127, 255, 1, 73};
+    for (unsigned frame=0; frame<3; ++frame) {
+        for (unsigned i=0; i<5; i+=IN) {
+            input_word word;
+            for (unsigned lane=0; lane<IN; ++lane) word[lane].range(7,0)=i+lane<5 ? codes[i+lane] : 99;
+            input.write(word);
+        }
+        ravel::repack<input_word, output_word, 5, LANES>(input, output);
+        for (unsigned i=0; i<5; i+=OUT) {
+            output_word word=output.read();
+            for (unsigned lane=0; lane<OUT; ++lane) assert(word[lane].range(7,0).to_uint() == (i+lane<5 ? codes[i+lane] : 0));
+        }
+        assert(input.empty() && output.empty());
+    }
+}
+int main() { check<4,2,2>(); check<2,4,2>(); check<3,2,1>(); }
+''')
+    binary = tmp_path / "bridge_test"
+    compiler = inspect_dependencies()["compiler"]["command"]
+    assert compiler is not None
+    subprocess.run([compiler, "-std=c++17", "-Wno-unknown-pragmas", "-I" + str(project.path / "firmware"),
+                    "-I" + str(project.path / "firmware/ap_types"), str(source), "-o", str(binary)], check=True, capture_output=True, text=True)
+    subprocess.run([str(binary)], check=True, capture_output=True, text=True)
