@@ -1,0 +1,29 @@
+{
+  "generator_revision": "8cab26d8a39e51e4906a06f3d1ae490c80b3ac8f",
+  "baseline_revision": "afec83563145ea53f3829cdeb30d24d017d6fb2a",
+  "toolchain": {
+    "Vitis HLS": "2023.2",
+    "Vivado": "2023.2"
+  },
+  "models": {
+    "composed_target": {
+      "model_sha256": "382bd79b7d9cb78a35d81a32fa2ffb1da07d8e94e4ad93d62dd2eea2585bc0c8",
+      "manifest_sha256": "283bef56aed4f58826e2f9d95dd8c0fe9d6ce582908d9a9f4e1a7194b6ebdf31",
+      "qualification_sha256": "abeeceab80616b2bcd8561b554c088bb5fa9d8e616e752a79211127b5ab5d310",
+      "source_closure_sha256": "80d6039436125d7335d809ea1101f18f17f02d826ab994593d9fe984ab64aa00",
+      "supplied_npz_sha256": "c662edb897f09ea93de1f524b1ce12f00e54b9b028565d4d2082d4c1bb0b64a4"
+    },
+    "legacy_p2d2": {
+      "model_sha256": "816a6384509a89808e668747fa5740dab8b3522056df24a8a81da5bbdd57b1ff",
+      "manifest_sha256": "980c87395f0d9faa355a469ec3c0c5baf060460f6a48b33f6ba969ca281f1d62",
+      "qualification_sha256": "9058ee1a908194da905f8da7e77e209af66110e76b1e16dde0fc7cae343b1764",
+      "source_closure_sha256": "1993db1c244a4d3b9386ccec7388c6d490ff5f154e7ffd919483c8c34bccbcbf"
+    },
+    "two_block_c3": {
+      "model_sha256": "d50073c63f11be2c0472674ffb9d70ae646d7d9cf234d6175320ca6ea610abdc",
+      "manifest_sha256": "86bbc79238d166367d6b21fd5bfc2b6e8536b2735d902df41d0895d0da71eb4f",
+      "qualification_sha256": "1b955a9356fe800c4cb06e18c279ae67d45cde686a1018ff10b6cc5311911f01",
+      "source_closure_sha256": "0aac9b5707dd7dc28ae5c5f6b9997c9035178a9e33cf13d01504a5eece66914f"
+    }
+  }
+}

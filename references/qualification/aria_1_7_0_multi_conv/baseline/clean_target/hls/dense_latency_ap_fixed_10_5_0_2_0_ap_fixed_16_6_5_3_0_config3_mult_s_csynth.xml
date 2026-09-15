@@ -1,0 +1,284 @@
+<profile>
+
+<ReportVersion>
+<Version>2023.2</Version>
+</ReportVersion>
+
+<UserAssignments>
+<unit>ns</unit>
+<ProductFamily>kintexuplus</ProductFamily>
+<Part>xcku5p-ffvb676-2-e</Part>
+<TopModelName>dense_latency_ap_fixed_10_5_0_2_0_ap_fixed_16_6_5_3_0_config3_mult_s</TopModelName>
+<TargetClockPeriod>5.00</TargetClockPeriod>
+<ClockUncertainty>1.35</ClockUncertainty>
+<TargetInitiationInterval>1</TargetInitiationInterval>
+<FlowTarget>vivado</FlowTarget>
+</UserAssignments>
+
+<PerformanceEstimates>
+<PipelineType>yes</PipelineType>
+<SummaryOfTimingAnalysis>
+<unit>ns</unit>
+<EstimatedClockPeriod>3.529</EstimatedClockPeriod>
+</SummaryOfTimingAnalysis>
+<SummaryOfOverallLatency>
+<unit>clock cycles</unit>
+<Best-caseLatency>1</Best-caseLatency>
+<Average-caseLatency>1</Average-caseLatency>
+<Worst-caseLatency>1</Worst-caseLatency>
+<Best-caseRealTimeLatency>5.000 ns</Best-caseRealTimeLatency>
+<Average-caseRealTimeLatency>5.000 ns</Average-caseRealTimeLatency>
+<Worst-caseRealTimeLatency>5.000 ns</Worst-caseRealTimeLatency>
+<PipelineInitiationInterval>1</PipelineInitiationInterval>
+<PipelineDepth>2</PipelineDepth>
+<Interval-min>1</Interval-min>
+<Interval-max>1</Interval-max>
+</SummaryOfOverallLatency>
+<SummaryOfViolations>
+<IssueType>-</IssueType>
+<ViolationType>-</ViolationType>
+<SourceLocation>firmware/nnet_utils/nnet_dense_latency.h:33</SourceLocation>
+</SummaryOfViolations>
+</PerformanceEstimates>
+
+<AreaEstimates>
+<Resources>
+<DSP>0</DSP>
+<FF>272</FF>
+<LUT>1833</LUT>
+<BRAM_18K>0</BRAM_18K>
+<URAM>0</URAM>
+</Resources>
+<AvailableResources>
+<BRAM_18K>960</BRAM_18K>
+<DSP>1824</DSP>
+<FF>433920</FF>
+<LUT>216960</LUT>
+<URAM>64</URAM>
+</AvailableResources>
+</AreaEstimates>
+
+<InterfaceSummary>
+<RtlPorts>
+<name>ap_clk</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>1</Bits>
+<Attribute>control</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_rst</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>1</Bits>
+<Attribute>control</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_0</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_1</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_2</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_3</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_4</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_5</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_6</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_7</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_8</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_9</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_10</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_return_11</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>out</Dir>
+<Bits>16</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>ap_ce</name>
+<Object>dense_latency&lt;ap_fixed&lt;10, 5, 0, 2, 0&gt;, ap_fixed&lt;16, 6, 5, 3, 0&gt;, config3_mult&gt;</Object>
+<Type>return value</Type>
+<Scope></Scope>
+<IOProtocol>ap_ctrl_hs</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>1</Bits>
+<Attribute>control</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_4</name>
+<Object>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_4</Object>
+<Type>pointer</Type>
+<Scope>global</Scope>
+<IOProtocol>ap_none</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>10</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_3</name>
+<Object>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_3</Object>
+<Type>pointer</Type>
+<Scope>global</Scope>
+<IOProtocol>ap_none</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>10</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_2</name>
+<Object>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_2</Object>
+<Type>pointer</Type>
+<Scope>global</Scope>
+<IOProtocol>ap_none</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>10</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_1</name>
+<Object>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig_1</Object>
+<Type>pointer</Type>
+<Scope>global</Scope>
+<IOProtocol>ap_none</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>10</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+<RtlPorts>
+<name>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig</name>
+<Object>void_compute_output_buffer_2d_array_const_ap_shift_reg_n_chan_stream_weig</Object>
+<Type>pointer</Type>
+<Scope>global</Scope>
+<IOProtocol>ap_none</IOProtocol>
+<IOConfig></IOConfig>
+<Dir>in</Dir>
+<Bits>10</Bits>
+<Attribute>data</Attribute>
+</RtlPorts>
+</InterfaceSummary>
+
+</profile>

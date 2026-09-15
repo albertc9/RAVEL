@@ -1,0 +1,5 @@
+{
+  "status": "passed",
+  "comparison": "canonical_fixed_point_integer_codes",
+  "max_abs_float_difference": 0.0
+}

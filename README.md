@@ -64,6 +64,21 @@ The throughput requirements of ARIANNA, RNO-G, and IceCube-Gen2 are already met 
 
 More Information about the reference implementation, please see the [performance](https://github.com/NuDAQ/CNN-Core-Generator/tree/d37a0a6dc31cf5a38f0d241f47e21263e0fe9e67#performance) of the CNN-Core-Generator.
 
+## Aria 1.7 multi-block qualification
+
+The two-convolution K5/S3/F12 target passes exact C verification on the mandatory
+96-sample corpus plus 1000 supplied events, RTL CoSim, and reset/backpressure
+protocol checks. At a 5 ns KU5P constraint, its composed P8/D4 implementation
+measures II 844, latency 866 cycles, and routed WNS +0.475 ns. A clean hls4ml
+baseline measures II 3076 and latency 3091 cycles under the same full-reset
+settings. The exact legacy P2/D2 model retains its previous II, latency,
+resources, and routed slack.
+
+The [Aria 1.7 qualification snapshot](references/qualification/aria_1_7_0_multi_conv/README.md)
+contains the measured resource tradeoff, a non-F12 two-block check, immutable
+source/report bindings, and reproduction commands. These results apply to those
+qualified models; board integration and model-accuracy evaluation are separate.
+
 ## Install
 
 Use a clean Python 3.11 virtual environment on Linux:

@@ -1,0 +1,2634 @@
+{
+  "architecture_contract_sha256": "6b78f921eddc4d598394de53bafd70148607bd743ed5e52d41d3b5ba5058a40e",
+  "architecture_envelope": {
+    "generation": {
+      "id": "aria",
+      "version": "1.7.0"
+    },
+    "implementation_plan": {
+      "channels_per_row": 4,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 4960,
+      "dense_parallelism": 2,
+      "dense_steps": 124,
+      "filter_lanes": 20,
+      "first_convolution": {
+        "id": "full-width-latency",
+        "multiplier_limit": 560,
+        "parallel_windows": 4,
+        "products_per_window": 140,
+        "schedule": {
+          "first_window_end": 6,
+          "id": "next-window-end",
+          "input_words": 128,
+          "last_window_end": 254,
+          "maximum_outputs_per_input_word": 1,
+          "output_rows": 125,
+          "status": "proven",
+          "version": 1
+        },
+        "target_loop_ii": 1,
+        "version": 1
+      },
+      "input_words_per_inference": 128,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p2-d2-v4",
+      "temporal_pack": 2,
+      "values_per_input_word": 8,
+      "values_per_internal_word": 80,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 124,
+        "id": "wide-sequential",
+        "mac_lanes": 40,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 40
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 1099511627775,
+        "version": 1,
+        "word_bits": 240
+      },
+      "width_lanes": 4
+    },
+    "interfaces": {
+      "hls_stream": {
+        "input_rows_per_word": 2,
+        "input_words_per_inference": 128,
+        "values_per_input_word": 8
+      },
+      "logical": {
+        "input_shape": [
+          256,
+          4
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl": {
+        "input_tdata_bits": 128,
+        "output_tdata_bits": 32
+      }
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "model_structure_sha256": "6c8d9d282085ddce0f59480cf92a195b27da1f0aca11e957c4c1b61880aa597e",
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 0,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 4
+          },
+          "role": "bias",
+          "shape": [
+            20
+          ]
+        },
+        "id": "conv2d_0:bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 6
+          },
+          "role": "weight",
+          "shape": [
+            7,
+            1,
+            1,
+            20
+          ]
+        },
+        "id": "conv2d_0:weight"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": -1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 3
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 6
+          },
+          "role": "weight",
+          "shape": [
+            4960,
+            1
+          ]
+        },
+        "id": "dense_0:weight"
+      }
+    ],
+    "passes": [
+      {
+        "id": "pack-temporal-input",
+        "order": 1,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "order": 2,
+        "result": "applied",
+        "version": 2
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "order": 3,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "order": 4,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "order": 5,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "order": 6,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "order": 7,
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "rendering": {
+      "first_convolution_function": "first_conv_2row_4lane_temporal_wide_cl",
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config4",
+          "output_precision_cpp": "ap_fixed<16,6>",
+          "output_symbol": "layer4_out",
+          "output_type": "q_conv2d_t"
+        },
+        "dense_0": {
+          "config_symbol": "config9",
+          "output_precision_cpp": "ap_fixed<24,14>",
+          "output_symbol": "layer9_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<10,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "waveform",
+          "output_type": "waveform_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config6",
+          "output_precision_cpp": "ap_fixed<10,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer6_out",
+          "output_type": "max_pooling2d_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config5",
+          "output_precision_cpp": "ap_ufixed<15,5>",
+          "output_symbol": "layer5_out",
+          "output_type": "q_conv2d_relu_t"
+        },
+        "repack_0": {
+          "output_precision_cpp": "ap_fixed<10,5>",
+          "output_symbol": "layer10_out",
+          "output_type": "ravel_repack_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_fixed<10,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer7_out",
+          "output_type": "max_pooling2d_t"
+        }
+      },
+      "streams": {
+        "activation": "layer5_out_x4",
+        "convolution": "layer4_out_x4",
+        "pooling": "layer6_out_x4"
+      },
+      "types": {
+        "activation_wide": "q_conv2d_relu_x4_t",
+        "convolution_wide": "q_conv2d_x4_t",
+        "input_wide": "waveform_x2_t",
+        "pooling_wide": "max_pooling2d_x4_t"
+      }
+    },
+    "resolver": {
+      "id": "aria-explicit-pd",
+      "version": 2
+    },
+    "schema_version": 1,
+    "specialization": {
+      "dense_parallelism": 2,
+      "temporal_packing": 2
+    },
+    "strategy": {
+      "id": "aria-wide-stream",
+      "version": 2
+    },
+    "streaming": {
+      "activation": {
+        "operation_id": "relu_0",
+        "values_per_word": 80
+      },
+      "buffers": {
+        "depth": 4,
+        "storage": "srl"
+      },
+      "dataflow_control": {
+        "block_control": "ap_ctrl_hs",
+        "start_propagation": false
+      },
+      "dense": {
+        "inputs": 4960,
+        "operation_id": "dense_0",
+        "parallelism": 2,
+        "steps": 124,
+        "weight_delivery": {
+          "accumulation": {
+            "policy": "ordered"
+          },
+          "applicability": {
+            "reasons": [],
+            "status": "applicable"
+          },
+          "depth": 124,
+          "id": "wide-sequential",
+          "mac_lanes": 40,
+          "multipliers": {
+            "implementation": "dsp",
+            "instances": 40
+          },
+          "storage": {
+            "implementation": "bram",
+            "type": "rom_1p"
+          },
+          "tail_elements": 0,
+          "tail_mask": 1099511627775,
+          "version": 1,
+          "word_bits": 240
+        }
+      },
+      "first_convolution": {
+        "filter_lanes": 20,
+        "kernel": [
+          7,
+          1
+        ],
+        "operation_id": "conv2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "width_lanes": 4
+      },
+      "input": {
+        "rows_per_word": 2,
+        "values_per_word": 8,
+        "words_per_inference": 128
+      },
+      "pooling": {
+        "operation_id": "max_pool2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "window": [
+          2,
+          1
+        ]
+      }
+    }
+  },
+  "architecture_envelope_sha256": "6b78f921eddc4d598394de53bafd70148607bd743ed5e52d41d3b5ba5058a40e",
+  "coefficient_realization": null,
+  "coefficient_realization_sha256": null,
+  "configuration_sha256": "0b4caa677c72e125a551a174f4a808ec1ffe47f1cc9b4b259ff9e671594b4854",
+  "dependencies": {
+    "Jinja2": {
+      "installed": "3.1.6",
+      "required": "==3.1.6",
+      "status": "qualified"
+    },
+    "PyYAML": {
+      "installed": "6.0.3",
+      "required": "==6.0.3",
+      "status": "qualified"
+    },
+    "hgq2": {
+      "installed": "0.1.7",
+      "required": "==0.1.7",
+      "status": "qualified"
+    },
+    "hls4ml": {
+      "installed": "1.2.0",
+      "required": "==1.2.0",
+      "status": "qualified"
+    },
+    "keras": {
+      "installed": "3.12.1",
+      "required": "==3.12.1",
+      "status": "qualified"
+    },
+    "numpy": {
+      "installed": "1.26.4",
+      "required": "==1.26.4",
+      "status": "qualified"
+    },
+    "quantizers": {
+      "installed": "1.2.2",
+      "required": "==1.2.2",
+      "status": "qualified"
+    }
+  },
+  "generated_plan_sha256": "eff61ea47204f78860533919065e622b93cc71d9bb3b612416dcee35e7c420fc",
+  "generation_configuration": {
+    "hls4ml": {
+      "Backend": "Vitis",
+      "ClockPeriod": 5.0,
+      "IOType": "io_stream",
+      "Part": "xcku5p-ffvb676-2-e",
+      "ProjectName": "legacy_p2d2",
+      "ReuseFactor": 1,
+      "Strategy": "Latency"
+    },
+    "ravel": {
+      "Optimization": {
+        "DenseParallelism": 2,
+        "TemporalPacking": 2
+      },
+      "OptimizationPolicy": "aria-aggressive-phara-v1",
+      "Profile": "aria"
+    }
+  },
+  "generation_fingerprint": "f5ed09e903c11a424653a5a52b2c35b8e4a4f3db5a1f40ff4f387c745048793b",
+  "implementation_plan": {
+    "channels_per_row": 4,
+    "dataflow_start_propagation": false,
+    "dense_inputs": 4960,
+    "dense_parallelism": 2,
+    "dense_steps": 124,
+    "filter_lanes": 20,
+    "first_convolution": {
+      "id": "full-width-latency",
+      "multiplier_limit": 560,
+      "parallel_windows": 4,
+      "products_per_window": 140,
+      "schedule": {
+        "first_window_end": 6,
+        "id": "next-window-end",
+        "input_words": 128,
+        "last_window_end": 254,
+        "maximum_outputs_per_input_word": 1,
+        "output_rows": 125,
+        "status": "proven",
+        "version": 1
+      },
+      "target_loop_ii": 1,
+      "version": 1
+    },
+    "input_words_per_inference": 128,
+    "internal_fifo_depth": 4,
+    "template_profile": "aria-p2-d2-v4",
+    "temporal_pack": 2,
+    "values_per_input_word": 8,
+    "values_per_internal_word": 80,
+    "weight_delivery": {
+      "accumulation": {
+        "policy": "ordered"
+      },
+      "applicability": {
+        "reasons": [],
+        "status": "applicable"
+      },
+      "depth": 124,
+      "id": "wide-sequential",
+      "mac_lanes": 40,
+      "multipliers": {
+        "implementation": "dsp",
+        "instances": 40
+      },
+      "storage": {
+        "implementation": "bram",
+        "type": "rom_1p"
+      },
+      "tail_elements": 0,
+      "tail_mask": 1099511627775,
+      "version": 1,
+      "word_bits": 240
+    },
+    "width_lanes": 4
+  },
+  "implementation_sha256": "c6cc60ec7d92a044b8168c91b548539bf44ce4131fee8b7df37ebefe1ecd43da",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 2,
+      "input_scalar_bits": 10,
+      "input_words_per_inference": 128,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 24,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 8
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 10,
+        "input_tdata_bits": 128,
+        "input_tdata_port": "waveform_TDATA",
+        "output_scalar_bits": 24,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer9_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "normalized_configuration": {
+    "hls4ml": {
+      "Backend": "Vitis",
+      "ClockPeriod": 5.0,
+      "IOType": "io_stream",
+      "Part": "xcku5p-ffvb676-2-e",
+      "ProjectName": "legacy_p2d2",
+      "ReuseFactor": 1,
+      "Strategy": "Latency"
+    },
+    "ravel": {
+      "HLS": {
+        "Backend": "Vitis",
+        "ClockPeriod": 5.0,
+        "Config": {
+          "LayerName": {
+            "flatten": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "max_pooling2d": {
+              "ConvImplementation": "LineBuffer",
+              "Precision": {
+                "accum": "auto",
+                "result": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "q_conv2d": {
+              "ConvImplementation": "LineBuffer",
+              "ParallelizationFactor": 1,
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "q_conv2d_iq": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "q_conv2d_relu": {
+              "Precision": {
+                "result": "auto",
+                "table": "fixed<18,8,TRN,WRAP,0>"
+              },
+              "ReuseFactor": 1,
+              "TableSize": 1024,
+              "Trace": false
+            },
+            "q_dense": {
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "q_dense_iq": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "ravel_repack": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "waveform": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            }
+          },
+          "Model": {
+            "BitExact": null,
+            "BramFactor": 1000000000,
+            "Precision": {
+              "default": "fixed<16,6>"
+            },
+            "ReuseFactor": 1,
+            "Strategy": "Latency",
+            "TraceOutput": false
+          }
+        },
+        "IOType": "io_stream",
+        "Part": "xcku5p-ffvb676-2-e"
+      },
+      "Optimization": {
+        "DenseParallelism": 2,
+        "TemporalPacking": 2
+      },
+      "Project": {
+        "ForceReplace": false,
+        "Name": "legacy_p2d2",
+        "OutputDir": "."
+      },
+      "Verification": {
+        "Mode": "required",
+        "Samples": 32
+      },
+      "Vitis": {
+        "Run": false,
+        "Stages": {
+          "CSim": true,
+          "CoSim": true,
+          "Export": false,
+          "Reset": true,
+          "Synth": true,
+          "VSynth": false,
+          "Validation": false
+        }
+      }
+    }
+  },
+  "pipeline": {
+    "passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "ec48ec802bc0d0dd32f12105139c999f96a8734a5d0ed593621187c125bd89e9",
+        "order": 1,
+        "output_design_sha256": "54c581693329aa64ac3649fed96c48ce94f40226c527308cc3a4872e5cebf4da",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "54c581693329aa64ac3649fed96c48ce94f40226c527308cc3a4872e5cebf4da",
+        "order": 2,
+        "output_design_sha256": "e5d384af108163f078e4d6922e4d92f5249e1be7285e1800694676279651f489",
+        "result": "applied",
+        "version": 2
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "e5d384af108163f078e4d6922e4d92f5249e1be7285e1800694676279651f489",
+        "order": 3,
+        "output_design_sha256": "c0b594d1a2d7928507b27eeb25fe4c967840e733f1ec68725a6d10815d66636f",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "c0b594d1a2d7928507b27eeb25fe4c967840e733f1ec68725a6d10815d66636f",
+        "order": 4,
+        "output_design_sha256": "9dbd647d782d6a71a11458e32a3f34ec5cbf05ccb464503927e212bce04ef14a",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "9dbd647d782d6a71a11458e32a3f34ec5cbf05ccb464503927e212bce04ef14a",
+        "order": 5,
+        "output_design_sha256": "64926d97e759f4a1404aa5618391dcd0cda2319d8f929b2ab255d7b5d2f1039f",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "64926d97e759f4a1404aa5618391dcd0cda2319d8f929b2ab255d7b5d2f1039f",
+        "order": 6,
+        "output_design_sha256": "ad466f1af037e6eb72de0d9b51602b20d729bf6880cc5e4ef7a4455b20e26aac",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "ad466f1af037e6eb72de0d9b51602b20d729bf6880cc5e4ef7a4455b20e26aac",
+        "order": 7,
+        "output_design_sha256": "d91869b828277df4dcae43ec57cc5f803640ebbdd4f362287f55cfb54b53bc9c",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "phases": [
+      "ValidateProfile",
+      "GenerateBaseline",
+      "BuildIR",
+      "ApplyAriaPasses",
+      "RenderProject",
+      "ValidateProject",
+      "PromoteProject"
+    ]
+  },
+  "profile": {
+    "generation": {
+      "id": "aria",
+      "version": "1.7.0"
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    }
+  },
+  "ravel": {
+    "generation": "Aria",
+    "package_version": "1.0.0.dev19+g17de15f94",
+    "product": "RAVEL",
+    "release": "1.7.0"
+  },
+  "resolved_design": {
+    "executed_passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "ec48ec802bc0d0dd32f12105139c999f96a8734a5d0ed593621187c125bd89e9",
+        "order": 1,
+        "output_design_sha256": "54c581693329aa64ac3649fed96c48ce94f40226c527308cc3a4872e5cebf4da",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "54c581693329aa64ac3649fed96c48ce94f40226c527308cc3a4872e5cebf4da",
+        "order": 2,
+        "output_design_sha256": "e5d384af108163f078e4d6922e4d92f5249e1be7285e1800694676279651f489",
+        "result": "applied",
+        "version": 2
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "e5d384af108163f078e4d6922e4d92f5249e1be7285e1800694676279651f489",
+        "order": 3,
+        "output_design_sha256": "c0b594d1a2d7928507b27eeb25fe4c967840e733f1ec68725a6d10815d66636f",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "c0b594d1a2d7928507b27eeb25fe4c967840e733f1ec68725a6d10815d66636f",
+        "order": 4,
+        "output_design_sha256": "9dbd647d782d6a71a11458e32a3f34ec5cbf05ccb464503927e212bce04ef14a",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "9dbd647d782d6a71a11458e32a3f34ec5cbf05ccb464503927e212bce04ef14a",
+        "order": 5,
+        "output_design_sha256": "64926d97e759f4a1404aa5618391dcd0cda2319d8f929b2ab255d7b5d2f1039f",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "64926d97e759f4a1404aa5618391dcd0cda2319d8f929b2ab255d7b5d2f1039f",
+        "order": 6,
+        "output_design_sha256": "ad466f1af037e6eb72de0d9b51602b20d729bf6880cc5e4ef7a4455b20e26aac",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "ad466f1af037e6eb72de0d9b51602b20d729bf6880cc5e4ef7a4455b20e26aac",
+        "order": 7,
+        "output_design_sha256": "d91869b828277df4dcae43ec57cc5f803640ebbdd4f362287f55cfb54b53bc9c",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "generation": {
+      "id": "aria",
+      "version": "1.7.0"
+    },
+    "implementation_plan": {
+      "channels_per_row": 4,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 4960,
+      "dense_parallelism": 2,
+      "dense_steps": 124,
+      "filter_lanes": 20,
+      "first_convolution": {
+        "id": "full-width-latency",
+        "multiplier_limit": 560,
+        "parallel_windows": 4,
+        "products_per_window": 140,
+        "schedule": {
+          "first_window_end": 6,
+          "id": "next-window-end",
+          "input_words": 128,
+          "last_window_end": 254,
+          "maximum_outputs_per_input_word": 1,
+          "output_rows": 125,
+          "status": "proven",
+          "version": 1
+        },
+        "target_loop_ii": 1,
+        "version": 1
+      },
+      "input_words_per_inference": 128,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p2-d2-v4",
+      "temporal_pack": 2,
+      "values_per_input_word": 8,
+      "values_per_internal_word": 80,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 124,
+        "id": "wide-sequential",
+        "mac_lanes": 40,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 40
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 1099511627775,
+        "version": 1,
+        "word_bits": 240
+      },
+      "width_lanes": 4
+    },
+    "interfaces": {
+      "hls_stream": {
+        "input_rows_per_word": 2,
+        "input_words_per_inference": 128,
+        "values_per_input_word": 8
+      },
+      "logical": {
+        "input_shape": [
+          256,
+          4
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl": {
+        "input_tdata_bits": 128,
+        "output_tdata_bits": 32
+      }
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 0,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 4
+          },
+          "role": "bias",
+          "shape": [
+            20
+          ]
+        },
+        "id": "conv2d_0:bias",
+        "operation_id": "conv2d_0",
+        "role": "bias",
+        "symbol": "b4",
+        "type_name": "q_conv2d_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 6
+          },
+          "role": "weight",
+          "shape": [
+            7,
+            1,
+            1,
+            20
+          ]
+        },
+        "id": "conv2d_0:weight",
+        "operation_id": "conv2d_0",
+        "role": "weight",
+        "symbol": "w4",
+        "type_name": "q_conv2d_weight_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": -1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 3
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias",
+        "operation_id": "dense_0",
+        "role": "bias",
+        "symbol": "b9",
+        "type_name": "q_dense_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 6
+          },
+          "role": "weight",
+          "shape": [
+            4960,
+            1
+          ]
+        },
+        "id": "dense_0:weight",
+        "operation_id": "dense_0",
+        "role": "weight",
+        "symbol": "w9",
+        "type_name": "q_dense_weight_t"
+      }
+    ],
+    "rendering": {
+      "first_convolution_function": "first_conv_2row_4lane_temporal_wide_cl",
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config4",
+          "output_precision_cpp": "ap_fixed<16,6>",
+          "output_symbol": "layer4_out",
+          "output_type": "q_conv2d_t"
+        },
+        "dense_0": {
+          "config_symbol": "config9",
+          "output_precision_cpp": "ap_fixed<24,14>",
+          "output_symbol": "layer9_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<10,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "waveform",
+          "output_type": "waveform_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config6",
+          "output_precision_cpp": "ap_fixed<10,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer6_out",
+          "output_type": "max_pooling2d_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config5",
+          "output_precision_cpp": "ap_ufixed<15,5>",
+          "output_symbol": "layer5_out",
+          "output_type": "q_conv2d_relu_t"
+        },
+        "repack_0": {
+          "output_precision_cpp": "ap_fixed<10,5>",
+          "output_symbol": "layer10_out",
+          "output_type": "ravel_repack_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_fixed<10,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer7_out",
+          "output_type": "max_pooling2d_t"
+        }
+      },
+      "streams": {
+        "activation": "layer5_out_x4",
+        "convolution": "layer4_out_x4",
+        "pooling": "layer6_out_x4"
+      },
+      "types": {
+        "activation_wide": "q_conv2d_relu_x4_t",
+        "convolution_wide": "q_conv2d_x4_t",
+        "input_wide": "waveform_x2_t",
+        "pooling_wide": "max_pooling2d_x4_t"
+      }
+    },
+    "resolved_design_sha256": "d91869b828277df4dcae43ec57cc5f803640ebbdd4f362287f55cfb54b53bc9c",
+    "resolver": {
+      "id": "aria-explicit-pd",
+      "version": 2
+    },
+    "schema_version": 1,
+    "specialization": {
+      "dense_parallelism": 2,
+      "temporal_packing": 2
+    },
+    "strategy": {
+      "id": "aria-wide-stream",
+      "version": 2
+    },
+    "streaming": {
+      "activation": {
+        "operation_id": "relu_0",
+        "values_per_word": 80
+      },
+      "buffers": {
+        "depth": 4,
+        "storage": "srl"
+      },
+      "dataflow_control": {
+        "block_control": "ap_ctrl_hs",
+        "start_propagation": false
+      },
+      "dense": {
+        "inputs": 4960,
+        "operation_id": "dense_0",
+        "parallelism": 2,
+        "steps": 124,
+        "weight_delivery": {
+          "accumulation": {
+            "policy": "ordered"
+          },
+          "applicability": {
+            "reasons": [],
+            "status": "applicable"
+          },
+          "depth": 124,
+          "id": "wide-sequential",
+          "mac_lanes": 40,
+          "multipliers": {
+            "implementation": "dsp",
+            "instances": 40
+          },
+          "storage": {
+            "implementation": "bram",
+            "type": "rom_1p"
+          },
+          "tail_elements": 0,
+          "tail_mask": 1099511627775,
+          "version": 1,
+          "word_bits": 240
+        }
+      },
+      "first_convolution": {
+        "filter_lanes": 20,
+        "kernel": [
+          7,
+          1
+        ],
+        "operation_id": "conv2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "width_lanes": 4
+      },
+      "input": {
+        "rows_per_word": 2,
+        "values_per_word": 8,
+        "words_per_inference": 128
+      },
+      "pooling": {
+        "operation_id": "max_pool2d_0",
+        "stride": [
+          2,
+          1
+        ],
+        "window": [
+          2,
+          1
+        ]
+      }
+    }
+  },
+  "schema_version": 6,
+  "source_closure": [
+    {
+      "path": "build_lib.sh",
+      "role": "project",
+      "sha256": "6bdb40fa587f06751177e2ec1b59d35acbd24ceb2a40c57bc3088be836070626",
+      "size": 973
+    },
+    {
+      "path": "build_opt.tcl",
+      "role": "vendor_script",
+      "sha256": "477e7e138e57d1d2447fee5ed8ffe51601f16319a38d8f9b1ea2ded521a260d6",
+      "size": 154
+    },
+    {
+      "path": "build_prj.tcl",
+      "role": "vendor_script",
+      "sha256": "00ca8797acd0c5e49951aaa86576a0780fbc743a99c8c2c1fc8fe6916935262c",
+      "size": 7665
+    },
+    {
+      "path": "firmware/ap_types/ap_common.h",
+      "role": "firmware",
+      "sha256": "d61258f6ebca39dc11492965e6e7a1508499478b6c4ac435cf83cd454738e0a5",
+      "size": 10180
+    },
+    {
+      "path": "firmware/ap_types/ap_decl.h",
+      "role": "firmware",
+      "sha256": "cf51ec1fed914af4a8a1f4d947b4477aa21f02711856e1dc22efeeb5ef608c48",
+      "size": 6473
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed.h",
+      "role": "firmware",
+      "sha256": "de5778ab2178ef99c3b68e7b00772c2ddf8f7e827b765a650e864f2d7228e9de",
+      "size": 12185
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_base.h",
+      "role": "firmware",
+      "sha256": "09dd402506631f154a6efa38c3d6bdca5904c8d8dd5c747b545f625281936f4a",
+      "size": 85182
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_ref.h",
+      "role": "firmware",
+      "sha256": "4cef7266a7567f4564b17986e1237dfe7fc20d8415594e32ba36b461f92b402c",
+      "size": 27302
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_special.h",
+      "role": "firmware",
+      "sha256": "c977d09e301cf2f26fe53e91f5ae0bfde03453f6b4ca9ccafd14a7f32ab3b7fb",
+      "size": 6985
+    },
+    {
+      "path": "firmware/ap_types/ap_float.h",
+      "role": "firmware",
+      "sha256": "c6c8ea808e4595ab3e1b8d5fb2da427e388104979fb31f9014d12915e47a6e1b",
+      "size": 6528
+    },
+    {
+      "path": "firmware/ap_types/ap_int.h",
+      "role": "firmware",
+      "sha256": "9d38b2ac537c20f08646ce516290a42d3f72e08c5aaa84541ed21ba5488e2cd0",
+      "size": 10012
+    },
+    {
+      "path": "firmware/ap_types/ap_int_base.h",
+      "role": "firmware",
+      "sha256": "2ade108df516f39afc9718d8e044aa7a547f0a7a4cd2e6dbe0ae5dd86d3718c4",
+      "size": 71735
+    },
+    {
+      "path": "firmware/ap_types/ap_int_ref.h",
+      "role": "firmware",
+      "sha256": "e6bb0e75a6e5c1e0bd84a1ad43c2a4b6bd3beec110f75833487e46e6133b9b96",
+      "size": 55218
+    },
+    {
+      "path": "firmware/ap_types/ap_int_special.h",
+      "role": "firmware",
+      "sha256": "1c8bd146e88a1a90270a98a05115f470e4145fcf1d6e9de51a4516a5b8253022",
+      "size": 6301
+    },
+    {
+      "path": "firmware/ap_types/ap_shift_reg.h",
+      "role": "firmware",
+      "sha256": "c2a7bc8f78a46dd6625f062c62502c15b3857902e161721b2a8442e9f2467ae7",
+      "size": 4894
+    },
+    {
+      "path": "firmware/ap_types/etc/ap_private.h",
+      "role": "firmware",
+      "sha256": "4c37711885f4af70fa425f0a797a1c79198785d970140dc092bdfebef31502d9",
+      "size": 261465
+    },
+    {
+      "path": "firmware/ap_types/hls_math.h",
+      "role": "firmware",
+      "sha256": "69b141a19cd88e6fe97c2db092e725561d47baf609fd8a1b9cdfb543df464627",
+      "size": 674
+    },
+    {
+      "path": "firmware/ap_types/hls_stream.h",
+      "role": "firmware",
+      "sha256": "3539157db138f1ce979cc21f47d5b325b0f05277deeb2d7dc495f1052dc6fbe2",
+      "size": 7480
+    },
+    {
+      "path": "firmware/ap_types/utils/x_hls_utils.h",
+      "role": "firmware",
+      "sha256": "c76e1c7f51f264abf427c61022852f604deec3a48d2fbbd67ad446222166d89c",
+      "size": 2227
+    },
+    {
+      "path": "firmware/defines.h",
+      "role": "firmware",
+      "sha256": "0aa3c68cfb525eed45f4e09dd4b6dd69aa5706553d7f2ef49773a5bdab1a8241",
+      "size": 1413
+    },
+    {
+      "path": "firmware/legacy_p2d2.cpp",
+      "role": "firmware",
+      "sha256": "74cc95a764630cbb6ac8c77e338332f6696a70879f3c454a0234738bb6e1dc67",
+      "size": 1852
+    },
+    {
+      "path": "firmware/legacy_p2d2.h",
+      "role": "firmware",
+      "sha256": "ea90f2fd42fcaebf389f52c91a2c5150dc10fff74aca56641f6573ef083bb873",
+      "size": 245
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_activation.h",
+      "role": "firmware",
+      "sha256": "2581cd0352d5df49fcd11902375c00e20da9562f7dac2a2137377de19bfe9e29",
+      "size": 31520
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_activation_stream.h",
+      "role": "firmware",
+      "sha256": "f802bfc772baa07f85e4ce83b0edcdc6a703e6ed59c8018bf21f7ed2bd862dfb",
+      "size": 27068
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_aria.h",
+      "role": "firmware",
+      "sha256": "bcacedf1f1209bbb40608a8f952e5cc44fda5670ab303f8bfba6e80b8202648f",
+      "size": 14328
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_batchnorm.h",
+      "role": "firmware",
+      "sha256": "6665f9fb59f8c5aa0dc472852f5f85443cbbbab29218639a1ba2c77e80e400e3",
+      "size": 4214
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_batchnorm_stream.h",
+      "role": "firmware",
+      "sha256": "3a580856776ee62a341ee35e45096e98042a8df9154bc3e3c299672ff1d68c40",
+      "size": 4182
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_code_gen.h",
+      "role": "firmware",
+      "sha256": "9de4b308358b39a759ff555adb5804e73d419674f5492cf5d74320e69feaf57b",
+      "size": 786
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_common.h",
+      "role": "firmware",
+      "sha256": "cac405e71adaa8cd03960d6c311d5b625f0631454ec6d30f8f425c756f33a4ef",
+      "size": 2127
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d.h",
+      "role": "firmware",
+      "sha256": "65add8931f0a3c9d0e3ee07978f2c5291ef3350300a89b9c4b1def73209e14a5",
+      "size": 6211
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_latency.h",
+      "role": "firmware",
+      "sha256": "35c2971d1bb480c56f243e22a16d83c630c367846b6814669c7e035bf188ef7f",
+      "size": 7034
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_resource.h",
+      "role": "firmware",
+      "sha256": "ead84fac549f8340c52a153992716c420882ad66dabf5b8230ff59c66531dbc3",
+      "size": 4126
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_stream.h",
+      "role": "firmware",
+      "sha256": "5b7ec28b42bbbd79db9d9885b7c47ebf6f655b17d83219db2652b70afbab2fe5",
+      "size": 1480
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d.h",
+      "role": "firmware",
+      "sha256": "3de5f4078081aa31aa5c7f7e4ccbea73f73c40549e9cc7e50bcbeb9330ff3424",
+      "size": 3748
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_latency.h",
+      "role": "firmware",
+      "sha256": "508f64a51b17679caac753eadd8c912f39f76c23695e61ba8e2668b071a3cf37",
+      "size": 3343
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_resource.h",
+      "role": "firmware",
+      "sha256": "c02c1da4f73ae52456562f2b3f0487173d016e9fa4e295202d920e75ab9b6d3e",
+      "size": 4254
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_stream.h",
+      "role": "firmware",
+      "sha256": "a332d3983f36f06835f8f5530961b9b96de44f52ccc5d42cffc10ae3831c447a",
+      "size": 3813
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv_stream.h",
+      "role": "firmware",
+      "sha256": "bbf2b6d3869c644296bc643f54b268c42413e3981a79a9640d89569fdff8bbfe",
+      "size": 14130
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_cropping.h",
+      "role": "firmware",
+      "sha256": "d1e419717c94b155951b5eed161f27536aac744dfdc29dd066bc36cdb237acf2",
+      "size": 2948
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_cropping_stream.h",
+      "role": "firmware",
+      "sha256": "760dede5c6d10b184e0ebb3e822a8832a727be04bc7f95eafc9c83728bf96640",
+      "size": 1600
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_da_wrappers.h",
+      "role": "firmware",
+      "sha256": "af95f6f6ce7e0bcf02e6c015909c4e216376bc60fbec1d460f6d2ee29f31d548",
+      "size": 3968
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense.h",
+      "role": "firmware",
+      "sha256": "96a8568b0b32eda76b90ae0f7b4f4194cf948802b2c55f48135d13504928f6c2",
+      "size": 3023
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_compressed.h",
+      "role": "firmware",
+      "sha256": "bd898a282cc1275b942da2a51289831dfab6d073b0dea2744c537ca85e86d7dd",
+      "size": 2859
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_latency.h",
+      "role": "firmware",
+      "sha256": "38d0f0957711681d600f2328ad8ea8f0cdb977b4b7cc5e1f47194d97aaeae770",
+      "size": 2424
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_resource.h",
+      "role": "firmware",
+      "sha256": "247e6bf2ab59bef2ed100df348168308e71b0f2e464a09a3a09ce9d62fdfdb5e",
+      "size": 9928
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_stream.h",
+      "role": "firmware",
+      "sha256": "87ea7b6d015b7de69fab590295309f65837ddd0a6011154b344e93305473a0f8",
+      "size": 3975
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_depthwise_product.h",
+      "role": "firmware",
+      "sha256": "440ce61e86999aeabbc782a5dfa9a80ca1e7f3f02a4b792511ac14ac16182ed3",
+      "size": 10646
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_einsum.h",
+      "role": "firmware",
+      "sha256": "2fbe65d527216602cf6a68c53fbc57156f3cf852d0ebb5b2157313f9e79d9819",
+      "size": 2881
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_einsum_dense.h",
+      "role": "firmware",
+      "sha256": "f1aa9f3987fabb5073ace8ead7641d76fb259b6cc90fa31d4393342952b32829",
+      "size": 4643
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_embed.h",
+      "role": "firmware",
+      "sha256": "a0026798df56ba20bec8708a307cb28b473d0069021ecdc62e793b48d0206764",
+      "size": 1292
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_embed_stream.h",
+      "role": "firmware",
+      "sha256": "4238c65129da40ebafc0bffb0b5b598246968870a26190f67d26ce72eb0da1a4",
+      "size": 839
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_function_stubs.h",
+      "role": "firmware",
+      "sha256": "ebf011b1965d033f89ff2c6d29d5ea8d5acf14140f176c2a15a4c99e5d56d0d0",
+      "size": 2960
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_garnet.h",
+      "role": "firmware",
+      "sha256": "358a67f4f5e1a45eb5262cb773dff084264d7fbbbfcd1f74e5443c9d1962dae6",
+      "size": 30731
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_helpers.h",
+      "role": "firmware",
+      "sha256": "be3b44aa21ba78d32f47d74ef42be38e082dab1913bbe6214dc83afd74511c61",
+      "size": 12528
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_image.h",
+      "role": "firmware",
+      "sha256": "3b1ce15c0c271670e26f3499860e1a6d05e95eb614ac31ead747b64b2cdc849d",
+      "size": 1293
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_image_stream.h",
+      "role": "firmware",
+      "sha256": "de91a55af0c7f415ef7aaadbaa0689a827ad340cafcd26772f04eb87054ed7cf",
+      "size": 1847
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_layernorm.h",
+      "role": "firmware",
+      "sha256": "70c2547b92be5a3ef8cd341cc0a671fae73fde6cea581538411d925d804ad844",
+      "size": 4986
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_math.h",
+      "role": "firmware",
+      "sha256": "854ad22a2122186b1aa30a11b92aa685670c559e7abfcb679bcdd3db6ac7c54f",
+      "size": 7677
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_merge.h",
+      "role": "firmware",
+      "sha256": "64224f5b5d6b6cf95b0ceeebfb23fee5b4e21e7503e41b4cf8f5b63e7355dcea",
+      "size": 11100
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_merge_stream.h",
+      "role": "firmware",
+      "sha256": "4d5dfda8cee2a6085519515d27c3d6f9c809048523f5791f85f723ca854d55b5",
+      "size": 11891
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_mult.h",
+      "role": "firmware",
+      "sha256": "28bc325053f8458fc65e12c54a6b98aa4d9bfe8f8984836a6ddbb149bdd9a269",
+      "size": 3306
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_padding.h",
+      "role": "firmware",
+      "sha256": "dcf886fb846c6a93cb5537c21f723fecea4170cb792361f5c95529cb5c0a8289",
+      "size": 4327
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_padding_stream.h",
+      "role": "firmware",
+      "sha256": "881dd9fd4017abdcf7ee2e503e688ea8b7bcc7de67344b084cf0a38da2c7edd9",
+      "size": 2191
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_pooling.h",
+      "role": "firmware",
+      "sha256": "53bc840be504ac7b863d73a64edaf63eac6c4e05caaba56722221332f01eebbe",
+      "size": 14814
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_pooling_stream.h",
+      "role": "firmware",
+      "sha256": "3052c16c8e9f58af2c9d44350e19d4be2224decb9cceab4b9fe9b2a97ec6395d",
+      "size": 12369
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_recr_activations.h",
+      "role": "firmware",
+      "sha256": "91a6c8d6bcd026ea5153d71f8621da8d9ce172c4b9f0be6276ab2732c90ef42f",
+      "size": 1889
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_recurrent.h",
+      "role": "firmware",
+      "sha256": "a776387c17848500a884d3da56885d9dac680132862d08535304ffc5ed8fb0c3",
+      "size": 40588
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d.h",
+      "role": "firmware",
+      "sha256": "851f8cf9068e08160eaa3b07378d916efa10f7db5b8c2706a59f210838f68a97",
+      "size": 2502
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d_latency.h",
+      "role": "firmware",
+      "sha256": "365edd0cdbf3c3f0537a7130d84e76245253838850f5346068729de194291b42",
+      "size": 3216
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d_stream.h",
+      "role": "firmware",
+      "sha256": "22b2f187bf02f765c41320e5ab2be7fea8520816bfaea4759cf721959941c004",
+      "size": 4981
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d.h",
+      "role": "firmware",
+      "sha256": "4a21453b6d223cd8a326cb25b05dcd376e0c633b06070795f28ba6d356bc16f6",
+      "size": 2823
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d_latency.h",
+      "role": "firmware",
+      "sha256": "3e3ab3b3797fd42e9827a0d7411ce43d9fa2d9c4f944fbdbd76f420076018650",
+      "size": 3248
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d_stream.h",
+      "role": "firmware",
+      "sha256": "6b88e512b99df79ea16ec8c1f58c27be7e6c73304c10d0f0da75926297752fc6",
+      "size": 6908
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv_stream.h",
+      "role": "firmware",
+      "sha256": "dd351d9b275011c4f9df05221b85cb8abf5ebf7060347fb5baea2c6cc852ef99",
+      "size": 8899
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_stream.h",
+      "role": "firmware",
+      "sha256": "9b49c36ab28cd1f23d5462bc8a27e1d35ef31048d919eef7ae2e2210da66ac60",
+      "size": 10823
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_time_distributed.h",
+      "role": "firmware",
+      "sha256": "bcdc66cc9c10bee19995692287c7567f994962da50d7ff0629dc33759a2c417a",
+      "size": 3910
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_transpose.h",
+      "role": "firmware",
+      "sha256": "5d182f26e0f0d95bb3e2cbb6d0ce308a8f29ae2db05625bcf72eacca14de0032",
+      "size": 1210
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_transpose_stream.h",
+      "role": "firmware",
+      "sha256": "6a756046342e73694b078f331d59e15b389a8ab1be7d303c87c061a5caf89dd0",
+      "size": 2424
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_types.h",
+      "role": "firmware",
+      "sha256": "559c986616e4b03ae3844070cb2325e7274479e4400e14d700dd28597117d0a4",
+      "size": 1920
+    },
+    {
+      "path": "firmware/parameters.h",
+      "role": "firmware",
+      "sha256": "51b2d425723be1d440743a736e932602a7df3d15b193f82443ca568467ac9fae",
+      "size": 5696
+    },
+    {
+      "path": "firmware/weights/b4.h",
+      "role": "parameter",
+      "sha256": "6ec130f1b25c527914973e3012fbfe6799f9754c95363b0f38ce29e43ca6ab33",
+      "size": 384
+    },
+    {
+      "path": "firmware/weights/b4.txt",
+      "role": "parameter",
+      "sha256": "0bff4a40f94393e421238f70ec627487f3805b2b54ea36145fa672a9db24d9ec",
+      "size": 169
+    },
+    {
+      "path": "firmware/weights/b9.h",
+      "role": "parameter",
+      "sha256": "006337b31791f5a716f535b6fc59135072f2d217a08c989aa35d4ee759964467",
+      "size": 218
+    },
+    {
+      "path": "firmware/weights/b9.txt",
+      "role": "parameter",
+      "sha256": "5599b7d296d8516891a7a8d381ae8c4b441b21b9186d1425763621af7e44d4be",
+      "size": 7
+    },
+    {
+      "path": "firmware/weights/w4.h",
+      "role": "parameter",
+      "sha256": "c083a1ef242c42ac245ac39261d492263d77700dd92373f14686ee86092ae1e1",
+      "size": 1553
+    },
+    {
+      "path": "firmware/weights/w4.txt",
+      "role": "parameter",
+      "sha256": "d8634babdbe1e6e6bdaa4ef8816c67ce7eec202c271f00d38cef07296bfbaa4f",
+      "size": 1322
+    },
+    {
+      "path": "firmware/weights/w9.h",
+      "role": "parameter",
+      "sha256": "e79e615452694173326d25a085820e75e000217d8730fc38a23e45ac6cfd687e",
+      "size": 46622
+    },
+    {
+      "path": "firmware/weights/w9.txt",
+      "role": "parameter",
+      "sha256": "d94a83e7374853b292e28b28e433b2c79ddaab3c5dc65235a655d8ea945d0d60",
+      "size": 46394
+    },
+    {
+      "path": "firmware/weights/w9_ravel_packed.h",
+      "role": "parameter",
+      "sha256": "318209dc86a4e1aece436b318ed5800ec8eafef8fe33169bd2d5ad76b5a2e1b4",
+      "size": 11042
+    },
+    {
+      "path": "hls4ml_config.yml",
+      "role": "configuration",
+      "sha256": "7d7bbc2a8eaa3ec28f0dd1f119fbcf88e2aea60272f8ba4bdd3ccbb1fe86c61f",
+      "size": 1692
+    },
+    {
+      "path": "keras_model.keras",
+      "role": "model",
+      "sha256": "703db89757638b4f9b99638c46e35ef707e653a04fefbecdb9da561b089a6186",
+      "size": 81333
+    },
+    {
+      "path": "legacy_p2d2_bridge.cpp",
+      "role": "simulation",
+      "sha256": "e438b60a664e25410da062573ef5e5cb2a3746b0729eb11808c508643966dec6",
+      "size": 2509
+    },
+    {
+      "path": "legacy_p2d2_test.cpp",
+      "role": "simulation",
+      "sha256": "fc15d26f5759370894b5304a24f740a98c292aabb1e96d83d32c98f0eadf68d9",
+      "size": 2880
+    },
+    {
+      "path": "project.tcl",
+      "role": "vendor_script",
+      "sha256": "d80080deef7d1f254572a67493f57107dd0bc0358931d41857beb34c1189280b",
+      "size": 311
+    },
+    {
+      "path": "ravel_config.yml",
+      "role": "configuration",
+      "sha256": "644d0e595ddf363698e9d377d51e5e3118a6eb9139ae25b67c5b25d85363ac6e",
+      "size": 1758
+    },
+    {
+      "path": "tb_data/rtl_expected_words.hex",
+      "role": "project",
+      "sha256": "aec91ed08b8a49bc51a6beaeb5ed356c5c6d071125c2807a30f817825abf2b4d",
+      "size": 666
+    },
+    {
+      "path": "tb_data/rtl_input_words.hex",
+      "role": "project",
+      "sha256": "e64b4067c418fe5bfe0995545bed7e1cc02685848f83187de197d86ef1d29855",
+      "size": 312576
+    },
+    {
+      "path": "tb_data/rtl_vectors.json",
+      "role": "configuration",
+      "sha256": "52358294384775389f55a62c0bf2ef5d2004bdc3cd0b4b4eec7eca0524c0d674",
+      "size": 424
+    },
+    {
+      "path": "tb_data/tb_input_features.dat",
+      "role": "project",
+      "sha256": "d4402b0f95254a513c2150d0ec0e64105fc39531dcb8762c121953fb365c779b",
+      "size": 399698
+    },
+    {
+      "path": "vivado_synth.tcl",
+      "role": "vendor_script",
+      "sha256": "ce4820bd66e1d7532145f060b185d3488cec83494ee8ac62acda63e55a2ee4c1",
+      "size": 295
+    }
+  ],
+  "source_closure_sha256": "1993db1c244a4d3b9386ccec7388c6d490ff5f154e7ffd919483c8c34bccbcbf",
+  "source_model": {
+    "facts": {
+      "dense": [
+        {
+          "bias": {
+            "elements": 1,
+            "shape": [
+              1
+            ]
+          },
+          "feature_ordering": {
+            "kind": "identity",
+            "order": "C"
+          },
+          "graph": {
+            "predecessors": [
+              "Reshape"
+            ],
+            "successors": []
+          },
+          "input_group_size": 20,
+          "kernel": {
+            "elements": 4960,
+            "shape": [
+              4960,
+              1
+            ],
+            "statistics": {
+              "nonzero": 4235,
+              "power_of_two": 2962,
+              "unique": 11,
+              "zero": 725
+            }
+          },
+          "n_in": 4960,
+          "n_out": 1,
+          "numeric": {
+            "accumulator": {
+              "fractional": 10,
+              "integer": 14,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 24
+            },
+            "bias": {
+              "fractional": 4,
+              "integer": -1,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 3
+            },
+            "input": {
+              "fractional": 5,
+              "integer": 5,
+              "kind": "fixed",
+              "overflow": "SAT_SYM",
+              "rounding": "RND",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 10
+            },
+            "output": {
+              "fractional": 10,
+              "integer": 14,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 24
+            },
+            "weight": {
+              "fractional": 5,
+              "integer": 1,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 6
+            }
+          },
+          "parameter_representation": "dense",
+          "role": "output"
+        }
+      ],
+      "inputs": [
+        "input_0:out0"
+      ],
+      "operations": [
+        {
+          "attributes": {
+            "input_shape": [
+              256,
+              4
+            ]
+          },
+          "id": "input_0",
+          "inputs": [],
+          "kind": "input",
+          "outputs": [
+            {
+              "id": "input_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 10
+              },
+              "shape": [
+                256,
+                4
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "target_shape": [
+              256,
+              4,
+              1
+            ]
+          },
+          "id": "repack_0",
+          "inputs": [
+            "input_0:out0"
+          ],
+          "kind": "repack",
+          "outputs": [
+            {
+              "id": "repack_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 10
+              },
+              "shape": [
+                256,
+                4,
+                1
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "filt_height": 7,
+            "filt_width": 1,
+            "in_height": 256,
+            "in_width": 4,
+            "n_chan": 1,
+            "n_filt": 20,
+            "out_height": 125,
+            "out_width": 4,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "conv2d_0",
+          "inputs": [
+            "repack_0:out0"
+          ],
+          "kind": "conv2d",
+          "outputs": [
+            {
+              "id": "conv2d_0:out0",
+              "numeric_type": {
+                "integer": 6,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 16
+              },
+              "shape": [
+                125,
+                4,
+                20
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "81ed5794ab5caafb9c8085bb1d45865263a7168e0dc66a4db78a475486665978",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 6
+              },
+              "role": "weight",
+              "shape": [
+                7,
+                1,
+                1,
+                20
+              ]
+            },
+            {
+              "content_sha256": "8bf342f033fc15369d5ff71bc5d82d82ce507f154754778f82316b7f7e6383b9",
+              "numeric_type": {
+                "integer": 0,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 4
+              },
+              "role": "bias",
+              "shape": [
+                20
+              ]
+            }
+          ]
+        },
+        {
+          "attributes": {
+            "activation": "relu",
+            "n_in": 10000
+          },
+          "id": "relu_0",
+          "inputs": [
+            "conv2d_0:out0"
+          ],
+          "kind": "relu",
+          "outputs": [
+            {
+              "id": "relu_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 15
+              },
+              "shape": [
+                125,
+                4,
+                20
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "in_height": 125,
+            "in_width": 4,
+            "n_filt": 20,
+            "out_height": 62,
+            "out_width": 4,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "pool_height": 2,
+            "pool_op": "Max",
+            "pool_width": 1,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "max_pool2d_0",
+          "inputs": [
+            "relu_0:out0"
+          ],
+          "kind": "max_pool2d",
+          "outputs": [
+            {
+              "id": "max_pool2d_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 10
+              },
+              "shape": [
+                62,
+                4,
+                20
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "target_shape": [
+              4960
+            ]
+          },
+          "id": "reshape_0",
+          "inputs": [
+            "max_pool2d_0:out0"
+          ],
+          "kind": "reshape",
+          "outputs": [
+            {
+              "id": "reshape_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 10
+              },
+              "shape": [
+                4960
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "n_in": 4960,
+            "n_out": 1
+          },
+          "id": "dense_0",
+          "inputs": [
+            "reshape_0:out0"
+          ],
+          "kind": "dense",
+          "outputs": [
+            {
+              "id": "dense_0:out0",
+              "numeric_type": {
+                "integer": 14,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 24
+              },
+              "shape": [
+                1
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "9a3a2fe53e6fe6ee5168c4385167a7eada23f14d291d0c02612e888115dddf6b",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 6
+              },
+              "role": "weight",
+              "shape": [
+                4960,
+                1
+              ]
+            },
+            {
+              "content_sha256": "74d323611439a39d8fba5a7516ade43cbe914ef3631c9450bc59ff1bae6341a0",
+              "numeric_type": {
+                "integer": -1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 3
+              },
+              "role": "bias",
+              "shape": [
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        "dense_0:out0"
+      ],
+      "schema_version": 1
+    },
+    "fingerprints": {
+      "frontend_provenance_sha256": "37acf2566611cb35165bd951146b8d72875523fb5b8d2a249095253314350b6f",
+      "model_structure_sha256": "6c8d9d282085ddce0f59480cf92a195b27da1f0aca11e957c4c1b61880aa597e",
+      "parameter_state_sha256": "9d3d909f4fdb8c0209050c985b62c12ef8a34a4569423d71e1173b89d1c8412a"
+    },
+    "frontend_provenance": {
+      "adapter": {
+        "id": "keras-hgq2",
+        "version": 1
+      },
+      "quantizer_contracts": [
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "input",
+          "rounding": "RND",
+          "source_ordinal": 2
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 2
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 2
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "input",
+          "rounding": "RND",
+          "source_ordinal": 5
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 5
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 5
+        }
+      ],
+      "source_layers": [
+        {
+          "class_name": "InputLayer",
+          "module": "keras.src.layers.core.input_layer",
+          "ordinal": 0
+        },
+        {
+          "class_name": "Reshape",
+          "module": "keras.src.layers.reshaping.reshape",
+          "ordinal": 1
+        },
+        {
+          "class_name": "QConv2D",
+          "module": "hgq.layers.conv",
+          "ordinal": 2
+        },
+        {
+          "class_name": "MaxPooling2D",
+          "module": "keras.src.layers.pooling.max_pooling2d",
+          "ordinal": 3
+        },
+        {
+          "class_name": "Flatten",
+          "module": "keras.src.layers.reshaping.flatten",
+          "ordinal": 4
+        },
+        {
+          "class_name": "QDense",
+          "module": "hgq.layers.core.dense",
+          "ordinal": 5
+        }
+      ]
+    },
+    "model_family": {
+      "id": "hgq-conv-pool-dense",
+      "version": 1
+    },
+    "semantic_model_sha256": "cf77c321167450e6e3e4d8c7ce91e301661956f31e57b6af43240f4ada7f6477",
+    "source_artifact_sha256": "703db89757638b4f9b99638c46e35ef707e653a04fefbecdb9da561b089a6186"
+  },
+  "source_ownership": [
+    {
+      "after_sha256": "0aa3c68cfb525eed45f4e09dd4b6dd69aa5706553d7f2ef49773a5bdab1a8241",
+      "before_sha256": "116350cd6d0b741deb74012f45f1a12341297944467e774245466f98e88e7b8a",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/defines.h"
+    },
+    {
+      "after_sha256": "74cc95a764630cbb6ac8c77e338332f6696a70879f3c454a0234738bb6e1dc67",
+      "before_sha256": "e4107fab9ad29d891fd1570992d2481495487507e61f0631081dab88d44433a4",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/legacy_p2d2.cpp"
+    },
+    {
+      "after_sha256": "ea90f2fd42fcaebf389f52c91a2c5150dc10fff74aca56641f6573ef083bb873",
+      "before_sha256": "37a8c2e4ecf262a36b1159fa0df54bf5b4224ea43ff3789479833a08f1af48d2",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/legacy_p2d2.h"
+    },
+    {
+      "after_sha256": "bcacedf1f1209bbb40608a8f952e5cc44fda5670ab303f8bfba6e80b8202648f",
+      "before_sha256": null,
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/nnet_utils/nnet_aria.h"
+    },
+    {
+      "after_sha256": "318209dc86a4e1aece436b318ed5800ec8eafef8fe33169bd2d5ad76b5a2e1b4",
+      "before_sha256": null,
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/weights/w9_ravel_packed.h"
+    },
+    {
+      "after_sha256": "e438b60a664e25410da062573ef5e5cb2a3746b0729eb11808c508643966dec6",
+      "before_sha256": "6f567c027adfb206c84bdb8d0787725aa393bc14f7e79349cc5fec3070f6fe19",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "legacy_p2d2_bridge.cpp"
+    },
+    {
+      "after_sha256": "fc15d26f5759370894b5304a24f740a98c292aabb1e96d83d32c98f0eadf68d9",
+      "before_sha256": "629a4ebb8c5eb4d89c4b5b18e29f318890a5aed85481609433968de630030ff9",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "legacy_p2d2_test.cpp"
+    },
+    {
+      "after_sha256": "d4402b0f95254a513c2150d0ec0e64105fc39531dcb8762c121953fb365c779b",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-verification-corpus",
+        "version": 2
+      },
+      "path": "tb_data/tb_input_features.dat"
+    },
+    {
+      "after_sha256": "477e7e138e57d1d2447fee5ed8ffe51601f16319a38d8f9b1ea2ded521a260d6",
+      "before_sha256": "fe24ec65d03dcd50cffe5a2d8f7f72b0ea91adc6dbcebf494d648064c92b5b0b",
+      "owner": {
+        "id": "configure-vendor-build",
+        "version": 1
+      },
+      "path": "build_opt.tcl"
+    },
+    {
+      "after_sha256": "00ca8797acd0c5e49951aaa86576a0780fbc743a99c8c2c1fc8fe6916935262c",
+      "before_sha256": "38b2e84e1ff22ad950e14c806d23e7e95b845cd672b8d1861d063649dde11783",
+      "owner": {
+        "id": "configure-vendor-build",
+        "version": 1
+      },
+      "path": "build_prj.tcl"
+    },
+    {
+      "after_sha256": "aec91ed08b8a49bc51a6beaeb5ed356c5c6d071125c2807a30f817825abf2b4d",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-rtl-reference",
+        "version": 1
+      },
+      "path": "tb_data/rtl_expected_words.hex"
+    },
+    {
+      "after_sha256": "e64b4067c418fe5bfe0995545bed7e1cc02685848f83187de197d86ef1d29855",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-rtl-reference",
+        "version": 1
+      },
+      "path": "tb_data/rtl_input_words.hex"
+    },
+    {
+      "after_sha256": "52358294384775389f55a62c0bf2ef5d2004bdc3cd0b4b4eec7eca0524c0d674",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-rtl-reference",
+        "version": 1
+      },
+      "path": "tb_data/rtl_vectors.json"
+    },
+    {
+      "after_sha256": "6bdb40fa587f06751177e2ec1b59d35acbd24ceb2a40c57bc3088be836070626",
+      "before_sha256": "a66422c4499bf87af795d01638fd6188e204aa01d03e2c8f3096d1289c5ed7c0",
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "build_lib.sh"
+    },
+    {
+      "after_sha256": "7d7bbc2a8eaa3ec28f0dd1f119fbcf88e2aea60272f8ba4bdd3ccbb1fe86c61f",
+      "before_sha256": "0122ad28c7a0a635ed5ba5ee8134d5dd63a8afb9040cf6465c5bf6787749f8d0",
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "hls4ml_config.yml"
+    },
+    {
+      "after_sha256": "703db89757638b4f9b99638c46e35ef707e653a04fefbecdb9da561b089a6186",
+      "before_sha256": "8876debacd8bbaff9fb1b56ad9540d72cd6d4932b257b9d83ca3ec918f740409",
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "keras_model.keras"
+    },
+    {
+      "after_sha256": "644d0e595ddf363698e9d377d51e5e3118a6eb9139ae25b67c5b25d85363ac6e",
+      "before_sha256": null,
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "ravel_config.yml"
+    }
+  ],
+  "status": {
+    "correctness_verification": "passed",
+    "dependency_qualification": "qualified",
+    "generation": "complete",
+    "model_fidelity": "reported",
+    "performance_qualification": "not_run",
+    "source_integrity": "clean"
+  },
+  "verification": {
+    "corpora": {
+      "built_in": {
+        "content_sha256": "da4b22a50e9dbd07bf021b4d01b990cbed3edd8ad02e9cf6a89bbb4b78702397",
+        "dtype": "float64",
+        "input_numeric_type": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "integer_code_sha256": "0e49092534e0aa4be47c834c979e6b7658e81f9605ec55f8dba685bb652f9924",
+        "kind": "numeric_contract",
+        "output_integer_code_sha256": "e476997dd3fcebe58a2e408355101f11bcfd98fe898b3d92aedbc2dc4f539407",
+        "patterns": [
+          "zeros",
+          "minimum",
+          "maximum",
+          "alternating_extrema",
+          "positive_impulse_row_0",
+          "negative_impulse_row_1",
+          "positive_impulse_row_2",
+          "negative_impulse_row_253",
+          "positive_impulse_row_254",
+          "negative_impulse_row_255",
+          "positive_impulse_row_3",
+          "negative_impulse_row_4",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "receptive_boundary_row_0_lane_0",
+          "receptive_boundary_row_0_lane_3",
+          "receptive_boundary_row_1_lane_0",
+          "receptive_boundary_row_1_lane_3",
+          "receptive_boundary_row_2_lane_0",
+          "receptive_boundary_row_2_lane_3",
+          "receptive_boundary_row_3_lane_0",
+          "receptive_boundary_row_3_lane_3",
+          "receptive_boundary_row_4_lane_0",
+          "receptive_boundary_row_4_lane_3",
+          "receptive_boundary_row_6_lane_0",
+          "receptive_boundary_row_6_lane_3",
+          "receptive_boundary_row_7_lane_0",
+          "receptive_boundary_row_7_lane_3",
+          "receptive_boundary_row_8_lane_0",
+          "receptive_boundary_row_8_lane_3",
+          "receptive_boundary_row_9_lane_0",
+          "receptive_boundary_row_9_lane_3",
+          "receptive_boundary_row_252_lane_0",
+          "receptive_boundary_row_252_lane_3",
+          "receptive_boundary_row_254_lane_0",
+          "receptive_boundary_row_254_lane_3",
+          "receptive_boundary_row_255_lane_0",
+          "receptive_boundary_row_255_lane_3",
+          "positive_lsb",
+          "negative_lsb",
+          "quantization_neighbor_code_-511",
+          "quantization_neighbor_code_-510",
+          "quantization_neighbor_code_-17",
+          "quantization_neighbor_code_-16",
+          "quantization_neighbor_code_-15",
+          "quantization_neighbor_code_-2",
+          "quantization_neighbor_code_-1",
+          "quantization_neighbor_code_0",
+          "quantization_neighbor_code_1",
+          "quantization_neighbor_code_2",
+          "quantization_neighbor_code_15",
+          "quantization_neighbor_code_16",
+          "quantization_neighbor_code_17",
+          "quantization_neighbor_code_510",
+          "quantization_neighbor_code_511",
+          "feature_channel_order"
+        ],
+        "recipe": {
+          "id": "numeric-contract",
+          "version": 2
+        },
+        "sample_count": 74,
+        "seed": 0,
+        "shape": [
+          74,
+          256,
+          4
+        ],
+        "source_conversion_consistency": "passed",
+        "transformation_equivalence": "passed"
+      }
+    },
+    "mode": "required",
+    "model_fidelity": "reported",
+    "model_fidelity_report": {
+      "max_abs_score_diff": 0.0,
+      "shape_match": true,
+      "status": "reported"
+    },
+    "rtl_reference": {
+      "corpus": "built_in",
+      "files": {
+        "rtl_expected_words.hex": "aec91ed08b8a49bc51a6beaeb5ed356c5c6d071125c2807a30f817825abf2b4d",
+        "rtl_input_words.hex": "e64b4067c418fe5bfe0995545bed7e1cc02685848f83187de197d86ef1d29855"
+      },
+      "input_tdata_bits": 128,
+      "input_words_per_inference": 128,
+      "output_tdata_bits": 32,
+      "padding": "zero",
+      "reference": "clean-hls4ml",
+      "sample_count": 74,
+      "schema_version": 1
+    },
+    "source_conversion_consistency": "passed",
+    "source_conversion_report": {
+      "comparison": "canonical_fixed_point_integer_codes",
+      "max_abs_float_difference": 0.0,
+      "status": "passed"
+    },
+    "stimuli": {
+      "content_sha256": "da4b22a50e9dbd07bf021b4d01b990cbed3edd8ad02e9cf6a89bbb4b78702397",
+      "dtype": "float64",
+      "input_numeric_type": {
+        "integer": 5,
+        "kind": "fixed",
+        "rounding": "RND",
+        "saturation": "SAT_SYM",
+        "saturation_bits": 0,
+        "signed": true,
+        "width": 10
+      },
+      "integer_code_sha256": "0e49092534e0aa4be47c834c979e6b7658e81f9605ec55f8dba685bb652f9924",
+      "kind": "numeric_contract",
+      "patterns": [
+        "zeros",
+        "minimum",
+        "maximum",
+        "alternating_extrema",
+        "positive_impulse_row_0",
+        "negative_impulse_row_1",
+        "positive_impulse_row_2",
+        "negative_impulse_row_253",
+        "positive_impulse_row_254",
+        "negative_impulse_row_255",
+        "positive_impulse_row_3",
+        "negative_impulse_row_4",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "receptive_boundary_row_0_lane_0",
+        "receptive_boundary_row_0_lane_3",
+        "receptive_boundary_row_1_lane_0",
+        "receptive_boundary_row_1_lane_3",
+        "receptive_boundary_row_2_lane_0",
+        "receptive_boundary_row_2_lane_3",
+        "receptive_boundary_row_3_lane_0",
+        "receptive_boundary_row_3_lane_3",
+        "receptive_boundary_row_4_lane_0",
+        "receptive_boundary_row_4_lane_3",
+        "receptive_boundary_row_6_lane_0",
+        "receptive_boundary_row_6_lane_3",
+        "receptive_boundary_row_7_lane_0",
+        "receptive_boundary_row_7_lane_3",
+        "receptive_boundary_row_8_lane_0",
+        "receptive_boundary_row_8_lane_3",
+        "receptive_boundary_row_9_lane_0",
+        "receptive_boundary_row_9_lane_3",
+        "receptive_boundary_row_252_lane_0",
+        "receptive_boundary_row_252_lane_3",
+        "receptive_boundary_row_254_lane_0",
+        "receptive_boundary_row_254_lane_3",
+        "receptive_boundary_row_255_lane_0",
+        "receptive_boundary_row_255_lane_3",
+        "positive_lsb",
+        "negative_lsb",
+        "quantization_neighbor_code_-511",
+        "quantization_neighbor_code_-510",
+        "quantization_neighbor_code_-17",
+        "quantization_neighbor_code_-16",
+        "quantization_neighbor_code_-15",
+        "quantization_neighbor_code_-2",
+        "quantization_neighbor_code_-1",
+        "quantization_neighbor_code_0",
+        "quantization_neighbor_code_1",
+        "quantization_neighbor_code_2",
+        "quantization_neighbor_code_15",
+        "quantization_neighbor_code_16",
+        "quantization_neighbor_code_17",
+        "quantization_neighbor_code_510",
+        "quantization_neighbor_code_511",
+        "feature_channel_order"
+      ],
+      "recipe": {
+        "id": "numeric-contract",
+        "version": 2
+      },
+      "sample_count": 74,
+      "seed": 0,
+      "shape": [
+        74,
+        256,
+        4
+      ]
+    },
+    "transformation_equivalence": "passed"
+  }
+}

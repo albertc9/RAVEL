@@ -1,0 +1,8 @@
+{
+  "manifest_sha256": "283bef56aed4f58826e2f9d95dd8c0fe9d6ce582908d9a9f4e1a7194b6ebdf31",
+  "source_closure_sha256": "80d6039436125d7335d809ea1101f18f17f02d826ab994593d9fe984ab64aa00",
+  "top": "composed_target",
+  "part": "xcku5p-ffvb676-2-e",
+  "clock_period_ns": 5.0,
+  "tool_version": "2023.2"
+}
