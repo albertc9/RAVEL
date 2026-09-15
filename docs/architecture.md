@@ -117,7 +117,11 @@ clock, tool version, and expected RTL port widths.
 - Structural validation checks the profile, configuration, templates, and
   generated-source contracts.
 - Transformation equivalence checks bit-exact baseline and optimized C++ output
-  for identical inputs.
+  for identical inputs. The optimized project is compiled and predicted in a
+  fresh process so a baseline shared-library handle cannot mask rendered-source
+  changes at the same output path. The default numeric-contract corpus includes
+  extrema, alternating values, position-sensitive impulses at leading and
+  trailing input rows, and seeded random samples.
 - Source-conversion consistency compares Keras/HGQ and clean hls4ml in canonical
   fixed-point integer codes; it is not a model-accuracy or convergence test.
 - Performance qualification records top-level and PHARA stage measurements
@@ -125,5 +129,5 @@ clock, tool version, and expected RTL port widths.
   CoSim report.
 
 RTL simulation, IP export, implementation timing, and board validation remain
-separate activities. Aria 1.6.0 does not promote HLS synthesis into proof of any
-of those layers.
+separate activities. The Aria 1.6 series does not promote HLS synthesis into
+proof of any of those layers.

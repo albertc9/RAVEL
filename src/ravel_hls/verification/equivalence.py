@@ -32,7 +32,7 @@ def prepare_stimuli(
     if verification_inputs is None and input_numeric_type is not None:
         sample_count = verification.get("Samples", 32)
         seed = verification.get("Seed", 0)
-        codes = _numeric_contract_codes(
+        codes, patterns = _numeric_contract_codes(
             sample_count, input_shape, input_numeric_type, seed
         )
         fractional = input_numeric_type["width"] - input_numeric_type["integer"]
@@ -79,6 +79,7 @@ def prepare_stimuli(
         record["integer_code_sha256"] = hashlib.sha256(
             codes.astype("<i8", copy=False).tobytes(order="C")
         ).hexdigest()
+        record["patterns"] = patterns
     return inputs, record
 
 
@@ -87,7 +88,7 @@ def _numeric_contract_codes(
     shape: tuple[int, ...],
     numeric_type: dict[str, Any],
     seed: int,
-) -> np.ndarray:
+) -> tuple[np.ndarray, list[str]]:
     width = numeric_type["width"]
     signed = numeric_type["signed"]
     if signed:
@@ -103,20 +104,37 @@ def _numeric_contract_codes(
     codes = np.random.default_rng(seed).integers(
         minimum, maximum + 1, size=(sample_count, *shape), dtype=np.int64
     )
-    patterns = [0, minimum, maximum]
-    for index, value in enumerate(patterns[:sample_count]):
+    pattern_names = ["seeded_random"] * sample_count
+    fixed_patterns = [0, minimum, maximum]
+    fixed_pattern_names = ["zeros", "minimum", "maximum"]
+    for index, value in enumerate(fixed_patterns[:sample_count]):
         codes[index].fill(value)
+        pattern_names[index] = fixed_pattern_names[index]
     if sample_count > 3:
         flat = codes[3].reshape(-1)
         flat[0::2] = minimum
         flat[1::2] = maximum
-    if sample_count > 4:
-        codes[4].fill(0)
-        codes[4].reshape(-1)[0] = 1
-    if sample_count > 5 and signed:
-        codes[5].fill(0)
-        codes[5].reshape(-1)[0] = -1
-    return codes
+        pattern_names[3] = "alternating_extrema"
+    probe_rows = _spatial_probe_rows(shape[0])
+    row_size = int(np.prod(shape[1:], dtype=np.int64))
+    probe_stop = min(sample_count, 12)
+    for sample_index in range(4, probe_stop):
+        probe_index = sample_index - 4
+        row = probe_rows[probe_index % len(probe_rows)]
+        within_row = (probe_index // len(probe_rows)) % row_size
+        value = -1 if signed and probe_index % 2 else 1
+        codes[sample_index].fill(0)
+        codes[sample_index].reshape(-1)[row * row_size + within_row] = value
+        polarity = "negative" if value < 0 else "positive"
+        suffix = f"_offset_{within_row}" if within_row else ""
+        pattern_names[sample_index] = f"{polarity}_impulse_row_{row}{suffix}"
+    return codes, pattern_names
+
+
+def _spatial_probe_rows(input_rows: int) -> tuple[int, ...]:
+    anchors = (0, 1, 2, input_rows - 3, input_rows - 2, input_rows - 1)
+    ordered = (*anchors, *range(3, max(3, input_rows - 3)))
+    return tuple(dict.fromkeys(row for row in ordered if 0 <= row < input_rows))
 
 
 def predict_baseline(
