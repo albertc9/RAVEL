@@ -94,6 +94,8 @@ def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_
     assert corpora["built_in"]["sample_count"] >= 8
     assert corpora["supplied"]["sample_count"] == 2
     assert all(record["transformation_equivalence"] == "passed" for record in corpora.values())
+    assert project.manifest["verification"]["rtl_reference"]["sample_count"] == corpora["built_in"]["sample_count"]
+    assert (project.path / "tb_data/rtl_expected_words.hex").is_file()
     rtl_inputs = np.loadtxt(project.path / "tb_data/tb_input_features.dat")
     assert rtl_inputs.shape[0] == corpora["built_in"]["sample_count"]
 

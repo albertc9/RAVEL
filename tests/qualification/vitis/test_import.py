@@ -576,3 +576,27 @@ def test_ooc_measurements_are_bound_and_a_timing_miss_is_recorded_as_warning(tmp
     (ooc / "binding.json").write_text(json.dumps(binding))
     with pytest.raises(ProjectGenerationError, match="source_closure_sha256"):
         Project.open(project_path).record(report_dir, ooc_dir=ooc)
+
+
+def test_protocol_evidence_requires_the_current_manifest_and_baseline_vectors(tmp_path):
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    manifest_path = project_path / "ravel_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["verification"] = {"rtl_reference": {"files": {"rtl_expected_words.hex": "a" * 64}}}
+    manifest_path.write_text(json.dumps(manifest))
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    protocol = tmp_path / "rtl_protocol.json"
+    evidence = {"status": "passed", "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                "source_closure_sha256": manifest["source_closure_sha256"], "top": "aria_top",
+                "vector_files": manifest["verification"]["rtl_reference"]["files"],
+                "completed_samples": 7, "reset_aborts": 1, "output_stall_cycles": 12}
+    protocol.write_text(json.dumps(evidence))
+    record = Project.open(project_path).record(reports, protocol_report=protocol).to_dict()
+    assert record["rtl_protocol"]["completed_samples"] == 7
+    evidence["manifest_sha256"] = "f" * 64
+    protocol.write_text(json.dumps(evidence))
+    with pytest.raises(ProjectGenerationError, match="manifest_sha256"):
+        Project.open(project_path).record(reports, protocol_report=protocol)

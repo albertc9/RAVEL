@@ -14,6 +14,8 @@ import uuid
 import numpy as np
 
 from .identity import ARIA_VERSION
+from .domain.graph import NumericType
+from .verification.rtl_vectors import write_rtl_vectors
 
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
@@ -460,6 +462,11 @@ def _generate_project(
                 if fidelity is not None:
                     verification_report["model_fidelity"] = "reported"
                     verification_report["model_fidelity_report"] = fidelity
+            input_numeric = model_analysis["model_facts"]["operations"][0]["outputs"][0]["numeric_type"]
+            verification_report["rtl_reference"] = write_rtl_vectors(
+                staging_path / "tb_data", corpora[0].inputs, baseline_predictions[:len(corpora[0].inputs)],
+                NumericType(**input_numeric), NumericType(**output_numeric), implementation_plan["values_per_input_word"])
+            ownership.record("write-rtl-reference", 1, ["tb_data/rtl_input_words.hex", "tb_data/rtl_expected_words.hex", "tb_data/rtl_vectors.json"])
             offset = 0
             for corpus in corpora:
                 record = verification_report["corpora"][corpus.name]

@@ -37,6 +37,7 @@ class QualificationRecord:
     interfaces: dict[str, Any] = field(default_factory=dict)
     warnings: tuple[dict[str, Any], ...] = ()
     ooc: dict[str, Any] | None = None
+    rtl_protocol: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -65,6 +66,7 @@ class QualificationRecord:
             "warnings": list(self.warnings),
             "status": "recorded",
             "ooc": self.ooc,
+            "rtl_protocol": self.rtl_protocol,
         }
 
 
@@ -73,6 +75,7 @@ def import_vitis_reports(
     *,
     report_dir: str | os.PathLike[str],
     ooc_dir: str | os.PathLike[str] | None = None,
+    protocol_report: str | os.PathLike[str] | None = None,
 ) -> QualificationRecord:
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
@@ -209,6 +212,17 @@ def import_vitis_reports(
             "top": reported_top, "part": reported_part, "clock_period_ns": reported_clock, "tool_version": "2023.2"})
         if ooc["timing"]["wns_ns"] < 0:
             warnings.append({"code": "ooc.timing_miss", "message": "Routed design misses the requested clock period"})
+    protocol = None
+    if protocol_report is not None:
+        protocol = json.loads(Path(protocol_report).read_text())
+        for key, expected in {"manifest_sha256": manifest_sha256, "top": reported_top,
+                              "source_closure_sha256": project_view.manifest["source_closure_sha256"],
+                              "vector_files": project_view.manifest.get("verification", {}).get("rtl_reference", {}).get("files")}.items():
+            if protocol.get(key) != expected or expected is None:
+                raise ProjectGenerationError(f"RTL protocol {key} disagrees with the bound project")
+        if protocol.get("status") != "passed" or any(protocol.get(key, 0) < 1 for key in ("completed_samples", "reset_aborts", "output_stall_cycles")):
+            raise ProjectGenerationError("RTL protocol evidence is incomplete")
+        protocol["report_sha256"] = _file_sha256(Path(protocol_report))
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         generation_fingerprint=_required_manifest_sha256(
@@ -248,6 +262,7 @@ def import_vitis_reports(
         interfaces=project_view.manifest.get("interfaces", {}),
         warnings=tuple(warnings),
         ooc=ooc,
+        rtl_protocol=protocol,
     )
     qualification_path = project_view.path / "ravel_qualification.json"
     temporary_path = qualification_path.with_name(".ravel_qualification.json.tmp")

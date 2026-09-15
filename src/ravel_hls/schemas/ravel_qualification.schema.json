@@ -23,7 +23,8 @@
     "stage_plan",
     "interfaces",
     "warnings",
-    "ooc"
+    "ooc",
+    "rtl_protocol"
   ],
   "properties": {
     "schema_version": {
@@ -177,6 +178,12 @@
       }
     },
     "ooc": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "rtl_protocol": {
       "type": [
         "object",
         "null"

@@ -104,12 +104,12 @@ class Project:
 
         return refresh(self, model, verification_inputs=verification_inputs)
 
-    def record(self, report_dir: str | Path, *, ooc_dir: str | Path | None = None) -> Any:
+    def record(self, report_dir: str | Path, *, ooc_dir: str | Path | None = None, protocol_report: str | Path | None = None) -> Any:
         """Attach measured Vitis HLS evidence without launching the tool."""
 
         from .qualification.vitis import import_vitis_reports
 
-        return import_vitis_reports(self, report_dir=report_dir, ooc_dir=ooc_dir)
+        return import_vitis_reports(self, report_dir=report_dir, ooc_dir=ooc_dir, protocol_report=protocol_report)
 
     def build(self) -> Any:
         """Run Vitis HLS for this project and attach its synthesis measurements."""
