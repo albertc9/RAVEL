@@ -76,3 +76,11 @@ def test_chain_uses_only_the_registered_bridge_capabilities():
     disabled = resolve_chain(((producer,), (consumer,)), bridge_strategies=())
     assert disabled.stages == ()
     assert disabled.findings[0].code == "planner.no_qualified_plan"
+
+
+def test_stream_contract_rejects_nonphysical_lane_and_shape_extents():
+    import pytest
+    numeric = NumericType("fixed", 8, 4, True, "RND", "SAT_SYM")
+    for shape, lanes in (((6,), 0), ((6,), -2), ((0, 6), 2), ((-1, 6), 2)):
+        with pytest.raises(ValueError, match="positive"):
+            StreamContract("features", shape, numeric, lanes)

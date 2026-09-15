@@ -7,7 +7,7 @@ from typing import Callable
 from ..domain.temporal import Finding, LayoutView, TemporalBlock
 from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
-from .schedules import temporal_schedule
+from .schedules import TokenSchedule, temporal_schedule
 
 
 @dataclass(frozen=True)
@@ -89,7 +89,8 @@ def _layout(request, strategy, version):
     if source.tensor_id != view.input.id or not view.input.numeric_type.preserves_codes_in(view.output.numeric_type):
         return Capability(findings=(Finding("strategy.layout.codes", "Layout view does not preserve the endpoint's integer codes", view.operation.id),))
     output = StreamContract(view.output.id, view.output.shape, view.output.numeric_type, source.lanes)
-    return Capability((Candidate(strategy, version, (view.operation.id,), source, output, Cost(0, 0, 0), False),))
+    return Capability((Candidate(strategy, version, (view.operation.id,), source, output, Cost(0, 0, 0), False,
+                                schedule=TokenSchedule(source.words, output.words, tuple(range(1, output.words + 1)))),))
 
 
 def _dense(request, strategy, version):
@@ -101,7 +102,8 @@ def _dense(request, strategy, version):
     output = head.outputs[0]
     target = StreamContract(output.id, output.shape, output.numeric_type, 1)
     return Capability((Candidate(strategy, version, (head.id,), source, target,
-                                Cost(context.dense_cycles, layout.input.shape[-1] * context.dense_parallelism, context.dense_cycles), True),))
+                                Cost(context.dense_cycles, layout.input.shape[-1] * context.dense_parallelism, context.dense_cycles), True,
+                                schedule=TokenSchedule(source.words, target.words, (source.words,) * target.words)),))
 
 
 TEMPORAL_STRATEGIES = (

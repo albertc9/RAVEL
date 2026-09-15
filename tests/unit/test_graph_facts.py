@@ -38,3 +38,15 @@ NUMERIC = {
     "kind": "fixed", "width": 10, "integer": 5, "signed": True,
     "rounding": "RND", "saturation": "SAT_SYM", "saturation_bits": 0,
 }
+
+
+def test_temporal_layout_view_proves_feature_major_channel_minor_flattening():
+    from ravel_hls.domain.temporal import FeatureLayout
+    layout = FeatureLayout.temporal((3, 2, 4))
+    assert layout.scalar_index((1, 1, 2)) == 14
+    assert layout.coordinates(14) == (1, 1, 2)
+    assert layout.to_dict() == {"order": "C", "axes": [
+        {"name": "temporal", "extent": 3, "stride": 8},
+        {"name": "feature", "extent": 2, "stride": 4},
+        {"name": "channel", "extent": 4, "stride": 1},
+    ], "scalar_count": 24}

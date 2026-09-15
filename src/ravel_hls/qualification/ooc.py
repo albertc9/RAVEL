@@ -21,8 +21,14 @@ def import_ooc(directory: Path, expected: dict) -> dict:
     for pattern in (r"Tool Version\s*:\s*Vivado v\.2023\.2\b",
                     r"Design\s*:\s*" + re.escape(expected["top"]) + r"\s*(?:\n|$)",
                     r"Design State\s*:\s*Routed\b"):
-        if not re.search(pattern, timing):
+        if not all(re.search(pattern, report) for report in (timing, utilization)):
             raise ProjectGenerationError("OOC timing report has an unqualified tool, top or implementation state")
+    device = re.search(r"Device\s*:\s*(\S+)", utilization)
+    if device is None or device[1].lower() != expected["part"].lower():
+        raise ProjectGenerationError("OOC report part disagrees with the bound project")
+    clocks = re.findall(r"^ap_clk\s+\{[^}]+\}\s+(\d+(?:\.\d+)?)\s+", timing, re.MULTILINE)
+    if len(clocks) != 1 or abs(float(clocks[0]) - expected["clock_period_ns"]) > 0.0005:
+        raise ProjectGenerationError("OOC report clock disagrees with the bound project")
     rows = timing.splitlines()
     try:
         index = next(i for i, row in enumerate(rows) if "WNS(ns)" in row and "TNS(ns)" in row)

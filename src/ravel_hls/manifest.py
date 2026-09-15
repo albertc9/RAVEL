@@ -72,8 +72,8 @@ def build_architecture_envelope(
     }
 
     if "stages" in design:
-        envelope.update({key: design[key] for key in ("stages", "bridges", "delegation", "control")})
-        envelope["cost_policy"] = {"id": "temporal-lexicographic", "version": 1}
+        envelope.update({key: design[key] for key in ("stages", "bridges", "delegation", "control", "components", "semantic_stages")})
+        envelope["cost_policy"] = design["components"]["cost_policy"]
     return envelope
 
 

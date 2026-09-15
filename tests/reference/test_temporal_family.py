@@ -179,3 +179,19 @@ def test_declared_schedule_bound_is_a_local_failure_without_truncating_the_chain
     assert report["resolved_design"] is None
     assert any(finding["code"] == "strategy.schedule.event_bound" and finding["operation_id"] == "conv2d_1"
                for finding in report["applicability"]["findings"])
+
+
+def test_every_selected_stage_declares_schedule_layout_control_and_source_ownership():
+    report = analyze(make_temporal_model(height=64, width=2, filters=3), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+    design = report["resolved_design"]
+    for stage in design["stages"]:
+        assert stage["schedule"]["input_words"] == stage["input"]["words"]
+        assert stage["schedule"]["output_words"] == stage["output"]["words"]
+        assert stage["execution"]["control"] == "ap_ctrl_hs-dataflow-process"
+        assert stage["execution"]["reset"] == "discard-in-flight"
+        assert stage["execution"]["source_owner"]
+    layout = next(stage for stage in design["semantic_stages"] if stage["kind"] == "layout-view")
+    assert layout["mapping"]["input"]["axes"][-1] == {"name": "channel", "extent": 3, "stride": 1}
+    assert design["semantic_stages"][-1]["kind"] == "dense-head"

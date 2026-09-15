@@ -560,8 +560,9 @@ def test_ooc_measurements_are_bound_and_a_timing_miss_is_recorded_as_warning(tmp
     ooc = tmp_path / "ooc"
     ooc.mkdir()
     timing = "| Tool Version : Vivado v.2023.2\n| Design : aria_top\n| Design State : Routed\nWNS(ns) TNS(ns) TNS Failing Endpoints\n------- ------- -------\n-0.125 -2.000 16\n"
+    timing += "Clock Waveform(ns) Period(ns) Frequency(MHz)\nap_clk {0.000 2.500} 5.000 200.000\n"
     (ooc / "timing.rpt").write_text(timing)
-    (ooc / "utilization.rpt").write_text("| CLB LUTs | 321 |\n| CLB Registers | 456 |\n| Block RAM Tile | 2.5 |\n| DSPs | 12 |\n")
+    (ooc / "utilization.rpt").write_text("| Tool Version : Vivado v.2023.2\n| Design : aria_top\n| Design State : Routed\n| Device : xcku5p-ffvb676-2-e\n| CLB LUTs | 321 |\n| CLB Registers | 456 |\n| Block RAM Tile | 2.5 |\n| DSPs | 12 |\n")
     manifest = Project.open(project_path).manifest
     binding = {"manifest_sha256": hashlib.sha256((project_path / 'ravel_manifest.json').read_bytes()).hexdigest(),
                "source_closure_sha256": manifest["source_closure_sha256"], "top": "aria_top",
@@ -572,6 +573,15 @@ def test_ooc_measurements_are_bound_and_a_timing_miss_is_recorded_as_warning(tmp
     assert record["ooc"]["resources"]["BRAM_TILES"] == 2.5
     assert record["ooc"]["manifest_sha256"] == binding["manifest_sha256"]
     assert "ooc.timing_miss" in {warning["code"] for warning in record["warnings"]}
+    (ooc / "timing.rpt").write_text(timing.replace("5.000 200.000", "6.000 166.667"))
+    with pytest.raises(ProjectGenerationError, match="clock"):
+        Project.open(project_path).record(report_dir, ooc_dir=ooc)
+    (ooc / "timing.rpt").write_text(timing)
+    utilization = (ooc / "utilization.rpt").read_text()
+    (ooc / "utilization.rpt").write_text(utilization.replace("ffvb676-2-e", "ffvb676-1-e"))
+    with pytest.raises(ProjectGenerationError, match="part"):
+        Project.open(project_path).record(report_dir, ooc_dir=ooc)
+    (ooc / "utilization.rpt").write_text(utilization)
     binding["source_closure_sha256"] = "f" * 64
     (ooc / "binding.json").write_text(json.dumps(binding))
     with pytest.raises(ProjectGenerationError, match="source_closure_sha256"):

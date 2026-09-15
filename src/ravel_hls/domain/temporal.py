@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from math import prod
 
+from .layout import FeatureLayout
 from .graph import GraphFacts, OperationFacts, TensorFacts
 
 
@@ -34,7 +35,10 @@ class LayoutView:
 
     def to_dict(self) -> dict[str, object]:
         return {"operation_id": self.operation.id, "input_shape": list(self.input.shape),
-                "output_shape": list(self.output.shape), "order": "channels_last"}
+                "output_shape": list(self.output.shape), "order": "channels_last",
+                "mapping": {"input": FeatureLayout.temporal(self.input.shape).to_dict(),
+                            "output": {"order": "C", "axes": [{"name": "flattened_feature", "extent": prod(self.output.shape), "stride": 1}]},
+                            "rule": "output_index_equals_input_scalar_index", "owns_tokens": False}}
 
 
 @dataclass(frozen=True)
