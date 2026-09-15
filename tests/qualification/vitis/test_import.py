@@ -36,7 +36,10 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 4
+    assert qualification["schema_version"] == 5
+    assert qualification["stage_plan"] == []
+    assert qualification["interfaces"] == json.loads(manifest_before)["interfaces"]
+    assert qualification["warnings"] == []
     assert qualification["stages"] == {}
     assert qualification["generation_fingerprint"] == "1" * 64
     assert qualification["source_closure_sha256"] == json.loads(
@@ -62,7 +65,7 @@ def test_import_vitis_reports_links_schema_v3_evidence_to_a_v3_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 4
+    assert qualification["schema_version"] == 5
     assert Project.open(project_path).status["performance_qualification"] == "recorded"
 
 
@@ -175,7 +178,7 @@ def test_import_records_first_convolution_pipeline_evidence(
         }
     }
     qualification = record.to_dict()
-    assert qualification["schema_version"] == 4
+    assert qualification["schema_version"] == 5
     assert qualification["stages"] == record.stages
     assert qualification["report_files"][stage_report.name] == hashlib.sha256(
         _FIRST_CONV_CSYNTH_XML.encode()
@@ -246,7 +249,7 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
 
     record = Project.open(project_path).record(report_dir)
 
-    assert record.to_dict()["schema_version"] == 4
+    assert record.to_dict()["schema_version"] == 5
     assert record.stages == {
         "phara_fused_region": {
             "top": "phara_pool_aligned_direct_p8_cl_1",

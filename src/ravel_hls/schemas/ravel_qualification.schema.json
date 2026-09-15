@@ -19,93 +19,214 @@
     "rtl_ports",
     "rtl_cosimulation",
     "report_files",
-    "status"
+    "status",
+    "stage_plan",
+    "interfaces",
+    "warnings"
   ],
   "properties": {
-    "schema_version": {"const": 4},
-    "manifest_sha256": {"$ref": "#/$defs/sha256"},
-    "generation_fingerprint": {"$ref": "#/$defs/sha256"},
-    "source_closure_sha256": {"$ref": "#/$defs/sha256"},
-    "top": {"type": "string", "minLength": 1},
+    "schema_version": {
+      "const": 5
+    },
+    "manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "generation_fingerprint": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_closure_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "top": {
+      "type": "string",
+      "minLength": 1
+    },
     "tool": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
-        "name": {"const": "Vitis HLS"},
-        "version": {"const": "2023.2"}
+        "name": {
+          "const": "Vitis HLS"
+        },
+        "version": {
+          "const": "2023.2"
+        }
       }
     },
-    "part": {"type": "string", "minLength": 1},
+    "part": {
+      "type": "string",
+      "minLength": 1
+    },
     "timing": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["target_clock_ns", "estimated_clock_ns"],
+      "required": [
+        "target_clock_ns",
+        "estimated_clock_ns"
+      ],
       "properties": {
-        "target_clock_ns": {"type": "number", "exclusiveMinimum": 0},
-        "estimated_clock_ns": {"type": "number", "exclusiveMinimum": 0}
+        "target_clock_ns": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "estimated_clock_ns": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
       }
     },
     "performance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["initiation_interval", "latency_cycles"],
+      "required": [
+        "initiation_interval",
+        "latency_cycles"
+      ],
       "properties": {
-        "initiation_interval": {"type": "integer", "minimum": 0},
-        "latency_cycles": {"type": "integer", "minimum": 0}
+        "initiation_interval": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_cycles": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "stages": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "first_convolution": {"$ref": "#/$defs/stage"},
-        "phara_fused_region": {"$ref": "#/$defs/stage"},
-        "dense": {"$ref": "#/$defs/stage"}
+        "first_convolution": {
+          "$ref": "#/$defs/stage"
+        },
+        "phara_fused_region": {
+          "$ref": "#/$defs/stage"
+        },
+        "dense": {
+          "$ref": "#/$defs/stage"
+        }
       }
     },
     "resources": {
       "type": "object",
-      "additionalProperties": {"type": "integer", "minimum": 0}
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
     },
     "rtl_ports": {
       "type": "object",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["direction", "bits"],
+        "required": [
+          "direction",
+          "bits"
+        ],
         "properties": {
-          "direction": {"enum": ["in", "out", "inout"]},
-          "bits": {"type": "integer", "minimum": 1}
+          "direction": {
+            "enum": [
+              "in",
+              "out",
+              "inout"
+            ]
+          },
+          "bits": {
+            "type": "integer",
+            "minimum": 1
+          }
         }
       }
     },
-    "rtl_cosimulation": {"enum": ["not_run", "passed"]},
+    "rtl_cosimulation": {
+      "enum": [
+        "not_run",
+        "passed"
+      ]
+    },
     "report_files": {
       "type": "object",
-      "additionalProperties": {"$ref": "#/$defs/sha256"}
+      "additionalProperties": {
+        "$ref": "#/$defs/sha256"
+      }
     },
-    "status": {"const": "recorded"}
+    "status": {
+      "const": "recorded"
+    },
+    "stage_plan": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "interfaces": {
+      "type": "object"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
   },
   "$defs": {
-    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "stage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["top", "initiation_interval", "latency_cycles", "loop"],
+      "required": [
+        "top",
+        "initiation_interval",
+        "latency_cycles",
+        "loop"
+      ],
       "properties": {
-        "top": {"type": "string", "minLength": 1},
-        "initiation_interval": {"type": "integer", "minimum": 0},
-        "latency_cycles": {"type": "integer", "minimum": 0},
+        "top": {
+          "type": "string",
+          "minLength": 1
+        },
+        "initiation_interval": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_cycles": {
+          "type": "integer",
+          "minimum": 0
+        },
         "loop": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["name", "trip_count", "pipeline_ii", "pipeline_depth"],
+          "required": [
+            "name",
+            "trip_count",
+            "pipeline_ii",
+            "pipeline_depth"
+          ],
           "properties": {
-            "name": {"type": "string", "minLength": 1},
-            "trip_count": {"type": "integer", "minimum": 1},
-            "pipeline_ii": {"type": "integer", "minimum": 1},
-            "pipeline_depth": {"type": "integer", "minimum": 1}
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "trip_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pipeline_ii": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "pipeline_depth": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         }
       }

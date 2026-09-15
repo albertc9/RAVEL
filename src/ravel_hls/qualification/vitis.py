@@ -1,6 +1,6 @@
 """Import measured Vitis HLS evidence without launching vendor tools."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 import os
@@ -9,6 +9,7 @@ from typing import Any
 import xml.etree.ElementTree as ET
 
 from ..exceptions import ProjectGenerationError, VerificationError
+from ..identity import QUALIFICATION_SCHEMA_VERSION
 from ..project import RavelProject, open_project
 
 
@@ -31,10 +32,13 @@ class QualificationRecord:
     rtl_ports: dict[str, dict[str, int | str]]
     rtl_cosimulation: str
     report_files: dict[str, str]
+    stage_plan: tuple[dict[str, Any], ...] = ()
+    interfaces: dict[str, Any] = field(default_factory=dict)
+    warnings: tuple[dict[str, Any], ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 4,
+            "schema_version": QUALIFICATION_SCHEMA_VERSION,
             "manifest_sha256": self.manifest_sha256,
             "generation_fingerprint": self.generation_fingerprint,
             "source_closure_sha256": self.source_closure_sha256,
@@ -54,6 +58,9 @@ class QualificationRecord:
             "rtl_ports": self.rtl_ports,
             "rtl_cosimulation": self.rtl_cosimulation,
             "report_files": self.report_files,
+            "stage_plan": list(self.stage_plan),
+            "interfaces": self.interfaces,
+            "warnings": list(self.warnings),
             "status": "recorded",
         }
 
@@ -66,10 +73,10 @@ def import_vitis_reports(
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5}:
+    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5, 6}:
         raise ProjectGenerationError(
             "Vitis evidence can only be recorded for a schema-v2 through "
-            "schema-v5 project"
+            "schema-v6 project"
         )
     if project_view.status.get("source_integrity") != "clean":
         raise VerificationError(
@@ -224,6 +231,9 @@ def import_vitis_reports(
         rtl_ports=rtl_ports,
         rtl_cosimulation=rtl_cosimulation,
         report_files=report_files,
+        stage_plan=tuple(project_view.manifest.get("resolved_design", {}).get("stages", ())),
+        interfaces=project_view.manifest.get("interfaces", {}),
+        warnings=tuple(project_view.manifest.get("resolved_design", {}).get("warnings", ())),
     )
     qualification_path = project_view.path / "ravel_qualification.json"
     temporary_path = qualification_path.with_name(".ravel_qualification.json.tmp")

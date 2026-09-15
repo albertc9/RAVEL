@@ -2,6 +2,8 @@
 
 ARIA_ID = "aria"
 ARIA_VERSION = "1.7.0"
+MANIFEST_SCHEMA_VERSION = 6
+QUALIFICATION_SCHEMA_VERSION = 5
 
 
 def aria_identity() -> dict[str, str]:
