@@ -104,19 +104,19 @@ class Project:
 
         return refresh(self, model, verification_inputs=verification_inputs)
 
-    def record(self, report_dir: str | Path) -> Any:
+    def record(self, report_dir: str | Path, *, ooc_dir: str | Path | None = None, protocol_report: str | Path | None = None) -> Any:
         """Attach measured Vitis HLS evidence without launching the tool."""
 
         from .qualification.vitis import import_vitis_reports
 
-        return import_vitis_reports(self, report_dir=report_dir)
+        return import_vitis_reports(self, report_dir=report_dir, ooc_dir=ooc_dir, protocol_report=protocol_report)
 
     def build(self) -> Any:
         """Run Vitis HLS for this project and attach its synthesis measurements."""
 
-        if self.manifest.get("schema_version") not in {2, 3, 4, 5}:
+        if self.manifest.get("schema_version") not in {2, 3, 4, 5, 6}:
             raise BuildError(
-                "Vitis builds require a schema-v2 through schema-v5 RAVEL project"
+                "Vitis builds require a schema-v2 through schema-v6 RAVEL project"
             )
         if self.status.get("source_integrity") != "clean":
             raise VerificationError(
@@ -174,9 +174,10 @@ def open_project(path: str | Path) -> RavelProject:
         3,
         4,
         5,
+        6,
     }:
         raise ProjectGenerationError(
-            "RAVEL project manifest schema_version must be 1, 2, 3, 4, or 5"
+            "RAVEL project manifest schema_version must be 1, 2, 3, 4, 5, or 6"
         )
     implementation_plan = manifest.get("implementation_plan")
     if (
@@ -236,7 +237,7 @@ def _qualification_matches_manifest(
         .get("ProjectName")
     )
     return (
-        qualification.get("schema_version") in {2, 3, 4}
+        qualification.get("schema_version") in {2, 3, 4, 5}
         and qualification.get("status") == "recorded"
         and qualification.get("manifest_sha256")
         == _file_sha256(project_path / "ravel_manifest.json")

@@ -1,0 +1,594 @@
+{
+  "source_revision": "afec83563145ea53f3829cdeb30d24d017d6fb2a",
+  "firmware_identical_to_frozen_baseline": true,
+  "configuration_delta": "config_rtl -reset all",
+  "top": "clean_target",
+  "part": "xcku5p-ffvb676-2-e",
+  "clock_period_ns": 5,
+  "tool_version": "2023.2",
+  "source_closure": [
+    {
+      "role": "project",
+      "path": "build_lib.sh",
+      "size": 966,
+      "sha256": "639dac5d31862d43e9e6a744754779d5feeff45144e163f56781ddc8196f962d"
+    },
+    {
+      "role": "vendor_script",
+      "path": "build_opt.tcl",
+      "size": 154,
+      "sha256": "717ff54f8e5eea81388e125cf4dfe2f4428e5a392d37e0404ac698ec5115a152"
+    },
+    {
+      "role": "vendor_script",
+      "path": "build_prj.tcl",
+      "size": 7687,
+      "sha256": "93702fcdad7c46b486e6ed5330e5cb652fa98c5321641a2641a0a3ef06a40f80"
+    },
+    {
+      "role": "simulation",
+      "path": "clean_target_bridge.cpp",
+      "size": 2200,
+      "sha256": "deb65d4274816bf35acb6fbd52eade0c402622006a9703bdce2ccf2926666ec6"
+    },
+    {
+      "role": "simulation",
+      "path": "clean_target_test.cpp",
+      "size": 3763,
+      "sha256": "cbef1004baf357dc05428d98fd75f6166b655491f15b4ee17dfd26ba61884933"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_common.h",
+      "size": 10180,
+      "sha256": "d61258f6ebca39dc11492965e6e7a1508499478b6c4ac435cf83cd454738e0a5"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_decl.h",
+      "size": 6473,
+      "sha256": "cf51ec1fed914af4a8a1f4d947b4477aa21f02711856e1dc22efeeb5ef608c48"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_fixed.h",
+      "size": 12185,
+      "sha256": "de5778ab2178ef99c3b68e7b00772c2ddf8f7e827b765a650e864f2d7228e9de"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_fixed_base.h",
+      "size": 85182,
+      "sha256": "09dd402506631f154a6efa38c3d6bdca5904c8d8dd5c747b545f625281936f4a"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_fixed_ref.h",
+      "size": 27302,
+      "sha256": "4cef7266a7567f4564b17986e1237dfe7fc20d8415594e32ba36b461f92b402c"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_fixed_special.h",
+      "size": 6985,
+      "sha256": "c977d09e301cf2f26fe53e91f5ae0bfde03453f6b4ca9ccafd14a7f32ab3b7fb"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_float.h",
+      "size": 6528,
+      "sha256": "c6c8ea808e4595ab3e1b8d5fb2da427e388104979fb31f9014d12915e47a6e1b"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_int.h",
+      "size": 10012,
+      "sha256": "9d38b2ac537c20f08646ce516290a42d3f72e08c5aaa84541ed21ba5488e2cd0"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_int_base.h",
+      "size": 71735,
+      "sha256": "2ade108df516f39afc9718d8e044aa7a547f0a7a4cd2e6dbe0ae5dd86d3718c4"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_int_ref.h",
+      "size": 55218,
+      "sha256": "e6bb0e75a6e5c1e0bd84a1ad43c2a4b6bd3beec110f75833487e46e6133b9b96"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_int_special.h",
+      "size": 6301,
+      "sha256": "1c8bd146e88a1a90270a98a05115f470e4145fcf1d6e9de51a4516a5b8253022"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/ap_shift_reg.h",
+      "size": 4894,
+      "sha256": "c2a7bc8f78a46dd6625f062c62502c15b3857902e161721b2a8442e9f2467ae7"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/etc/ap_private.h",
+      "size": 261465,
+      "sha256": "4c37711885f4af70fa425f0a797a1c79198785d970140dc092bdfebef31502d9"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/hls_math.h",
+      "size": 674,
+      "sha256": "69b141a19cd88e6fe97c2db092e725561d47baf609fd8a1b9cdfb543df464627"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/hls_stream.h",
+      "size": 7480,
+      "sha256": "3539157db138f1ce979cc21f47d5b325b0f05277deeb2d7dc495f1052dc6fbe2"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/ap_types/utils/x_hls_utils.h",
+      "size": 2227,
+      "sha256": "c76e1c7f51f264abf427c61022852f604deec3a48d2fbbd67ad446222166d89c"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/clean_target.cpp",
+      "size": 2559,
+      "sha256": "1ae6459886da985be2803e1c5ad4ee2ed232f0e2f663141274ef42f454ddef8e"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/clean_target.h",
+      "size": 353,
+      "sha256": "f8797369dd38177d8bab9ab56a19be79839d72882db3edc15e90b9a7e503ad41"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/defines.h",
+      "size": 1475,
+      "sha256": "5794ea4f6775c2eb7cfbc5edc4bff91ff9c49c63c09337b825e8c28d118b8faf"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_activation.h",
+      "size": 31520,
+      "sha256": "2581cd0352d5df49fcd11902375c00e20da9562f7dac2a2137377de19bfe9e29"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_activation_stream.h",
+      "size": 27068,
+      "sha256": "f802bfc772baa07f85e4ce83b0edcdc6a703e6ed59c8018bf21f7ed2bd862dfb"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_batchnorm.h",
+      "size": 4214,
+      "sha256": "6665f9fb59f8c5aa0dc472852f5f85443cbbbab29218639a1ba2c77e80e400e3"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_batchnorm_stream.h",
+      "size": 4182,
+      "sha256": "3a580856776ee62a341ee35e45096e98042a8df9154bc3e3c299672ff1d68c40"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_code_gen.h",
+      "size": 786,
+      "sha256": "9de4b308358b39a759ff555adb5804e73d419674f5492cf5d74320e69feaf57b"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_common.h",
+      "size": 2127,
+      "sha256": "cac405e71adaa8cd03960d6c311d5b625f0631454ec6d30f8f425c756f33a4ef"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv1d.h",
+      "size": 6211,
+      "sha256": "65add8931f0a3c9d0e3ee07978f2c5291ef3350300a89b9c4b1def73209e14a5"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv1d_latency.h",
+      "size": 7034,
+      "sha256": "35c2971d1bb480c56f243e22a16d83c630c367846b6814669c7e035bf188ef7f"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv1d_resource.h",
+      "size": 4126,
+      "sha256": "ead84fac549f8340c52a153992716c420882ad66dabf5b8230ff59c66531dbc3"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv1d_stream.h",
+      "size": 1480,
+      "sha256": "5b7ec28b42bbbd79db9d9885b7c47ebf6f655b17d83219db2652b70afbab2fe5"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv2d.h",
+      "size": 3748,
+      "sha256": "3de5f4078081aa31aa5c7f7e4ccbea73f73c40549e9cc7e50bcbeb9330ff3424"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv2d_latency.h",
+      "size": 3343,
+      "sha256": "508f64a51b17679caac753eadd8c912f39f76c23695e61ba8e2668b071a3cf37"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv2d_resource.h",
+      "size": 4254,
+      "sha256": "c02c1da4f73ae52456562f2b3f0487173d016e9fa4e295202d920e75ab9b6d3e"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv2d_stream.h",
+      "size": 3813,
+      "sha256": "a332d3983f36f06835f8f5530961b9b96de44f52ccc5d42cffc10ae3831c447a"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_conv_stream.h",
+      "size": 14130,
+      "sha256": "bbf2b6d3869c644296bc643f54b268c42413e3981a79a9640d89569fdff8bbfe"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_cropping.h",
+      "size": 2948,
+      "sha256": "d1e419717c94b155951b5eed161f27536aac744dfdc29dd066bc36cdb237acf2"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_cropping_stream.h",
+      "size": 1600,
+      "sha256": "760dede5c6d10b184e0ebb3e822a8832a727be04bc7f95eafc9c83728bf96640"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_da_wrappers.h",
+      "size": 3968,
+      "sha256": "af95f6f6ce7e0bcf02e6c015909c4e216376bc60fbec1d460f6d2ee29f31d548"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_dense.h",
+      "size": 3023,
+      "sha256": "96a8568b0b32eda76b90ae0f7b4f4194cf948802b2c55f48135d13504928f6c2"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_dense_compressed.h",
+      "size": 2859,
+      "sha256": "bd898a282cc1275b942da2a51289831dfab6d073b0dea2744c537ca85e86d7dd"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_dense_latency.h",
+      "size": 2424,
+      "sha256": "38d0f0957711681d600f2328ad8ea8f0cdb977b4b7cc5e1f47194d97aaeae770"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_dense_resource.h",
+      "size": 9928,
+      "sha256": "247e6bf2ab59bef2ed100df348168308e71b0f2e464a09a3a09ce9d62fdfdb5e"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_dense_stream.h",
+      "size": 3975,
+      "sha256": "87ea7b6d015b7de69fab590295309f65837ddd0a6011154b344e93305473a0f8"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_depthwise_product.h",
+      "size": 10646,
+      "sha256": "440ce61e86999aeabbc782a5dfa9a80ca1e7f3f02a4b792511ac14ac16182ed3"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_einsum.h",
+      "size": 2881,
+      "sha256": "2fbe65d527216602cf6a68c53fbc57156f3cf852d0ebb5b2157313f9e79d9819"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_einsum_dense.h",
+      "size": 4643,
+      "sha256": "f1aa9f3987fabb5073ace8ead7641d76fb259b6cc90fa31d4393342952b32829"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_embed.h",
+      "size": 1292,
+      "sha256": "a0026798df56ba20bec8708a307cb28b473d0069021ecdc62e793b48d0206764"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_embed_stream.h",
+      "size": 839,
+      "sha256": "4238c65129da40ebafc0bffb0b5b598246968870a26190f67d26ce72eb0da1a4"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_function_stubs.h",
+      "size": 2960,
+      "sha256": "ebf011b1965d033f89ff2c6d29d5ea8d5acf14140f176c2a15a4c99e5d56d0d0"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_garnet.h",
+      "size": 30731,
+      "sha256": "358a67f4f5e1a45eb5262cb773dff084264d7fbbbfcd1f74e5443c9d1962dae6"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_helpers.h",
+      "size": 12528,
+      "sha256": "be3b44aa21ba78d32f47d74ef42be38e082dab1913bbe6214dc83afd74511c61"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_image.h",
+      "size": 1293,
+      "sha256": "3b1ce15c0c271670e26f3499860e1a6d05e95eb614ac31ead747b64b2cdc849d"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_image_stream.h",
+      "size": 1847,
+      "sha256": "de91a55af0c7f415ef7aaadbaa0689a827ad340cafcd26772f04eb87054ed7cf"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_layernorm.h",
+      "size": 4986,
+      "sha256": "70c2547b92be5a3ef8cd341cc0a671fae73fde6cea581538411d925d804ad844"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_math.h",
+      "size": 7677,
+      "sha256": "854ad22a2122186b1aa30a11b92aa685670c559e7abfcb679bcdd3db6ac7c54f"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_merge.h",
+      "size": 11100,
+      "sha256": "64224f5b5d6b6cf95b0ceeebfb23fee5b4e21e7503e41b4cf8f5b63e7355dcea"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_merge_stream.h",
+      "size": 11891,
+      "sha256": "4d5dfda8cee2a6085519515d27c3d6f9c809048523f5791f85f723ca854d55b5"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_mult.h",
+      "size": 3306,
+      "sha256": "28bc325053f8458fc65e12c54a6b98aa4d9bfe8f8984836a6ddbb149bdd9a269"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_padding.h",
+      "size": 4327,
+      "sha256": "dcf886fb846c6a93cb5537c21f723fecea4170cb792361f5c95529cb5c0a8289"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_padding_stream.h",
+      "size": 2191,
+      "sha256": "881dd9fd4017abdcf7ee2e503e688ea8b7bcc7de67344b084cf0a38da2c7edd9"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_pooling.h",
+      "size": 14814,
+      "sha256": "53bc840be504ac7b863d73a64edaf63eac6c4e05caaba56722221332f01eebbe"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_pooling_stream.h",
+      "size": 12369,
+      "sha256": "3052c16c8e9f58af2c9d44350e19d4be2224decb9cceab4b9fe9b2a97ec6395d"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_recr_activations.h",
+      "size": 1889,
+      "sha256": "91a6c8d6bcd026ea5153d71f8621da8d9ce172c4b9f0be6276ab2732c90ef42f"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_recurrent.h",
+      "size": 40588,
+      "sha256": "a776387c17848500a884d3da56885d9dac680132862d08535304ffc5ed8fb0c3"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv1d.h",
+      "size": 2502,
+      "sha256": "851f8cf9068e08160eaa3b07378d916efa10f7db5b8c2706a59f210838f68a97"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv1d_latency.h",
+      "size": 3216,
+      "sha256": "365edd0cdbf3c3f0537a7130d84e76245253838850f5346068729de194291b42"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv1d_stream.h",
+      "size": 4981,
+      "sha256": "22b2f187bf02f765c41320e5ab2be7fea8520816bfaea4759cf721959941c004"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv2d.h",
+      "size": 2823,
+      "sha256": "4a21453b6d223cd8a326cb25b05dcd376e0c633b06070795f28ba6d356bc16f6"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv2d_latency.h",
+      "size": 3248,
+      "sha256": "3e3ab3b3797fd42e9827a0d7411ce43d9fa2d9c4f944fbdbd76f420076018650"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv2d_stream.h",
+      "size": 6908,
+      "sha256": "6b88e512b99df79ea16ec8c1f58c27be7e6c73304c10d0f0da75926297752fc6"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_sepconv_stream.h",
+      "size": 8899,
+      "sha256": "dd351d9b275011c4f9df05221b85cb8abf5ebf7060347fb5baea2c6cc852ef99"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_stream.h",
+      "size": 10823,
+      "sha256": "9b49c36ab28cd1f23d5462bc8a27e1d35ef31048d919eef7ae2e2210da66ac60"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_time_distributed.h",
+      "size": 3910,
+      "sha256": "bcdc66cc9c10bee19995692287c7567f994962da50d7ff0629dc33759a2c417a"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_transpose.h",
+      "size": 1210,
+      "sha256": "5d182f26e0f0d95bb3e2cbb6d0ce308a8f29ae2db05625bcf72eacca14de0032"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_transpose_stream.h",
+      "size": 2424,
+      "sha256": "6a756046342e73694b078f331d59e15b389a8ab1be7d303c87c061a5caf89dd0"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/nnet_utils/nnet_types.h",
+      "size": 1920,
+      "sha256": "559c986616e4b03ae3844070cb2325e7274479e4400e14d700dd28597117d0a4"
+    },
+    {
+      "role": "firmware",
+      "path": "firmware/parameters.h",
+      "size": 9723,
+      "sha256": "f70d39810bf35b635d98cb8983de96a376692b5def3159dc2dcc84fc650c7aed"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/b12.h",
+      "size": 222,
+      "sha256": "1434e7f9b181704a626566358c406d7beb20905349f36673052ff427f2239f24"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/b12.txt",
+      "size": 7,
+      "sha256": "5599b7d296d8516891a7a8d381ae8c4b441b21b9186d1425763621af7e44d4be"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/b3.h",
+      "size": 317,
+      "sha256": "0953f23b39aff640481c1a91fc868b1f16f21bff07ffd196f0491a0892689240"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/b3.txt",
+      "size": 102,
+      "sha256": "2cf5df0bcedff27e3f4742e0157aba3934a8d0f4e6254e1f8ad20eeea323a459"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/b7.h",
+      "size": 320,
+      "sha256": "24e5c8cb92264acf7970e93197f99fac0918bb9da4ea9358c43ba3971e15d1e4"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/b7.txt",
+      "size": 101,
+      "sha256": "1631570681b00f01ef5ea08cadd2555ad0863acc5a28655a245c61a074785f13"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/w12.h",
+      "size": 2621,
+      "sha256": "7cf3ee532beca52a6f24b1b41533dbaf9550dac4b7e43315bf5a5f1f1cca8c7a"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/w12.txt",
+      "size": 2393,
+      "sha256": "a786d6216089f72a5b09decada6feca5fed959385416c056b3251b8c72febefc"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/w3.h",
+      "size": 790,
+      "sha256": "9961997c1fa2698f372d977ed12fa110223d31cfb00f09e42047623a02559c69"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/w3.txt",
+      "size": 562,
+      "sha256": "bf72d2debb565fbe4391654962d6baeaf856f7cebdc650ace132dc55f2b92288"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/w7.h",
+      "size": 6283,
+      "sha256": "ae6bcb576a565b65541aedc953337175d8990394b348a03293478ab0708ccfcc"
+    },
+    {
+      "role": "parameter",
+      "path": "firmware/weights/w7.txt",
+      "size": 6047,
+      "sha256": "b4fcfc6d7308384e24efd42a46c6e3a52cf44de6e3072c52934bbd18078b6ed6"
+    },
+    {
+      "role": "configuration",
+      "path": "hls4ml_config.yml",
+      "size": 2380,
+      "sha256": "e80432523ab865ff0fe70d683a048acb5fd3befda5a0c235fd5503149bc25ca8"
+    },
+    {
+      "role": "model",
+      "path": "keras_model.keras",
+      "size": 87842,
+      "sha256": "d1ea0452fbdbbe4ee684b9d86c34fc5ea7468e353dba5228951262971ec5c932"
+    },
+    {
+      "role": "vendor_script",
+      "path": "project.tcl",
+      "size": 310,
+      "sha256": "27906f65c6580ad38d094e71ef067c589f1c02a20548b5e9573899632e990c80"
+    },
+    {
+      "role": "vendor_script",
+      "path": "vivado_synth.tcl",
+      "size": 295,
+      "sha256": "ce4820bd66e1d7532145f060b185d3488cec83494ee8ac62acda63e55a2ee4c1"
+    }
+  ],
+  "source_closure_sha256": "0e317054b2abb69bc0c47204a5896a077dad493201b7d15657c3d4ee755dba7f"
+}

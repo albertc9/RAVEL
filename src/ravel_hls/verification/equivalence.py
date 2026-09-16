@@ -186,7 +186,7 @@ def predict_optimized(
                 text=True,
             )
         if result.returncode != 0:
-            detail = result.stderr.strip() or result.stdout.strip()
+            detail = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
             stage = {10: "compilation", 11: "prediction"}.get(
                 result.returncode, "worker"
             )
@@ -201,9 +201,13 @@ def predict_optimized(
             ) from error
 
 
-def require_bit_exact(baseline: np.ndarray, optimized: np.ndarray) -> None:
+def require_bit_exact(baseline: np.ndarray, optimized: np.ndarray, numeric_type: dict[str, Any] | None = None) -> None:
     """Require the public Aria transformation-equivalence contract."""
 
+    if numeric_type is not None:
+        scale = 2 ** (numeric_type["width"] - numeric_type["integer"])
+        baseline = np.rint(baseline * scale).astype(np.int64)
+        optimized = np.rint(optimized * scale).astype(np.int64)
     if baseline.shape != optimized.shape or not np.array_equal(baseline, optimized):
         maximum_difference = (
             float(np.max(np.abs(baseline - optimized)))

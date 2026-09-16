@@ -1,14 +1,16 @@
 """Import measured Vitis HLS evidence without launching vendor tools."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 import xml.etree.ElementTree as ET
 
 from ..exceptions import ProjectGenerationError, VerificationError
+from ..identity import QUALIFICATION_SCHEMA_VERSION
 from ..project import RavelProject, open_project
 
 
@@ -31,10 +33,15 @@ class QualificationRecord:
     rtl_ports: dict[str, dict[str, int | str]]
     rtl_cosimulation: str
     report_files: dict[str, str]
+    stage_plan: tuple[dict[str, Any], ...] = ()
+    interfaces: dict[str, Any] = field(default_factory=dict)
+    warnings: tuple[dict[str, Any], ...] = ()
+    ooc: dict[str, Any] | None = None
+    rtl_protocol: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 4,
+            "schema_version": QUALIFICATION_SCHEMA_VERSION,
             "manifest_sha256": self.manifest_sha256,
             "generation_fingerprint": self.generation_fingerprint,
             "source_closure_sha256": self.source_closure_sha256,
@@ -54,7 +61,12 @@ class QualificationRecord:
             "rtl_ports": self.rtl_ports,
             "rtl_cosimulation": self.rtl_cosimulation,
             "report_files": self.report_files,
+            "stage_plan": list(self.stage_plan),
+            "interfaces": self.interfaces,
+            "warnings": list(self.warnings),
             "status": "recorded",
+            "ooc": self.ooc,
+            "rtl_protocol": self.rtl_protocol,
         }
 
 
@@ -62,14 +74,16 @@ def import_vitis_reports(
     project: RavelProject | str | os.PathLike[str],
     *,
     report_dir: str | os.PathLike[str],
+    ooc_dir: str | os.PathLike[str] | None = None,
+    protocol_report: str | os.PathLike[str] | None = None,
 ) -> QualificationRecord:
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5}:
+    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5, 6}:
         raise ProjectGenerationError(
             "Vitis evidence can only be recorded for a schema-v2 through "
-            "schema-v5 project"
+            "schema-v6 project"
         )
     if project_view.status.get("source_integrity") != "clean":
         raise VerificationError(
@@ -189,6 +203,26 @@ def import_vitis_reports(
         report_files[stage_report.relative_to(report_root).as_posix()] = _file_sha256(
             stage_report
         )
+    ooc = None
+    warnings = list(project_view.manifest.get("resolved_design", {}).get("warnings", ()))
+    if ooc_dir is not None:
+        from .ooc import import_ooc
+        ooc = import_ooc(Path(ooc_dir), {"manifest_sha256": manifest_sha256,
+            "source_closure_sha256": project_view.manifest["source_closure_sha256"],
+            "top": reported_top, "part": reported_part, "clock_period_ns": reported_clock, "tool_version": "2023.2"})
+        if ooc["timing"]["wns_ns"] < 0:
+            warnings.append({"code": "ooc.timing_miss", "message": "Routed design misses the requested clock period"})
+    protocol = None
+    if protocol_report is not None:
+        protocol = json.loads(Path(protocol_report).read_text())
+        for key, expected in {"manifest_sha256": manifest_sha256, "top": reported_top,
+                              "source_closure_sha256": project_view.manifest["source_closure_sha256"],
+                              "vector_files": project_view.manifest.get("verification", {}).get("rtl_reference", {}).get("files")}.items():
+            if protocol.get(key) != expected or expected is None:
+                raise ProjectGenerationError(f"RTL protocol {key} disagrees with the bound project")
+        if protocol.get("status") != "passed" or any(protocol.get(key, 0) < 1 for key in ("completed_samples", "reset_aborts", "output_stall_cycles")):
+            raise ProjectGenerationError("RTL protocol evidence is incomplete")
+        protocol["report_sha256"] = _file_sha256(Path(protocol_report))
     record = QualificationRecord(
         manifest_sha256=manifest_sha256,
         generation_fingerprint=_required_manifest_sha256(
@@ -224,6 +258,11 @@ def import_vitis_reports(
         rtl_ports=rtl_ports,
         rtl_cosimulation=rtl_cosimulation,
         report_files=report_files,
+        stage_plan=tuple(project_view.manifest.get("resolved_design", {}).get("stages", ())),
+        interfaces=project_view.manifest.get("interfaces", {}),
+        warnings=tuple(warnings),
+        ooc=ooc,
+        rtl_protocol=protocol,
     )
     qualification_path = project_view.path / "ravel_qualification.json"
     temporary_path = qualification_path.with_name(".ravel_qualification.json.tmp")
@@ -244,6 +283,8 @@ def _stage_evidence(
     expected_clock: float,
 ) -> tuple[dict[str, dict[str, Any]], list[Path]]:
     resolved_design = manifest.get("resolved_design", {})
+    if resolved_design.get("strategy", {}).get("id") == "aria-composed":
+        return _composed_stage_evidence(report_root, resolved_design, expected_tool_version, expected_part, expected_clock)
     rendering = resolved_design.get("rendering", {})
     if resolved_design.get("strategy", {}).get("id") == "phara":
         stage_functions = {
@@ -411,3 +452,38 @@ def _required_manifest_sha256(manifest: dict[str, Any], key: str) -> str:
     if not isinstance(value, str) or len(value) != 64:
         raise ProjectGenerationError(f"RAVEL manifest has no valid {key}")
     return value
+
+
+def _composed_stage_evidence(report_root, design, version, part, clock):
+    bindings = design.get("report_bindings")
+    if not bindings:
+        raise ProjectGenerationError("Composed manifest has no stage report bindings")
+    reports = []
+    for path in sorted(report_root.rglob("*_csynth.xml")):
+        try:
+            root = ET.parse(path).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        reports.append((path, root))
+    stages, used = {}, []
+    for binding in bindings:
+        functions = []
+        for selector in binding["functions"]:
+            matches = [(path, root) for path, root in reports
+                       if (top := root.findtext("./UserAssignments/TopModelName", "")).startswith(selector["name"] + "_")
+                       and ("config" not in selector or re.search(r"(?:^|_)" + re.escape(selector["config"]) + r"(?:_|$)", top))]
+            if not matches:
+                raise ProjectGenerationError(f"No Vitis report for selected stage {binding['stage_id']}: {selector}")
+            for path, root in matches:
+                if (_required_text(root, "./ReportVersion/Version") != version
+                        or _required_text(root, "./UserAssignments/Part") != part
+                        or float(_required_text(root, "./UserAssignments/TargetClockPeriod")) != clock):
+                    raise ProjectGenerationError(f"Selected stage report disagrees with top environment: {path.name}")
+                functions.append({"top": _required_text(root, "./UserAssignments/TopModelName"),
+                                  "initiation_interval": int(_required_text(root, "./PerformanceEstimates/SummaryOfOverallLatency/Interval-min")),
+                                  "latency_cycles": int(_required_text(root, "./PerformanceEstimates/SummaryOfOverallLatency/Best-caseLatency")),
+                                  "loops": [{"name": loop.tag, "pipeline_ii": int(loop.findtext("PipelineII"))}
+                                            for loop in root.findall("./PerformanceEstimates/SummaryOfLoopLatency/*") if loop.findtext("PipelineII") is not None]})
+                used.append(path)
+        stages[binding["stage_id"]] = {"functions": functions, "realization": binding.get("realization", "measured")}
+    return stages, used

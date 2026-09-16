@@ -5,6 +5,8 @@ from copy import deepcopy
 import os
 from typing import Any
 
+from .identity import ARIA_VERSION
+
 from .exceptions import ConfigurationError
 
 
@@ -211,7 +213,7 @@ class RavelConfig(Mapping[str, Any]):
                 f"Unknown RAVEL configuration field: {', '.join(unknown_fields)}"
             )
         if "Profile" in self._data and self._data["Profile"] != "aria":
-            raise ConfigurationError("Profile must be aria for RAVEL Aria 1.5.1")
+            raise ConfigurationError(f"Profile must be aria for RAVEL Aria {ARIA_VERSION}")
         self._data.setdefault("Profile", "aria")
         self._data["Optimization"] = _resolve_optimization(
             self._data.get("Optimization")

@@ -6,6 +6,7 @@ import json
 from typing import Any, Callable, Mapping
 
 from ..registry import ComponentDefinition
+from ...identity import aria_identity
 
 
 PassEffect = Callable[[dict[str, Any]], dict[str, Any]]
@@ -48,7 +49,7 @@ def resolve_aria_design(
     phara = implementation_plan.get("phara")
     state: dict[str, Any] = {
         "schema_version": 1,
-        "generation": {"id": "aria", "version": "1.5.1"},
+        "generation": aria_identity(),
         "model_family": {"id": "hgq-conv-pool-dense", "version": 1},
         "strategy": (
             {"id": "phara", "version": 1}

@@ -3,6 +3,9 @@
 from collections.abc import Mapping
 from typing import Any
 
+from ...domain.graph import GraphFacts
+from ...domain.temporal import recognize_temporal_chain
+
 
 _CANONICAL_SEQUENCE = (
     "input",
@@ -18,6 +21,33 @@ _CANONICAL_SEQUENCE = (
 def match_hgq_conv_pool_dense(
     facts: Mapping[str, Any], provenance: Mapping[str, Any]
 ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Match the temporal grammar once; legacy identity is a compatibility DTO."""
+
+    recognition = recognize_temporal_chain(GraphFacts.from_dict(facts))
+    if recognition.chain is None:
+        return None, {"status": "unsupported", "findings": [f.to_dict() for f in recognition.findings]}
+    chain = recognition.chain
+    findings = []
+    for class_name, count in (("QConv2D", len(chain.blocks)), ("QDense", 1)):
+        observed = sum(source["class_name"] == class_name and source["module"].startswith("hgq.layers")
+                       for source in provenance["source_layers"])
+        if observed != count:
+            findings.append({"code": "family.provenance.hgq2", "severity": "error",
+                             "operation_id": None, "message": "Temporal family requires HGQ2 convolution and Dense origins"})
+    for contract in provenance["quantizer_contracts"]:
+        if (contract["q_type"], contract["rounding"], contract["overflow"], contract["heterogeneous_axis"]) != ("kif", "RND", "SAT_SYM", []):
+            findings.append({"code": "family.numeric.quantizer", "severity": "error",
+                             "operation_id": None, "message": "Aria requires tensor-wide HGQ2 KIF/RND/SAT_SYM quantization"})
+    if findings:
+        return None, {"status": "unsupported", "findings": findings}
+    family_id = "hgq-conv-pool-dense" if len(chain.blocks) == 1 else "hgq-temporal-block-chain"
+    return {"id": family_id, "version": 1}, {"status": "applicable", "findings": []}
+
+
+def legacy_match_hgq_conv_pool_dense(
+    facts: Mapping[str, Any], provenance: Mapping[str, Any]
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Pre-1.7 regression oracle; never used for production recognition."""
     operations = facts["operations"]
     observed_sequence = tuple(operation["kind"] for operation in operations)
     findings: list[dict[str, Any]] = []

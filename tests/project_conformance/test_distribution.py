@@ -148,7 +148,7 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
         )
     )
 
-    assert schema["title"] == "RAVEL Aria 1.5.1 configuration"
+    assert schema["title"] == "RAVEL Aria 1.7.0 configuration"
     assert schema["required"] == ["HLS"]
     assert set(schema["properties"]) == {
         "Project",
@@ -173,9 +173,9 @@ def test_manifest_schema_describes_the_v5_envelope_and_realization() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 5}
+    assert schema["properties"]["schema_version"] == {"const": 6}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
-        "const": "1.5.1"
+        "const": "1.7.0"
     }
     assert "source_closure" in schema["required"]
     assert "source_closure_sha256" in schema["required"]
@@ -213,7 +213,7 @@ def test_qualification_schema_binds_v3_evidence_identity_and_stages() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 4}
+    assert schema["properties"]["schema_version"] == {"const": 5}
     assert {
         "manifest_sha256",
         "generation_fingerprint",

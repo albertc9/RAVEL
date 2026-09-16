@@ -276,10 +276,10 @@ class Parameters:
 
         payload = self._payload_for(analyzed.parameter_payload)
         replacements = payload.by_id()
-        from .analysis.model import _semantic_kind
+        from .frontend.extraction import _semantic_kind, ordered_layers
 
         ordinals: dict[str, int] = {}
-        for layer in analyzed.graph.get_layers():
+        for layer in ordered_layers(analyzed.graph):
             kind = _semantic_kind(layer)
             ordinal = ordinals.get(kind, 0)
             ordinals[kind] = ordinal + 1

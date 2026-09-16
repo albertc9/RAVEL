@@ -3,7 +3,9 @@ from pathlib import Path
 
 import numpy as np
 
-from ravel_hls.analysis.model import _analyze_model, _rendering_contract
+from ravel_hls.analysis.model import _analyze_model
+from ravel_hls.compatibility.legacy_design import _rendering_contract
+from ravel_hls.frontend.extraction import _native_rendering_contract
 from ravel_hls.analysis.phara import analyze_da_parameters, analyze_hybrid_parameters
 from ravel_hls.compatibility.dependencies import inspect_dependencies
 from ravel_hls.profiles.aria.plan import build_implementation_plan
@@ -103,7 +105,7 @@ def test_phara_p8_direct_credit_scheduled_cpp_is_bit_exact(
         "dense_parallelism": 4,
     }
     resolved_design["rendering"] = _rendering_contract(
-        list(analyzed.graph.get_layers()), plan
+        _native_rendering_contract(list(analyzed.graph.get_layers())), plan
     )
     render_aria_project(
         project_path,
@@ -158,7 +160,7 @@ def test_phara_p8_da_affine_graph_cpp_is_bit_exact(
         "dense_parallelism": 4,
     }
     resolved_design["rendering"] = _rendering_contract(
-        list(analyzed.graph.get_layers()), plan
+        _native_rendering_contract(list(analyzed.graph.get_layers())), plan
     )
     render_aria_project(
         project_path,
@@ -215,7 +217,7 @@ def test_phara_p8_hybrid_affine_graph_cpp_is_bit_exact(
         "dense_parallelism": 4,
     }
     resolved_design["rendering"] = _rendering_contract(
-        list(analyzed.graph.get_layers()), plan
+        _native_rendering_contract(list(analyzed.graph.get_layers())), plan
     )
     render_aria_project(
         project_path,

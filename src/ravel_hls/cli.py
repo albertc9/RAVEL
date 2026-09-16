@@ -8,6 +8,7 @@ import sys
 
 from .compatibility.dependencies import inspect_dependencies
 from .exceptions import RavelError
+from .identity import ARIA_VERSION
 from .project import open_project
 
 
@@ -18,7 +19,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {version('ravel-hls')} (RAVEL Aria 1.5.1)",
+        version=f"%(prog)s {version('ravel-hls')} (RAVEL Aria {ARIA_VERSION})",
     )
     subparsers = parser.add_subparsers(dest="command")
     doctor_parser = subparsers.add_parser("doctor")

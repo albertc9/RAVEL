@@ -36,7 +36,10 @@ def test_import_vitis_reports_links_measured_evidence_to_the_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 4
+    assert qualification["schema_version"] == 5
+    assert qualification["stage_plan"] == []
+    assert qualification["interfaces"] == json.loads(manifest_before)["interfaces"]
+    assert qualification["warnings"] == []
     assert qualification["stages"] == {}
     assert qualification["generation_fingerprint"] == "1" * 64
     assert qualification["source_closure_sha256"] == json.loads(
@@ -62,7 +65,7 @@ def test_import_vitis_reports_links_schema_v3_evidence_to_a_v3_manifest(
     qualification = json.loads(
         (project_path / "ravel_qualification.json").read_text(encoding="utf-8")
     )
-    assert qualification["schema_version"] == 4
+    assert qualification["schema_version"] == 5
     assert Project.open(project_path).status["performance_qualification"] == "recorded"
 
 
@@ -175,7 +178,7 @@ def test_import_records_first_convolution_pipeline_evidence(
         }
     }
     qualification = record.to_dict()
-    assert qualification["schema_version"] == 4
+    assert qualification["schema_version"] == 5
     assert qualification["stages"] == record.stages
     assert qualification["report_files"][stage_report.name] == hashlib.sha256(
         _FIRST_CONV_CSYNTH_XML.encode()
@@ -246,7 +249,7 @@ def test_import_records_phara_fused_region_and_dense_stage_evidence(
 
     record = Project.open(project_path).record(report_dir)
 
-    assert record.to_dict()["schema_version"] == 4
+    assert record.to_dict()["schema_version"] == 5
     assert record.stages == {
         "phara_fused_region": {
             "top": "phara_pool_aligned_direct_p8_cl_1",
@@ -522,3 +525,88 @@ def _stage_wrapper_csynth_xml(
   </PerformanceEstimates>
 </profile>
 """
+
+
+def test_composed_reports_follow_selected_stage_bindings_not_legacy_function_names(tmp_path):
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    manifest_path = project_path / "ravel_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["resolved_design"] = {
+        "strategy": {"id": "aria-composed", "version": 1},
+        "stages": [{"operation_ids": ["conv2d_1", "relu_1", "max_pool2d_1"],
+                    "strategy": {"id": "hls4ml-temporal-block", "version": 1}}],
+        "rendering": {"first_convolution_function": "unused_legacy_function"},
+        "report_bindings": [{"stage_id": "conv2d_1", "functions": [{"name": "conv_2d_cl", "config": "config7"}]}],
+    }
+    manifest_path.write_text(json.dumps(manifest))
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    (report_dir / "native_csynth.xml").write_text(_stage_wrapper_csynth_xml(
+        top="conv_2d_cl_array_config7_s", latency=230, interval=228))
+    record = Project.open(project_path).record(report_dir).to_dict()
+    assert record["stage_plan"] == manifest["resolved_design"]["stages"]
+    assert record["stages"]["conv2d_1"]["functions"][0]["initiation_interval"] == 228
+    assert "native_csynth.xml" in record["report_files"]
+
+
+def test_ooc_measurements_are_bound_and_a_timing_miss_is_recorded_as_warning(tmp_path):
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    ooc = tmp_path / "ooc"
+    ooc.mkdir()
+    timing = "| Tool Version : Vivado v.2023.2\n| Design : aria_top\n| Design State : Routed\nWNS(ns) TNS(ns) TNS Failing Endpoints\n------- ------- -------\n-0.125 -2.000 16\n"
+    timing += "Clock Waveform(ns) Period(ns) Frequency(MHz)\nap_clk {0.000 2.500} 5.000 200.000\n"
+    (ooc / "timing.rpt").write_text(timing)
+    (ooc / "utilization.rpt").write_text("| Tool Version : Vivado v.2023.2\n| Design : aria_top\n| Design State : Routed\n| Device : xcku5p-ffvb676-2-e\n| CLB LUTs | 321 |\n| CLB Registers | 456 |\n| Block RAM Tile | 2.5 |\n| DSPs | 12 |\n")
+    manifest = Project.open(project_path).manifest
+    binding = {"manifest_sha256": hashlib.sha256((project_path / 'ravel_manifest.json').read_bytes()).hexdigest(),
+               "source_closure_sha256": manifest["source_closure_sha256"], "top": "aria_top",
+               "part": "xcku5p-ffvb676-2-e", "clock_period_ns": 5.0, "tool_version": "2023.2"}
+    (ooc / "binding.json").write_text(json.dumps(binding))
+    record = Project.open(project_path).record(report_dir, ooc_dir=ooc).to_dict()
+    assert record["ooc"]["timing"]["wns_ns"] == -0.125
+    assert record["ooc"]["resources"]["BRAM_TILES"] == 2.5
+    assert record["ooc"]["manifest_sha256"] == binding["manifest_sha256"]
+    assert "ooc.timing_miss" in {warning["code"] for warning in record["warnings"]}
+    (ooc / "timing.rpt").write_text(timing.replace("5.000 200.000", "6.000 166.667"))
+    with pytest.raises(ProjectGenerationError, match="clock"):
+        Project.open(project_path).record(report_dir, ooc_dir=ooc)
+    (ooc / "timing.rpt").write_text(timing)
+    utilization = (ooc / "utilization.rpt").read_text()
+    (ooc / "utilization.rpt").write_text(utilization.replace("ffvb676-2-e", "ffvb676-1-e"))
+    with pytest.raises(ProjectGenerationError, match="part"):
+        Project.open(project_path).record(report_dir, ooc_dir=ooc)
+    (ooc / "utilization.rpt").write_text(utilization)
+    binding["source_closure_sha256"] = "f" * 64
+    (ooc / "binding.json").write_text(json.dumps(binding))
+    with pytest.raises(ProjectGenerationError, match="source_closure_sha256"):
+        Project.open(project_path).record(report_dir, ooc_dir=ooc)
+
+
+def test_protocol_evidence_requires_the_current_manifest_and_baseline_vectors(tmp_path):
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    manifest_path = project_path / "ravel_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["verification"] = {"rtl_reference": {"files": {"rtl_expected_words.hex": "a" * 64}}}
+    manifest_path.write_text(json.dumps(manifest))
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    protocol = tmp_path / "rtl_protocol.json"
+    evidence = {"status": "passed", "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                "source_closure_sha256": manifest["source_closure_sha256"], "top": "aria_top",
+                "vector_files": manifest["verification"]["rtl_reference"]["files"],
+                "completed_samples": 7, "reset_aborts": 1, "output_stall_cycles": 12}
+    protocol.write_text(json.dumps(evidence))
+    record = Project.open(project_path).record(reports, protocol_report=protocol).to_dict()
+    assert record["rtl_protocol"]["completed_samples"] == 7
+    evidence["manifest_sha256"] = "f" * 64
+    protocol.write_text(json.dumps(evidence))
+    with pytest.raises(ProjectGenerationError, match="manifest_sha256"):
+        Project.open(project_path).record(reports, protocol_report=protocol)

@@ -9,6 +9,7 @@ from typing import Any
 
 from .compatibility.dependencies import inspect_dependencies
 from .config import AGGRESSIVE_SPECIALIZATION_POLICY, RavelConfig
+from .identity import ARIA_VERSION, MANIFEST_SCHEMA_VERSION
 
 
 def canonical_sha256(value: Any) -> str:
@@ -38,7 +39,7 @@ def build_architecture_envelope(
     """Return the refresh-stable architecture identity for one resolved design."""
 
     design = model_analysis["resolved_design"]
-    return {
+    envelope = {
         "schema_version": 1,
         "generation": model_analysis["generation"],
         "model_family": model_analysis["model_family"],
@@ -70,6 +71,11 @@ def build_architecture_envelope(
         ],
     }
 
+    if "stages" in design:
+        envelope.update({key: design[key] for key in ("stages", "bridges", "delegation", "control", "components", "semantic_stages")})
+        envelope["cost_policy"] = design["components"]["cost_policy"]
+    return envelope
+
 
 def build_generation_manifest(
     *,
@@ -82,6 +88,7 @@ def build_generation_manifest(
     verification_report: dict[str, Any],
     interface_contract: dict[str, Any],
     model_analysis: dict[str, Any],
+    source_ownership: list[dict[str, Any]],
 ) -> dict[str, Any]:
     dependency_report = inspect_dependencies()
     recorded_configuration = {
@@ -103,6 +110,7 @@ def build_generation_manifest(
             "plan": implementation_plan,
             "passes": pass_records,
             "compatibility_profile": "hls4ml-1.2.0-hgq2-0.1.7",
+            **({key: model_analysis["resolved_design"][key] for key in ("stages", "bridges", "delegation", "control", "components", "semantic_stages")} if "stages" in model_analysis["resolved_design"] else {}),
         }
     )
     generation_fingerprint = canonical_sha256(
@@ -148,11 +156,11 @@ def build_generation_manifest(
         else None
     )
     manifest = {
-        "schema_version": 5,
+        "schema_version": MANIFEST_SCHEMA_VERSION,
         "ravel": {
             "product": "RAVEL",
             "generation": "Aria",
-            "release": "1.5.1",
+            "release": ARIA_VERSION,
             "package_version": package_version,
         },
         "source_model": source_model,
@@ -187,6 +195,7 @@ def build_generation_manifest(
             "source_integrity": "clean",
             "performance_qualification": "not_run",
         },
+        "source_ownership": source_ownership,
         "source_closure": source_closure,
         "source_closure_sha256": canonical_sha256(source_closure),
         "generation_fingerprint": generation_fingerprint,
@@ -196,6 +205,7 @@ def build_generation_manifest(
         "coefficient_realization_sha256": coefficient_realization_sha256,
     }
     manifest["resolved_design"] = model_analysis["resolved_design"]
+    manifest["generated_plan_sha256"] = canonical_sha256(model_analysis["resolved_design"])
     manifest["architecture_contract_sha256"] = architecture_contract
     return manifest
 

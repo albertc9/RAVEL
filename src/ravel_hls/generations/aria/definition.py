@@ -1,6 +1,11 @@
-"""The closed, explicit Aria 1.5 built-in generation definition."""
+"""The closed, explicit current Aria built-in generation definition."""
 
-from ...rendering.vitis import render_aria_project
+from ...identity import ARIA_ID, ARIA_VERSION
+from ...planning.strategies import TEMPORAL_STRATEGIES
+from ...planning.bridges import LOSSLESS_BRIDGES
+from ...planning.chain import TEMPORAL_RESOLVER
+
+from ...rendering.vitis.composed import render_project
 from ..registry import (
     BackendBindingDefinition,
     ComponentDefinition,
@@ -18,9 +23,9 @@ from .passes import (
 )
 
 
-ARIA_1_5_1 = GenerationDefinition(
-    id="aria",
-    version="1.5.1",
+ARIA = GenerationDefinition(
+    id=ARIA_ID,
+    version=ARIA_VERSION,
     operation_extractors=tuple(
         ComponentDefinition(operation_id, 1)
         for operation_id in (
@@ -48,9 +53,12 @@ ARIA_1_5_1 = GenerationDefinition(
         PHARA_FUSION_PASS,
         PHARA_DATAFLOW_CONTROL_PASS,
     ),
+    stage_strategies=TEMPORAL_STRATEGIES,
+    bridge_strategies=LOSSLESS_BRIDGES,
+    chain_resolver=TEMPORAL_RESOLVER,
     backends=(
         BackendBindingDefinition(
-            "Vitis", "io_stream", "aria-vitis-templates", 3, render_aria_project
+            "Vitis", "io_stream", "aria-vitis-templates", 3, render_project
         ),
     ),
 )

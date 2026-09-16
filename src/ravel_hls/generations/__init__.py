@@ -1,10 +1,10 @@
 """Built-in versioned RAVEL generations."""
 
-from .aria import ARIA_1_5_1
+from .aria import ARIA
 from .registry import GenerationDefinition
 
 
-_BUILTIN_GENERATIONS = (ARIA_1_5_1,)
+_BUILTIN_GENERATIONS = (ARIA,)
 
 
 def builtin_generation(generation_id: str, version: str) -> GenerationDefinition:

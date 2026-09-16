@@ -13,6 +13,10 @@ import uuid
 
 import numpy as np
 
+from .identity import ARIA_VERSION
+from .domain.graph import NumericType
+from .verification.rtl_vectors import write_rtl_vectors
+
 from .config import RavelConfig
 from .compatibility.dependencies import inspect_dependencies
 from .backends.vitis.build import normalize_build_script, write_build_options
@@ -23,7 +27,9 @@ from .exceptions import (
     RavelError,
     VerificationError,
 )
-from .manifest import architecture_contract_sha256, build_generation_manifest
+from .manifest import architecture_contract_sha256, build_generation_manifest, canonical_sha256
+from .rendering.artifacts import normalize_host_artifacts
+from .rendering.ownership import SourceOwnership
 from .parameters import Parameters
 from .project import RavelProject, open_project
 from .generations import builtin_generation
@@ -35,6 +41,8 @@ from .verification.equivalence import (
     require_bit_exact,
     require_source_consistency,
 )
+from .verification.corpora import prepare_corpora
+from .verification.boundaries import capture_boundaries, compare_boundaries
 
 
 def convert(
@@ -73,7 +81,7 @@ def _convert_analyzed_model(
     analyzed = _analyze_model(model, config)
     if not analyzed.analysis.applicable:
         messages = [finding["message"] for finding in analyzed.analysis.findings]
-        raise CompatibilityError("; ".join(messages))
+        raise CompatibilityError("; ".join(messages), findings=analyzed.analysis.to_dict()["applicability"]["findings"])
     return _publish_analyzed_graph(
         graph=analyzed.graph,
         analysis_report=analyzed.analysis.to_dict(),
@@ -149,14 +157,14 @@ def refresh(
     *,
     verification_inputs: Any | None = None,
 ) -> RavelProject:
-    """Atomically refresh a schema-v5 project without changing its architecture."""
+    """Atomically refresh a project without changing its recorded architecture."""
 
     from .analysis.model import _analyze_model, analyze
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") != 5:
+    if project_view.manifest.get("schema_version") not in {5, 6}:
         raise CompatibilityError(
-            "PHARA refresh requires a schema-v5 generated project"
+            "PHARA refresh requires a schema-v5 or schema-v6 generated project"
         )
     if isinstance(model_or_parameters, Parameters):
         config = _refresh_configuration(project_view)
@@ -257,7 +265,7 @@ def _generate_analyzed_project(
             if facts["status"] != "qualified"
         ]
         raise CompatibilityError(
-            "Aria 1.5.1 dependency stack is not qualified: " + ", ".join(failures)
+            f"Aria {ARIA_VERSION} dependency stack is not qualified: " + ", ".join(failures)
         )
     if (
         verification_inputs is not None
@@ -268,14 +276,14 @@ def _generate_analyzed_project(
         )
     hls_config = _hls_config_values(hls_model)
     if hls_config.get("Backend") != "Vitis":
-        raise CompatibilityError("hls4ml Backend must be Vitis for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml Backend must be Vitis for Aria {ARIA_VERSION}")
     if hls_config.get("IOType") != "io_stream":
-        raise CompatibilityError("hls4ml IOType must be io_stream for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml IOType must be io_stream for Aria {ARIA_VERSION}")
     model_config = hls_config.get("HLSConfig", {}).get("Model", {})
     if model_config.get("Strategy", "Latency") != "Latency":
-        raise CompatibilityError("hls4ml Strategy must be Latency for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml Strategy must be Latency for Aria {ARIA_VERSION}")
     if model_config.get("ReuseFactor", 1) != 1:
-        raise CompatibilityError("hls4ml ReuseFactor must be 1 for Aria 1.5.1")
+        raise CompatibilityError(f"hls4ml ReuseFactor must be 1 for Aria {ARIA_VERSION}")
     layers = list(hls_model.get_layers())
     input_shapes = list(hls_config.get("InputShapes", {}).values())
     output_shapes = list(hls_config.get("OutputShapes", {}).values())
@@ -362,12 +370,11 @@ def _generate_project(
         stimuli_record = None
         baseline_predictions = None
         verification_unavailable = None
+        corpora = ()
         if verification_mode != "disabled":
-            stimuli, stimuli_record = prepare_stimuli(
-                ravel_config,
-                verification_inputs,
-                model_analysis["model_facts"]["operations"][0]["outputs"][0],
-            )
+            corpora = prepare_corpora(ravel_config, verification_inputs, model_analysis["model_facts"])
+            stimuli = np.concatenate([corpus.inputs for corpus in corpora])
+            stimuli_record = corpora[0].record
             verification_unavailable = _verification_unavailable_reason(
                 hls_model, dependency_report
             )
@@ -395,16 +402,23 @@ def _generate_project(
         binding = generation.backend_binding(
             hls_config["Backend"], hls_config["IOType"]
         )
-        managed_paths = binding.render(
+        baseline_boundaries = None
+        if baseline_predictions is not None and "stages" in model_analysis["resolved_design"]:
+            baseline_boundaries = capture_boundaries(staging_path, project_name, model_analysis["resolved_design"], model_analysis["model_facts"], corpora[0].inputs, dependency_report.get("compiler", {}).get("command"), baseline=True)
+        ownership = SourceOwnership(staging_path)
+        source_steps = binding.render(
             staging_path,
             project_name,
             model_analysis["resolved_design"],
             parameter_payload,
         )
+        ownership.record_steps(source_steps)
         if stimuli is not None:
-            _write_vitis_testbench_inputs(staging_path, stimuli)
-        normalize_build_script(staging_path)
+            _write_vitis_testbench_inputs(staging_path, corpora[0].inputs)
+            ownership.record("write-verification-corpus", 2, ["tb_data/tb_input_features.dat"])
+        normalize_build_script(staging_path, reset_all="stages" in model_analysis["resolved_design"])
         write_build_options(staging_path, ravel_config)
+        ownership.record("configure-vendor-build", 1, ["build_prj.tcl", "build_opt.tcl"])
         verification_report: dict[str, Any] = {
             "mode": verification_mode,
             "source_conversion_consistency": "not_run",
@@ -413,6 +427,10 @@ def _generate_project(
         }
         if stimuli_record is not None:
             verification_report["stimuli"] = stimuli_record
+            verification_report["corpora"] = {
+                corpus.name: {**corpus.record, "transformation_equivalence": "not_run",
+                              "source_conversion_consistency": "not_run"} for corpus in corpora
+            }
         if verification_unavailable is not None:
             verification_report["unavailable_reason"] = verification_unavailable
         if baseline_predictions is not None and stimuli is not None:
@@ -421,8 +439,12 @@ def _generate_project(
                 stimuli,
                 dependency_report.get("compiler", {}).get("command"),
             )
-            require_bit_exact(baseline_predictions, optimized_predictions)
+            output_numeric = model_analysis["model_facts"]["operations"][-1]["outputs"][0]["numeric_type"]
+            require_bit_exact(baseline_predictions, optimized_predictions, output_numeric)
             verification_report["transformation_equivalence"] = "passed"
+            if baseline_boundaries is not None:
+                observed_boundaries = capture_boundaries(staging_path, project_name, model_analysis["resolved_design"], model_analysis["model_facts"], corpora[0].inputs, dependency_report.get("compiler", {}).get("command"), baseline=False)
+                verification_report["stage_boundaries"] = compare_boundaries(baseline_boundaries, observed_boundaries)
             if source_consistency_available:
                 source_consistency = require_source_consistency(
                     hls_config.get("KerasModel"),
@@ -441,13 +463,30 @@ def _generate_project(
                 if fidelity is not None:
                     verification_report["model_fidelity"] = "reported"
                     verification_report["model_fidelity_report"] = fidelity
+            input_numeric = model_analysis["model_facts"]["operations"][0]["outputs"][0]["numeric_type"]
+            verification_report["rtl_reference"] = write_rtl_vectors(
+                staging_path / "tb_data", corpora[0].inputs, baseline_predictions[:len(corpora[0].inputs)],
+                NumericType(**input_numeric), NumericType(**output_numeric), implementation_plan["values_per_input_word"])
+            ownership.record("write-rtl-reference", 1, ["tb_data/rtl_input_words.hex", "tb_data/rtl_expected_words.hex", "tb_data/rtl_vectors.json"])
+            offset = 0
+            for corpus in corpora:
+                record = verification_report["corpora"][corpus.name]
+                count = len(corpus.inputs)
+                codes = np.rint(baseline_predictions[offset:offset + count] * 2 ** (output_numeric["width"] - output_numeric["integer"])).astype("<i8")
+                record.update(transformation_equivalence="passed",
+                              source_conversion_consistency="passed" if source_consistency_available else "not_run",
+                              output_integer_code_sha256=hashlib.sha256(codes.tobytes()).hexdigest())
+                offset += count
         mutable_hls_config["OutputDir"] = original_output
-        _rewrite_published_hls_config(staging_path, output_path)
+        artifact_stamp = canonical_sha256({"fingerprints": model_analysis["fingerprints"], "design": model_analysis["resolved_design"]})[:16]
+        _rewrite_published_hls_config(staging_path, output_path, stamp=artifact_stamp)
+        normalize_host_artifacts(staging_path, artifact_stamp)
         published_ravel_config = _published_ravel_config(ravel_config)
         ravel_config_path = staging_path / "ravel_config.yml"
         ravel_config_path.write_text(
             published_ravel_config.to_yaml(), encoding="utf-8"
         )
+        ownership.record("normalize-project-artifacts", 2, ["hls4ml_config.yml", "ravel_config.yml", "build_lib.sh", "keras_model.keras"])
         semantic_model = {
             "facts": model_facts,
             "layers": [
@@ -472,6 +511,7 @@ def _generate_project(
             verification_report=verification_report,
             interface_contract=_interface_contract(layers, implementation_plan),
             model_analysis=dict(model_analysis),
+            source_ownership=ownership.verify(),
         )
         (staging_path / "ravel_manifest.json").write_text(
             json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -520,7 +560,7 @@ def _verification_unavailable_reason(
 def _write_vitis_testbench_inputs(
     project_path: Path, stimuli: np.ndarray
 ) -> None:
-    sample_count = min(32, len(stimuli))
+    sample_count = len(stimuli)
     testbench_dir = project_path / "tb_data"
     testbench_dir.mkdir(exist_ok=True)
     np.savetxt(
@@ -652,7 +692,7 @@ class _KerasModelPath(str):
     pass
 
 
-def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None:
+def _rewrite_published_hls_config(staging_path: Path, output_path: Path, *, stamp: str) -> None:
     import yaml
 
     class Loader(yaml.SafeLoader):
@@ -681,6 +721,7 @@ def _rewrite_published_hls_config(staging_path: Path, output_path: Path) -> None
     if not isinstance(values, dict):
         raise ProjectGenerationError("hls4ml_config.yml must contain a mapping")
     values["OutputDir"] = "."
+    values["Stamp"] = stamp
     if isinstance(values.get("KerasModel"), _KerasModelPath):
         values["KerasModel"] = _KerasModelPath("keras_model.keras")
     config_path.write_text(
