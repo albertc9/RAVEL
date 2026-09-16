@@ -4,6 +4,7 @@ from ..domain.graph import GraphFacts
 from ..domain.temporal import recognize_temporal_chain
 from ..profiles.aria.plan import build_implementation_plan
 from ..planning.temporal import plan_temporal_chain
+from ..planning.search import SearchReport
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
 
@@ -75,6 +76,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
             else:
                 resolved_design.update(
+                    optimization_search=SearchReport((composed,), composed).to_dict(),
                     model_family=model_family, strategy={"id": "aria-composed", "version": 1},
                     resolver={"id": generation.chain_resolver.id, "version": generation.chain_resolver.version},
                     components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],

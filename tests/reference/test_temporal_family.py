@@ -39,6 +39,22 @@ def test_analysis_recognizes_a_repeated_temporal_family_before_plan_qualificatio
     assert report["recognition"]["layout"]["output_shape"] == [105]
 
 
+def test_analysis_explains_its_analytical_search_without_claiming_vendor_measurements():
+    report = analyze(make_temporal_model(height=64, width=2, filters=3), {
+        "HLS": {},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+
+    search = report["resolved_design"]["optimization_search"]
+    assert search["mode"] == "analytical"
+    assert search["status"] == "complete"
+    assert search["candidate_count"] >= 1
+    assert search["selected_candidate"] in {
+        candidate["id"] for candidate in search["candidates"]
+    }
+    assert search["performance_qualification"] == "not_run"
+
+
 def test_three_blocks_are_recognized_but_outside_the_qualified_release_domain():
     report = analyze(make_temporal_model(blocks=3, height=512, width=2, filters=3), {
         "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
