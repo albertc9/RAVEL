@@ -1,0 +1,86 @@
+{
+  "source_revision": "632090a0986bed3f404bc5ac49570d80db6cc5db",
+  "projects": {
+    "composed_target": {
+      "original": {
+        "architecture_contract_sha256": "9f5077e9467988621555dcd94a59e5cae5a46ec0dbd6c4a84d2d53636d3b204d",
+        "generation_fingerprint": "cfb9aabea2738b24fccc88bd1a7f0aa57eb1a4a45335550b9728a0c36e41fe7d",
+        "implementation_sha256": "4307ce09a213a5a65cdcd9098e988ef85ce57782738d6e1a76c9e6310a7b226c"
+      },
+      "repeat": {
+        "architecture_contract_sha256": "9f5077e9467988621555dcd94a59e5cae5a46ec0dbd6c4a84d2d53636d3b204d",
+        "generation_fingerprint": "cfb9aabea2738b24fccc88bd1a7f0aa57eb1a4a45335550b9728a0c36e41fe7d",
+        "implementation_sha256": "4307ce09a213a5a65cdcd9098e988ef85ce57782738d6e1a76c9e6310a7b226c"
+      },
+      "compilation_inputs_identical": true,
+      "host_stamp_only_differences": [
+        "build_lib.sh",
+        "hls4ml_config.yml"
+      ],
+      "selected_candidate_identical": true,
+      "original_plan_sha256": "422c4abd30ff94200883a69a2a35628fca97b22252a59f979c9645f3f9d78328",
+      "repeat_plan_sha256": "4c99a45b20b331cd40abd05929a75fba30fde8c05034a129866a5c1e06ca46a5",
+      "note": "Search diagnostics changed after vendor qualification; hardware sources, test vectors, vendor build inputs, selected architecture and generation fingerprint are byte-identical. Only the host library stamp can differ."
+    },
+    "two_block_c3": {
+      "original": {
+        "architecture_contract_sha256": "630c56cb9a5c86664476702aee182c0ab31862b62bc6cde248bcd326af33fe37",
+        "generation_fingerprint": "b6a68f69f79170e464e04d91baea9f2999bc6690df4584ea9095743880008b70",
+        "implementation_sha256": "ef1ff40eae083ae16c2e3000f234058708f07f32b97b1cc8e28ec28762b0794c"
+      },
+      "repeat": {
+        "architecture_contract_sha256": "630c56cb9a5c86664476702aee182c0ab31862b62bc6cde248bcd326af33fe37",
+        "generation_fingerprint": "b6a68f69f79170e464e04d91baea9f2999bc6690df4584ea9095743880008b70",
+        "implementation_sha256": "ef1ff40eae083ae16c2e3000f234058708f07f32b97b1cc8e28ec28762b0794c"
+      },
+      "compilation_inputs_identical": true,
+      "host_stamp_only_differences": [
+        "build_lib.sh",
+        "hls4ml_config.yml"
+      ],
+      "selected_candidate_identical": true,
+      "original_plan_sha256": "6a62dfbff62305f4cfccb7a1c0fc36b4c9df66e0dfe68869ea415d3900daed28",
+      "repeat_plan_sha256": "04e0288327626456b8e9f4b64306bfe88b52c2c99137c1ffc617a7b22fc9182f",
+      "note": "Search diagnostics changed after vendor qualification; hardware sources, test vectors, vendor build inputs, selected architecture and generation fingerprint are byte-identical. Only the host library stamp can differ."
+    },
+    "heldout": {
+      "original": {
+        "architecture_contract_sha256": "c2b0c841eaf9a9f1379c8ad271c41c36a5af38a8579ed50ec51dd7c42e943d3f",
+        "generation_fingerprint": "fa91258dbfd33ec4ab7713dd10a4afd4f82f525eeb4f2e8471e2c10296d5bf40",
+        "implementation_sha256": "f29dc9060c44d45fd503a87579507967a0a178a57a09dcafa3f5fb98f489eea4"
+      },
+      "repeat": {
+        "architecture_contract_sha256": "c2b0c841eaf9a9f1379c8ad271c41c36a5af38a8579ed50ec51dd7c42e943d3f",
+        "generation_fingerprint": "fa91258dbfd33ec4ab7713dd10a4afd4f82f525eeb4f2e8471e2c10296d5bf40",
+        "implementation_sha256": "f29dc9060c44d45fd503a87579507967a0a178a57a09dcafa3f5fb98f489eea4"
+      },
+      "compilation_inputs_identical": true,
+      "host_stamp_only_differences": [
+        "build_lib.sh",
+        "hls4ml_config.yml"
+      ],
+      "selected_candidate_identical": true,
+      "original_plan_sha256": "54f92210e77267a98210274095f9e67c11d6b57e3449c5816e620307f945db59",
+      "repeat_plan_sha256": "b6f378e54d707bfa9b304688582b1b86f37277225ec47e5c0fd6352ceb30dc8c",
+      "note": "Search diagnostics changed after vendor qualification; hardware sources, test vectors, vendor build inputs, selected architecture and generation fingerprint are byte-identical. Only the host library stamp can differ."
+    },
+    "legacy_p2d2": {
+      "original": {
+        "architecture_contract_sha256": "f4675646f05c2d095b7c9ce14f76fcac23a7b2fbe03047b22b00df777431f940",
+        "generation_fingerprint": "f9b5057fb3932a656f8597c4c7dd7307fed12561d72f51ec0b3d82f2edf6d78d",
+        "implementation_sha256": "10214492846d216fcae869526020e8c1477a764a9329b70afe9a0c8cc648f5d8"
+      },
+      "repeat": {
+        "architecture_contract_sha256": "f4675646f05c2d095b7c9ce14f76fcac23a7b2fbe03047b22b00df777431f940",
+        "generation_fingerprint": "f9b5057fb3932a656f8597c4c7dd7307fed12561d72f51ec0b3d82f2edf6d78d",
+        "implementation_sha256": "10214492846d216fcae869526020e8c1477a764a9329b70afe9a0c8cc648f5d8"
+      },
+      "compilation_inputs_identical": true,
+      "host_stamp_only_differences": [],
+      "selected_candidate_identical": true,
+      "original_plan_sha256": "61c322642a3082b00ecbd62f565bc577edcf44f1da0a7b7dde9120ec6f87b5d9",
+      "repeat_plan_sha256": "61c322642a3082b00ecbd62f565bc577edcf44f1da0a7b7dde9120ec6f87b5d9",
+      "note": "Search diagnostics changed after vendor qualification; hardware sources, test vectors, vendor build inputs, selected architecture and generation fingerprint are byte-identical. Only the host library stamp can differ."
+    }
+  }
+}

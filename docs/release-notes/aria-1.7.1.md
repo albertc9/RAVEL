@@ -1,19 +1,21 @@
 # Aria v1.7.1
 
-Draft for the planned release. The wording below describes intended scope;
-implementation and qualification are pending.
+Prepared release notes; this development work does not publish a release.
 
 ## What's New
 
-Aria 1.7.1 introduces automatic optimization search for multi-convolution
-streaming designs, exploring schedules and parallelism within the selected
-P/D configuration.
+Aria 1.7.1 adds automatic analytical optimization search for two-block streaming
+models while preserving the selected P/D configuration.
 
-- Derives convolution schedules and parallelism candidates from model geometry
-  and data dependencies.
-- Optimizes stream packing and stage throughput together to reduce whole-model
-  bottlenecks.
-- Records the selected implementation, search decisions, and validation evidence
-  for reproducible conversion.
+- Derives window schedules and position parallelism from model geometry, with
+  calibrated selection and optional per-core resource limits.
+- Records candidates, estimates and selection reasons, and preserves recorded
+  architectures during parameter refresh.
+- Reduces the qualified F12 target's II from 844 to 124 at 5 ns, using additional
+  LUT and FF. Existing single-block performance remains unchanged.
 
-Performance comparisons will be added after paired qualification.
+Normal conversion performs software search. Vendor synthesis and routed timing
+remain separate, explicit qualification steps. See the
+[scope](../design/aria-1.7.1-optimization-search.md) and
+[measured qualification](../../references/qualification/aria_1_7_1_search/README.md)
+for supported coverage and resource tradeoffs.

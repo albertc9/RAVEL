@@ -1,0 +1,4533 @@
+{
+  "architecture_contract_sha256": "630c56cb9a5c86664476702aee182c0ab31862b62bc6cde248bcd326af33fe37",
+  "architecture_envelope": {
+    "bridges": [],
+    "components": {
+      "bridge_strategies": [
+        {
+          "id": "lossless-stream-repack",
+          "version": 2
+        }
+      ],
+      "cost_policy": {
+        "calibration_profile": {
+          "clock_period_ns": 5,
+          "evidence": "references/qualification/aria_1_7_1_search/calibration.json",
+          "id": "ku5p-captured-window-2023.2",
+          "part": "xcku5p-ffvb676-2-e",
+          "status": "predicted",
+          "tool": "Vitis HLS 2023.2",
+          "version": 1
+        },
+        "id": "aria-stream-search",
+        "version": 1
+      },
+      "stage_strategies": [
+        {
+          "id": "aria-wide-stream",
+          "version": 2
+        },
+        {
+          "id": "phara",
+          "version": 1
+        },
+        {
+          "id": "hls4ml-temporal-block",
+          "version": 1
+        },
+        {
+          "id": "aria-window-stream",
+          "version": 1
+        },
+        {
+          "id": "identity-layout-view",
+          "version": 1
+        },
+        {
+          "id": "aria-dense-wide",
+          "version": 1
+        }
+      ]
+    },
+    "control": {
+      "protocol": "ap_ctrl_hs",
+      "reset": {
+        "abort": "discard-in-flight",
+        "level": "active-low",
+        "scope": "all-registers"
+      }
+    },
+    "cost_policy": {
+      "calibration_profile": {
+        "clock_period_ns": 5,
+        "evidence": "references/qualification/aria_1_7_1_search/calibration.json",
+        "id": "ku5p-captured-window-2023.2",
+        "part": "xcku5p-ffvb676-2-e",
+        "status": "predicted",
+        "tool": "Vitis HLS 2023.2",
+        "version": 1
+      },
+      "id": "aria-stream-search",
+      "version": 1
+    },
+    "delegation": {
+      "hls4ml_version": "1.2.0",
+      "policy": "native-latency-v1",
+      "settings": {
+        "ReuseFactor": 1,
+        "Strategy": "Latency"
+      }
+    },
+    "generation": {
+      "id": "aria",
+      "version": "1.7.1"
+    },
+    "implementation_plan": {
+      "channels_per_row": 2,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 18,
+      "dense_parallelism": 1,
+      "dense_steps": 6,
+      "filter_lanes": 3,
+      "first_convolution": {
+        "id": "full-width-latency",
+        "multiplier_limit": 18,
+        "parallel_windows": 2,
+        "products_per_window": 9,
+        "schedule": {
+          "first_window_end": 2,
+          "id": "next-window-end",
+          "input_words": 32,
+          "last_window_end": 62,
+          "maximum_outputs_per_input_word": 1,
+          "output_rows": 31,
+          "status": "proven",
+          "version": 1
+        },
+        "target_loop_ii": 1,
+        "version": 1
+      },
+      "input_words_per_inference": 32,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p2-d1-v4",
+      "temporal_pack": 2,
+      "values_per_input_word": 4,
+      "values_per_internal_word": 6,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 6,
+        "id": "wide-sequential",
+        "mac_lanes": 3,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 3
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 7,
+        "version": 1,
+        "word_bits": 15
+      },
+      "width_lanes": 2
+    },
+    "interfaces": {
+      "hls_stream": {
+        "input_rows_per_word": 2,
+        "input_words_per_inference": 32,
+        "values_per_input_word": 4
+      },
+      "logical": {
+        "input_shape": [
+          64,
+          2,
+          1
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl": {
+        "input_tdata_bits": 64,
+        "output_tdata_bits": 32
+      }
+    },
+    "model_family": {
+      "id": "hgq-temporal-block-chain",
+      "version": 1
+    },
+    "model_structure_sha256": "210cd2166c665f8cf4d6796719a371d655ecfa07e3f6d324bf824135e9f92b06",
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 32,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 2
+          },
+          "role": "bias",
+          "shape": [
+            3
+          ]
+        },
+        "id": "conv2d_0:bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "weight",
+          "shape": [
+            3,
+            1,
+            1,
+            3
+          ]
+        },
+        "id": "conv2d_0:weight"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 32,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 2
+          },
+          "role": "bias",
+          "shape": [
+            3
+          ]
+        },
+        "id": "conv2d_1:bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "weight",
+          "shape": [
+            3,
+            1,
+            3,
+            3
+          ]
+        },
+        "id": "conv2d_1:weight"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 32,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 2
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "weight",
+          "shape": [
+            18,
+            1
+          ]
+        },
+        "id": "dense_0:weight"
+      }
+    ],
+    "passes": [
+      {
+        "id": "pack-temporal-input",
+        "order": 1,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "order": 2,
+        "result": "applied",
+        "version": 2
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "order": 3,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "order": 4,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "order": 5,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "order": 6,
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "order": 7,
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "rendering": {
+      "dense_filter_lanes": 3,
+      "first_convolution_function": "first_conv_2row_4lane_temporal_wide_cl",
+      "native_operations": {
+        "conv2d_0": {
+          "config_symbol": "config3",
+          "input_symbol": "renamed_input",
+          "native_call": "nnet::conv_2d_cl<renamed_input_t, renamed_conv_0_t, config3>(renamed_input, layer3_out, w3, b3);",
+          "output_precision_cpp": "ap_fixed<13,5>",
+          "output_shape": [
+            31,
+            2,
+            3
+          ],
+          "output_symbol": "layer3_out",
+          "output_type": "renamed_conv_0_t"
+        },
+        "conv2d_1": {
+          "config_symbol": "config7",
+          "input_symbol": "layer5_out",
+          "native_call": "nnet::conv_2d_cl<renamed_pool_0_t, renamed_conv_1_t, config7>(layer5_out, layer7_out, w7, b7);",
+          "output_precision_cpp": "ap_fixed<15,7>",
+          "output_shape": [
+            7,
+            2,
+            3
+          ],
+          "output_symbol": "layer7_out",
+          "output_type": "renamed_conv_1_t"
+        },
+        "dense_0": {
+          "config_symbol": "config11",
+          "input_symbol": "layer10_out",
+          "native_call": "nnet::dense<renamed_pool_1_t, result_t, config11>(layer10_out, layer11_out, w11, b11);",
+          "output_precision_cpp": "ap_fixed<21,9>",
+          "output_shape": [
+            1
+          ],
+          "output_symbol": "layer11_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "config_symbol": "config1",
+          "input_symbol": null,
+          "native_call": null,
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_shape": [
+            64,
+            2,
+            1
+          ],
+          "output_symbol": "renamed_input",
+          "output_type": "renamed_input_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config5",
+          "input_symbol": "layer4_out",
+          "native_call": "nnet::pooling2d_cl<renamed_conv_0_relu_t, renamed_pool_0_t, config5>(layer4_out, layer5_out);",
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_shape": [
+            15,
+            2,
+            3
+          ],
+          "output_symbol": "layer5_out",
+          "output_type": "renamed_pool_0_t"
+        },
+        "max_pool2d_1": {
+          "config_symbol": "config9",
+          "input_symbol": "layer8_out",
+          "native_call": "nnet::pooling2d_cl<renamed_conv_1_relu_t, renamed_pool_1_t, config9>(layer8_out, layer9_out);",
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_shape": [
+            3,
+            2,
+            3
+          ],
+          "output_symbol": "layer9_out",
+          "output_type": "renamed_pool_1_t"
+        },
+        "relu_0": {
+          "config_symbol": "config4",
+          "input_symbol": "layer3_out",
+          "native_call": "nnet::relu<renamed_conv_0_t, renamed_conv_0_relu_t, relu_config4>(layer3_out, layer4_out);",
+          "output_precision_cpp": "ap_ufixed<12,4>",
+          "output_shape": [
+            31,
+            2,
+            3
+          ],
+          "output_symbol": "layer4_out",
+          "output_type": "renamed_conv_0_relu_t"
+        },
+        "relu_1": {
+          "config_symbol": "config8",
+          "input_symbol": "layer7_out",
+          "native_call": "nnet::relu<renamed_conv_1_t, renamed_conv_1_relu_t, relu_config8>(layer7_out, layer8_out);",
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_shape": [
+            7,
+            2,
+            3
+          ],
+          "output_symbol": "layer8_out",
+          "output_type": "renamed_conv_1_relu_t"
+        },
+        "reshape_0": {
+          "config_symbol": "config10",
+          "input_symbol": "layer9_out",
+          "native_call": null,
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_shape": [
+            18
+          ],
+          "output_symbol": "layer10_out",
+          "output_type": "renamed_pool_1_t"
+        }
+      },
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config3",
+          "output_precision_cpp": "ap_fixed<13,5>",
+          "output_symbol": "layer3_out",
+          "output_type": "renamed_conv_0_t"
+        },
+        "conv2d_1": {
+          "output_precision_cpp": "ap_fixed<15,7>",
+          "output_symbol": "layer7_out",
+          "output_type": "renamed_conv_1_t"
+        },
+        "dense_0": {
+          "config_symbol": "config11",
+          "output_precision_cpp": "ap_fixed<21,9>",
+          "output_symbol": "layer11_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "renamed_input",
+          "output_type": "renamed_input_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config5",
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer5_out",
+          "output_type": "renamed_pool_0_t"
+        },
+        "max_pool2d_1": {
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_symbol": "layer9_out",
+          "output_type": "renamed_pool_1_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config4",
+          "output_precision_cpp": "ap_ufixed<12,4>",
+          "output_symbol": "layer4_out",
+          "output_type": "renamed_conv_0_relu_t"
+        },
+        "relu_1": {
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_symbol": "layer8_out",
+          "output_type": "renamed_conv_1_relu_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_symbol": "layer10_out",
+          "output_type": "renamed_pool_1_t"
+        }
+      },
+      "streams": {
+        "activation": "layer4_out_x2",
+        "convolution": "layer3_out_x2",
+        "pooling": "layer5_out_x2"
+      },
+      "types": {
+        "activation_wide": "renamed_conv_0_relu_x2_t",
+        "convolution_wide": "renamed_conv_0_x2_t",
+        "input_wide": "renamed_input_x2_t",
+        "pooling_wide": "renamed_pool_0_x2_t"
+      }
+    },
+    "resolver": {
+      "id": "bounded-temporal-dp",
+      "version": 1
+    },
+    "schema_version": 1,
+    "semantic_stages": [
+      {
+        "dead_row_elimination": false,
+        "dropped_pool_rows": 1,
+        "kind": "temporal-block",
+        "logical_axes": [
+          "temporal",
+          "feature",
+          "channel"
+        ],
+        "operation_ids": [
+          "conv2d_0",
+          "relu_0",
+          "max_pool2d_0"
+        ]
+      },
+      {
+        "dead_row_elimination": false,
+        "dropped_pool_rows": 1,
+        "kind": "temporal-block",
+        "logical_axes": [
+          "temporal",
+          "feature",
+          "channel"
+        ],
+        "operation_ids": [
+          "conv2d_1",
+          "relu_1",
+          "max_pool2d_1"
+        ]
+      },
+      {
+        "input_shape": [
+          3,
+          2,
+          3
+        ],
+        "kind": "layout-view",
+        "mapping": {
+          "input": {
+            "axes": [
+              {
+                "extent": 3,
+                "name": "temporal",
+                "stride": 6
+              },
+              {
+                "extent": 2,
+                "name": "feature",
+                "stride": 3
+              },
+              {
+                "extent": 3,
+                "name": "channel",
+                "stride": 1
+              }
+            ],
+            "order": "C",
+            "scalar_count": 18
+          },
+          "output": {
+            "axes": [
+              {
+                "extent": 18,
+                "name": "flattened_feature",
+                "stride": 1
+              }
+            ],
+            "order": "C"
+          },
+          "owns_tokens": false,
+          "rule": "output_index_equals_input_scalar_index"
+        },
+        "operation_id": "reshape_0",
+        "operation_ids": [
+          "reshape_0"
+        ],
+        "order": "channels_last",
+        "output_shape": [
+          18
+        ]
+      },
+      {
+        "feature_order": "C",
+        "kind": "dense-head",
+        "operation_ids": [
+          "dense_0"
+        ],
+        "weight_axes": [
+          "flattened_feature",
+          "output"
+        ]
+      }
+    ],
+    "specialization": {
+      "dense_parallelism": 1,
+      "temporal_packing": 2
+    },
+    "stages": [
+      {
+        "estimate": {
+          "confidence": "analytical",
+          "cycles": 32,
+          "latency": 32,
+          "resource_proxy": 9,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 4,
+          "output_lanes": 6,
+          "reset": "discard-in-flight",
+          "source_owner": "legacy-template-adapter",
+          "storage": "selected-legacy-streaming-plan"
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 4,
+          "numeric": {
+            "integer": 5,
+            "kind": "fixed",
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            64,
+            2,
+            1
+          ],
+          "tail_valid_lanes": 4,
+          "tensor_id": "input_0:out0",
+          "words": 32
+        },
+        "operation_ids": [
+          "conv2d_0",
+          "relu_0",
+          "max_pool2d_0"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 5,
+            "kind": "fixed",
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            15,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_0:out0",
+          "words": 15
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 1,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 3,
+          "id": "complete-window-dependencies",
+          "input_words": 32,
+          "output_words": 15,
+          "production_after_input_words": [
+            3,
+            5,
+            7,
+            9,
+            11,
+            13,
+            15,
+            17,
+            19,
+            21,
+            23,
+            25,
+            27,
+            29,
+            31
+          ],
+          "rational_rate": [
+            15,
+            32
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": true,
+        "strategy": {
+          "id": "aria-wide-stream",
+          "version": 2
+        }
+      },
+      {
+        "estimate": {
+          "confidence": "calibrated",
+          "cycles": 31,
+          "latency": 15,
+          "resource_proxy": 54,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 6,
+          "output_lanes": 6,
+          "reset": "discard-in-flight",
+          "source_owner": "captured-window-positions",
+          "storage": "partitioned-row-history-and-local-window"
+        },
+        "implementation": {
+          "arithmetic_order": "kernel-channel-filter",
+          "channels": 3,
+          "convolution_rows": 7,
+          "drains_complete_frame": true,
+          "filters": 3,
+          "id": "captured-window-positions",
+          "input_rows": 15,
+          "input_words": 15,
+          "kernel_rows": 3,
+          "output_rows": 3,
+          "pool_rows": 2,
+          "positions": 2,
+          "storage": "partitioned-row-history-and-local-window",
+          "stride_rows": 2,
+          "target_loop_ii": 1,
+          "version": 1,
+          "width": 2
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 5,
+            "kind": "fixed",
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            15,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_0:out0",
+          "words": 15
+        },
+        "operation_ids": [
+          "conv2d_1",
+          "relu_1",
+          "max_pool2d_1"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            3,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_1:out0",
+          "words": 3
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 2,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 5,
+          "id": "complete-window-dependencies",
+          "input_words": 15,
+          "output_words": 3,
+          "production_after_input_words": [
+            5,
+            9,
+            13
+          ],
+          "rational_rate": [
+            1,
+            5
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": true,
+        "strategy": {
+          "id": "aria-window-stream",
+          "version": 1
+        }
+      },
+      {
+        "estimate": {
+          "confidence": "analytical",
+          "cycles": 0,
+          "latency": 0,
+          "resource_proxy": 0,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 6,
+          "output_lanes": 6,
+          "reset": "discard-in-flight",
+          "source_owner": "compose-top-and-contracts",
+          "storage": "zero-alias"
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            3,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_1:out0",
+          "words": 3
+        },
+        "operation_ids": [
+          "reshape_0"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            18
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "reshape_0:out0",
+          "words": 3
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 0,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 1,
+          "id": "complete-window-dependencies",
+          "input_words": 3,
+          "output_words": 3,
+          "production_after_input_words": [
+            1,
+            2,
+            3
+          ],
+          "rational_rate": [
+            1,
+            1
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": false,
+        "strategy": {
+          "id": "identity-layout-view",
+          "version": 1
+        }
+      },
+      {
+        "estimate": {
+          "confidence": "analytical",
+          "cycles": 6,
+          "latency": 6,
+          "resource_proxy": 3,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 6,
+          "output_lanes": 1,
+          "reset": "discard-in-flight",
+          "source_owner": "legacy-template-adapter",
+          "storage": "dense-rom-packing-and-accumulator"
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            18
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "reshape_0:out0",
+          "words": 3
+        },
+        "operation_ids": [
+          "dense_0"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 1,
+          "numeric": {
+            "integer": 9,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 21
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            1
+          ],
+          "tail_valid_lanes": 1,
+          "tensor_id": "dense_0:out0",
+          "words": 1
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 0,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 3,
+          "id": "complete-window-dependencies",
+          "input_words": 3,
+          "output_words": 1,
+          "production_after_input_words": [
+            3
+          ],
+          "rational_rate": [
+            1,
+            3
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": true,
+        "strategy": {
+          "id": "aria-dense-wide",
+          "version": 1
+        }
+      }
+    ],
+    "strategy": {
+      "id": "aria-composed",
+      "version": 1
+    },
+    "streaming": {
+      "fifo_depth_words": 4,
+      "liveness_proof": {
+        "argument": "finite matched token counts, positive FIFO capacity, no feedback edges",
+        "assumptions": [
+          "eventual-input",
+          "eventual-output-ready"
+        ],
+        "id": "linear-blocking-chain",
+        "version": 1
+      }
+    }
+  },
+  "architecture_envelope_sha256": "630c56cb9a5c86664476702aee182c0ab31862b62bc6cde248bcd326af33fe37",
+  "coefficient_realization": null,
+  "coefficient_realization_sha256": null,
+  "configuration_sha256": "d89d02d99f724539e7e74b69734a49c2d4434d46b9f46ded6692197c54b4ed75",
+  "dependencies": {
+    "Jinja2": {
+      "installed": "3.1.6",
+      "required": "==3.1.6",
+      "status": "qualified"
+    },
+    "PyYAML": {
+      "installed": "6.0.3",
+      "required": "==6.0.3",
+      "status": "qualified"
+    },
+    "hgq2": {
+      "installed": "0.1.7",
+      "required": "==0.1.7",
+      "status": "qualified"
+    },
+    "hls4ml": {
+      "installed": "1.2.0",
+      "required": "==1.2.0",
+      "status": "qualified"
+    },
+    "keras": {
+      "installed": "3.12.1",
+      "required": "==3.12.1",
+      "status": "qualified"
+    },
+    "numpy": {
+      "installed": "1.26.4",
+      "required": "==1.26.4",
+      "status": "qualified"
+    },
+    "quantizers": {
+      "installed": "1.2.2",
+      "required": "==1.2.2",
+      "status": "qualified"
+    }
+  },
+  "generated_plan_sha256": "6a62dfbff62305f4cfccb7a1c0fc36b4c9df66e0dfe68869ea415d3900daed28",
+  "generation_configuration": {
+    "hls4ml": {
+      "Backend": "Vitis",
+      "ClockPeriod": 5.0,
+      "IOType": "io_stream",
+      "Part": "xcku5p-ffvb676-2-e",
+      "ProjectName": "two_block_c3",
+      "ReuseFactor": 1,
+      "Strategy": "Latency"
+    },
+    "ravel": {
+      "Optimization": {
+        "DenseParallelism": 1,
+        "TemporalPacking": 2
+      },
+      "OptimizationPolicy": "aria-aggressive-phara-v1",
+      "Profile": "aria"
+    }
+  },
+  "generation_fingerprint": "b6a68f69f79170e464e04d91baea9f2999bc6690df4584ea9095743880008b70",
+  "implementation_plan": {
+    "channels_per_row": 2,
+    "dataflow_start_propagation": false,
+    "dense_inputs": 18,
+    "dense_parallelism": 1,
+    "dense_steps": 6,
+    "filter_lanes": 3,
+    "first_convolution": {
+      "id": "full-width-latency",
+      "multiplier_limit": 18,
+      "parallel_windows": 2,
+      "products_per_window": 9,
+      "schedule": {
+        "first_window_end": 2,
+        "id": "next-window-end",
+        "input_words": 32,
+        "last_window_end": 62,
+        "maximum_outputs_per_input_word": 1,
+        "output_rows": 31,
+        "status": "proven",
+        "version": 1
+      },
+      "target_loop_ii": 1,
+      "version": 1
+    },
+    "input_words_per_inference": 32,
+    "internal_fifo_depth": 4,
+    "template_profile": "aria-p2-d1-v4",
+    "temporal_pack": 2,
+    "values_per_input_word": 4,
+    "values_per_internal_word": 6,
+    "weight_delivery": {
+      "accumulation": {
+        "policy": "ordered"
+      },
+      "applicability": {
+        "reasons": [],
+        "status": "applicable"
+      },
+      "depth": 6,
+      "id": "wide-sequential",
+      "mac_lanes": 3,
+      "multipliers": {
+        "implementation": "dsp",
+        "instances": 3
+      },
+      "storage": {
+        "implementation": "bram",
+        "type": "rom_1p"
+      },
+      "tail_elements": 0,
+      "tail_mask": 7,
+      "version": 1,
+      "word_bits": 15
+    },
+    "width_lanes": 2
+  },
+  "implementation_sha256": "ef1ff40eae083ae16c2e3000f234058708f07f32b97b1cc8e28ec28762b0794c",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 2,
+      "input_rows_per_word": 2,
+      "input_scalar_bits": 9,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 21,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 4
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        64,
+        2,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 9,
+        "input_tdata_bits": 64,
+        "input_tdata_port": "renamed_input_TDATA",
+        "output_scalar_bits": 21,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer11_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "normalized_configuration": {
+    "hls4ml": {
+      "Backend": "Vitis",
+      "ClockPeriod": 5.0,
+      "IOType": "io_stream",
+      "Part": "xcku5p-ffvb676-2-e",
+      "ProjectName": "two_block_c3",
+      "ReuseFactor": 1,
+      "Strategy": "Latency"
+    },
+    "ravel": {
+      "HLS": {
+        "Backend": "Vitis",
+        "ClockPeriod": 5.0,
+        "Config": {
+          "LayerName": {
+            "renamed_conv_0": {
+              "ConvImplementation": "LineBuffer",
+              "ParallelizationFactor": 1,
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "renamed_conv_0_iq": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "renamed_conv_0_relu": {
+              "Precision": {
+                "result": "auto",
+                "table": "fixed<18,8,TRN,WRAP,0>"
+              },
+              "ReuseFactor": 1,
+              "TableSize": 1024,
+              "Trace": false
+            },
+            "renamed_conv_1": {
+              "ConvImplementation": "LineBuffer",
+              "ParallelizationFactor": 1,
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "renamed_conv_1_iq": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "renamed_conv_1_relu": {
+              "Precision": {
+                "result": "auto",
+                "table": "fixed<18,8,TRN,WRAP,0>"
+              },
+              "ReuseFactor": 1,
+              "TableSize": 1024,
+              "Trace": false
+            },
+            "renamed_head": {
+              "Precision": {
+                "accum": "auto",
+                "bias": "auto",
+                "result": "auto",
+                "weight": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "renamed_input": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            },
+            "renamed_pool_0": {
+              "ConvImplementation": "LineBuffer",
+              "Precision": {
+                "accum": "auto",
+                "result": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "renamed_pool_1": {
+              "ConvImplementation": "LineBuffer",
+              "Precision": {
+                "accum": "auto",
+                "result": "auto"
+              },
+              "ReuseFactor": 1,
+              "Trace": false
+            },
+            "renamed_view": {
+              "Precision": {
+                "result": "auto"
+              },
+              "Trace": false
+            }
+          },
+          "Model": {
+            "BitExact": null,
+            "BramFactor": 1000000000,
+            "Precision": {
+              "default": "fixed<16,6>"
+            },
+            "ReuseFactor": 1,
+            "Strategy": "Latency",
+            "TraceOutput": false
+          }
+        },
+        "IOType": "io_stream",
+        "Part": "xcku5p-ffvb676-2-e"
+      },
+      "Optimization": {
+        "DenseParallelism": 1,
+        "TemporalPacking": 2
+      },
+      "Project": {
+        "ForceReplace": false,
+        "Name": "two_block_c3",
+        "OutputDir": "."
+      },
+      "Verification": {
+        "Mode": "required",
+        "Samples": 32
+      },
+      "Vitis": {
+        "Run": false,
+        "Stages": {
+          "CSim": true,
+          "CoSim": true,
+          "Export": false,
+          "Reset": true,
+          "Synth": true,
+          "VSynth": false,
+          "Validation": false
+        }
+      }
+    }
+  },
+  "pipeline": {
+    "passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "8ee8b55adb67af4d63739064739f4deb66efa49535cff5afa508c0aaa76d5c34",
+        "order": 1,
+        "output_design_sha256": "fbf1933661bee36c8e097bce0e945a524ae34852d6e3255992ef424c1e1ae5db",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "fbf1933661bee36c8e097bce0e945a524ae34852d6e3255992ef424c1e1ae5db",
+        "order": 2,
+        "output_design_sha256": "1fb58ec15b780b9f947fdddf16bcad58a97accc378746c95048aba00eec22cae",
+        "result": "applied",
+        "version": 2
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "1fb58ec15b780b9f947fdddf16bcad58a97accc378746c95048aba00eec22cae",
+        "order": 3,
+        "output_design_sha256": "ea7a97f9c484461d6c9ed89cd4933e3b4f3ab7019375e2df94a96881a6fd5090",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "ea7a97f9c484461d6c9ed89cd4933e3b4f3ab7019375e2df94a96881a6fd5090",
+        "order": 4,
+        "output_design_sha256": "a20b8eab3dc382945d81fb8bc33b03214166cdbc27658dcce4f53dc7493f9937",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "a20b8eab3dc382945d81fb8bc33b03214166cdbc27658dcce4f53dc7493f9937",
+        "order": 5,
+        "output_design_sha256": "a8d610b98d1ab8e45b5e1a7fa8e8c628d8bdec8ee2b4ede2b3c9c8c2189a7a9a",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "a8d610b98d1ab8e45b5e1a7fa8e8c628d8bdec8ee2b4ede2b3c9c8c2189a7a9a",
+        "order": 6,
+        "output_design_sha256": "7c65b2f4bce6714b0044878afc48c064b3f90a68c26a5a951bf6d2fb41b55f59",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "7c65b2f4bce6714b0044878afc48c064b3f90a68c26a5a951bf6d2fb41b55f59",
+        "order": 7,
+        "output_design_sha256": "e9f1a92acd2a2946869bf5a03ee30501b85dab479c60e6aee0ad4768b76f3bf4",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "phases": [
+      "ValidateProfile",
+      "GenerateBaseline",
+      "BuildIR",
+      "ApplyAriaPasses",
+      "RenderProject",
+      "ValidateProject",
+      "PromoteProject"
+    ]
+  },
+  "profile": {
+    "generation": {
+      "id": "aria",
+      "version": "1.7.1"
+    },
+    "model_family": {
+      "id": "hgq-temporal-block-chain",
+      "version": 1
+    }
+  },
+  "ravel": {
+    "generation": "Aria",
+    "package_version": "1.0.0.dev19+g17de15f94",
+    "product": "RAVEL",
+    "release": "1.7.1"
+  },
+  "resolved_design": {
+    "bridges": [],
+    "components": {
+      "bridge_strategies": [
+        {
+          "id": "lossless-stream-repack",
+          "version": 2
+        }
+      ],
+      "cost_policy": {
+        "calibration_profile": {
+          "clock_period_ns": 5,
+          "evidence": "references/qualification/aria_1_7_1_search/calibration.json",
+          "id": "ku5p-captured-window-2023.2",
+          "part": "xcku5p-ffvb676-2-e",
+          "status": "predicted",
+          "tool": "Vitis HLS 2023.2",
+          "version": 1
+        },
+        "id": "aria-stream-search",
+        "version": 1
+      },
+      "stage_strategies": [
+        {
+          "id": "aria-wide-stream",
+          "version": 2
+        },
+        {
+          "id": "phara",
+          "version": 1
+        },
+        {
+          "id": "hls4ml-temporal-block",
+          "version": 1
+        },
+        {
+          "id": "aria-window-stream",
+          "version": 1
+        },
+        {
+          "id": "identity-layout-view",
+          "version": 1
+        },
+        {
+          "id": "aria-dense-wide",
+          "version": 1
+        }
+      ]
+    },
+    "control": {
+      "protocol": "ap_ctrl_hs",
+      "reset": {
+        "abort": "discard-in-flight",
+        "level": "active-low",
+        "scope": "all-registers"
+      }
+    },
+    "delegation": {
+      "hls4ml_version": "1.2.0",
+      "policy": "native-latency-v1",
+      "settings": {
+        "ReuseFactor": 1,
+        "Strategy": "Latency"
+      }
+    },
+    "executed_passes": [
+      {
+        "id": "pack-temporal-input",
+        "input_design_sha256": "8ee8b55adb67af4d63739064739f4deb66efa49535cff5afa508c0aaa76d5c34",
+        "order": 1,
+        "output_design_sha256": "fbf1933661bee36c8e097bce0e945a524ae34852d6e3255992ef424c1e1ae5db",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "fuse-repack-into-first-conv",
+        "input_design_sha256": "fbf1933661bee36c8e097bce0e945a524ae34852d6e3255992ef424c1e1ae5db",
+        "order": 2,
+        "output_design_sha256": "1fb58ec15b780b9f947fdddf16bcad58a97accc378746c95048aba00eec22cae",
+        "result": "applied",
+        "version": 2
+      },
+      {
+        "id": "propagate-wide-relu-stream",
+        "input_design_sha256": "1fb58ec15b780b9f947fdddf16bcad58a97accc378746c95048aba00eec22cae",
+        "order": 3,
+        "output_design_sha256": "ea7a97f9c484461d6c9ed89cd4933e3b4f3ab7019375e2df94a96881a6fd5090",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "specialize-nonoverlapping-maxpool",
+        "input_design_sha256": "ea7a97f9c484461d6c9ed89cd4933e3b4f3ab7019375e2df94a96881a6fd5090",
+        "order": 4,
+        "output_design_sha256": "a20b8eab3dc382945d81fb8bc33b03214166cdbc27658dcce4f53dc7493f9937",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "stream-flatten-into-dense",
+        "input_design_sha256": "a20b8eab3dc382945d81fb8bc33b03214166cdbc27658dcce4f53dc7493f9937",
+        "order": 5,
+        "output_design_sha256": "a8d610b98d1ab8e45b5e1a7fa8e8c628d8bdec8ee2b4ede2b3c9c8c2189a7a9a",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "bind-shallow-internal-fifos",
+        "input_design_sha256": "a8d610b98d1ab8e45b5e1a7fa8e8c628d8bdec8ee2b4ede2b3c9c8c2189a7a9a",
+        "order": 6,
+        "output_design_sha256": "7c65b2f4bce6714b0044878afc48c064b3f90a68c26a5a951bf6d2fb41b55f59",
+        "result": "applied",
+        "version": 1
+      },
+      {
+        "id": "elide-dataflow-start-propagation",
+        "input_design_sha256": "7c65b2f4bce6714b0044878afc48c064b3f90a68c26a5a951bf6d2fb41b55f59",
+        "order": 7,
+        "output_design_sha256": "e9f1a92acd2a2946869bf5a03ee30501b85dab479c60e6aee0ad4768b76f3bf4",
+        "result": "applied",
+        "version": 1
+      }
+    ],
+    "generation": {
+      "id": "aria",
+      "version": "1.7.1"
+    },
+    "implementation_plan": {
+      "channels_per_row": 2,
+      "dataflow_start_propagation": false,
+      "dense_inputs": 18,
+      "dense_parallelism": 1,
+      "dense_steps": 6,
+      "filter_lanes": 3,
+      "first_convolution": {
+        "id": "full-width-latency",
+        "multiplier_limit": 18,
+        "parallel_windows": 2,
+        "products_per_window": 9,
+        "schedule": {
+          "first_window_end": 2,
+          "id": "next-window-end",
+          "input_words": 32,
+          "last_window_end": 62,
+          "maximum_outputs_per_input_word": 1,
+          "output_rows": 31,
+          "status": "proven",
+          "version": 1
+        },
+        "target_loop_ii": 1,
+        "version": 1
+      },
+      "input_words_per_inference": 32,
+      "internal_fifo_depth": 4,
+      "template_profile": "aria-p2-d1-v4",
+      "temporal_pack": 2,
+      "values_per_input_word": 4,
+      "values_per_internal_word": 6,
+      "weight_delivery": {
+        "accumulation": {
+          "policy": "ordered"
+        },
+        "applicability": {
+          "reasons": [],
+          "status": "applicable"
+        },
+        "depth": 6,
+        "id": "wide-sequential",
+        "mac_lanes": 3,
+        "multipliers": {
+          "implementation": "dsp",
+          "instances": 3
+        },
+        "storage": {
+          "implementation": "bram",
+          "type": "rom_1p"
+        },
+        "tail_elements": 0,
+        "tail_mask": 7,
+        "version": 1,
+        "word_bits": 15
+      },
+      "width_lanes": 2
+    },
+    "interfaces": {
+      "hls_stream": {
+        "input_rows_per_word": 2,
+        "input_words_per_inference": 32,
+        "values_per_input_word": 4
+      },
+      "logical": {
+        "input_shape": [
+          64,
+          2,
+          1
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl": {
+        "input_tdata_bits": 64,
+        "output_tdata_bits": 32
+      }
+    },
+    "model_family": {
+      "id": "hgq-temporal-block-chain",
+      "version": 1
+    },
+    "optimization_search": {
+      "candidate_count": 3,
+      "candidates": [
+        {
+          "calibration_profile": null,
+          "confidence": "uncalibrated",
+          "id": "d82c1cd719652b5b23a72730a0c0725c02497e9e96d96f2492e501ce6e7ef382",
+          "predicted_frame_cycles": 32,
+          "rejection_reasons": [],
+          "resources": {
+            "policy": "conservative-structural-envelope-v1",
+            "status": "unknown",
+            "units": {
+              "BRAM": "18-Kib-blocks"
+            },
+            "values": {
+              "BRAM": null,
+              "DSP": null,
+              "FF": null,
+              "LUT": null
+            }
+          },
+          "schedule": null,
+          "strategies": [
+            "aria-wide-stream",
+            "hls4ml-temporal-block",
+            "identity-layout-view",
+            "aria-dense-wide"
+          ]
+        },
+        {
+          "calibration_profile": {
+            "clock_period_ns": 5,
+            "evidence": "references/qualification/aria_1_7_1_search/calibration.json",
+            "id": "ku5p-captured-window-2023.2",
+            "part": "xcku5p-ffvb676-2-e",
+            "status": "predicted",
+            "tool": "Vitis HLS 2023.2",
+            "version": 1
+          },
+          "confidence": "calibrated",
+          "id": "6901a34257c6a1d4d0d671a84105d195b71b1ff77aaf4c96700ab21783a88f70",
+          "predicted_frame_cycles": 51,
+          "rejection_reasons": [],
+          "resources": {
+            "policy": "conservative-structural-envelope-v1",
+            "status": "predicted",
+            "units": {
+              "BRAM": "18-Kib-blocks"
+            },
+            "values": {
+              "BRAM": 27,
+              "DSP": 48,
+              "FF": 5314,
+              "LUT": 11984
+            }
+          },
+          "schedule": {
+            "arithmetic_order": "kernel-channel-filter",
+            "channels": 3,
+            "convolution_rows": 7,
+            "drains_complete_frame": true,
+            "filters": 3,
+            "id": "captured-window-positions",
+            "input_rows": 15,
+            "input_words": 30,
+            "kernel_rows": 3,
+            "output_rows": 3,
+            "pool_rows": 2,
+            "positions": 1,
+            "storage": "partitioned-row-history-and-local-window",
+            "stride_rows": 2,
+            "target_loop_ii": 1,
+            "version": 1,
+            "width": 2
+          },
+          "strategies": [
+            "aria-wide-stream",
+            "aria-window-stream",
+            "identity-layout-view",
+            "aria-dense-wide"
+          ]
+        },
+        {
+          "calibration_profile": {
+            "clock_period_ns": 5,
+            "evidence": "references/qualification/aria_1_7_1_search/calibration.json",
+            "id": "ku5p-captured-window-2023.2",
+            "part": "xcku5p-ffvb676-2-e",
+            "status": "predicted",
+            "tool": "Vitis HLS 2023.2",
+            "version": 1
+          },
+          "confidence": "calibrated",
+          "id": "a690b1577e3a2358630283102c4caa99058ca5c7baa75a66995b882bf3aa7c98",
+          "predicted_frame_cycles": 49,
+          "rejection_reasons": [],
+          "resources": {
+            "policy": "conservative-structural-envelope-v1",
+            "status": "predicted",
+            "units": {
+              "BRAM": "18-Kib-blocks"
+            },
+            "values": {
+              "BRAM": 29,
+              "DSP": 75,
+              "FF": 6178,
+              "LUT": 14144
+            }
+          },
+          "schedule": {
+            "arithmetic_order": "kernel-channel-filter",
+            "channels": 3,
+            "convolution_rows": 7,
+            "drains_complete_frame": true,
+            "filters": 3,
+            "id": "captured-window-positions",
+            "input_rows": 15,
+            "input_words": 15,
+            "kernel_rows": 3,
+            "output_rows": 3,
+            "pool_rows": 2,
+            "positions": 2,
+            "storage": "partitioned-row-history-and-local-window",
+            "stride_rows": 2,
+            "target_loop_ii": 1,
+            "version": 1,
+            "width": 2
+          },
+          "strategies": [
+            "aria-wide-stream",
+            "aria-window-stream",
+            "identity-layout-view",
+            "aria-dense-wide"
+          ]
+        }
+      ],
+      "constraints": {
+        "clock_period_ns": 5.0,
+        "explicit_limits": {},
+        "limits_source": "device-capacity",
+        "part": "xcku5p-ffvb676-2-e",
+        "resource_limits": {
+          "BRAM": 960,
+          "DSP": 1824,
+          "FF": 433920,
+          "LUT": 216960
+        },
+        "status": "predicted-or-unknown"
+      },
+      "exploration": {
+        "bound_reasons": [],
+        "evaluated": 3,
+        "generated": 3,
+        "limit": 32
+      },
+      "mode": "analytical",
+      "optimality": "within-enumerated-calibrated-domain",
+      "performance_qualification": "not_run",
+      "policy": {
+        "id": "aria-stream-search",
+        "version": 1
+      },
+      "selected_candidate": "a690b1577e3a2358630283102c4caa99058ca5c7baa75a66995b882bf3aa7c98",
+      "selection_reason": "calibrated-predicted-frame-interval",
+      "status": "complete"
+    },
+    "parameter_bindings": [
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 32,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 2
+          },
+          "role": "bias",
+          "shape": [
+            3
+          ]
+        },
+        "id": "conv2d_0:bias",
+        "operation_id": "conv2d_0",
+        "role": "bias",
+        "symbol": "b3",
+        "type_name": "renamed_conv_0_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "weight",
+          "shape": [
+            3,
+            1,
+            1,
+            3
+          ]
+        },
+        "id": "conv2d_0:weight",
+        "operation_id": "conv2d_0",
+        "role": "weight",
+        "symbol": "w3",
+        "type_name": "renamed_conv_0_weight_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 32,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 2
+          },
+          "role": "bias",
+          "shape": [
+            3
+          ]
+        },
+        "id": "conv2d_1:bias",
+        "operation_id": "conv2d_1",
+        "role": "bias",
+        "symbol": "b7",
+        "type_name": "renamed_conv_1_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "weight",
+          "shape": [
+            3,
+            1,
+            3,
+            3
+          ]
+        },
+        "id": "conv2d_1:weight",
+        "operation_id": "conv2d_1",
+        "role": "weight",
+        "symbol": "w7",
+        "type_name": "renamed_conv_1_weight_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 32,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 2
+          },
+          "role": "bias",
+          "shape": [
+            1
+          ]
+        },
+        "id": "dense_0:bias",
+        "operation_id": "dense_0",
+        "role": "bias",
+        "symbol": "b11",
+        "type_name": "renamed_head_bias_t"
+      },
+      {
+        "descriptor": {
+          "numeric_type": {
+            "integer": 1,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 5
+          },
+          "role": "weight",
+          "shape": [
+            18,
+            1
+          ]
+        },
+        "id": "dense_0:weight",
+        "operation_id": "dense_0",
+        "role": "weight",
+        "symbol": "w11",
+        "type_name": "renamed_head_weight_t"
+      }
+    ],
+    "rendering": {
+      "dense_filter_lanes": 3,
+      "first_convolution_function": "first_conv_2row_4lane_temporal_wide_cl",
+      "native_operations": {
+        "conv2d_0": {
+          "config_symbol": "config3",
+          "input_symbol": "renamed_input",
+          "native_call": "nnet::conv_2d_cl<renamed_input_t, renamed_conv_0_t, config3>(renamed_input, layer3_out, w3, b3);",
+          "output_precision_cpp": "ap_fixed<13,5>",
+          "output_shape": [
+            31,
+            2,
+            3
+          ],
+          "output_symbol": "layer3_out",
+          "output_type": "renamed_conv_0_t"
+        },
+        "conv2d_1": {
+          "config_symbol": "config7",
+          "input_symbol": "layer5_out",
+          "native_call": "nnet::conv_2d_cl<renamed_pool_0_t, renamed_conv_1_t, config7>(layer5_out, layer7_out, w7, b7);",
+          "output_precision_cpp": "ap_fixed<15,7>",
+          "output_shape": [
+            7,
+            2,
+            3
+          ],
+          "output_symbol": "layer7_out",
+          "output_type": "renamed_conv_1_t"
+        },
+        "dense_0": {
+          "config_symbol": "config11",
+          "input_symbol": "layer10_out",
+          "native_call": "nnet::dense<renamed_pool_1_t, result_t, config11>(layer10_out, layer11_out, w11, b11);",
+          "output_precision_cpp": "ap_fixed<21,9>",
+          "output_shape": [
+            1
+          ],
+          "output_symbol": "layer11_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "config_symbol": "config1",
+          "input_symbol": null,
+          "native_call": null,
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_shape": [
+            64,
+            2,
+            1
+          ],
+          "output_symbol": "renamed_input",
+          "output_type": "renamed_input_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config5",
+          "input_symbol": "layer4_out",
+          "native_call": "nnet::pooling2d_cl<renamed_conv_0_relu_t, renamed_pool_0_t, config5>(layer4_out, layer5_out);",
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_shape": [
+            15,
+            2,
+            3
+          ],
+          "output_symbol": "layer5_out",
+          "output_type": "renamed_pool_0_t"
+        },
+        "max_pool2d_1": {
+          "config_symbol": "config9",
+          "input_symbol": "layer8_out",
+          "native_call": "nnet::pooling2d_cl<renamed_conv_1_relu_t, renamed_pool_1_t, config9>(layer8_out, layer9_out);",
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_shape": [
+            3,
+            2,
+            3
+          ],
+          "output_symbol": "layer9_out",
+          "output_type": "renamed_pool_1_t"
+        },
+        "relu_0": {
+          "config_symbol": "config4",
+          "input_symbol": "layer3_out",
+          "native_call": "nnet::relu<renamed_conv_0_t, renamed_conv_0_relu_t, relu_config4>(layer3_out, layer4_out);",
+          "output_precision_cpp": "ap_ufixed<12,4>",
+          "output_shape": [
+            31,
+            2,
+            3
+          ],
+          "output_symbol": "layer4_out",
+          "output_type": "renamed_conv_0_relu_t"
+        },
+        "relu_1": {
+          "config_symbol": "config8",
+          "input_symbol": "layer7_out",
+          "native_call": "nnet::relu<renamed_conv_1_t, renamed_conv_1_relu_t, relu_config8>(layer7_out, layer8_out);",
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_shape": [
+            7,
+            2,
+            3
+          ],
+          "output_symbol": "layer8_out",
+          "output_type": "renamed_conv_1_relu_t"
+        },
+        "reshape_0": {
+          "config_symbol": "config10",
+          "input_symbol": "layer9_out",
+          "native_call": null,
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_shape": [
+            18
+          ],
+          "output_symbol": "layer10_out",
+          "output_type": "renamed_pool_1_t"
+        }
+      },
+      "operations": {
+        "conv2d_0": {
+          "config_symbol": "config3",
+          "output_precision_cpp": "ap_fixed<13,5>",
+          "output_symbol": "layer3_out",
+          "output_type": "renamed_conv_0_t"
+        },
+        "conv2d_1": {
+          "output_precision_cpp": "ap_fixed<15,7>",
+          "output_symbol": "layer7_out",
+          "output_type": "renamed_conv_1_t"
+        },
+        "dense_0": {
+          "config_symbol": "config11",
+          "output_precision_cpp": "ap_fixed<21,9>",
+          "output_symbol": "layer11_out",
+          "output_type": "result_t"
+        },
+        "input_0": {
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "renamed_input",
+          "output_type": "renamed_input_t"
+        },
+        "max_pool2d_0": {
+          "config_symbol": "config5",
+          "output_precision_cpp": "ap_fixed<9,5,AP_RND,AP_SAT_SYM,0>",
+          "output_symbol": "layer5_out",
+          "output_type": "renamed_pool_0_t"
+        },
+        "max_pool2d_1": {
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_symbol": "layer9_out",
+          "output_type": "renamed_pool_1_t"
+        },
+        "relu_0": {
+          "config_symbol": "relu_config4",
+          "output_precision_cpp": "ap_ufixed<12,4>",
+          "output_symbol": "layer4_out",
+          "output_type": "renamed_conv_0_relu_t"
+        },
+        "relu_1": {
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_symbol": "layer8_out",
+          "output_type": "renamed_conv_1_relu_t"
+        },
+        "reshape_0": {
+          "output_precision_cpp": "ap_ufixed<14,6>",
+          "output_symbol": "layer10_out",
+          "output_type": "renamed_pool_1_t"
+        }
+      },
+      "streams": {
+        "activation": "layer4_out_x2",
+        "convolution": "layer3_out_x2",
+        "pooling": "layer5_out_x2"
+      },
+      "types": {
+        "activation_wide": "renamed_conv_0_relu_x2_t",
+        "convolution_wide": "renamed_conv_0_x2_t",
+        "input_wide": "renamed_input_x2_t",
+        "pooling_wide": "renamed_pool_0_x2_t"
+      }
+    },
+    "report_bindings": [
+      {
+        "functions": [
+          {
+            "name": "first_conv_2row_4lane_temporal_wide_cl"
+          },
+          {
+            "name": "maxpool2d_wide_nonoverlap_cl"
+          }
+        ],
+        "stage_id": "conv2d_0"
+      },
+      {
+        "functions": [
+          {
+            "config": "config7",
+            "name": "scheduled_conv"
+          },
+          {
+            "config": "relu_config8",
+            "name": "relu"
+          },
+          {
+            "config": "config9",
+            "name": "scheduled_pool"
+          }
+        ],
+        "stage_id": "conv2d_1"
+      },
+      {
+        "functions": [],
+        "realization": "zero-hardware-view",
+        "stage_id": "reshape_0"
+      },
+      {
+        "functions": [
+          {
+            "name": "dense_wide_stream"
+          }
+        ],
+        "stage_id": "dense_0"
+      }
+    ],
+    "resolved_design_sha256": "ca94244ca28f29bce914f49758b59a2f6dda37b52d89384de4c5f731b4a71bd8",
+    "resolver": {
+      "id": "bounded-temporal-dp",
+      "version": 1
+    },
+    "schema_version": 1,
+    "semantic_stages": [
+      {
+        "dead_row_elimination": false,
+        "dropped_pool_rows": 1,
+        "kind": "temporal-block",
+        "logical_axes": [
+          "temporal",
+          "feature",
+          "channel"
+        ],
+        "operation_ids": [
+          "conv2d_0",
+          "relu_0",
+          "max_pool2d_0"
+        ]
+      },
+      {
+        "dead_row_elimination": false,
+        "dropped_pool_rows": 1,
+        "kind": "temporal-block",
+        "logical_axes": [
+          "temporal",
+          "feature",
+          "channel"
+        ],
+        "operation_ids": [
+          "conv2d_1",
+          "relu_1",
+          "max_pool2d_1"
+        ]
+      },
+      {
+        "input_shape": [
+          3,
+          2,
+          3
+        ],
+        "kind": "layout-view",
+        "mapping": {
+          "input": {
+            "axes": [
+              {
+                "extent": 3,
+                "name": "temporal",
+                "stride": 6
+              },
+              {
+                "extent": 2,
+                "name": "feature",
+                "stride": 3
+              },
+              {
+                "extent": 3,
+                "name": "channel",
+                "stride": 1
+              }
+            ],
+            "order": "C",
+            "scalar_count": 18
+          },
+          "output": {
+            "axes": [
+              {
+                "extent": 18,
+                "name": "flattened_feature",
+                "stride": 1
+              }
+            ],
+            "order": "C"
+          },
+          "owns_tokens": false,
+          "rule": "output_index_equals_input_scalar_index"
+        },
+        "operation_id": "reshape_0",
+        "operation_ids": [
+          "reshape_0"
+        ],
+        "order": "channels_last",
+        "output_shape": [
+          18
+        ]
+      },
+      {
+        "feature_order": "C",
+        "kind": "dense-head",
+        "operation_ids": [
+          "dense_0"
+        ],
+        "weight_axes": [
+          "flattened_feature",
+          "output"
+        ]
+      }
+    ],
+    "specialization": {
+      "dense_parallelism": 1,
+      "temporal_packing": 2
+    },
+    "stages": [
+      {
+        "estimate": {
+          "confidence": "analytical",
+          "cycles": 32,
+          "latency": 32,
+          "resource_proxy": 9,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 4,
+          "output_lanes": 6,
+          "reset": "discard-in-flight",
+          "source_owner": "legacy-template-adapter",
+          "storage": "selected-legacy-streaming-plan"
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 4,
+          "numeric": {
+            "integer": 5,
+            "kind": "fixed",
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            64,
+            2,
+            1
+          ],
+          "tail_valid_lanes": 4,
+          "tensor_id": "input_0:out0",
+          "words": 32
+        },
+        "operation_ids": [
+          "conv2d_0",
+          "relu_0",
+          "max_pool2d_0"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 5,
+            "kind": "fixed",
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            15,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_0:out0",
+          "words": 15
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 1,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 3,
+          "id": "complete-window-dependencies",
+          "input_words": 32,
+          "output_words": 15,
+          "production_after_input_words": [
+            3,
+            5,
+            7,
+            9,
+            11,
+            13,
+            15,
+            17,
+            19,
+            21,
+            23,
+            25,
+            27,
+            29,
+            31
+          ],
+          "rational_rate": [
+            15,
+            32
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": true,
+        "strategy": {
+          "id": "aria-wide-stream",
+          "version": 2
+        }
+      },
+      {
+        "estimate": {
+          "confidence": "calibrated",
+          "cycles": 31,
+          "latency": 15,
+          "resource_proxy": 54,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 6,
+          "output_lanes": 6,
+          "reset": "discard-in-flight",
+          "source_owner": "captured-window-positions",
+          "storage": "partitioned-row-history-and-local-window"
+        },
+        "implementation": {
+          "arithmetic_order": "kernel-channel-filter",
+          "channels": 3,
+          "convolution_rows": 7,
+          "drains_complete_frame": true,
+          "filters": 3,
+          "id": "captured-window-positions",
+          "input_rows": 15,
+          "input_words": 15,
+          "kernel_rows": 3,
+          "output_rows": 3,
+          "pool_rows": 2,
+          "positions": 2,
+          "storage": "partitioned-row-history-and-local-window",
+          "stride_rows": 2,
+          "target_loop_ii": 1,
+          "version": 1,
+          "width": 2
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 5,
+            "kind": "fixed",
+            "rounding": "RND",
+            "saturation": "SAT_SYM",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 9
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            15,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_0:out0",
+          "words": 15
+        },
+        "operation_ids": [
+          "conv2d_1",
+          "relu_1",
+          "max_pool2d_1"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            3,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_1:out0",
+          "words": 3
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 2,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 5,
+          "id": "complete-window-dependencies",
+          "input_words": 15,
+          "output_words": 3,
+          "production_after_input_words": [
+            5,
+            9,
+            13
+          ],
+          "rational_rate": [
+            1,
+            5
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": true,
+        "strategy": {
+          "id": "aria-window-stream",
+          "version": 1
+        }
+      },
+      {
+        "estimate": {
+          "confidence": "analytical",
+          "cycles": 0,
+          "latency": 0,
+          "resource_proxy": 0,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 6,
+          "output_lanes": 6,
+          "reset": "discard-in-flight",
+          "source_owner": "compose-top-and-contracts",
+          "storage": "zero-alias"
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            3,
+            2,
+            3
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "max_pool2d_1:out0",
+          "words": 3
+        },
+        "operation_ids": [
+          "reshape_0"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            18
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "reshape_0:out0",
+          "words": 3
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 0,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 1,
+          "id": "complete-window-dependencies",
+          "input_words": 3,
+          "output_words": 3,
+          "production_after_input_words": [
+            1,
+            2,
+            3
+          ],
+          "rational_rate": [
+            1,
+            1
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": false,
+        "strategy": {
+          "id": "identity-layout-view",
+          "version": 1
+        }
+      },
+      {
+        "estimate": {
+          "confidence": "analytical",
+          "cycles": 6,
+          "latency": 6,
+          "resource_proxy": 3,
+          "status": "estimated"
+        },
+        "execution": {
+          "control": "ap_ctrl_hs-dataflow-process",
+          "input_lanes": 6,
+          "output_lanes": 1,
+          "reset": "discard-in-flight",
+          "source_owner": "legacy-template-adapter",
+          "storage": "dense-rom-packing-and-accumulator"
+        },
+        "input": {
+          "backpressure": "blocking",
+          "lanes": 6,
+          "numeric": {
+            "integer": 6,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": false,
+            "width": 14
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            18
+          ],
+          "tail_valid_lanes": 6,
+          "tensor_id": "reshape_0:out0",
+          "words": 3
+        },
+        "operation_ids": [
+          "dense_0"
+        ],
+        "output": {
+          "backpressure": "blocking",
+          "lanes": 1,
+          "numeric": {
+            "integer": 9,
+            "kind": "fixed",
+            "rounding": "TRN",
+            "saturation": "WRAP",
+            "saturation_bits": 0,
+            "signed": true,
+            "width": 21
+          },
+          "order": "C",
+          "protocol": "blocking-stream",
+          "reset": "per-inference",
+          "shape": [
+            1
+          ],
+          "tail_valid_lanes": 1,
+          "tensor_id": "dense_0:out0",
+          "words": 1
+        },
+        "schedule": {
+          "consecutive_inference": "repeat-complete-frame",
+          "drain_input_words": 0,
+          "elastic_gaps": "arbitrary-with-eventual-progress",
+          "fifo_depth_words": 4,
+          "fill_input_words": 3,
+          "id": "complete-window-dependencies",
+          "input_words": 3,
+          "output_words": 1,
+          "production_after_input_words": [
+            3
+          ],
+          "rational_rate": [
+            1,
+            3
+          ],
+          "timebase": "accepted-input-words-not-clock-cycles",
+          "version": 1
+        },
+        "specialized": true,
+        "strategy": {
+          "id": "aria-dense-wide",
+          "version": 1
+        }
+      }
+    ],
+    "strategy": {
+      "id": "aria-composed",
+      "version": 1
+    },
+    "streaming": {
+      "fifo_depth_words": 4,
+      "liveness_proof": {
+        "argument": "finite matched token counts, positive FIFO capacity, no feedback edges",
+        "assumptions": [
+          "eventual-input",
+          "eventual-output-ready"
+        ],
+        "id": "linear-blocking-chain",
+        "version": 1
+      }
+    },
+    "warnings": [
+      {
+        "code": "estimate.uncalibrated_native",
+        "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"
+      }
+    ]
+  },
+  "schema_version": 7,
+  "source_closure": [
+    {
+      "path": "build_lib.sh",
+      "role": "project",
+      "sha256": "671e881366c76764f9a05174e089554350f044d051999ac9289b0a86d5b6fab7",
+      "size": 974
+    },
+    {
+      "path": "build_opt.tcl",
+      "role": "vendor_script",
+      "sha256": "477e7e138e57d1d2447fee5ed8ffe51601f16319a38d8f9b1ea2ded521a260d6",
+      "size": 154
+    },
+    {
+      "path": "build_prj.tcl",
+      "role": "vendor_script",
+      "sha256": "93702fcdad7c46b486e6ed5330e5cb652fa98c5321641a2641a0a3ef06a40f80",
+      "size": 7687
+    },
+    {
+      "path": "firmware/ap_types/ap_common.h",
+      "role": "firmware",
+      "sha256": "d61258f6ebca39dc11492965e6e7a1508499478b6c4ac435cf83cd454738e0a5",
+      "size": 10180
+    },
+    {
+      "path": "firmware/ap_types/ap_decl.h",
+      "role": "firmware",
+      "sha256": "cf51ec1fed914af4a8a1f4d947b4477aa21f02711856e1dc22efeeb5ef608c48",
+      "size": 6473
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed.h",
+      "role": "firmware",
+      "sha256": "de5778ab2178ef99c3b68e7b00772c2ddf8f7e827b765a650e864f2d7228e9de",
+      "size": 12185
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_base.h",
+      "role": "firmware",
+      "sha256": "09dd402506631f154a6efa38c3d6bdca5904c8d8dd5c747b545f625281936f4a",
+      "size": 85182
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_ref.h",
+      "role": "firmware",
+      "sha256": "4cef7266a7567f4564b17986e1237dfe7fc20d8415594e32ba36b461f92b402c",
+      "size": 27302
+    },
+    {
+      "path": "firmware/ap_types/ap_fixed_special.h",
+      "role": "firmware",
+      "sha256": "c977d09e301cf2f26fe53e91f5ae0bfde03453f6b4ca9ccafd14a7f32ab3b7fb",
+      "size": 6985
+    },
+    {
+      "path": "firmware/ap_types/ap_float.h",
+      "role": "firmware",
+      "sha256": "c6c8ea808e4595ab3e1b8d5fb2da427e388104979fb31f9014d12915e47a6e1b",
+      "size": 6528
+    },
+    {
+      "path": "firmware/ap_types/ap_int.h",
+      "role": "firmware",
+      "sha256": "9d38b2ac537c20f08646ce516290a42d3f72e08c5aaa84541ed21ba5488e2cd0",
+      "size": 10012
+    },
+    {
+      "path": "firmware/ap_types/ap_int_base.h",
+      "role": "firmware",
+      "sha256": "2ade108df516f39afc9718d8e044aa7a547f0a7a4cd2e6dbe0ae5dd86d3718c4",
+      "size": 71735
+    },
+    {
+      "path": "firmware/ap_types/ap_int_ref.h",
+      "role": "firmware",
+      "sha256": "e6bb0e75a6e5c1e0bd84a1ad43c2a4b6bd3beec110f75833487e46e6133b9b96",
+      "size": 55218
+    },
+    {
+      "path": "firmware/ap_types/ap_int_special.h",
+      "role": "firmware",
+      "sha256": "1c8bd146e88a1a90270a98a05115f470e4145fcf1d6e9de51a4516a5b8253022",
+      "size": 6301
+    },
+    {
+      "path": "firmware/ap_types/ap_shift_reg.h",
+      "role": "firmware",
+      "sha256": "c2a7bc8f78a46dd6625f062c62502c15b3857902e161721b2a8442e9f2467ae7",
+      "size": 4894
+    },
+    {
+      "path": "firmware/ap_types/etc/ap_private.h",
+      "role": "firmware",
+      "sha256": "4c37711885f4af70fa425f0a797a1c79198785d970140dc092bdfebef31502d9",
+      "size": 261465
+    },
+    {
+      "path": "firmware/ap_types/hls_math.h",
+      "role": "firmware",
+      "sha256": "69b141a19cd88e6fe97c2db092e725561d47baf609fd8a1b9cdfb543df464627",
+      "size": 674
+    },
+    {
+      "path": "firmware/ap_types/hls_stream.h",
+      "role": "firmware",
+      "sha256": "3539157db138f1ce979cc21f47d5b325b0f05277deeb2d7dc495f1052dc6fbe2",
+      "size": 7480
+    },
+    {
+      "path": "firmware/ap_types/utils/x_hls_utils.h",
+      "role": "firmware",
+      "sha256": "c76e1c7f51f264abf427c61022852f604deec3a48d2fbbd67ad446222166d89c",
+      "size": 2227
+    },
+    {
+      "path": "firmware/defines.h",
+      "role": "firmware",
+      "sha256": "49c595ff71e7a721f4586960c43b9bb104045f844c39e63a2e5eda9628c427c3",
+      "size": 2045
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_activation.h",
+      "role": "firmware",
+      "sha256": "2581cd0352d5df49fcd11902375c00e20da9562f7dac2a2137377de19bfe9e29",
+      "size": 31520
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_activation_stream.h",
+      "role": "firmware",
+      "sha256": "f802bfc772baa07f85e4ce83b0edcdc6a703e6ed59c8018bf21f7ed2bd862dfb",
+      "size": 27068
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_aria.h",
+      "role": "firmware",
+      "sha256": "a5cf4930e65e679cb7e0b2d60e0285c77277718f3e8e6459e8284f47421c7805",
+      "size": 14318
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_batchnorm.h",
+      "role": "firmware",
+      "sha256": "6665f9fb59f8c5aa0dc472852f5f85443cbbbab29218639a1ba2c77e80e400e3",
+      "size": 4214
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_batchnorm_stream.h",
+      "role": "firmware",
+      "sha256": "3a580856776ee62a341ee35e45096e98042a8df9154bc3e3c299672ff1d68c40",
+      "size": 4182
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_code_gen.h",
+      "role": "firmware",
+      "sha256": "9de4b308358b39a759ff555adb5804e73d419674f5492cf5d74320e69feaf57b",
+      "size": 786
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_common.h",
+      "role": "firmware",
+      "sha256": "cac405e71adaa8cd03960d6c311d5b625f0631454ec6d30f8f425c756f33a4ef",
+      "size": 2127
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d.h",
+      "role": "firmware",
+      "sha256": "65add8931f0a3c9d0e3ee07978f2c5291ef3350300a89b9c4b1def73209e14a5",
+      "size": 6211
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_latency.h",
+      "role": "firmware",
+      "sha256": "35c2971d1bb480c56f243e22a16d83c630c367846b6814669c7e035bf188ef7f",
+      "size": 7034
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_resource.h",
+      "role": "firmware",
+      "sha256": "ead84fac549f8340c52a153992716c420882ad66dabf5b8230ff59c66531dbc3",
+      "size": 4126
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv1d_stream.h",
+      "role": "firmware",
+      "sha256": "5b7ec28b42bbbd79db9d9885b7c47ebf6f655b17d83219db2652b70afbab2fe5",
+      "size": 1480
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d.h",
+      "role": "firmware",
+      "sha256": "3de5f4078081aa31aa5c7f7e4ccbea73f73c40549e9cc7e50bcbeb9330ff3424",
+      "size": 3748
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_latency.h",
+      "role": "firmware",
+      "sha256": "508f64a51b17679caac753eadd8c912f39f76c23695e61ba8e2668b071a3cf37",
+      "size": 3343
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_resource.h",
+      "role": "firmware",
+      "sha256": "c02c1da4f73ae52456562f2b3f0487173d016e9fa4e295202d920e75ab9b6d3e",
+      "size": 4254
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv2d_stream.h",
+      "role": "firmware",
+      "sha256": "a332d3983f36f06835f8f5530961b9b96de44f52ccc5d42cffc10ae3831c447a",
+      "size": 3813
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_conv_stream.h",
+      "role": "firmware",
+      "sha256": "bbf2b6d3869c644296bc643f54b268c42413e3981a79a9640d89569fdff8bbfe",
+      "size": 14130
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_cropping.h",
+      "role": "firmware",
+      "sha256": "d1e419717c94b155951b5eed161f27536aac744dfdc29dd066bc36cdb237acf2",
+      "size": 2948
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_cropping_stream.h",
+      "role": "firmware",
+      "sha256": "760dede5c6d10b184e0ebb3e822a8832a727be04bc7f95eafc9c83728bf96640",
+      "size": 1600
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_da_wrappers.h",
+      "role": "firmware",
+      "sha256": "af95f6f6ce7e0bcf02e6c015909c4e216376bc60fbec1d460f6d2ee29f31d548",
+      "size": 3968
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense.h",
+      "role": "firmware",
+      "sha256": "96a8568b0b32eda76b90ae0f7b4f4194cf948802b2c55f48135d13504928f6c2",
+      "size": 3023
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_compressed.h",
+      "role": "firmware",
+      "sha256": "bd898a282cc1275b942da2a51289831dfab6d073b0dea2744c537ca85e86d7dd",
+      "size": 2859
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_latency.h",
+      "role": "firmware",
+      "sha256": "38d0f0957711681d600f2328ad8ea8f0cdb977b4b7cc5e1f47194d97aaeae770",
+      "size": 2424
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_resource.h",
+      "role": "firmware",
+      "sha256": "247e6bf2ab59bef2ed100df348168308e71b0f2e464a09a3a09ce9d62fdfdb5e",
+      "size": 9928
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_dense_stream.h",
+      "role": "firmware",
+      "sha256": "87ea7b6d015b7de69fab590295309f65837ddd0a6011154b344e93305473a0f8",
+      "size": 3975
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_depthwise_product.h",
+      "role": "firmware",
+      "sha256": "440ce61e86999aeabbc782a5dfa9a80ca1e7f3f02a4b792511ac14ac16182ed3",
+      "size": 10646
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_einsum.h",
+      "role": "firmware",
+      "sha256": "2fbe65d527216602cf6a68c53fbc57156f3cf852d0ebb5b2157313f9e79d9819",
+      "size": 2881
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_einsum_dense.h",
+      "role": "firmware",
+      "sha256": "f1aa9f3987fabb5073ace8ead7641d76fb259b6cc90fa31d4393342952b32829",
+      "size": 4643
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_embed.h",
+      "role": "firmware",
+      "sha256": "a0026798df56ba20bec8708a307cb28b473d0069021ecdc62e793b48d0206764",
+      "size": 1292
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_embed_stream.h",
+      "role": "firmware",
+      "sha256": "4238c65129da40ebafc0bffb0b5b598246968870a26190f67d26ce72eb0da1a4",
+      "size": 839
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_function_stubs.h",
+      "role": "firmware",
+      "sha256": "ebf011b1965d033f89ff2c6d29d5ea8d5acf14140f176c2a15a4c99e5d56d0d0",
+      "size": 2960
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_garnet.h",
+      "role": "firmware",
+      "sha256": "358a67f4f5e1a45eb5262cb773dff084264d7fbbbfcd1f74e5443c9d1962dae6",
+      "size": 30731
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_helpers.h",
+      "role": "firmware",
+      "sha256": "be3b44aa21ba78d32f47d74ef42be38e082dab1913bbe6214dc83afd74511c61",
+      "size": 12528
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_image.h",
+      "role": "firmware",
+      "sha256": "3b1ce15c0c271670e26f3499860e1a6d05e95eb614ac31ead747b64b2cdc849d",
+      "size": 1293
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_image_stream.h",
+      "role": "firmware",
+      "sha256": "de91a55af0c7f415ef7aaadbaa0689a827ad340cafcd26772f04eb87054ed7cf",
+      "size": 1847
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_layernorm.h",
+      "role": "firmware",
+      "sha256": "70c2547b92be5a3ef8cd341cc0a671fae73fde6cea581538411d925d804ad844",
+      "size": 4986
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_math.h",
+      "role": "firmware",
+      "sha256": "854ad22a2122186b1aa30a11b92aa685670c559e7abfcb679bcdd3db6ac7c54f",
+      "size": 7677
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_merge.h",
+      "role": "firmware",
+      "sha256": "64224f5b5d6b6cf95b0ceeebfb23fee5b4e21e7503e41b4cf8f5b63e7355dcea",
+      "size": 11100
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_merge_stream.h",
+      "role": "firmware",
+      "sha256": "4d5dfda8cee2a6085519515d27c3d6f9c809048523f5791f85f723ca854d55b5",
+      "size": 11891
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_mult.h",
+      "role": "firmware",
+      "sha256": "28bc325053f8458fc65e12c54a6b98aa4d9bfe8f8984836a6ddbb149bdd9a269",
+      "size": 3306
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_padding.h",
+      "role": "firmware",
+      "sha256": "dcf886fb846c6a93cb5537c21f723fecea4170cb792361f5c95529cb5c0a8289",
+      "size": 4327
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_padding_stream.h",
+      "role": "firmware",
+      "sha256": "881dd9fd4017abdcf7ee2e503e688ea8b7bcc7de67344b084cf0a38da2c7edd9",
+      "size": 2191
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_pooling.h",
+      "role": "firmware",
+      "sha256": "53bc840be504ac7b863d73a64edaf63eac6c4e05caaba56722221332f01eebbe",
+      "size": 14814
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_pooling_stream.h",
+      "role": "firmware",
+      "sha256": "3052c16c8e9f58af2c9d44350e19d4be2224decb9cceab4b9fe9b2a97ec6395d",
+      "size": 12369
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_recr_activations.h",
+      "role": "firmware",
+      "sha256": "91a6c8d6bcd026ea5153d71f8621da8d9ce172c4b9f0be6276ab2732c90ef42f",
+      "size": 1889
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_recurrent.h",
+      "role": "firmware",
+      "sha256": "a776387c17848500a884d3da56885d9dac680132862d08535304ffc5ed8fb0c3",
+      "size": 40588
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d.h",
+      "role": "firmware",
+      "sha256": "851f8cf9068e08160eaa3b07378d916efa10f7db5b8c2706a59f210838f68a97",
+      "size": 2502
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d_latency.h",
+      "role": "firmware",
+      "sha256": "365edd0cdbf3c3f0537a7130d84e76245253838850f5346068729de194291b42",
+      "size": 3216
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv1d_stream.h",
+      "role": "firmware",
+      "sha256": "22b2f187bf02f765c41320e5ab2be7fea8520816bfaea4759cf721959941c004",
+      "size": 4981
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d.h",
+      "role": "firmware",
+      "sha256": "4a21453b6d223cd8a326cb25b05dcd376e0c633b06070795f28ba6d356bc16f6",
+      "size": 2823
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d_latency.h",
+      "role": "firmware",
+      "sha256": "3e3ab3b3797fd42e9827a0d7411ce43d9fa2d9c4f944fbdbd76f420076018650",
+      "size": 3248
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv2d_stream.h",
+      "role": "firmware",
+      "sha256": "6b88e512b99df79ea16ec8c1f58c27be7e6c73304c10d0f0da75926297752fc6",
+      "size": 6908
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_sepconv_stream.h",
+      "role": "firmware",
+      "sha256": "dd351d9b275011c4f9df05221b85cb8abf5ebf7060347fb5baea2c6cc852ef99",
+      "size": 8899
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_stream.h",
+      "role": "firmware",
+      "sha256": "9b49c36ab28cd1f23d5462bc8a27e1d35ef31048d919eef7ae2e2210da66ac60",
+      "size": 10823
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_time_distributed.h",
+      "role": "firmware",
+      "sha256": "bcdc66cc9c10bee19995692287c7567f994962da50d7ff0629dc33759a2c417a",
+      "size": 3910
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_transpose.h",
+      "role": "firmware",
+      "sha256": "5d182f26e0f0d95bb3e2cbb6d0ce308a8f29ae2db05625bcf72eacca14de0032",
+      "size": 1210
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_transpose_stream.h",
+      "role": "firmware",
+      "sha256": "6a756046342e73694b078f331d59e15b389a8ab1be7d303c87c061a5caf89dd0",
+      "size": 2424
+    },
+    {
+      "path": "firmware/nnet_utils/nnet_types.h",
+      "role": "firmware",
+      "sha256": "559c986616e4b03ae3844070cb2325e7274479e4400e14d700dd28597117d0a4",
+      "size": 1920
+    },
+    {
+      "path": "firmware/nnet_utils/ravel_bridges.h",
+      "role": "firmware",
+      "sha256": "fdc49d75092b16c8c04ff05001f0db7c53d43931878c4c093f9cd518295cc355",
+      "size": 1426
+    },
+    {
+      "path": "firmware/nnet_utils/ravel_windows.h",
+      "role": "firmware",
+      "sha256": "964518b6380a1f7f55d6f54f75af1ac4777a65b7c4a75be99879803cd543b71e",
+      "size": 6138
+    },
+    {
+      "path": "firmware/parameters.h",
+      "role": "firmware",
+      "sha256": "97c6211ab02442e35e10acf86cd0b30e8b579061cb68c05d44034bb3d83f80ee",
+      "size": 9811
+    },
+    {
+      "path": "firmware/two_block_c3.cpp",
+      "role": "firmware",
+      "sha256": "8ecac29737bf89b6777b0c098075844c43bf8f7bb03f9d49a91f04eecfe5984e",
+      "size": 2941
+    },
+    {
+      "path": "firmware/two_block_c3.h",
+      "role": "firmware",
+      "sha256": "9a45f881f1c0cc8604d14a24f7319cfa4d0a7ad966d5b59f8f725d4ff29250d3",
+      "size": 259
+    },
+    {
+      "path": "firmware/weights/b11.h",
+      "role": "parameter",
+      "sha256": "5750b2f1ce166c3b41416fc7bca0af37939b88d3d0bc8a08e0ec0321017690af",
+      "size": 224
+    },
+    {
+      "path": "firmware/weights/b11.txt",
+      "role": "parameter",
+      "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+      "size": 1
+    },
+    {
+      "path": "firmware/weights/b3.h",
+      "role": "parameter",
+      "sha256": "59c19da72f3de6dd3d7339adc9a5478b7a136f46f96521cadd82fee149fb5c1c",
+      "size": 230
+    },
+    {
+      "path": "firmware/weights/b3.txt",
+      "role": "parameter",
+      "sha256": "3ac9e93b30803d39c0852f53da1a76a3f0675dc4a38b257c6794cd00a239e964",
+      "size": 7
+    },
+    {
+      "path": "firmware/weights/b7.h",
+      "role": "parameter",
+      "sha256": "86f244d40422c8e0843bcf49f3fa012d4b9a1cff43b30915a2e14af0fcc3bfbf",
+      "size": 230
+    },
+    {
+      "path": "firmware/weights/b7.txt",
+      "role": "parameter",
+      "sha256": "3ac9e93b30803d39c0852f53da1a76a3f0675dc4a38b257c6794cd00a239e964",
+      "size": 7
+    },
+    {
+      "path": "firmware/weights/w11.h",
+      "role": "parameter",
+      "sha256": "b5397bb7901541b222ca865976ad69b6996827deaf95b0cc35ceee1cc613758d",
+      "size": 381
+    },
+    {
+      "path": "firmware/weights/w11.txt",
+      "role": "parameter",
+      "sha256": "bd2c8be77ce75105f15f0674ab700b7c60f5145dc894e2b231ff0d0b1e9f5a71",
+      "size": 147
+    },
+    {
+      "path": "firmware/weights/w11_ravel_packed.h",
+      "role": "parameter",
+      "sha256": "e1decc1e7a32759bad5e0d0a1c866d74be9e30f08096bc2396ccbe7a8d71da3a",
+      "size": 316
+    },
+    {
+      "path": "firmware/weights/w3.h",
+      "role": "parameter",
+      "sha256": "3c13f4d8e8add952d19ef3ff42e6017759b1ddf61c1da58b316629593f3a62cd",
+      "size": 309
+    },
+    {
+      "path": "firmware/weights/w3.txt",
+      "role": "parameter",
+      "sha256": "8e6fbc9399b9b4b618cf5e30f61fccd18c40c2ecf2009163d1a46c27906b0aad",
+      "size": 72
+    },
+    {
+      "path": "firmware/weights/w7.h",
+      "role": "parameter",
+      "sha256": "df93f699e615982b42bcf2fd22169f363f39ed7543d088fcbd1ad0537916d4a0",
+      "size": 468
+    },
+    {
+      "path": "firmware/weights/w7.txt",
+      "role": "parameter",
+      "sha256": "4f5a059513bd1e1de82e0b98a2303ee4bed01ee8cf25990bc9589468f8fd064e",
+      "size": 229
+    },
+    {
+      "path": "hls4ml_config.yml",
+      "role": "configuration",
+      "sha256": "870741468b00ec6aa1b7274f67520db527b8444f50e45189cac659ff74e9937a",
+      "size": 2214
+    },
+    {
+      "path": "keras_model.keras",
+      "role": "model",
+      "sha256": "8591a332f9aab1af341de28240cb6969c43ba130afd5cd59358f8b32504892e3",
+      "size": 77231
+    },
+    {
+      "path": "project.tcl",
+      "role": "vendor_script",
+      "sha256": "48689504a3f70db34da2a3b6d6641fdaf352def8da9ea544e1d928ed3099d7a2",
+      "size": 312
+    },
+    {
+      "path": "ravel_config.yml",
+      "role": "configuration",
+      "sha256": "0828cef859a1a9161736e607c3e992489e6a784786e7d79bbb9b326db48b4943",
+      "size": 2309
+    },
+    {
+      "path": "tb_data/rtl_expected_words.hex",
+      "role": "project",
+      "sha256": "074ef42d14f6a6e7167ccedd202f9bff53922455687a40c59e610cc420cd3f35",
+      "size": 828
+    },
+    {
+      "path": "tb_data/rtl_input_words.hex",
+      "role": "project",
+      "sha256": "4a9b37cc31a4839d7816d6aee77abda07a9badc6c7568915d89f0431cc4389a9",
+      "size": 50048
+    },
+    {
+      "path": "tb_data/rtl_vectors.json",
+      "role": "configuration",
+      "sha256": "aeb9091afe91f7fb7c5f01dfd0a77a114e1cc647ec17c2c68d2c3cfc2e06bea1",
+      "size": 422
+    },
+    {
+      "path": "tb_data/tb_input_features.dat",
+      "role": "project",
+      "sha256": "325fee40e18a6295748fab6630b19d8643e957c5e66e61fe374b64791b7c3dff",
+      "size": 53023
+    },
+    {
+      "path": "two_block_c3_bridge.cpp",
+      "role": "simulation",
+      "sha256": "8828a5a13241fb04fc9144b7e6736375e7d9380c76fd63e3450f07df10ef22a1",
+      "size": 2607
+    },
+    {
+      "path": "two_block_c3_test.cpp",
+      "role": "simulation",
+      "sha256": "4f8143c3a9980bac3f7b6dca8367ad1a084476f700556b736c1e4a7609a75855",
+      "size": 2947
+    },
+    {
+      "path": "vivado_synth.tcl",
+      "role": "vendor_script",
+      "sha256": "ce4820bd66e1d7532145f060b185d3488cec83494ee8ac62acda63e55a2ee4c1",
+      "size": 295
+    }
+  ],
+  "source_closure_sha256": "786c105baa3a10a1e1a5e3e43056dc99e2509f877e6181fbf56c3555e16367c7",
+  "source_model": {
+    "facts": {
+      "dense": [
+        {
+          "bias": {
+            "elements": 1,
+            "shape": [
+              1
+            ]
+          },
+          "feature_ordering": {
+            "kind": "identity",
+            "order": "C"
+          },
+          "graph": {
+            "predecessors": [
+              "Reshape"
+            ],
+            "successors": []
+          },
+          "input_group_size": 3,
+          "kernel": {
+            "elements": 18,
+            "shape": [
+              18,
+              1
+            ],
+            "statistics": {
+              "nonzero": 16,
+              "power_of_two": 5,
+              "unique": 12,
+              "zero": 2
+            }
+          },
+          "n_in": 18,
+          "n_out": 1,
+          "numeric": {
+            "accumulator": {
+              "fractional": 12,
+              "integer": 9,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 21
+            },
+            "bias": {
+              "fractional": -30,
+              "integer": 32,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": false,
+              "width": 2
+            },
+            "input": {
+              "fractional": 8,
+              "integer": 6,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": false,
+              "width": 14
+            },
+            "output": {
+              "fractional": 12,
+              "integer": 9,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 21
+            },
+            "weight": {
+              "fractional": 4,
+              "integer": 1,
+              "kind": "fixed",
+              "overflow": "WRAP",
+              "rounding": "TRN",
+              "saturation_bits": 0,
+              "signed": true,
+              "width": 5
+            }
+          },
+          "parameter_representation": "dense",
+          "role": "output"
+        }
+      ],
+      "inputs": [
+        "input_0:out0"
+      ],
+      "operations": [
+        {
+          "attributes": {
+            "input_shape": [
+              64,
+              2,
+              1
+            ]
+          },
+          "id": "input_0",
+          "inputs": [],
+          "kind": "input",
+          "outputs": [
+            {
+              "id": "input_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 9
+              },
+              "shape": [
+                64,
+                2,
+                1
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "filt_height": 3,
+            "filt_width": 1,
+            "in_height": 64,
+            "in_width": 2,
+            "n_chan": 1,
+            "n_filt": 3,
+            "out_height": 31,
+            "out_width": 2,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "conv2d_0",
+          "inputs": [
+            "input_0:out0"
+          ],
+          "kind": "conv2d",
+          "outputs": [
+            {
+              "id": "conv2d_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 13
+              },
+              "shape": [
+                31,
+                2,
+                3
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "30f7bd15e083bf0cdaafa090615c3a972fb8171275974f523e8cdc6fa3dbf06e",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 5
+              },
+              "role": "weight",
+              "shape": [
+                3,
+                1,
+                1,
+                3
+              ]
+            },
+            {
+              "content_sha256": "9d908ecfb6b256def8b49a7c504e6c889c4b0e41fe6ce3e01863dd7b61a20aa0",
+              "numeric_type": {
+                "integer": 32,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 2
+              },
+              "role": "bias",
+              "shape": [
+                3
+              ]
+            }
+          ]
+        },
+        {
+          "attributes": {
+            "activation": "relu",
+            "n_in": 186
+          },
+          "id": "relu_0",
+          "inputs": [
+            "conv2d_0:out0"
+          ],
+          "kind": "relu",
+          "outputs": [
+            {
+              "id": "relu_0:out0",
+              "numeric_type": {
+                "integer": 4,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 12
+              },
+              "shape": [
+                31,
+                2,
+                3
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "in_height": 31,
+            "in_width": 2,
+            "n_filt": 3,
+            "out_height": 15,
+            "out_width": 2,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "pool_height": 2,
+            "pool_op": "Max",
+            "pool_width": 1,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "max_pool2d_0",
+          "inputs": [
+            "relu_0:out0"
+          ],
+          "kind": "max_pool2d",
+          "outputs": [
+            {
+              "id": "max_pool2d_0:out0",
+              "numeric_type": {
+                "integer": 5,
+                "kind": "fixed",
+                "rounding": "RND",
+                "saturation": "SAT_SYM",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 9
+              },
+              "shape": [
+                15,
+                2,
+                3
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "filt_height": 3,
+            "filt_width": 1,
+            "in_height": 15,
+            "in_width": 2,
+            "n_chan": 3,
+            "n_filt": 3,
+            "out_height": 7,
+            "out_width": 2,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "conv2d_1",
+          "inputs": [
+            "max_pool2d_0:out0"
+          ],
+          "kind": "conv2d",
+          "outputs": [
+            {
+              "id": "conv2d_1:out0",
+              "numeric_type": {
+                "integer": 7,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 15
+              },
+              "shape": [
+                7,
+                2,
+                3
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "c66b419391605dc702d032af5006e9c7d296a511faf9788d620468e8b8399be7",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 5
+              },
+              "role": "weight",
+              "shape": [
+                3,
+                1,
+                3,
+                3
+              ]
+            },
+            {
+              "content_sha256": "9d908ecfb6b256def8b49a7c504e6c889c4b0e41fe6ce3e01863dd7b61a20aa0",
+              "numeric_type": {
+                "integer": 32,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 2
+              },
+              "role": "bias",
+              "shape": [
+                3
+              ]
+            }
+          ]
+        },
+        {
+          "attributes": {
+            "activation": "relu",
+            "n_in": 42
+          },
+          "id": "relu_1",
+          "inputs": [
+            "conv2d_1:out0"
+          ],
+          "kind": "relu",
+          "outputs": [
+            {
+              "id": "relu_1:out0",
+              "numeric_type": {
+                "integer": 6,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 14
+              },
+              "shape": [
+                7,
+                2,
+                3
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "in_height": 7,
+            "in_width": 2,
+            "n_filt": 3,
+            "out_height": 3,
+            "out_width": 2,
+            "pad_bottom": 0,
+            "pad_left": 0,
+            "pad_right": 0,
+            "pad_top": 0,
+            "pool_height": 2,
+            "pool_op": "Max",
+            "pool_width": 1,
+            "stride_height": 2,
+            "stride_width": 1
+          },
+          "id": "max_pool2d_1",
+          "inputs": [
+            "relu_1:out0"
+          ],
+          "kind": "max_pool2d",
+          "outputs": [
+            {
+              "id": "max_pool2d_1:out0",
+              "numeric_type": {
+                "integer": 6,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 14
+              },
+              "shape": [
+                3,
+                2,
+                3
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "target_shape": [
+              18
+            ]
+          },
+          "id": "reshape_0",
+          "inputs": [
+            "max_pool2d_1:out0"
+          ],
+          "kind": "reshape",
+          "outputs": [
+            {
+              "id": "reshape_0:out0",
+              "numeric_type": {
+                "integer": 6,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 14
+              },
+              "shape": [
+                18
+              ]
+            }
+          ],
+          "parameters": []
+        },
+        {
+          "attributes": {
+            "n_in": 18,
+            "n_out": 1
+          },
+          "id": "dense_0",
+          "inputs": [
+            "reshape_0:out0"
+          ],
+          "kind": "dense",
+          "outputs": [
+            {
+              "id": "dense_0:out0",
+              "numeric_type": {
+                "integer": 9,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 21
+              },
+              "shape": [
+                1
+              ]
+            }
+          ],
+          "parameters": [
+            {
+              "content_sha256": "a9d8307061217b78bedd81c5d06a2f6124157b9bd056eeb8b493fc7d9d7f3093",
+              "numeric_type": {
+                "integer": 1,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": true,
+                "width": 5
+              },
+              "role": "weight",
+              "shape": [
+                18,
+                1
+              ]
+            },
+            {
+              "content_sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+              "numeric_type": {
+                "integer": 32,
+                "kind": "fixed",
+                "rounding": "TRN",
+                "saturation": "WRAP",
+                "saturation_bits": 0,
+                "signed": false,
+                "width": 2
+              },
+              "role": "bias",
+              "shape": [
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        "dense_0:out0"
+      ],
+      "schema_version": 1
+    },
+    "fingerprints": {
+      "frontend_provenance_sha256": "22f62c31d6de80a3943025c4a4ad592f7a441be39a5ad2be6d80f126270612ce",
+      "model_structure_sha256": "210cd2166c665f8cf4d6796719a371d655ecfa07e3f6d324bf824135e9f92b06",
+      "parameter_state_sha256": "ed043ca507c65edae7c090599a6748c55867a90f073fc007569d1c54609dc1ea"
+    },
+    "frontend_provenance": {
+      "adapter": {
+        "id": "keras-hgq2",
+        "version": 1
+      },
+      "quantizer_contracts": [
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "input",
+          "rounding": "RND",
+          "source_ordinal": 1
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 1
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 1
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "input",
+          "rounding": "RND",
+          "source_ordinal": 3
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 3
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 3
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": true,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "weight",
+          "rounding": "RND",
+          "source_ordinal": 6
+        },
+        {
+          "heterogeneous_axis": [],
+          "homogeneous_axis": null,
+          "is_weight": false,
+          "overflow": "SAT_SYM",
+          "q_type": "kif",
+          "role": "bias",
+          "rounding": "RND",
+          "source_ordinal": 6
+        }
+      ],
+      "source_layers": [
+        {
+          "class_name": "InputLayer",
+          "module": "keras.src.layers.core.input_layer",
+          "ordinal": 0
+        },
+        {
+          "class_name": "QConv2D",
+          "module": "hgq.layers.conv",
+          "ordinal": 1
+        },
+        {
+          "class_name": "MaxPooling2D",
+          "module": "keras.src.layers.pooling.max_pooling2d",
+          "ordinal": 2
+        },
+        {
+          "class_name": "QConv2D",
+          "module": "hgq.layers.conv",
+          "ordinal": 3
+        },
+        {
+          "class_name": "MaxPooling2D",
+          "module": "keras.src.layers.pooling.max_pooling2d",
+          "ordinal": 4
+        },
+        {
+          "class_name": "Flatten",
+          "module": "keras.src.layers.reshaping.flatten",
+          "ordinal": 5
+        },
+        {
+          "class_name": "QDense",
+          "module": "hgq.layers.core.dense",
+          "ordinal": 6
+        }
+      ]
+    },
+    "model_family": {
+      "id": "hgq-temporal-block-chain",
+      "version": 1
+    },
+    "semantic_model_sha256": "528821e8bc6dda70373ad6ab62fb903c10a87628a579508aace4885caa35b71c",
+    "source_artifact_sha256": "8591a332f9aab1af341de28240cb6969c43ba130afd5cd59358f8b32504892e3"
+  },
+  "source_ownership": [
+    {
+      "after_sha256": "49c595ff71e7a721f4586960c43b9bb104045f844c39e63a2e5eda9628c427c3",
+      "before_sha256": "52e7273aaa50c979575db9070d8ed084fc2f51e1ba288efea75cab103bf66e38",
+      "owner": {
+        "id": "compose-top-and-contracts",
+        "version": 1
+      },
+      "path": "firmware/defines.h"
+    },
+    {
+      "after_sha256": "a5cf4930e65e679cb7e0b2d60e0285c77277718f3e8e6459e8284f47421c7805",
+      "before_sha256": null,
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/nnet_utils/nnet_aria.h"
+    },
+    {
+      "after_sha256": "fdc49d75092b16c8c04ff05001f0db7c53d43931878c4c093f9cd518295cc355",
+      "before_sha256": null,
+      "owner": {
+        "id": "lossless-stream-repack",
+        "version": 2
+      },
+      "path": "firmware/nnet_utils/ravel_bridges.h"
+    },
+    {
+      "after_sha256": "964518b6380a1f7f55d6f54f75af1ac4777a65b7c4a75be99879803cd543b71e",
+      "before_sha256": null,
+      "owner": {
+        "id": "captured-window-positions",
+        "version": 1
+      },
+      "path": "firmware/nnet_utils/ravel_windows.h"
+    },
+    {
+      "after_sha256": "8ecac29737bf89b6777b0c098075844c43bf8f7bb03f9d49a91f04eecfe5984e",
+      "before_sha256": "8911f3c771f1e512134481857511cd4f19b27ce9aa71234dc973d72857c11b03",
+      "owner": {
+        "id": "compose-top-and-contracts",
+        "version": 1
+      },
+      "path": "firmware/two_block_c3.cpp"
+    },
+    {
+      "after_sha256": "9a45f881f1c0cc8604d14a24f7319cfa4d0a7ad966d5b59f8f725d4ff29250d3",
+      "before_sha256": "8a7ce63103d5f9ef9ab32ed766d78e4a615c761cb617754d2d1f4e9c4ad3ec81",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "firmware/two_block_c3.h"
+    },
+    {
+      "after_sha256": "e1decc1e7a32759bad5e0d0a1c866d74be9e30f08096bc2396ccbe7a8d71da3a",
+      "before_sha256": null,
+      "owner": {
+        "id": "dense-rom-packing",
+        "version": 1
+      },
+      "path": "firmware/weights/w11_ravel_packed.h"
+    },
+    {
+      "after_sha256": "8828a5a13241fb04fc9144b7e6736375e7d9380c76fd63e3450f07df10ef22a1",
+      "before_sha256": "62a8697da7bfb2c91474619ca85269b2bff3529eeb023c266fc5a1c3e5c899ee",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "two_block_c3_bridge.cpp"
+    },
+    {
+      "after_sha256": "4f8143c3a9980bac3f7b6dca8367ad1a084476f700556b736c1e4a7609a75855",
+      "before_sha256": "f159ffe47acac655838f61cd68cd545571b3cd97d86b301dc212b08a8999ecc5",
+      "owner": {
+        "id": "legacy-template-adapter",
+        "version": 1
+      },
+      "path": "two_block_c3_test.cpp"
+    },
+    {
+      "after_sha256": "325fee40e18a6295748fab6630b19d8643e957c5e66e61fe374b64791b7c3dff",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-verification-corpus",
+        "version": 2
+      },
+      "path": "tb_data/tb_input_features.dat"
+    },
+    {
+      "after_sha256": "477e7e138e57d1d2447fee5ed8ffe51601f16319a38d8f9b1ea2ded521a260d6",
+      "before_sha256": "fe24ec65d03dcd50cffe5a2d8f7f72b0ea91adc6dbcebf494d648064c92b5b0b",
+      "owner": {
+        "id": "configure-vendor-build",
+        "version": 1
+      },
+      "path": "build_opt.tcl"
+    },
+    {
+      "after_sha256": "93702fcdad7c46b486e6ed5330e5cb652fa98c5321641a2641a0a3ef06a40f80",
+      "before_sha256": "38b2e84e1ff22ad950e14c806d23e7e95b845cd672b8d1861d063649dde11783",
+      "owner": {
+        "id": "configure-vendor-build",
+        "version": 1
+      },
+      "path": "build_prj.tcl"
+    },
+    {
+      "after_sha256": "074ef42d14f6a6e7167ccedd202f9bff53922455687a40c59e610cc420cd3f35",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-rtl-reference",
+        "version": 1
+      },
+      "path": "tb_data/rtl_expected_words.hex"
+    },
+    {
+      "after_sha256": "4a9b37cc31a4839d7816d6aee77abda07a9badc6c7568915d89f0431cc4389a9",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-rtl-reference",
+        "version": 1
+      },
+      "path": "tb_data/rtl_input_words.hex"
+    },
+    {
+      "after_sha256": "aeb9091afe91f7fb7c5f01dfd0a77a114e1cc647ec17c2c68d2c3cfc2e06bea1",
+      "before_sha256": null,
+      "owner": {
+        "id": "write-rtl-reference",
+        "version": 1
+      },
+      "path": "tb_data/rtl_vectors.json"
+    },
+    {
+      "after_sha256": "671e881366c76764f9a05174e089554350f044d051999ac9289b0a86d5b6fab7",
+      "before_sha256": "d48dca536c4c67494aed987b60dc7081246b9adebf5dbe6cdce2ec3ca0f45cfc",
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "build_lib.sh"
+    },
+    {
+      "after_sha256": "870741468b00ec6aa1b7274f67520db527b8444f50e45189cac659ff74e9937a",
+      "before_sha256": "f1d32307379f28f2ec6cd7fccfdf2e5a7b78f8e07b2beddce266d27dcb0f28b8",
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "hls4ml_config.yml"
+    },
+    {
+      "after_sha256": "8591a332f9aab1af341de28240cb6969c43ba130afd5cd59358f8b32504892e3",
+      "before_sha256": "781d2e7cde7fe884f9ccd9a8781c64f983ca045babd42d9d47adfe3ccf51cb2f",
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "keras_model.keras"
+    },
+    {
+      "after_sha256": "0828cef859a1a9161736e607c3e992489e6a784786e7d79bbb9b326db48b4943",
+      "before_sha256": null,
+      "owner": {
+        "id": "normalize-project-artifacts",
+        "version": 2
+      },
+      "path": "ravel_config.yml"
+    }
+  ],
+  "status": {
+    "correctness_verification": "passed",
+    "dependency_qualification": "qualified",
+    "generation": "complete",
+    "model_fidelity": "reported",
+    "performance_qualification": "not_run",
+    "source_integrity": "clean"
+  },
+  "verification": {
+    "corpora": {
+      "built_in": {
+        "content_sha256": "cacfa641f814349b8b4ef64a92398316c2095a1b209d17001350ec1145a5a702",
+        "dtype": "float64",
+        "input_numeric_type": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "integer_code_sha256": "2040268adcd156268236970fea873853e71c25422368c645cf73b344a20b6d63",
+        "kind": "numeric_contract",
+        "output_integer_code_sha256": "b9579ba809f59c756ad159d37000038cb55ce12a9a483badf5ee14338d9bf3ce",
+        "patterns": [
+          "zeros",
+          "minimum",
+          "maximum",
+          "alternating_extrema",
+          "positive_impulse_row_0",
+          "negative_impulse_row_1",
+          "positive_impulse_row_2",
+          "negative_impulse_row_61",
+          "positive_impulse_row_62",
+          "negative_impulse_row_63",
+          "positive_impulse_row_3",
+          "negative_impulse_row_4",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "seeded_random",
+          "receptive_boundary_row_0_lane_0",
+          "receptive_boundary_row_0_lane_1",
+          "receptive_boundary_row_1_lane_0",
+          "receptive_boundary_row_1_lane_1",
+          "receptive_boundary_row_2_lane_0",
+          "receptive_boundary_row_2_lane_1",
+          "receptive_boundary_row_3_lane_0",
+          "receptive_boundary_row_3_lane_1",
+          "receptive_boundary_row_4_lane_0",
+          "receptive_boundary_row_4_lane_1",
+          "receptive_boundary_row_5_lane_0",
+          "receptive_boundary_row_5_lane_1",
+          "receptive_boundary_row_7_lane_0",
+          "receptive_boundary_row_7_lane_1",
+          "receptive_boundary_row_8_lane_0",
+          "receptive_boundary_row_8_lane_1",
+          "receptive_boundary_row_12_lane_0",
+          "receptive_boundary_row_12_lane_1",
+          "receptive_boundary_row_13_lane_0",
+          "receptive_boundary_row_13_lane_1",
+          "receptive_boundary_row_15_lane_0",
+          "receptive_boundary_row_15_lane_1",
+          "receptive_boundary_row_16_lane_0",
+          "receptive_boundary_row_16_lane_1",
+          "receptive_boundary_row_20_lane_0",
+          "receptive_boundary_row_20_lane_1",
+          "receptive_boundary_row_21_lane_0",
+          "receptive_boundary_row_21_lane_1",
+          "receptive_boundary_row_52_lane_0",
+          "receptive_boundary_row_52_lane_1",
+          "receptive_boundary_row_60_lane_0",
+          "receptive_boundary_row_60_lane_1",
+          "receptive_boundary_row_62_lane_0",
+          "receptive_boundary_row_62_lane_1",
+          "receptive_boundary_row_63_lane_0",
+          "receptive_boundary_row_63_lane_1",
+          "positive_lsb",
+          "negative_lsb",
+          "quantization_neighbor_code_-255",
+          "quantization_neighbor_code_-254",
+          "quantization_neighbor_code_-129",
+          "quantization_neighbor_code_-128",
+          "quantization_neighbor_code_-127",
+          "quantization_neighbor_code_-9",
+          "quantization_neighbor_code_-8",
+          "quantization_neighbor_code_-7",
+          "quantization_neighbor_code_-2",
+          "quantization_neighbor_code_-1",
+          "quantization_neighbor_code_0",
+          "quantization_neighbor_code_1",
+          "quantization_neighbor_code_2",
+          "quantization_neighbor_code_7",
+          "quantization_neighbor_code_8",
+          "quantization_neighbor_code_9",
+          "quantization_neighbor_code_127",
+          "quantization_neighbor_code_128",
+          "quantization_neighbor_code_129",
+          "quantization_neighbor_code_254",
+          "quantization_neighbor_code_255",
+          "feature_channel_order"
+        ],
+        "recipe": {
+          "id": "numeric-contract",
+          "version": 2
+        },
+        "sample_count": 92,
+        "seed": 0,
+        "shape": [
+          92,
+          64,
+          2,
+          1
+        ],
+        "source_conversion_consistency": "passed",
+        "transformation_equivalence": "passed"
+      }
+    },
+    "mode": "required",
+    "model_fidelity": "reported",
+    "model_fidelity_report": {
+      "max_abs_score_diff": 0.0,
+      "shape_match": true,
+      "status": "reported"
+    },
+    "rtl_reference": {
+      "corpus": "built_in",
+      "files": {
+        "rtl_expected_words.hex": "074ef42d14f6a6e7167ccedd202f9bff53922455687a40c59e610cc420cd3f35",
+        "rtl_input_words.hex": "4a9b37cc31a4839d7816d6aee77abda07a9badc6c7568915d89f0431cc4389a9"
+      },
+      "input_tdata_bits": 64,
+      "input_words_per_inference": 32,
+      "output_tdata_bits": 32,
+      "padding": "zero",
+      "reference": "clean-hls4ml",
+      "sample_count": 92,
+      "schema_version": 1
+    },
+    "source_conversion_consistency": "passed",
+    "source_conversion_report": {
+      "comparison": "canonical_fixed_point_integer_codes",
+      "max_abs_float_difference": 0.0,
+      "status": "passed"
+    },
+    "stage_boundaries": {
+      "corpus": "built_in",
+      "encoding": "unsigned-scalar-bits-le64",
+      "observations": [
+        {
+          "codes_per_sample": 186,
+          "integer_bits_sha256": "4c4cc95be26f27ffba2082ca005f0c2618987ea2e7dfe6d63d0036cfc153b763",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "conv2d_0:out0"
+        },
+        {
+          "codes_per_sample": 186,
+          "integer_bits_sha256": "efd0dfc46fae1e2e3f27fa900d4ece59b40b217f77871930886b3133298caa3e",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "relu_0:out0"
+        },
+        {
+          "codes_per_sample": 90,
+          "integer_bits_sha256": "84c0142e2e229aba1692523d487a7cc1e2e511a6596ff901dfc2536df954d175",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "max_pool2d_0:out0"
+        },
+        {
+          "codes_per_sample": 42,
+          "integer_bits_sha256": "0a84bfd88af1efcb62e5559d971d11d8d485f1a9212abc558895e45b7b766e8f",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "conv2d_1:out0"
+        },
+        {
+          "codes_per_sample": 42,
+          "integer_bits_sha256": "44b76d4cb67e7a140216a346c557cfa6dcf9fc562f51bad85c246b188dc8fb40",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "relu_1:out0"
+        },
+        {
+          "codes_per_sample": 18,
+          "integer_bits_sha256": "8751efe4ce3539f0edbda4bc7dad40517ef106b1e082fb6aa7d056f1d1179e3f",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "max_pool2d_1:out0"
+        },
+        {
+          "codes_per_sample": 18,
+          "integer_bits_sha256": "8751efe4ce3539f0edbda4bc7dad40517ef106b1e082fb6aa7d056f1d1179e3f",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "reshape_0:out0"
+        },
+        {
+          "codes_per_sample": 1,
+          "integer_bits_sha256": "9447ce1da45ef671f587b890c90c073a4ced5e03489db490702e05b9e2212fde",
+          "sample_count": 92,
+          "status": "passed",
+          "tensor_id": "dense_0:out0"
+        }
+      ],
+      "status": "passed"
+    },
+    "stimuli": {
+      "content_sha256": "cacfa641f814349b8b4ef64a92398316c2095a1b209d17001350ec1145a5a702",
+      "dtype": "float64",
+      "input_numeric_type": {
+        "integer": 5,
+        "kind": "fixed",
+        "rounding": "RND",
+        "saturation": "SAT_SYM",
+        "saturation_bits": 0,
+        "signed": true,
+        "width": 9
+      },
+      "integer_code_sha256": "2040268adcd156268236970fea873853e71c25422368c645cf73b344a20b6d63",
+      "kind": "numeric_contract",
+      "patterns": [
+        "zeros",
+        "minimum",
+        "maximum",
+        "alternating_extrema",
+        "positive_impulse_row_0",
+        "negative_impulse_row_1",
+        "positive_impulse_row_2",
+        "negative_impulse_row_61",
+        "positive_impulse_row_62",
+        "negative_impulse_row_63",
+        "positive_impulse_row_3",
+        "negative_impulse_row_4",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "seeded_random",
+        "receptive_boundary_row_0_lane_0",
+        "receptive_boundary_row_0_lane_1",
+        "receptive_boundary_row_1_lane_0",
+        "receptive_boundary_row_1_lane_1",
+        "receptive_boundary_row_2_lane_0",
+        "receptive_boundary_row_2_lane_1",
+        "receptive_boundary_row_3_lane_0",
+        "receptive_boundary_row_3_lane_1",
+        "receptive_boundary_row_4_lane_0",
+        "receptive_boundary_row_4_lane_1",
+        "receptive_boundary_row_5_lane_0",
+        "receptive_boundary_row_5_lane_1",
+        "receptive_boundary_row_7_lane_0",
+        "receptive_boundary_row_7_lane_1",
+        "receptive_boundary_row_8_lane_0",
+        "receptive_boundary_row_8_lane_1",
+        "receptive_boundary_row_12_lane_0",
+        "receptive_boundary_row_12_lane_1",
+        "receptive_boundary_row_13_lane_0",
+        "receptive_boundary_row_13_lane_1",
+        "receptive_boundary_row_15_lane_0",
+        "receptive_boundary_row_15_lane_1",
+        "receptive_boundary_row_16_lane_0",
+        "receptive_boundary_row_16_lane_1",
+        "receptive_boundary_row_20_lane_0",
+        "receptive_boundary_row_20_lane_1",
+        "receptive_boundary_row_21_lane_0",
+        "receptive_boundary_row_21_lane_1",
+        "receptive_boundary_row_52_lane_0",
+        "receptive_boundary_row_52_lane_1",
+        "receptive_boundary_row_60_lane_0",
+        "receptive_boundary_row_60_lane_1",
+        "receptive_boundary_row_62_lane_0",
+        "receptive_boundary_row_62_lane_1",
+        "receptive_boundary_row_63_lane_0",
+        "receptive_boundary_row_63_lane_1",
+        "positive_lsb",
+        "negative_lsb",
+        "quantization_neighbor_code_-255",
+        "quantization_neighbor_code_-254",
+        "quantization_neighbor_code_-129",
+        "quantization_neighbor_code_-128",
+        "quantization_neighbor_code_-127",
+        "quantization_neighbor_code_-9",
+        "quantization_neighbor_code_-8",
+        "quantization_neighbor_code_-7",
+        "quantization_neighbor_code_-2",
+        "quantization_neighbor_code_-1",
+        "quantization_neighbor_code_0",
+        "quantization_neighbor_code_1",
+        "quantization_neighbor_code_2",
+        "quantization_neighbor_code_7",
+        "quantization_neighbor_code_8",
+        "quantization_neighbor_code_9",
+        "quantization_neighbor_code_127",
+        "quantization_neighbor_code_128",
+        "quantization_neighbor_code_129",
+        "quantization_neighbor_code_254",
+        "quantization_neighbor_code_255",
+        "feature_channel_order"
+      ],
+      "recipe": {
+        "id": "numeric-contract",
+        "version": 2
+      },
+      "sample_count": 92,
+      "seed": 0,
+      "shape": [
+        92,
+        64,
+        2,
+        1
+      ]
+    },
+    "transformation_equivalence": "passed"
+  }
+}

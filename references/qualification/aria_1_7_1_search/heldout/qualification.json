@@ -1,0 +1,791 @@
+{
+  "generation_fingerprint": "fa91258dbfd33ec4ab7713dd10a4afd4f82f525eeb4f2e8471e2c10296d5bf40",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 3,
+      "input_rows_per_word": 2,
+      "input_scalar_bits": 9,
+      "input_words_per_inference": 40,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 21,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 6
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        80,
+        3,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 9,
+        "input_tdata_bits": 96,
+        "input_tdata_port": "heldout_input_TDATA",
+        "output_scalar_bits": 21,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer11_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "manifest_sha256": "ffef09e1da80b882598fb8e0dbc444819239b4b59b92e8857b632b8e141d2bc5",
+  "ooc": null,
+  "part": "xcku5p-ffvb676-2-e",
+  "performance": {
+    "initiation_interval": 71,
+    "latency_cycles": 78
+  },
+  "report_files": {
+    "heldout_prj/solution1/sim/report/heldout_cosim.rpt": "e5d5f1668a0d0a4befab522582108697dd4773c2158bfed59d3fdb6ab4f6724d",
+    "heldout_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues_csynth.xml": "b9821acc6928b4f1e2f02b6115ae77021033ef6ce16f3509ceb61286ca0c49eb",
+    "heldout_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_s_csynth.xml": "a876ece806dc606d7ca59f8ca842b464fb7efe0f945eb28977663718bff707f6",
+    "heldout_prj/solution1/syn/report/first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_6u_config3_s_csynth.xml": "bb1ea95f2ccc2713bdf754a733aabbd664fb26dc7f233a1dc7d3416ae24762fd",
+    "heldout_prj/solution1/syn/report/heldout_csynth.xml": "f75cc8f70060a06815486d25465ae27ac6ac0b81ae2ac55acfb5641a36422e8f",
+    "heldout_prj/solution1/syn/report/maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_config5_s_csynth.xml": "b545ff4b97434f4f1c3987dfbf00e267abae40a51c56f80581fa0547b064a418",
+    "heldout_prj/solution1/syn/report/relu_array_ap_fixed_4u_array_ap_ufixed_13_5_5_3_0_4u_relu_config8_s_csynth.xml": "248f7d17c7a2edd9564b605685a4a47f3bf202ff4399ed0b952a979761d75502",
+    "heldout_prj/solution1/syn/report/repack_array_ap_fixed_6u_array_ap_fixed_9_5_0_2_0_2u_114u_2u_s_csynth.xml": "ad930e41540550e4f0c4cdf926a51b9141d69d093566e7dc1ca16e418d5c1458",
+    "heldout_prj/solution1/syn/report/repack_array_ap_ufixed_4u_array_ap_ufixed_13_5_5_3_0_12u_48u_4u_s_csynth.xml": "de149af493abcfd8dad062d0f11eeb253b4d58a7906fbd7fbb46bf7d49f5fce2",
+    "heldout_prj/solution1/syn/report/scheduled_conv_array_array_ap_fixed_14_6_5_3_0_4u_config7_1u_s_csynth.xml": "1781ac7f8f4be10f1019e39641c54a3e6c3038ec05aef1abee70096f34a7d3b2",
+    "heldout_prj/solution1/syn/report/scheduled_pool_array_array_ap_ufixed_13_5_5_3_0_4u_config9_1u_s_csynth.xml": "506eaa7e55fc11bcbabc638a61b7c888d6ba1eff6db2c308e90402a5e60eb24f"
+  },
+  "resources": {
+    "BRAM_18K": 0,
+    "DSP": 4,
+    "FF": 3229,
+    "LUT": 5295,
+    "URAM": 0
+  },
+  "rtl_cosimulation": "passed",
+  "rtl_ports": {
+    "ap_clk": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_done": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_idle": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_ready": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_rst_n": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_start": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "heldout_input_TDATA": {
+      "bits": 96,
+      "direction": "in"
+    },
+    "heldout_input_TREADY": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "heldout_input_TVALID": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer11_out_TDATA": {
+      "bits": 32,
+      "direction": "out"
+    },
+    "layer11_out_TREADY": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer11_out_TVALID": {
+      "bits": 1,
+      "direction": "out"
+    }
+  },
+  "rtl_protocol": {
+    "completed_samples": 95,
+    "consecutive_samples": 92,
+    "input_gap_cycles": 560,
+    "interfaces": {
+      "hls_stream_interface": {
+        "block_control": "ap_ctrl_hs",
+        "channels_per_row": 3,
+        "input_rows_per_word": 2,
+        "input_scalar_bits": 9,
+        "input_words_per_inference": 40,
+        "optional_axis_sidebands": [],
+        "ordering": "row-major; time before channel",
+        "output_scalar_bits": 21,
+        "output_words_per_inference": 1,
+        "protocol": "axis",
+        "values_per_input_word": 6
+      },
+      "logical_model_interface": {
+        "input_shape": [
+          80,
+          3,
+          1
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl_interface": {
+        "expected": {
+          "input_scalar_bits": 9,
+          "input_tdata_bits": 96,
+          "input_tdata_port": "heldout_input_TDATA",
+          "output_scalar_bits": 21,
+          "output_tdata_bits": 32,
+          "output_tdata_port": "layer11_out_TDATA",
+          "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+        },
+        "measured": null
+      }
+    },
+    "log_sha256": "da9d4f92b559f49a66d62821620eeb75328f459ba59c021d028549237e8584c6",
+    "manifest_sha256": "ffef09e1da80b882598fb8e0dbc444819239b4b59b92e8857b632b8e141d2bc5",
+    "output_stall_cycles": 82,
+    "report_sha256": "fa4ba3b24091b27e93057445173900f59a00b630981a1ccc64bd58e8ab9a0212",
+    "reset_aborts": 1,
+    "reset_between_epochs": 1,
+    "rtl_files": {
+      "heldout.v": "c4e569b05bea6b1526d5cff57bcfde8f0d5c3e22d24ecbc872a481934c3e86b2",
+      "heldout_dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues.v": "3d110e7fe949f5b221d7e5543549ea89f2daab40bf731a55fd891ea4a29f9601",
+      "heldout_dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues_w11_rbkb.v": "632c74f1ca02e362ba77f32cdf5db38c33876ab07359c77e4f93330b9ed73035",
+      "heldout_dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_s.v": "0e2433618c4981bf3d72d8e98a3e47cd7c40bcfdee0c4bcd6bb088f374da98a2",
+      "heldout_fifo_w156_d4_S.v": "efabb4b0d51001875906cf206a70f3a7f86a7f276633de13bcbbc6e8a96bd192",
+      "heldout_fifo_w18_d4_S.v": "d4506f75e215e56bb3821a533c0ef2eac67a8c5b2091d6cb7169b841282a6526",
+      "heldout_fifo_w52_d4_S.v": "8ba968cc7267bd753d4c0e22829f403d93bcddd60733f2c9e5f9b098d9927829",
+      "heldout_fifo_w54_d4_S.v": "75a848f8836d18f0163bd0abe20b5dd1b26c39cfceee27360e99b6fcc58e6845",
+      "heldout_fifo_w56_d4_S.v": "9e90ff721d20f42661532b9da676c19fbd19685153268dc9c41c52810d06964a",
+      "heldout_fifo_w78_d4_S.v": "7ca3af5eedcc8d73ed5d587789e106535f46748226d35b7c529d0081959c2305",
+      "heldout_fifo_w84_d4_S.v": "b845f4723cc294eadc5a1cea137fdf9105145c7367b300acd98f9cfe6e8f9b78",
+      "heldout_first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_6u_config3_s.v": "6058d8a3f76b2f4ce8bfc2fe39c5e814c26ce10af162a3cb4999136be90af5f9",
+      "heldout_flow_control_loop_pipe.v": "0e75ec45ffe84d0fcd16789b2135af9f33b4945f7d27fd15f23f84a7db5d71e7",
+      "heldout_flow_control_loop_pipe_sequential_init.v": "6bb0153e60e0ce38db04f539ed12e01bf9cea6102fd914678614deee54de8f84",
+      "heldout_mac_muladd_13ns_4s_18s_19_1_1.v": "4ee65ac6f9fde01b3eb190105ecfdfb548c9347cc44bf8fefc41253d2ffa58b6",
+      "heldout_mac_muladd_13ns_5s_18s_19_1_1.v": "b59a1c0ec77cf0a6b18d9eaa748a38f2499753780fb719b9c0e3608402fd6fc1",
+      "heldout_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_config5_s.v": "002db3766e1efb4ade3737c9aec27551f574f9cdcddf21778d6b9ddc3b1c0823",
+      "heldout_mul_13ns_5s_18_1_1.v": "327bd8b83e159e842c17742cd3aaa7bfdddb11aa69a56611b27438648b06f024",
+      "heldout_mul_9s_5ns_13_1_1.v": "b866be7a14e127caaa726637beaaf21590e2d216a0b3032960c10682e1e9939d",
+      "heldout_mul_9s_5s_13_1_1.v": "5b29d2314f2a6a77249c52dd00c337292a80497e8f16a185fc9a8b96b87b7a72",
+      "heldout_regslice_both.v": "11edaf94f0a320d0228b35797b85714de7fc8793294cb2aa181e2f4f7cf1afb3",
+      "heldout_relu_array_ap_fixed_4u_array_ap_ufixed_13_5_5_3_0_4u_relu_config8_s.v": "0252140370a67a5e1ae89e30ae783e7bf48611ec6c3cfe0da4a6d60f10f99e24",
+      "heldout_relu_array_ap_fixed_6u_array_ap_ufixed_13_5_5_3_0_6u_relu_config4_s.v": "5153757953c60f7b6f163096e5048e41c5872a4dbcb9399cfb3d09ad8abab22d",
+      "heldout_repack_array_ap_fixed_6u_array_ap_fixed_9_5_0_2_0_2u_114u_2u_s.v": "8203954bad54260e30af05ef0da162893f25c7df7ea31d831d35dcba1590ce82",
+      "heldout_repack_array_ap_ufixed_4u_array_ap_ufixed_13_5_5_3_0_12u_48u_4u_s.v": "daa36e27441773e0d071cd914fedde4129f37203947201331047c48b99d5266f",
+      "heldout_scheduled_conv_array_array_ap_fixed_14_6_5_3_0_4u_config7_1u_s.v": "9c1c11a444cc819f0662dbf7dca412091e6935582adc966c31ba26b673439e99",
+      "heldout_scheduled_pool_array_array_ap_ufixed_13_5_5_3_0_4u_config9_1u_s.v": "0d13132b1083f125f3a7b3b6df15ea27fce68bc744221c2220364543c0b58cf2",
+      "heldout_sparsemux_13_3_9_1_1.v": "292080f802c9e08617ed0903a9fb31a5268d865c5835ab535d70d2163010b52c",
+      "heldout_sparsemux_7_2_13_1_1.v": "245ca625eb731bcfb7c32e462c7beb3e729dfe03027a7b7a631ac5c0a5631848",
+      "heldout_sparsemux_7_2_9_1_1.v": "3d9119fa2b10b2b34dafe5dc5ae129264302c0440bbdc93695ebbe40f48ebd18",
+      "heldout_start_for_dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_U0.v": "5068baad35608f59d35ba3aed715eb0304e7077282fd09dea33d42b252357ef2",
+      "heldout_start_for_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_confcud.v": "8ef0294af7676067ea994418df9ed998f76062c1ff62dcc29818dc3fa1deed96",
+      "heldout_start_for_relu_array_ap_fixed_4u_array_ap_ufixed_13_5_5_3_0_4u_relu_config8_U0.v": "b0f592d6167cc534c8e9a9f509b1455073ab5396db07ed118fc1e91855681aea",
+      "heldout_start_for_relu_array_ap_fixed_6u_array_ap_ufixed_13_5_5_3_0_6u_relu_config4_U0.v": "6970135ece1cc853e35a6744683983601594a39fc1f17aff9ae04524d818cf2c",
+      "heldout_start_for_repack_array_ap_fixed_6u_array_ap_fixed_9_5_0_2_0_2u_114u_2u_U0.v": "e2627477c93840dacd77dd3e740d56c1eb8f804a331f56e8dfa01957d216fe2c",
+      "heldout_start_for_repack_array_ap_ufixed_4u_array_ap_ufixed_13_5_5_3_0_12u_48u_4u_U0.v": "0ff64317d78b5fbf0f6679e4777f40da7234af2c28a36662f37ddd4dcf57ee11",
+      "heldout_start_for_scheduled_conv_array_array_ap_fixed_14_6_5_3_0_4u_config7_1u_U0.v": "4b8bcf095f74067e3081d4e54727e96e5249d999b6f66b572a15f91a84fca828",
+      "heldout_start_for_scheduled_pool_array_array_ap_ufixed_13_5_5_3_0_4u_config9_1u_U0.v": "1a3c52cdbc2b2d2396ef4c47ac27b2b985cce567bd8f11a9829caad4348cbba6",
+      "heldout_urem_6ns_5ns_4_10_1.v": "27eab3f2d3ac7aa724337f6f075826d35bfd1a7bb2018c843874f0c70f41196e",
+      "heldout_urem_7ns_4ns_3_11_1.v": "be409940f4f231ac506f1287d14682cdfb8d6799191168bea2b9b83d0e006ceb"
+    },
+    "schema_version": 1,
+    "simulator": {
+      "name": "xsim",
+      "version": "Vivado Simulator v2023.2"
+    },
+    "source_closure_sha256": "bf2936aee645ed13c578625507744ca1901f09e9de3ab7a52f2f868ba4735c28",
+    "status": "passed",
+    "testbench_sha256": "2a58e777bb335ee063ac703bb111e5e00a5b116b85900586eadbf4e219cdc20d",
+    "top": "heldout",
+    "vector_files": {
+      "rtl_expected_words.hex": "64ad57153d940f20bc7495b664a32396e51e1a6fae7c1f49934e7e7241a9d6e4",
+      "rtl_input_words.hex": "719917086d0684090db7ae8fbd45a67fe5adb9a4a054607d4016d4f7ca987876"
+    }
+  },
+  "schema_version": 5,
+  "source_closure_sha256": "bf2936aee645ed13c578625507744ca1901f09e9de3ab7a52f2f868ba4735c28",
+  "stage_plan": [
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 40,
+        "latency": 40,
+        "resource_proxy": 6,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 6,
+        "output_lanes": 6,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "selected-legacy-streaming-plan"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          80,
+          3,
+          1
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "input_0:out0",
+        "words": 40
+      },
+      "operation_ids": [
+        "conv2d_0",
+        "relu_0",
+        "max_pool2d_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          19,
+          3,
+          2
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 19
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 1,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 3,
+        "id": "complete-window-dependencies",
+        "input_words": 40,
+        "output_words": 19,
+        "production_after_input_words": [
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23,
+          25,
+          27,
+          29,
+          31,
+          33,
+          35,
+          37,
+          39
+        ],
+        "rational_rate": [
+          19,
+          40
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-wide-stream",
+        "version": 2
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "calibrated",
+        "cycles": 71,
+        "latency": 57,
+        "resource_proxy": 24,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 2,
+        "output_lanes": 4,
+        "reset": "discard-in-flight",
+        "source_owner": "captured-window-positions",
+        "storage": "partitioned-row-history-and-local-window"
+      },
+      "implementation": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 2,
+        "convolution_rows": 9,
+        "drains_complete_frame": true,
+        "filters": 4,
+        "id": "captured-window-positions",
+        "input_rows": 19,
+        "input_words": 57,
+        "kernel_rows": 3,
+        "output_rows": 4,
+        "pool_rows": 2,
+        "positions": 1,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 2,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 3
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 2,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          19,
+          3,
+          2
+        ],
+        "tail_valid_lanes": 2,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 57
+      },
+      "operation_ids": [
+        "conv2d_1",
+        "relu_1",
+        "max_pool2d_1"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 4,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 13
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          4,
+          3,
+          4
+        ],
+        "tail_valid_lanes": 4,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 12
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 6,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 13,
+        "id": "complete-window-dependencies",
+        "input_words": 57,
+        "output_words": 12,
+        "production_after_input_words": [
+          13,
+          14,
+          15,
+          25,
+          26,
+          27,
+          37,
+          38,
+          39,
+          49,
+          50,
+          51
+        ],
+        "rational_rate": [
+          4,
+          19
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-window-stream",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 0,
+        "latency": 0,
+        "resource_proxy": 0,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 4,
+        "output_lanes": 4,
+        "reset": "discard-in-flight",
+        "source_owner": "compose-top-and-contracts",
+        "storage": "zero-alias"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 4,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 13
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          4,
+          3,
+          4
+        ],
+        "tail_valid_lanes": 4,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 12
+      },
+      "operation_ids": [
+        "reshape_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 4,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 13
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          48
+        ],
+        "tail_valid_lanes": 4,
+        "tensor_id": "reshape_0:out0",
+        "words": 12
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 1,
+        "id": "complete-window-dependencies",
+        "input_words": 12,
+        "output_words": 12,
+        "production_after_input_words": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "rational_rate": [
+          1,
+          1
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": false,
+      "strategy": {
+        "id": "identity-layout-view",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 12,
+        "latency": 12,
+        "resource_proxy": 4,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 12,
+        "output_lanes": 1,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "dense-rom-packing-and-accumulator"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 12,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 13
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          48
+        ],
+        "tail_valid_lanes": 12,
+        "tensor_id": "reshape_0:out0",
+        "words": 4
+      },
+      "operation_ids": [
+        "dense_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 1,
+        "numeric": {
+          "integer": 9,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 21
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          1
+        ],
+        "tail_valid_lanes": 1,
+        "tensor_id": "dense_0:out0",
+        "words": 1
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 4,
+        "id": "complete-window-dependencies",
+        "input_words": 4,
+        "output_words": 1,
+        "production_after_input_words": [
+          4
+        ],
+        "rational_rate": [
+          1,
+          4
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-dense-wide",
+        "version": 1
+      }
+    }
+  ],
+  "stages": {
+    "bridge_0": {
+      "functions": [
+        {
+          "initiation_interval": 70,
+          "latency_cycles": 70,
+          "loops": [
+            {
+              "name": "BridgeCodes",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "repack_array_ap_fixed_6u_array_ap_fixed_9_5_0_2_0_2u_114u_2u_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "bridge_1": {
+      "functions": [
+        {
+          "initiation_interval": 23,
+          "latency_cycles": 23,
+          "loops": [
+            {
+              "name": "BridgeCodes",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "repack_array_ap_ufixed_4u_array_ap_ufixed_13_5_5_3_0_12u_48u_4u_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "conv2d_0": {
+      "functions": [
+        {
+          "initiation_interval": 43,
+          "latency_cycles": 43,
+          "loops": [
+            {
+              "name": "ReadPairsWide",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_6u_config3_s"
+        },
+        {
+          "initiation_interval": 42,
+          "latency_cycles": 42,
+          "loops": [
+            {
+              "name": "PoolRows",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_config5_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "conv2d_1": {
+      "functions": [
+        {
+          "initiation_interval": 60,
+          "latency_cycles": 60,
+          "loops": [
+            {
+              "name": "WindowWords",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "scheduled_conv_array_array_ap_fixed_14_6_5_3_0_4u_config7_1u_s"
+        },
+        {
+          "initiation_interval": 30,
+          "latency_cycles": 30,
+          "loops": [
+            {
+              "name": "ReLUActLoop",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "relu_array_ap_fixed_4u_array_ap_ufixed_13_5_5_3_0_4u_relu_config8_s"
+        },
+        {
+          "initiation_interval": 30,
+          "latency_cycles": 30,
+          "loops": [
+            {
+              "name": "PoolWords",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "scheduled_pool_array_array_ap_ufixed_13_5_5_3_0_4u_config9_1u_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "dense_0": {
+      "functions": [
+        {
+          "initiation_interval": 17,
+          "latency_cycles": 17,
+          "loops": [
+            {
+              "name": "DenseValues",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues"
+        },
+        {
+          "initiation_interval": 20,
+          "latency_cycles": 20,
+          "loops": [],
+          "top": "dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "reshape_0": {
+      "functions": [],
+      "realization": "zero-hardware-view"
+    }
+  },
+  "status": "recorded",
+  "timing": {
+    "estimated_clock_ns": 3.492,
+    "target_clock_ns": 5.0
+  },
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "top": "heldout",
+  "warnings": [
+    {
+      "code": "estimate.uncalibrated_native",
+      "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"
+    }
+  ]
+}

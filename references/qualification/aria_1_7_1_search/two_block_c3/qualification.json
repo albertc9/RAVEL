@@ -1,0 +1,722 @@
+{
+  "generation_fingerprint": "b6a68f69f79170e464e04d91baea9f2999bc6690df4584ea9095743880008b70",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 2,
+      "input_rows_per_word": 2,
+      "input_scalar_bits": 9,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 21,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 4
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        64,
+        2,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 9,
+        "input_tdata_bits": 64,
+        "input_tdata_port": "renamed_input_TDATA",
+        "output_scalar_bits": 21,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer11_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "manifest_sha256": "a354fa892d061765e91b79985c6de2f1984efc5b976c52362dc19a559f1d4af8",
+  "ooc": null,
+  "part": "xcku5p-ffvb676-2-e",
+  "performance": {
+    "initiation_interval": 35,
+    "latency_cycles": 44
+  },
+  "report_files": {
+    "two_block_c3_prj/solution1/sim/report/two_block_c3_cosim.rpt": "6f6440cb3f285fc276eef44e5658732e9dd71da383cd319ee9f91e279732794e",
+    "two_block_c3_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues_csynth.xml": "4eee4cdc98361732ab4f47a5f5fbbc5c9d13d626b53e93b3bb3dbc4b68f8c529",
+    "two_block_c3_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_s_csynth.xml": "646c0d29bed28711623448e60bec93b3fdd2b6e5794cc837e9a1ef60800e908d",
+    "two_block_c3_prj/solution1/syn/report/first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_6u_config3_s_csynth.xml": "f1922e95b88afdc37f2f5e1f4116496bdc0a1fe6213109584c6f1382d4285875",
+    "two_block_c3_prj/solution1/syn/report/maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_config5_s_csynth.xml": "41685ad7890c943430495322f4bfa646b2835e15bda7612916f514002ced58b1",
+    "two_block_c3_prj/solution1/syn/report/relu_array_ap_fixed_6u_array_ap_ufixed_14_6_5_3_0_6u_relu_config8_s_csynth.xml": "6730c24d9bcb2cc91105ad2493097b015f95897c4b7f328d3ba5e373702b5bbe",
+    "two_block_c3_prj/solution1/syn/report/scheduled_conv_array_array_ap_fixed_15_7_5_3_0_6u_config7_2u_s_csynth.xml": "c5ba4b074722902af134c72105b94bfad377769964a320b21de0426c1acc36d8",
+    "two_block_c3_prj/solution1/syn/report/scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_6u_config9_2u_s_csynth.xml": "bba122d99338ca3941e289951833a044e5b4aed4e21da0ae2a345ac726e2459d",
+    "two_block_c3_prj/solution1/syn/report/two_block_c3_csynth.xml": "be80123d6d9720f07543d68c24847bbd473b62ad3d1342b8ea39d88364e95a81"
+  },
+  "resources": {
+    "BRAM_18K": 0,
+    "DSP": 3,
+    "FF": 2096,
+    "LUT": 4365,
+    "URAM": 0
+  },
+  "rtl_cosimulation": "passed",
+  "rtl_ports": {
+    "ap_clk": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_done": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_idle": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_ready": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_rst_n": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_start": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer11_out_TDATA": {
+      "bits": 32,
+      "direction": "out"
+    },
+    "layer11_out_TREADY": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer11_out_TVALID": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "renamed_input_TDATA": {
+      "bits": 64,
+      "direction": "in"
+    },
+    "renamed_input_TREADY": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "renamed_input_TVALID": {
+      "bits": 1,
+      "direction": "in"
+    }
+  },
+  "rtl_protocol": {
+    "completed_samples": 95,
+    "consecutive_samples": 92,
+    "input_gap_cycles": 514,
+    "interfaces": {
+      "hls_stream_interface": {
+        "block_control": "ap_ctrl_hs",
+        "channels_per_row": 2,
+        "input_rows_per_word": 2,
+        "input_scalar_bits": 9,
+        "input_words_per_inference": 32,
+        "optional_axis_sidebands": [],
+        "ordering": "row-major; time before channel",
+        "output_scalar_bits": 21,
+        "output_words_per_inference": 1,
+        "protocol": "axis",
+        "values_per_input_word": 4
+      },
+      "logical_model_interface": {
+        "input_shape": [
+          64,
+          2,
+          1
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl_interface": {
+        "expected": {
+          "input_scalar_bits": 9,
+          "input_tdata_bits": 64,
+          "input_tdata_port": "renamed_input_TDATA",
+          "output_scalar_bits": 21,
+          "output_tdata_bits": 32,
+          "output_tdata_port": "layer11_out_TDATA",
+          "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+        },
+        "measured": null
+      }
+    },
+    "log_sha256": "feb9a8d5f4bf0ae7949f15c55cb61d0e8a20779df2706520b6c9f2bf1285e75e",
+    "manifest_sha256": "a354fa892d061765e91b79985c6de2f1984efc5b976c52362dc19a559f1d4af8",
+    "output_stall_cycles": 80,
+    "report_sha256": "c021d608247f10585075f9893103b96a9b0e22b9455c41d86a7c614929dc94df",
+    "reset_aborts": 1,
+    "reset_between_epochs": 1,
+    "rtl_files": {
+      "two_block_c3.v": "976191681034f29b2bd783af653c213841d18cce74e982d76feb1bd955c9623c",
+      "two_block_c3_dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues.v": "1f480799d010b51510013f0da9be13dbda256866c86e5f148aacd3c71a34cbbd",
+      "two_block_c3_dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues_w11_rbkb.v": "9e66c1b91efa8535fcdeac22b8d776446514a564e549c26a0f00dc9fbb864661",
+      "two_block_c3_dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_s.v": "ee64042bbc579367c557b58d234249c855ba33e359a07094777f370764987384",
+      "two_block_c3_fifo_w54_d4_S.v": "1e939f2106739d05c3bd63a581669d122476a095db5facf7bc1f1d9183be2da4",
+      "two_block_c3_fifo_w72_d4_S.v": "290df15143927e0664de5b0b9216063a8935f3666a79670418b9fc6ae0f4be9b",
+      "two_block_c3_fifo_w78_d4_S.v": "849c467a8a7c10cfd7a143d61fadbce7b7316675820136028b277c06a12b3543",
+      "two_block_c3_fifo_w84_d4_S.v": "cdd72dbba90eb261d5c243cb5e37143a598ded583040caf06e8bbe8c371a9b3a",
+      "two_block_c3_fifo_w90_d4_S.v": "eff167535c64d0a355e7d82cf2ce78c0f20eb391c8e192fda9c1797280877720",
+      "two_block_c3_first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_6u_config3_s.v": "b0d4be8009182140b30c5a99aff9f6f66c3e5d703d3e8ef9479579dd4c6b47e1",
+      "two_block_c3_flow_control_loop_pipe.v": "1f59e10bfc5700da7fdd6c6571c4ec370722052db3ee357e6f062f188311efa0",
+      "two_block_c3_flow_control_loop_pipe_sequential_init.v": "29a41914b65425bb29e1e919770af580cbbca80e609c8342e47c8b93f5b8229e",
+      "two_block_c3_mac_muladd_14ns_5s_19s_20_1_1.v": "32296447264ffec9d898957a066470a89d49df80c041a6642fe76a3a206a9e18",
+      "two_block_c3_mac_muladd_14ns_5s_20s_21_1_1.v": "04e48d0cc2202bb346c6d870b22edf73483698069604640451ca8059b75b55a6",
+      "two_block_c3_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_config5_s.v": "443b35f51e43f82ac8de06c78ed260f9d67b50dc278f72341b52d9f4a3e7ebbd",
+      "two_block_c3_mul_14ns_5s_19_1_1.v": "9ffd8cf0022bd5326af5051b2a06030f969fec01567396f4cc5fbc584b8751b0",
+      "two_block_c3_regslice_both.v": "418707ddc274627d7a70f2de1f0f5ea8bb6dc322a400e04799654135f3c30c3c",
+      "two_block_c3_relu_array_ap_fixed_6u_array_ap_ufixed_12_4_5_3_0_6u_relu_config4_s.v": "c7f6b68f3f67046bd3891ad835f7d15815597833a314070fc9782abcd6caeab0",
+      "two_block_c3_relu_array_ap_fixed_6u_array_ap_ufixed_14_6_5_3_0_6u_relu_config8_s.v": "f2564f3d2044b65c2e4de61a7f8cd465f6e28621436ef6e59e3f742c7080341f",
+      "two_block_c3_scheduled_conv_array_array_ap_fixed_15_7_5_3_0_6u_config7_2u_s.v": "34259f2408eb01aed9c994f8bf67a7018afe11e6ae15b6dc307e41aab4506f7b",
+      "two_block_c3_scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_6u_config9_2u_s.v": "4178c782c26e635844cdb9d083c86d1f6497d8221b31676b983cce3e63ba4cbb",
+      "two_block_c3_start_for_dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_U0.v": "47b7e14345229b8e30b53c1fd0b4431d294b26cbcca504011a1253d8a21b4c97",
+      "two_block_c3_start_for_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_confcud.v": "675f45c7ac1e30d69e8905de187bd58a71dd68b6a6229c9d2b93da71bf43b621",
+      "two_block_c3_start_for_relu_array_ap_fixed_6u_array_ap_ufixed_12_4_5_3_0_6u_relu_config4_U0.v": "8f24a596a02a0952a2edb55857d6d427330ece9510bb8324042eebdda4b46452",
+      "two_block_c3_start_for_relu_array_ap_fixed_6u_array_ap_ufixed_14_6_5_3_0_6u_relu_config8_U0.v": "b8678f966fb0732641aee5e243a0a6d0924bf7d5ac78c7b0f2915852986101ab",
+      "two_block_c3_start_for_scheduled_conv_array_array_ap_fixed_15_7_5_3_0_6u_config7_2u_U0.v": "7dff3703c974777cea1222b740133d8e9389c3302046dbd5963fd1e4d2b8c056",
+      "two_block_c3_start_for_scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_6u_config9_2u_U0.v": "24525a82919e631efd263404d1c4f03e63dc8e4db08e25981c0d1f4f68a73d70"
+    },
+    "schema_version": 1,
+    "simulator": {
+      "name": "xsim",
+      "version": "Vivado Simulator v2023.2"
+    },
+    "source_closure_sha256": "786c105baa3a10a1e1a5e3e43056dc99e2509f877e6181fbf56c3555e16367c7",
+    "status": "passed",
+    "testbench_sha256": "8c9c4d6e3a1e44850dc3a5a77c43d660092d7963816a810cd889e469d4275fb3",
+    "top": "two_block_c3",
+    "vector_files": {
+      "rtl_expected_words.hex": "074ef42d14f6a6e7167ccedd202f9bff53922455687a40c59e610cc420cd3f35",
+      "rtl_input_words.hex": "4a9b37cc31a4839d7816d6aee77abda07a9badc6c7568915d89f0431cc4389a9"
+    }
+  },
+  "schema_version": 5,
+  "source_closure_sha256": "786c105baa3a10a1e1a5e3e43056dc99e2509f877e6181fbf56c3555e16367c7",
+  "stage_plan": [
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 32,
+        "latency": 32,
+        "resource_proxy": 9,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 4,
+        "output_lanes": 6,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "selected-legacy-streaming-plan"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 4,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          64,
+          2,
+          1
+        ],
+        "tail_valid_lanes": 4,
+        "tensor_id": "input_0:out0",
+        "words": 32
+      },
+      "operation_ids": [
+        "conv2d_0",
+        "relu_0",
+        "max_pool2d_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          15,
+          2,
+          3
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 15
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 1,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 3,
+        "id": "complete-window-dependencies",
+        "input_words": 32,
+        "output_words": 15,
+        "production_after_input_words": [
+          3,
+          5,
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23,
+          25,
+          27,
+          29,
+          31
+        ],
+        "rational_rate": [
+          15,
+          32
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-wide-stream",
+        "version": 2
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "calibrated",
+        "cycles": 31,
+        "latency": 15,
+        "resource_proxy": 54,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 6,
+        "output_lanes": 6,
+        "reset": "discard-in-flight",
+        "source_owner": "captured-window-positions",
+        "storage": "partitioned-row-history-and-local-window"
+      },
+      "implementation": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 3,
+        "convolution_rows": 7,
+        "drains_complete_frame": true,
+        "filters": 3,
+        "id": "captured-window-positions",
+        "input_rows": 15,
+        "input_words": 15,
+        "kernel_rows": 3,
+        "output_rows": 3,
+        "pool_rows": 2,
+        "positions": 2,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 2,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 2
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          15,
+          2,
+          3
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 15
+      },
+      "operation_ids": [
+        "conv2d_1",
+        "relu_1",
+        "max_pool2d_1"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          3,
+          2,
+          3
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 3
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 2,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 5,
+        "id": "complete-window-dependencies",
+        "input_words": 15,
+        "output_words": 3,
+        "production_after_input_words": [
+          5,
+          9,
+          13
+        ],
+        "rational_rate": [
+          1,
+          5
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-window-stream",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 0,
+        "latency": 0,
+        "resource_proxy": 0,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 6,
+        "output_lanes": 6,
+        "reset": "discard-in-flight",
+        "source_owner": "compose-top-and-contracts",
+        "storage": "zero-alias"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          3,
+          2,
+          3
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 3
+      },
+      "operation_ids": [
+        "reshape_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          18
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "reshape_0:out0",
+        "words": 3
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 1,
+        "id": "complete-window-dependencies",
+        "input_words": 3,
+        "output_words": 3,
+        "production_after_input_words": [
+          1,
+          2,
+          3
+        ],
+        "rational_rate": [
+          1,
+          1
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": false,
+      "strategy": {
+        "id": "identity-layout-view",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 6,
+        "latency": 6,
+        "resource_proxy": 3,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 6,
+        "output_lanes": 1,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "dense-rom-packing-and-accumulator"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 6,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          18
+        ],
+        "tail_valid_lanes": 6,
+        "tensor_id": "reshape_0:out0",
+        "words": 3
+      },
+      "operation_ids": [
+        "dense_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 1,
+        "numeric": {
+          "integer": 9,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 21
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          1
+        ],
+        "tail_valid_lanes": 1,
+        "tensor_id": "dense_0:out0",
+        "words": 1
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 3,
+        "id": "complete-window-dependencies",
+        "input_words": 3,
+        "output_words": 1,
+        "production_after_input_words": [
+          3
+        ],
+        "rational_rate": [
+          1,
+          3
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-dense-wide",
+        "version": 1
+      }
+    }
+  ],
+  "stages": {
+    "conv2d_0": {
+      "functions": [
+        {
+          "initiation_interval": 34,
+          "latency_cycles": 34,
+          "loops": [
+            {
+              "name": "ReadPairsWide",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_6u_config3_s"
+        },
+        {
+          "initiation_interval": 34,
+          "latency_cycles": 34,
+          "loops": [
+            {
+              "name": "PoolRows",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_9_5_0_2_0_6u_config5_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "conv2d_1": {
+      "functions": [
+        {
+          "initiation_interval": 18,
+          "latency_cycles": 18,
+          "loops": [
+            {
+              "name": "WindowWords",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "scheduled_conv_array_array_ap_fixed_15_7_5_3_0_6u_config7_2u_s"
+        },
+        {
+          "initiation_interval": 10,
+          "latency_cycles": 10,
+          "loops": [
+            {
+              "name": "ReLUActLoop",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "relu_array_ap_fixed_6u_array_ap_ufixed_14_6_5_3_0_6u_relu_config8_s"
+        },
+        {
+          "initiation_interval": 10,
+          "latency_cycles": 10,
+          "loops": [
+            {
+              "name": "PoolWords",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_6u_config9_2u_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "dense_0": {
+      "functions": [
+        {
+          "initiation_interval": 12,
+          "latency_cycles": 12,
+          "loops": [
+            {
+              "name": "DenseValues",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues"
+        },
+        {
+          "initiation_interval": 15,
+          "latency_cycles": 15,
+          "loops": [],
+          "top": "dense_wide_stream_array_array_ap_fixed_21_9_5_3_0_1u_config11_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "reshape_0": {
+      "functions": [],
+      "realization": "zero-hardware-view"
+    }
+  },
+  "status": "recorded",
+  "timing": {
+    "estimated_clock_ns": 3.454,
+    "target_clock_ns": 5.0
+  },
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "top": "two_block_c3",
+  "warnings": [
+    {
+      "code": "estimate.uncalibrated_native",
+      "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"
+    }
+  ]
+}
