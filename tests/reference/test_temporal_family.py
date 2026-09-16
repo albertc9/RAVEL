@@ -168,6 +168,30 @@ def test_search_is_deterministic_and_accounts_for_its_finite_exploration():
     assert first["optimality"] == "within-enumerated-calibrated-domain"
 
 
+def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defaults(tmp_path):
+    from zipfile import ZipFile
+    from ravel_hls import Project, refresh
+
+    path = tmp_path / "ravel_170_refresh_fixture"
+    with ZipFile(Path(__file__).parent / "fixtures/aria170_refresh.zip") as archive:
+        archive.extractall(path)
+    original = Project.open(path)
+    assert original.manifest["profile"]["generation"]["version"] == "1.7.0"
+    assert original.status["source_integrity"] == "clean"
+    assert original.manifest["resolved_design"]["stages"][1]["strategy"]["id"] == "hls4ml-temporal-block"
+    model = Path(__file__).parent / "fixtures/two_block_c3.keras"
+    current = analyze(model, {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    })
+    assert current.resolved_design["stages"][1]["strategy"]["id"] == "aria-window-stream"
+    refreshed = refresh(original, model)
+    assert refreshed.manifest["architecture_contract_sha256"] == original.manifest["architecture_contract_sha256"]
+    assert refreshed.manifest["resolved_design"]["stages"] == original.manifest["resolved_design"]["stages"]
+    assert refreshed.status["correctness_verification"] == "passed"
+    assert refreshed.status["performance_qualification"] == "not_run"
+
+
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
     import numpy as np
 

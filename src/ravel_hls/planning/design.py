@@ -7,8 +7,9 @@ from ..planning.temporal import plan_temporal_chain
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
 from .calibration import WINDOW_COST_PROFILE
+from .replay import replay_design
 
-def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls=None):
+def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls=None, recorded_design=None):
     model_facts = facts.to_dict()
     model_family, applicability = generation.match_model_family(
         model_facts, frontend_provenance
@@ -54,6 +55,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 coefficient_realization=coefficient_realization,
             )
     multi_report = {}
+    if recorded_design is not None and resolved_design is not None:
+        return model_family, applicability, replay_design(recorded_design, resolved_design, generation), multi_report
     if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
         multi_report["recognition"] = recognition.chain.to_dict()
         outside_release = len(recognition.chain.blocks) > 2

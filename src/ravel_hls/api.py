@@ -192,7 +192,7 @@ def refresh(
             project_view.path / "keras_model.keras",
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
-        analyzed = _analyze_model(template, config)
+        analyzed = _analyze_model(template, config, recorded_manifest=project_view.manifest)
         payload, report = model_or_parameters._apply_to_analysis(analyzed)
         if architecture_contract_sha256(report) != project_view.manifest.get(
             "architecture_contract_sha256"
@@ -211,7 +211,8 @@ def refresh(
             source_consistency_available=False,
         )
     config = _refresh_configuration(project_view)
-    analysis = analyze(model_or_parameters, config).to_dict()
+    analyzed = _analyze_model(model_or_parameters, config, recorded_manifest=project_view.manifest)
+    analysis = analyzed.analysis.to_dict()
     observed_contract = architecture_contract_sha256(analysis)
     expected_contract = project_view.manifest.get("architecture_contract_sha256")
     if observed_contract != expected_contract:
@@ -219,11 +220,14 @@ def refresh(
             "Refresh model changes the recorded architecture contract; "
             "use ordinary conversion"
         )
-    return convert(
-        model_or_parameters,
-        project_view.path,
-        config,
+    return _publish_analyzed_graph(
+        graph=analyzed.graph,
+        analysis_report=analysis,
+        parameter_payload=analyzed.parameter_payload,
+        output_dir=project_view.path,
+        config=config,
         verification_inputs=verification_inputs,
+        source_consistency_available=True,
     )
 
 
