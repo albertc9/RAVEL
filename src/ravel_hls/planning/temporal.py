@@ -7,12 +7,13 @@ from dataclasses import replace
 from .bridges import LOSSLESS_BRIDGES
 from .strategies import StageContext, StageRequest, TEMPORAL_STRATEGIES
 from .search import SearchReport
+from .resources import constraint_report, estimate_resources, rejection_reasons
 
 
 def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
                         dense_parallelism: int, input_strategy: str,
                         input_cycles: int, dense_cycles: int,
-                        part=None, clock_period=None,
+                        part=None, clock_period=None, resource_limits=None,
                         strategies=TEMPORAL_STRATEGIES, bridges=LOSSLESS_BRIDGES, resolver=TEMPORAL_RESOLVER) -> SearchReport:
     context = StageContext(chain.blocks[0].input.id, input_strategy, temporal_packing,
                            dense_parallelism, input_cycles, dense_cycles, part, clock_period)
@@ -43,9 +44,12 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
                              + [WINDOW_COST_PROFILE.bridge_cycles(bridge) for bridge in plan.bridges]) + 1
                 plan = replace(plan, cost=Cost(cycles, plan.cost.resource, plan.cost.latency))
             plans.append(plan)
-    incumbent = next((plan for plan in plans if not any(stage.implementation for stage in plan.stages)), None)
-    calibrated = [plan for plan in plans if all(stage.confidence in {"analytical", "calibrated"} for stage in plan.stages)]
+    resources = tuple(estimate_resources(plan, chain) for plan in plans)
+    constraints = constraint_report(part, clock_period, resource_limits or {})
+    feasible = [plan for plan, estimate in zip(plans, resources) if not rejection_reasons(estimate, constraints)]
+    incumbent = next((plan for plan in feasible if not any(stage.implementation for stage in plan.stages)), None)
+    calibrated = [plan for plan in feasible if all(stage.confidence in {"analytical", "calibrated"} for stage in plan.stages)]
     selected = min(calibrated, key=lambda plan: (plan.conservative_cost, plan.identity), default=incumbent)
     if selected is None:
-        selected = ChainPlan(findings=(Finding("planner.no_qualified_plan", "No compatible temporal implementation"),))
-    return SearchReport(tuple(plans), selected)
+        selected = ChainPlan(findings=(Finding("search.no_feasible_plan", "No selectable plan meets the requested core constraints"),))
+    return SearchReport(tuple(plans), selected, resources=resources, constraints=constraints)

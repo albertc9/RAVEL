@@ -70,9 +70,11 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
                 part=(hls or {}).get("Part"), clock_period=(hls or {}).get("ClockPeriod"),
+                resource_limits=choices.get("ResourceLimits"),
                 bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
             composed = search.selected
+            multi_report["optimization_search"] = search.to_dict()
             if composed.findings:
                 resolved_design = None
                 applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}

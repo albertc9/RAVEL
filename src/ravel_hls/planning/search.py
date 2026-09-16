@@ -1,11 +1,12 @@
 """Immutable evidence for analytical implementation selection."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 
 from .chain import ChainPlan
 from .calibration import WINDOW_COST_PROFILE
+from .resources import ResourceEstimate, rejection_reasons
 
 
 def plan_identity(plan: ChainPlan) -> str:
@@ -24,6 +25,8 @@ class SearchReport:
     candidates: tuple[ChainPlan, ...]
     selected: ChainPlan
     complete: bool = True
+    resources: tuple[ResourceEstimate, ...] = ()
+    constraints: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -31,7 +34,8 @@ class SearchReport:
             "mode": "analytical",
             "status": "complete" if self.complete else "incomplete",
             "candidate_count": len(self.candidates),
-            "selected_candidate": plan_identity(self.selected),
+            "selected_candidate": plan_identity(self.selected) if self.selected.stages else None,
+            "constraints": self.constraints,
             "performance_qualification": "not_run",
             "selection_reason": "calibrated-predicted-frame-interval" if any(
                 stage.confidence == "calibrated" for stage in self.selected.stages) else "retain-incumbent-without-calibrated-coverage",
@@ -40,6 +44,8 @@ class SearchReport:
                     "id": plan_identity(plan),
                     "strategies": [stage.id for stage in plan.stages],
                     "predicted_frame_cycles": plan.cost.cycles,
+                    "resources": resource.to_dict(),
+                    "rejection_reasons": rejection_reasons(resource, self.constraints) if self.constraints else [],
                     "schedule": next((stage.implementation.to_dict() for stage in plan.stages
                                       if stage.implementation is not None), None),
                     "confidence": (
@@ -50,6 +56,6 @@ class SearchReport:
                     "calibration_profile": WINDOW_COST_PROFILE.to_dict() if any(
                         stage.confidence == "calibrated" for stage in plan.stages) else None,
                 }
-                for plan in self.candidates
+                for plan, resource in zip(self.candidates, self.resources or (ResourceEstimate(),) * len(self.candidates))
             ],
         }

@@ -136,6 +136,25 @@ def test_calibrated_window_conversion_preserves_intermediate_and_final_codes(tmp
     }
 
 
+def test_search_reports_resource_predictions_and_rejects_an_impossible_core_limit():
+    model = make_temporal_model(height=64, width=2, filters=3)
+    config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+              "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    analysis = analyze(model, config).to_dict()
+    search = analysis["resolved_design"]["optimization_search"]
+    selected = next(c for c in search["candidates"] if c["id"] == search["selected_candidate"])
+    assert set(selected["resources"]["values"]) == {"LUT", "FF", "DSP", "BRAM"}
+    assert selected["resources"]["status"] == "predicted"
+    assert search["constraints"]["clock_period_ns"] == 5
+    assert search["constraints"]["limits_source"] == "device-capacity"
+    limited = analyze(model, {**config, "Optimization": {
+        **config["Optimization"], "ResourceLimits": {"LUT": 1},
+    }}).to_dict()
+    assert limited["applicability"]["status"] == "unsupported"
+    assert "search.no_feasible_plan" in {f["code"] for f in limited["applicability"]["findings"]}
+    assert limited["optimization_search"]["status"] == "complete"
+
+
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
     import numpy as np
 
