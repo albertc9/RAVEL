@@ -67,6 +67,7 @@ def test_analysis_derives_position_candidates_from_geometry_without_promoting_un
     generated = [entry for entry in search["candidates"] if entry["schedule"] is not None]
     assert {entry["schedule"]["positions"] for entry in generated} == expected_positions
     assert all(entry["confidence"] == "uncalibrated" for entry in generated)
+    assert all(not entry["selectable"] and "cost.outside_calibrated_coverage" in entry["rejection_reasons"] for entry in generated)
     selected = next(entry for entry in search["candidates"] if entry["id"] == search["selected_candidate"])
     assert selected["schedule"] is None
 
@@ -153,6 +154,7 @@ def test_search_reports_resource_predictions_and_rejects_an_impossible_core_limi
     assert limited["applicability"]["status"] == "unsupported"
     assert "search.no_feasible_plan" in {f["code"] for f in limited["applicability"]["findings"]}
     assert limited["optimization_search"]["status"] == "complete"
+    assert limited["optimization_search"]["selection_reason"] == "no-feasible-plan"
 
 
 def test_single_block_analysis_does_not_silently_ignore_a_resource_ceiling():

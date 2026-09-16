@@ -34,6 +34,17 @@ class SearchReport:
     bound_reasons: tuple[str, ...] = ()
 
     def to_dict(self) -> dict:
+        def exclusions(plan, resource):
+            reasons = rejection_reasons(resource, self.constraints) if self.constraints else []
+            if any(stage.implementation and stage.confidence != "calibrated" for stage in plan.stages):
+                reasons.append("cost.outside_calibrated_coverage")
+            return reasons
+
+        selection_reason = "no-feasible-plan"
+        if self.selected.stages:
+            selection_reason = ("calibrated-predicted-frame-interval" if any(
+                stage.confidence == "calibrated" for stage in self.selected.stages)
+                else "retain-incumbent-without-calibrated-coverage")
         return {
             "policy": {"id": "aria-stream-search", "version": 1},
             "mode": "analytical",
@@ -46,15 +57,15 @@ class SearchReport:
             "selected_candidate": plan_identity(self.selected) if self.selected.stages else None,
             "constraints": self.constraints,
             "performance_qualification": "not_run",
-            "selection_reason": "calibrated-predicted-frame-interval" if any(
-                stage.confidence == "calibrated" for stage in self.selected.stages) else "retain-incumbent-without-calibrated-coverage",
+            "selection_reason": selection_reason,
             "candidates": [
                 {
                     "id": plan_identity(plan),
                     "strategies": [stage.id for stage in plan.stages],
                     "predicted_frame_cycles": plan.cost.cycles,
                     "resources": resource.to_dict(),
-                    "rejection_reasons": rejection_reasons(resource, self.constraints) if self.constraints else [],
+                    "rejection_reasons": exclusions(plan, resource),
+                    "selectable": not exclusions(plan, resource),
                     "schedule": next((stage.implementation.to_dict() for stage in plan.stages
                                       if stage.implementation is not None), None),
                     "confidence": (
