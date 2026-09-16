@@ -110,4 +110,10 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 resolved_design["report_bindings"] = report_bindings(resolved_design)
                 resolved_design["rendering"]["dense_filter_lanes"] = recognition.chain.layout.input.shape[-1]
                 resolved_design["resolved_design_sha256"] = canonical_sha256({key: value for key, value in resolved_design.items() if key != "resolved_design_sha256"})
+    if choices.get("ResourceLimits") and model_family and model_family["id"] != "hgq-temporal-block-chain":
+        resolved_design = None
+        applicability = {"status": "unsupported", "findings": [{
+            "code": "search.resource_limits.unavailable", "severity": "error", "operation_id": None,
+            "message": "Resource-constrained search is currently available for two-block plans; single-block resource estimates are uncalibrated",
+        }]}
     return model_family, applicability, resolved_design, multi_report

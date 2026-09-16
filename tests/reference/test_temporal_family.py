@@ -155,6 +155,15 @@ def test_search_reports_resource_predictions_and_rejects_an_impossible_core_limi
     assert limited["optimization_search"]["status"] == "complete"
 
 
+def test_single_block_analysis_does_not_silently_ignore_a_resource_ceiling():
+    report = analyze(make_temporal_model(blocks=1, height=64, width=2, filters=3), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1,
+                                      "ResourceLimits": {"LUT": 1}},
+    }).to_dict()
+    assert report["applicability"]["status"] == "unsupported"
+    assert "search.resource_limits.unavailable" in {f["code"] for f in report["applicability"]["findings"]}
+
+
 def test_search_is_deterministic_and_accounts_for_its_finite_exploration():
     model = make_temporal_model(height=64, width=3, filters=3)
     config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
