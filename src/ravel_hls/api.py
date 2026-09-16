@@ -162,9 +162,9 @@ def refresh(
     from .analysis.model import _analyze_model, analyze
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {5, 6}:
+    if project_view.manifest.get("schema_version") not in {5, 6, 7}:
         raise CompatibilityError(
-            "PHARA refresh requires a schema-v5 or schema-v6 generated project"
+            "PHARA refresh requires a schema-v5, schema-v6 or schema-v7 generated project"
         )
     if isinstance(model_or_parameters, Parameters):
         config = _refresh_configuration(project_view)
