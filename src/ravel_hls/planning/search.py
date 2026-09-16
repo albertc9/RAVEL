@@ -37,6 +37,8 @@ class SearchReport:
                     "id": plan_identity(plan),
                     "strategies": [stage.id for stage in plan.stages],
                     "predicted_frame_cycles": plan.cost.cycles,
+                    "schedule": next((stage.implementation.to_dict() for stage in plan.stages
+                                      if stage.implementation is not None), None),
                     "confidence": (
                         "analytical" if all(stage.confidence in {"analytical", "calibrated"}
                                             for stage in plan.stages)

@@ -8,6 +8,7 @@ from ..domain.temporal import Finding, LayoutView, TemporalBlock
 from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
+from .windows import window_schedules
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,26 @@ def _layout(request, strategy, version):
                                 schedule=TokenSchedule(source.words, output.words, tuple(range(1, output.words + 1)))),))
 
 
+def _scheduled(request, strategy, version):
+    block = request.semantic
+    if not isinstance(block, TemporalBlock) or block.input.id == request.context.external_endpoint:
+        return Capability()
+    candidates = []
+    for implementation in window_schedules(block):
+        pooled = block.pooling.outputs[0]
+        source = StreamContract(block.input.id, block.input.shape, block.input.numeric_type,
+                                implementation.positions * implementation.channels)
+        target = StreamContract(pooled.id, pooled.shape, pooled.numeric_type,
+                                implementation.positions * implementation.filters)
+        candidates.append(Candidate(
+            strategy, version,
+            (block.convolution.id, block.activation.id, block.pooling.id), source, target,
+            Cost(implementation.input_words, implementation.products, implementation.input_words),
+            True, "uncalibrated", temporal_schedule(block, source.lanes, target.lanes), implementation,
+        ))
+    return Capability(tuple(candidates))
+
+
 def _dense(request, strategy, version):
     head, layout, context = request.semantic, request.layout, request.context
     if not isinstance(head, OperationFacts) or head.kind != "dense" or layout is None:
@@ -110,6 +131,7 @@ TEMPORAL_STRATEGIES = (
     StageStrategy("aria-wide-stream", 2, _temporal),
     StageStrategy("phara", 1, _temporal),
     StageStrategy("hls4ml-temporal-block", 1, _temporal),
+    StageStrategy("aria-window-stream", 1, _scheduled),
     StageStrategy("identity-layout-view", 1, _layout),
     StageStrategy("aria-dense-wide", 1, _dense),
 )

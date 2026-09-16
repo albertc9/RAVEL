@@ -55,6 +55,22 @@ def test_analysis_explains_its_analytical_search_without_claiming_vendor_measure
     assert search["performance_qualification"] == "not_run"
 
 
+@pytest.mark.parametrize("width, expected_positions", [(1, {1}), (2, {1, 2}), (3, {1, 3})])
+def test_analysis_derives_position_candidates_from_geometry_without_promoting_unknown_costs(
+    width, expected_positions,
+):
+    report = analyze(make_temporal_model(height=64, width=width, filters=3), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+
+    search = report["resolved_design"]["optimization_search"]
+    generated = [entry for entry in search["candidates"] if entry["schedule"] is not None]
+    assert {entry["schedule"]["positions"] for entry in generated} == expected_positions
+    assert all(entry["confidence"] == "uncalibrated" for entry in generated)
+    selected = next(entry for entry in search["candidates"] if entry["id"] == search["selected_candidate"])
+    assert selected["schedule"] is None
+
+
 def test_three_blocks_are_recognized_but_outside_the_qualified_release_domain():
     report = analyze(make_temporal_model(blocks=3, height=512, width=2, filters=3), {
         "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},

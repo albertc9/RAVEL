@@ -8,6 +8,7 @@ from ..domain.graph import NumericType
 from ..domain.temporal import Finding
 from .bridges import Bridge, BridgeStrategy, LOSSLESS_BRIDGES
 from .schedules import TokenSchedule
+from .windows import WindowSchedule
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class Candidate:
     specialized: bool
     confidence: str = "analytical"
     schedule: TokenSchedule | None = None
+    implementation: WindowSchedule | None = None
 
     @property
     def identity(self) -> tuple[str, int]:
@@ -79,7 +81,8 @@ class Candidate:
                               "input_lanes": self.input.lanes, "output_lanes": self.output.lanes},
                 "estimate": {"cycles": self.cost.cycles, "resource_proxy": self.cost.resource,
                              "latency": self.cost.latency, "status": "estimated", "confidence": self.confidence},
-                **({"schedule": self.schedule.to_dict()} if self.schedule else {})}
+                **({"schedule": self.schedule.to_dict()} if self.schedule else {}),
+                **({"implementation": self.implementation.to_dict()} if self.implementation else {})}
 
 
 @dataclass(frozen=True)

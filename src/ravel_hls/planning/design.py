@@ -4,7 +4,6 @@ from ..domain.graph import GraphFacts
 from ..domain.temporal import recognize_temporal_chain
 from ..profiles.aria.plan import build_implementation_plan
 from ..planning.temporal import plan_temporal_chain
-from ..planning.search import SearchReport
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
 
@@ -64,19 +63,20 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
             "message": "Aria 1.7 qualifies only one- and two-block plans",
         }]}
         elif resolved_design is not None:
-            composed = plan_temporal_chain(
+            search = plan_temporal_chain(
                 recognition.chain, temporal_packing=plan["temporal_pack"],
                 dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
                 input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
                 bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
+            composed = search.selected
             if composed.findings:
                 resolved_design = None
                 applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
             else:
                 resolved_design.update(
-                    optimization_search=SearchReport((composed,), composed).to_dict(),
+                    optimization_search=search.to_dict(),
                     model_family=model_family, strategy={"id": "aria-composed", "version": 1},
                     resolver={"id": generation.chain_resolver.id, "version": generation.chain_resolver.version},
                     components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],
