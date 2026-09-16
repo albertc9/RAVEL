@@ -9,6 +9,7 @@ from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
 from .windows import window_schedules
+from .calibration import WINDOW_COST_PROFILE
 
 
 @dataclass(frozen=True)
@@ -19,6 +20,8 @@ class StageContext:
     dense_parallelism: int
     input_cycles: int
     dense_cycles: int
+    part: str | None = None
+    clock_period: float | None = None
 
 
 @dataclass(frozen=True)
@@ -100,6 +103,7 @@ def _scheduled(request, strategy, version):
         return Capability()
     candidates = []
     for implementation in window_schedules(block):
+        calibrated = WINDOW_COST_PROFILE.covers(block, implementation, request.context.part, request.context.clock_period)
         pooled = block.pooling.outputs[0]
         source = StreamContract(block.input.id, block.input.shape, block.input.numeric_type,
                                 implementation.positions * implementation.channels)
@@ -108,8 +112,9 @@ def _scheduled(request, strategy, version):
         candidates.append(Candidate(
             strategy, version,
             (block.convolution.id, block.activation.id, block.pooling.id), source, target,
-            Cost(implementation.input_words, implementation.products, implementation.input_words),
-            True, "uncalibrated", temporal_schedule(block, source.lanes, target.lanes), implementation,
+            Cost(WINDOW_COST_PROFILE.window_cycles(implementation) if calibrated else implementation.input_words,
+                 implementation.products, implementation.input_words),
+            True, "calibrated" if calibrated else "uncalibrated", temporal_schedule(block, source.lanes, target.lanes), implementation,
         ))
     return Capability(tuple(candidates))
 

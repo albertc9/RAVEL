@@ -6,8 +6,9 @@ from ..profiles.aria.plan import build_implementation_plan
 from ..planning.temporal import plan_temporal_chain
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
+from .calibration import WINDOW_COST_PROFILE
 
-def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts):
+def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls=None):
     model_facts = facts.to_dict()
     model_family, applicability = generation.match_model_family(
         model_facts, frontend_provenance
@@ -68,6 +69,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
                 input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
+                part=(hls or {}).get("Part"), clock_period=(hls or {}).get("ClockPeriod"),
                 bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
             composed = search.selected
@@ -81,7 +83,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                     resolver={"id": generation.chain_resolver.id, "version": generation.chain_resolver.version},
                     components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],
                                 "bridge_strategies": [{"id": entry.id, "version": entry.version} for entry in generation.bridge_strategies],
-                                "cost_policy": {"id": "temporal-lexicographic", "version": 1, "unknown_cycles": "rank-after-finite-estimates"}},
+                                "cost_policy": {"id": "aria-stream-search", "version": 1,
+                                                "calibration_profile": WINDOW_COST_PROFILE.to_dict()}},
                     semantic_stages=[{"kind": "temporal-block", "operation_ids": [block.convolution.id, block.activation.id, block.pooling.id],
                                       "dropped_pool_rows": block.pooling.attribute("in_height") - ((block.pooling.attribute("out_height") - 1) * block.pooling.attribute("stride_height") + block.pooling.attribute("pool_height")),
                                       "dead_row_elimination": False, "logical_axes": ["temporal", "feature", "channel"]} for block in recognition.chain.blocks] + [

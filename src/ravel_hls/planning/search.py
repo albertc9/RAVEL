@@ -5,6 +5,7 @@ import hashlib
 import json
 
 from .chain import ChainPlan
+from .calibration import WINDOW_COST_PROFILE
 
 
 def plan_identity(plan: ChainPlan) -> str:
@@ -32,6 +33,8 @@ class SearchReport:
             "candidate_count": len(self.candidates),
             "selected_candidate": plan_identity(self.selected),
             "performance_qualification": "not_run",
+            "selection_reason": "calibrated-predicted-frame-interval" if any(
+                stage.confidence == "calibrated" for stage in self.selected.stages) else "retain-incumbent-without-calibrated-coverage",
             "candidates": [
                 {
                     "id": plan_identity(plan),
@@ -40,10 +43,12 @@ class SearchReport:
                     "schedule": next((stage.implementation.to_dict() for stage in plan.stages
                                       if stage.implementation is not None), None),
                     "confidence": (
-                        "analytical" if all(stage.confidence in {"analytical", "calibrated"}
-                                            for stage in plan.stages)
+                        "calibrated" if any(stage.confidence == "calibrated" for stage in plan.stages)
+                        else "analytical" if all(stage.confidence == "analytical" for stage in plan.stages)
                         else "uncalibrated"
                     ),
+                    "calibration_profile": WINDOW_COST_PROFILE.to_dict() if any(
+                        stage.confidence == "calibrated" for stage in plan.stages) else None,
                 }
                 for plan in self.candidates
             ],

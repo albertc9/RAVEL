@@ -125,7 +125,7 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     native = _native_rendering_contract(layers)
     dense_facts = {"dense": analyze_dense_facts(layers)}
     model_family, applicability, resolved_design, multi_report = resolve_model_design(
-        generation, typed_facts, frontend_provenance, choices, parameter_payload, native, dense_facts)
+        generation, typed_facts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls_values)
     if resolved_design is None:
         dense_facts = {} if model_family is None else dense_facts
     analysis = ModelAnalysis._from_report(

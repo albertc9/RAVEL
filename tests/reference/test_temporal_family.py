@@ -119,6 +119,23 @@ def test_composed_two_block_project_is_bit_exact_against_its_clean_baseline(tmp_
     assert "firmware/nnet_utils/nnet_conv2d_stream.h" not in owned
 
 
+def test_calibrated_window_conversion_preserves_intermediate_and_final_codes(tmp_path):
+    project = convert(make_temporal_model(height=64, width=2, filters=3), tmp_path / "window", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+        "Verification": {"Mode": "required", "Samples": 16},
+    })
+
+    stages = project.manifest["resolved_design"]["stages"]
+    assert stages[1]["strategy"]["id"] == "aria-window-stream"
+    assert project.status["correctness_verification"] == "passed"
+    boundaries = project.manifest["verification"]["stage_boundaries"]
+    assert boundaries["status"] == "passed"
+    assert {entry["tensor_id"] for entry in boundaries["observations"]} >= {
+        "conv2d_1:out0", "relu_1:out0", "max_pool2d_1:out0", "dense_0:out0",
+    }
+
+
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
     import numpy as np
 
