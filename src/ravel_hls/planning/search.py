@@ -8,6 +8,8 @@ from .chain import ChainPlan
 from .calibration import WINDOW_COST_PROFILE
 from .resources import ResourceEstimate, rejection_reasons
 
+SEARCH_CANDIDATE_LIMIT = 32
+
 
 def plan_identity(plan: ChainPlan) -> str:
     payload = {
@@ -27,6 +29,9 @@ class SearchReport:
     complete: bool = True
     resources: tuple[ResourceEstimate, ...] = ()
     constraints: dict = field(default_factory=dict)
+    generated: int = 0
+    evaluated: int = 0
+    bound_reasons: tuple[str, ...] = ()
 
     def to_dict(self) -> dict:
         return {
@@ -34,6 +39,10 @@ class SearchReport:
             "mode": "analytical",
             "status": "complete" if self.complete else "incomplete",
             "candidate_count": len(self.candidates),
+            "exploration": {"generated": self.generated, "evaluated": self.evaluated,
+                            "limit": SEARCH_CANDIDATE_LIMIT, "bound_reasons": list(self.bound_reasons)},
+            "optimality": "within-enumerated-calibrated-domain" if self.complete and self.selected.stages and any(
+                stage.confidence == "calibrated" for stage in self.selected.stages) else "not-claimed",
             "selected_candidate": plan_identity(self.selected) if self.selected.stages else None,
             "constraints": self.constraints,
             "performance_qualification": "not_run",

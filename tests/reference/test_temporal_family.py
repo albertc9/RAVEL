@@ -155,6 +155,19 @@ def test_search_reports_resource_predictions_and_rejects_an_impossible_core_limi
     assert limited["optimization_search"]["status"] == "complete"
 
 
+def test_search_is_deterministic_and_accounts_for_its_finite_exploration():
+    model = make_temporal_model(height=64, width=3, filters=3)
+    config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+              "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    first = analyze(model, config).to_dict()["optimization_search"]
+    repeated = analyze(model, config).to_dict()["optimization_search"]
+    assert first == repeated
+    assert first["exploration"]["evaluated"] == first["exploration"]["generated"]
+    assert first["exploration"]["evaluated"] <= first["exploration"]["limit"]
+    assert len({candidate["id"] for candidate in first["candidates"]}) == first["candidate_count"]
+    assert first["optimality"] == "within-enumerated-calibrated-domain"
+
+
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
     import numpy as np
 

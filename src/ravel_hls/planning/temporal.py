@@ -6,7 +6,7 @@ from .calibration import WINDOW_COST_PROFILE
 from dataclasses import replace
 from .bridges import LOSSLESS_BRIDGES
 from .strategies import StageContext, StageRequest, TEMPORAL_STRATEGIES
-from .search import SearchReport
+from .search import SearchReport, SEARCH_CANDIDATE_LIMIT, plan_identity
 from .resources import constraint_report, estimate_resources, rejection_reasons
 
 
@@ -32,11 +32,17 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
             return SearchReport((), failed)
         domains.append(domain)
     plans = []
-    for downstream in domains[-1]:
+    # Always evaluate the legal incumbent before bounded alternatives. Bounds
+    # never authorize selecting an illegal or uncalibrated replacement.
+    ordered = sorted(domains[-1], key=lambda candidate: (candidate.implementation is not None, candidate.identity))
+    explored = ordered[:SEARCH_CANDIDATE_LIMIT]
+    bound_reasons = ["search.candidate_bound"] if len(explored) < len(ordered) else []
+    for downstream in explored:
         layouts = candidates(StageRequest(chain.layout, context, previous=downstream.output))
         head = candidates(StageRequest(chain.head, context, layout=chain.layout))
         domain = (*domains[:-1], (downstream,), layouts, head)
         plan = resolver.resolve(domain, bridge_strategies=bridges)
+        bound_reasons.extend(finding.code for finding in plan.findings if finding.code.endswith("_bound"))
         if not plan.findings:
             if downstream.confidence == "calibrated":
                 cycles = max([stage.cost.cycles + (0 if stage.implementation else 16)
@@ -49,7 +55,14 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
     feasible = [plan for plan, estimate in zip(plans, resources) if not rejection_reasons(estimate, constraints)]
     incumbent = next((plan for plan in feasible if not any(stage.implementation for stage in plan.stages)), None)
     calibrated = [plan for plan in feasible if all(stage.confidence in {"analytical", "calibrated"} for stage in plan.stages)]
-    selected = min(calibrated, key=lambda plan: (plan.conservative_cost, plan.identity), default=incumbent)
+    def ranking(plan):
+        estimate = resources[plans.index(plan)]
+        normalized = sum(value / constraints["resource_limits"].get(name, 1)
+                         for name, value in estimate.values.items() if value is not None)
+        return plan.cost.cycles, normalized, plan.cost.latency, plan_identity(plan)
+    selected = min(calibrated, key=ranking, default=incumbent)
     if selected is None:
         selected = ChainPlan(findings=(Finding("search.no_feasible_plan", "No selectable plan meets the requested core constraints"),))
-    return SearchReport(tuple(plans), selected, resources=resources, constraints=constraints)
+    return SearchReport(tuple(plans), selected, complete=not bound_reasons,
+                        resources=resources, constraints=constraints,
+                        generated=len(ordered), evaluated=len(explored), bound_reasons=tuple(bound_reasons))
