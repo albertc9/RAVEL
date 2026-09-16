@@ -11,6 +11,18 @@ def test_verification_mode_defaults_to_auto() -> None:
     assert config["Verification"]["Mode"] == "auto"
 
 
+def test_optional_initiation_interval_target_survives_configuration_roundtrip():
+    config = RavelConfig({"Optimization": {"TargetII": 85}})
+
+    assert RavelConfig.from_yaml(config.to_yaml())["Optimization"]["TargetII"] == 85
+
+
+@pytest.mark.parametrize("target", [0, -1, 1.5, True, None, "85"])
+def test_initiation_interval_target_requires_positive_integer_cycles(target):
+    with pytest.raises(ConfigurationError, match="Optimization.TargetII"):
+        RavelConfig({"Optimization": {"TargetII": target}})
+
+
 def test_verification_mode_accepts_mapping_input() -> None:
     config = RavelConfig({"Verification": {"Mode": "required"}})
 

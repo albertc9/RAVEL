@@ -29,6 +29,7 @@
       "properties": {
         "TemporalPacking": {"enum": [2, 4, 8], "default": 8},
         "DenseParallelism": {"enum": [1, 2, 4], "default": 4},
+        "TargetII": {"type": "integer", "minimum": 1, "description": "Optional best-effort per-core initiation interval in clock cycles."},
         "ResourceLimits": {
           "type": "object", "additionalProperties": false,
           "description": "Optional per-core ceilings; BRAM is counted in 18-Kib blocks.",

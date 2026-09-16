@@ -32,6 +32,7 @@ class SearchReport:
     generated: int = 0
     evaluated: int = 0
     bound_reasons: tuple[str, ...] = ()
+    target_ii: int | None = None
 
     def to_dict(self) -> dict:
         def exclusions(plan, resource):
@@ -45,9 +46,17 @@ class SearchReport:
             selection_reason = ("calibrated-predicted-frame-interval" if any(
                 stage.confidence == "calibrated" for stage in self.selected.stages)
                 else "retain-incumbent-without-calibrated-coverage")
+        target_status = "not-requested"
+        if self.target_ii is not None:
+            target_status = "unqualified"
+            if self.selected.stages and all(s.confidence in {"analytical", "calibrated"} for s in self.selected.stages):
+                met = self.selected.cost.cycles <= self.target_ii
+                target_status = "predicted-met" if met else "predicted-unmet"
+                selection_reason = "lowest-lut-within-ii-target" if met else "best-effort-ii-target-unmet"
         return {
             "policy": {"id": "aria-stream-search", "version": 1},
             "mode": "analytical",
+            "target": {"ii_cycles": self.target_ii, "status": target_status},
             "status": "complete" if self.complete else "incomplete",
             "candidate_count": len(self.candidates),
             "exploration": {"generated": self.generated, "evaluated": self.evaluated,

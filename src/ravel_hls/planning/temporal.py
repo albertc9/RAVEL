@@ -13,7 +13,7 @@ from .resources import constraint_report, estimate_resources, rejection_reasons
 def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
                         dense_parallelism: int, input_strategy: str,
                         input_cycles: int, dense_cycles: int,
-                        part=None, clock_period=None, resource_limits=None,
+                        part=None, clock_period=None, resource_limits=None, target_ii=None,
                         strategies=TEMPORAL_STRATEGIES, bridges=LOSSLESS_BRIDGES, resolver=TEMPORAL_RESOLVER) -> SearchReport:
     context = StageContext(chain.blocks[0].input.id, input_strategy, temporal_packing,
                            dense_parallelism, input_cycles, dense_cycles, part, clock_period)
@@ -28,7 +28,7 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
         domain = candidates(StageRequest(block, context))
         if not domain:
             failed = ChainPlan(findings=tuple(findings) or (Finding("planner.no_stage_candidate", "No qualified strategy can implement this temporal block", block.convolution.id),))
-            return SearchReport((), failed)
+            return SearchReport((), failed, target_ii=target_ii)
         domains.append(domain)
     plans = []
     # Always evaluate the legal incumbent before bounded alternatives. Bounds
@@ -58,11 +58,13 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
         estimate = resources[plans.index(plan)]
         normalized = sum(value / constraints["resource_limits"].get(name, 1)
                          for name, value in estimate.values.items() if value is not None)
-        return plan.cost.cycles, normalized, plan.cost.latency, plan_identity(plan)
+        if target_ii is not None and plan.cost.cycles <= target_ii:
+            return 0, estimate.lut if estimate.lut is not None else float("inf"), normalized, plan.cost.cycles, plan_identity(plan)
+        return 1, plan.cost.cycles, normalized, plan.cost.latency, plan_identity(plan)
     selected = min(calibrated, key=ranking, default=incumbent)
     if selected is None:
         selected = ChainPlan(findings=(*findings, Finding("search.no_feasible_plan", "No selectable plan meets the requested core constraints")))
     bound_reasons.extend(finding.code for finding in findings if finding.code.endswith("_bound"))
     return SearchReport(tuple(plans), selected, complete=not bound_reasons,
                         resources=resources, constraints=constraints,
-                        generated=len(ordered), evaluated=len(explored), bound_reasons=tuple(bound_reasons))
+                        generated=len(ordered), evaluated=len(explored), bound_reasons=tuple(bound_reasons), target_ii=target_ii)

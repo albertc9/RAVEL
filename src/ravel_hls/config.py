@@ -32,7 +32,7 @@ def _resolve_optimization(values: Any) -> dict[str, Any]:
         return dict(_AGGRESSIVE_SPECIALIZATION)
     if not isinstance(values, Mapping):
         raise ConfigurationError("Optimization must be a mapping")
-    fields = {"TemporalPacking", "DenseParallelism", "ResourceLimits"}
+    fields = {"TemporalPacking", "DenseParallelism", "ResourceLimits", "TargetII"}
     unknown_fields = sorted(values.keys() - fields)
     if unknown_fields:
         raise ConfigurationError(
@@ -64,10 +64,15 @@ def _resolve_optimization(values: Any) -> dict[str, Any]:
         raise ConfigurationError("Optimization.ResourceLimits must map LUT, FF, DSP or BRAM to per-core ceilings")
     if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in limits.values()):
         raise ConfigurationError("Optimization.ResourceLimits values must be nonnegative integers")
+    if "TargetII" in resolved:
+        target = resolved["TargetII"]
+        if not isinstance(target, int) or isinstance(target, bool) or target <= 0:
+            raise ConfigurationError("Optimization.TargetII must be a positive integer number of cycles")
     return {
         "TemporalPacking": temporal_packing,
         "DenseParallelism": dense_parallelism,
         **({"ResourceLimits": dict(limits)} if limits else {}),
+        **({"TargetII": resolved["TargetII"]} if "TargetII" in resolved else {}),
     }
 
 

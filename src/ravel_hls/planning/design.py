@@ -74,6 +74,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
                 part=(hls or {}).get("Part"), clock_period=(hls or {}).get("ClockPeriod"),
                 resource_limits=choices.get("ResourceLimits"),
+                target_ii=choices.get("TargetII"),
                 bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
             composed = search.selected

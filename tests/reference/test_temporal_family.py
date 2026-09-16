@@ -179,6 +179,32 @@ def test_search_is_deterministic_and_accounts_for_its_finite_exploration():
     assert first["optimality"] == "within-enumerated-calibrated-domain"
 
 
+def test_requested_ii_prefers_lower_lut_after_the_target_is_met():
+    model = make_temporal_model(height=64, width=2, filters=3)
+    config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+              "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    fastest = analyze(model, config).to_dict()["optimization_search"]
+    targeted = analyze(model, {**config, "Optimization": {
+        **config["Optimization"], "TargetII": 100,
+    }}).to_dict()["optimization_search"]
+    def selected(report):
+        return next(c for c in report["candidates"] if c["id"] == report["selected_candidate"])
+    fast, small = selected(fastest), selected(targeted)
+    assert small["resources"]["values"]["LUT"] < fast["resources"]["values"]["LUT"]
+    assert small["predicted_frame_cycles"] <= 100
+    assert targeted["target"] == {"ii_cycles": 100, "status": "predicted-met"}
+
+
+def test_unattainable_ii_target_retains_a_feasible_plan_and_reports_the_shortfall():
+    report = analyze(make_temporal_model(height=64, width=2, filters=3), {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1, "TargetII": 1},
+    }).to_dict()
+    assert report["applicability"]["status"] == "applicable"
+    assert report["optimization_search"]["target"] == {"ii_cycles": 1, "status": "predicted-unmet"}
+    assert report["optimization_search"]["selection_reason"] == "best-effort-ii-target-unmet"
+
+
 def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defaults(tmp_path):
     from zipfile import ZipFile
     from ravel_hls import Project, refresh
