@@ -1,8 +1,8 @@
 """Code-owned product-generation identity, independent of package build tags."""
 
 ARIA_ID = "aria"
-ARIA_VERSION = "1.7.0"
-MANIFEST_SCHEMA_VERSION = 6
+ARIA_VERSION = "1.7.1"
+MANIFEST_SCHEMA_VERSION = 7
 QUALIFICATION_SCHEMA_VERSION = 5
 
 

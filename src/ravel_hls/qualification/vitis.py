@@ -80,10 +80,10 @@ def import_vitis_reports(
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5, 6}:
+    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5, 6, 7}:
         raise ProjectGenerationError(
             "Vitis evidence can only be recorded for a schema-v2 through "
-            "schema-v6 project"
+            "schema-v7 project"
         )
     if project_view.status.get("source_integrity") != "clean":
         raise VerificationError(

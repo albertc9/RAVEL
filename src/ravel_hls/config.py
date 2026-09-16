@@ -27,12 +27,12 @@ _VITIS_STAGE_DEFAULTS = {
 }
 
 
-def _resolve_optimization(values: Any) -> dict[str, int]:
+def _resolve_optimization(values: Any) -> dict[str, Any]:
     if values is None:
         return dict(_AGGRESSIVE_SPECIALIZATION)
     if not isinstance(values, Mapping):
         raise ConfigurationError("Optimization must be a mapping")
-    fields = {"TemporalPacking", "DenseParallelism"}
+    fields = {"TemporalPacking", "DenseParallelism", "ResourceLimits"}
     unknown_fields = sorted(values.keys() - fields)
     if unknown_fields:
         raise ConfigurationError(
@@ -59,9 +59,15 @@ def _resolve_optimization(values: Any) -> dict[str, int]:
         raise ConfigurationError(
             "Optimization must select P2/D1, P2/D2, P4/D1, P4/D2, or P8/D4"
         )
+    limits = resolved.get("ResourceLimits", {})
+    if not isinstance(limits, Mapping) or limits.keys() - {"LUT", "FF", "DSP", "BRAM"}:
+        raise ConfigurationError("Optimization.ResourceLimits must map LUT, FF, DSP or BRAM to per-core ceilings")
+    if any(not isinstance(value, int) or isinstance(value, bool) or value < 0 for value in limits.values()):
+        raise ConfigurationError("Optimization.ResourceLimits values must be nonnegative integers")
     return {
         "TemporalPacking": temporal_packing,
         "DenseParallelism": dense_parallelism,
+        **({"ResourceLimits": dict(limits)} if limits else {}),
     }
 
 

@@ -39,6 +39,39 @@ def test_analysis_recognizes_a_repeated_temporal_family_before_plan_qualificatio
     assert report["recognition"]["layout"]["output_shape"] == [105]
 
 
+def test_analysis_explains_its_analytical_search_without_claiming_vendor_measurements():
+    report = analyze(make_temporal_model(height=64, width=2, filters=3), {
+        "HLS": {},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+
+    search = report["resolved_design"]["optimization_search"]
+    assert search["mode"] == "analytical"
+    assert search["status"] == "complete"
+    assert search["candidate_count"] >= 1
+    assert search["selected_candidate"] in {
+        candidate["id"] for candidate in search["candidates"]
+    }
+    assert search["performance_qualification"] == "not_run"
+
+
+@pytest.mark.parametrize("width, expected_positions", [(1, {1}), (2, {1, 2}), (3, {1, 3})])
+def test_analysis_derives_position_candidates_from_geometry_without_promoting_unknown_costs(
+    width, expected_positions,
+):
+    report = analyze(make_temporal_model(height=64, width=width, filters=3), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    }).to_dict()
+
+    search = report["resolved_design"]["optimization_search"]
+    generated = [entry for entry in search["candidates"] if entry["schedule"] is not None]
+    assert {entry["schedule"]["positions"] for entry in generated} == expected_positions
+    assert all(entry["confidence"] == "uncalibrated" for entry in generated)
+    assert all(not entry["selectable"] and "cost.outside_calibrated_coverage" in entry["rejection_reasons"] for entry in generated)
+    selected = next(entry for entry in search["candidates"] if entry["id"] == search["selected_candidate"])
+    assert selected["schedule"] is None
+
+
 def test_three_blocks_are_recognized_but_outside_the_qualified_release_domain():
     report = analyze(make_temporal_model(blocks=3, height=512, width=2, filters=3), {
         "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
@@ -85,6 +118,89 @@ def test_composed_two_block_project_is_bit_exact_against_its_clean_baseline(tmp_
     assert bridge_owner == {"id": "lossless-stream-repack", "version": 2}
     assert "firmware/nnet_utils/ravel_bridges.h" in owned
     assert "firmware/nnet_utils/nnet_conv2d_stream.h" not in owned
+
+
+def test_calibrated_window_conversion_preserves_intermediate_and_final_codes(tmp_path):
+    project = convert(make_temporal_model(height=64, width=2, filters=3), tmp_path / "window", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+        "Verification": {"Mode": "required", "Samples": 16},
+    })
+
+    stages = project.manifest["resolved_design"]["stages"]
+    assert stages[1]["strategy"]["id"] == "aria-window-stream"
+    assert project.status["correctness_verification"] == "passed"
+    boundaries = project.manifest["verification"]["stage_boundaries"]
+    assert boundaries["status"] == "passed"
+    assert {entry["tensor_id"] for entry in boundaries["observations"]} >= {
+        "conv2d_1:out0", "relu_1:out0", "max_pool2d_1:out0", "dense_0:out0",
+    }
+
+
+def test_search_reports_resource_predictions_and_rejects_an_impossible_core_limit():
+    model = make_temporal_model(height=64, width=2, filters=3)
+    config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+              "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    analysis = analyze(model, config).to_dict()
+    search = analysis["resolved_design"]["optimization_search"]
+    selected = next(c for c in search["candidates"] if c["id"] == search["selected_candidate"])
+    assert set(selected["resources"]["values"]) == {"LUT", "FF", "DSP", "BRAM"}
+    assert selected["resources"]["status"] == "predicted"
+    assert search["constraints"]["clock_period_ns"] == 5
+    assert search["constraints"]["limits_source"] == "device-capacity"
+    limited = analyze(model, {**config, "Optimization": {
+        **config["Optimization"], "ResourceLimits": {"LUT": 1},
+    }}).to_dict()
+    assert limited["applicability"]["status"] == "unsupported"
+    assert "search.no_feasible_plan" in {f["code"] for f in limited["applicability"]["findings"]}
+    assert limited["optimization_search"]["status"] == "complete"
+    assert limited["optimization_search"]["selection_reason"] == "no-feasible-plan"
+
+
+def test_single_block_analysis_does_not_silently_ignore_a_resource_ceiling():
+    report = analyze(make_temporal_model(blocks=1, height=64, width=2, filters=3), {
+        "HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1,
+                                      "ResourceLimits": {"LUT": 1}},
+    }).to_dict()
+    assert report["applicability"]["status"] == "unsupported"
+    assert "search.resource_limits.unavailable" in {f["code"] for f in report["applicability"]["findings"]}
+
+
+def test_search_is_deterministic_and_accounts_for_its_finite_exploration():
+    model = make_temporal_model(height=64, width=3, filters=3)
+    config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+              "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    first = analyze(model, config).to_dict()["optimization_search"]
+    repeated = analyze(model, config).to_dict()["optimization_search"]
+    assert first == repeated
+    assert first["exploration"]["evaluated"] == first["exploration"]["generated"]
+    assert first["exploration"]["evaluated"] <= first["exploration"]["limit"]
+    assert len({candidate["id"] for candidate in first["candidates"]}) == first["candidate_count"]
+    assert first["optimality"] == "within-enumerated-calibrated-domain"
+
+
+def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defaults(tmp_path):
+    from zipfile import ZipFile
+    from ravel_hls import Project, refresh
+
+    path = tmp_path / "ravel_170_refresh_fixture"
+    with ZipFile(Path(__file__).parent / "fixtures/aria170_refresh.zip") as archive:
+        archive.extractall(path)
+    original = Project.open(path)
+    assert original.manifest["profile"]["generation"]["version"] == "1.7.0"
+    assert original.status["source_integrity"] == "clean"
+    assert original.manifest["resolved_design"]["stages"][1]["strategy"]["id"] == "hls4ml-temporal-block"
+    model = Path(__file__).parent / "fixtures/two_block_c3.keras"
+    current = analyze(model, {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1},
+    })
+    assert current.resolved_design["stages"][1]["strategy"]["id"] == "aria-window-stream"
+    refreshed = refresh(original, model)
+    assert refreshed.manifest["architecture_contract_sha256"] == original.manifest["architecture_contract_sha256"]
+    assert refreshed.manifest["resolved_design"]["stages"] == original.manifest["resolved_design"]["stages"]
+    assert refreshed.status["correctness_verification"] == "passed"
+    assert refreshed.status["performance_qualification"] == "not_run"
 
 
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):

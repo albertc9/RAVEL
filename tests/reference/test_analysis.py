@@ -44,7 +44,7 @@ def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
     )
 
     report = analysis.to_dict()
-    assert report["generation"] == {"id": "aria", "version": "1.7.0"}
+    assert report["generation"] == {"id": "aria", "version": "1.7.1"}
     assert report["resolved_design"]["generation"] == report["generation"]
     assert report["model_family"] == {
         "id": "hgq-conv-pool-dense",

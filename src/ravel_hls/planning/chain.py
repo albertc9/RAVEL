@@ -8,6 +8,7 @@ from ..domain.graph import NumericType
 from ..domain.temporal import Finding
 from .bridges import Bridge, BridgeStrategy, LOSSLESS_BRIDGES
 from .schedules import TokenSchedule
+from .windows import WindowSchedule
 
 
 @dataclass(frozen=True)
@@ -61,25 +62,29 @@ class Candidate:
     specialized: bool
     confidence: str = "analytical"
     schedule: TokenSchedule | None = None
+    implementation: WindowSchedule | None = None
 
     @property
-    def identity(self) -> tuple[str, int]:
-        return self.id, self.version
+    def identity(self) -> tuple[str, int, int]:
+        return self.id, self.version, self.implementation.positions if self.implementation else 0
 
     def to_dict(self) -> dict[str, object]:
         return {"strategy": {"id": self.id, "version": self.version},
                 "operation_ids": list(self.operation_ids), "input": self.input.to_dict(),
                 "output": self.output.to_dict(), "specialized": self.specialized,
                 "execution": {"control": "ap_ctrl_hs-dataflow-process", "reset": "discard-in-flight",
-                              "source_owner": ("hls4ml-native-latency-v1" if self.id == "hls4ml-temporal-block" else
+                              "source_owner": ("captured-window-positions" if self.implementation else
+                                               "hls4ml-native-latency-v1" if self.id == "hls4ml-temporal-block" else
                                                "compose-top-and-contracts" if self.id == "identity-layout-view" else "legacy-template-adapter"),
-                              "storage": ("delegated-native-line-buffers" if self.id == "hls4ml-temporal-block" else
+                              "storage": ("partitioned-row-history-and-local-window" if self.implementation else
+                                          "delegated-native-line-buffers" if self.id == "hls4ml-temporal-block" else
                                           "zero-alias" if self.id == "identity-layout-view" else
                                           "dense-rom-packing-and-accumulator" if self.id == "aria-dense-wide" else "selected-legacy-streaming-plan"),
                               "input_lanes": self.input.lanes, "output_lanes": self.output.lanes},
                 "estimate": {"cycles": self.cost.cycles, "resource_proxy": self.cost.resource,
                              "latency": self.cost.latency, "status": "estimated", "confidence": self.confidence},
-                **({"schedule": self.schedule.to_dict()} if self.schedule else {})}
+                **({"schedule": self.schedule.to_dict()} if self.schedule else {}),
+                **({"implementation": self.implementation.to_dict()} if self.implementation else {})}
 
 
 @dataclass(frozen=True)
@@ -99,7 +104,7 @@ class ChainPlan:
         return (float("inf") if unknown else self.cost.cycles, self.cost.resource, self.cost.latency)
 
     @property
-    def identity(self) -> tuple[tuple[str, int], ...]:
+    def identity(self) -> tuple[tuple[str, int, int], ...]:
         return tuple(stage.identity for stage in self.stages)
 
 

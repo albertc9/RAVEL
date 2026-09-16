@@ -114,9 +114,9 @@ class Project:
     def build(self) -> Any:
         """Run Vitis HLS for this project and attach its synthesis measurements."""
 
-        if self.manifest.get("schema_version") not in {2, 3, 4, 5, 6}:
+        if self.manifest.get("schema_version") not in {2, 3, 4, 5, 6, 7}:
             raise BuildError(
-                "Vitis builds require a schema-v2 through schema-v6 RAVEL project"
+                "Vitis builds require a schema-v2 through schema-v7 RAVEL project"
             )
         if self.status.get("source_integrity") != "clean":
             raise VerificationError(
@@ -175,9 +175,10 @@ def open_project(path: str | Path) -> RavelProject:
         4,
         5,
         6,
+        7,
     }:
         raise ProjectGenerationError(
-            "RAVEL project manifest schema_version must be 1, 2, 3, 4, 5, or 6"
+            "RAVEL project manifest schema_version must be 1, 2, 3, 4, 5, 6, or 7"
         )
     implementation_plan = manifest.get("implementation_plan")
     if (

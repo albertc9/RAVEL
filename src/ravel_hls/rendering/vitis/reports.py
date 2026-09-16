@@ -15,7 +15,11 @@ def report_bindings(design: Mapping[str, Any]) -> list[dict[str, Any]]:
         if strategy == "identity-layout-view":
             bindings.append({"stage_id": operation_ids[0], "functions": [], "realization": "zero-hardware-view"})
             continue
-        if strategy == "hls4ml-temporal-block":
+        if strategy == "aria-window-stream":
+            functions = [{"name": "scheduled_conv", "config": native[operation_ids[0]]["config_symbol"]},
+                         {"name": "relu", "config": native[operation_ids[1]]["config_symbol"].replace("config", "relu_config")},
+                         {"name": "scheduled_pool", "config": native[operation_ids[2]]["config_symbol"]}]
+        elif strategy == "hls4ml-temporal-block":
             functions = []
             for operation in operation_ids:
                 call = native[operation]["native_call"]

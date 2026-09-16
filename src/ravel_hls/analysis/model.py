@@ -88,7 +88,7 @@ def analyze(model: Any, config: Mapping[str, Any]) -> ModelAnalysis:
 
     return _analyze_model(model, config).analysis
 
-def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
+def _analyze_model(model: Any, config: Mapping[str, Any], *, recorded_manifest=None) -> _AnalyzedModel:
     """Return the private graph-bearing analysis used by conversion."""
 
     generation = builtin_generation(ARIA_ID, ARIA_VERSION)
@@ -124,15 +124,24 @@ def _analyze_model(model: Any, config: Mapping[str, Any]) -> _AnalyzedModel:
     fingerprints["frontend_provenance_sha256"] = canonical_sha256(frontend_provenance)
     native = _native_rendering_contract(layers)
     dense_facts = {"dense": analyze_dense_facts(layers)}
+    recorded_design = None
+    generation_identity = generation.identity
+    if recorded_manifest is not None:
+        if fingerprints["model_structure_sha256"] != recorded_manifest["source_model"]["fingerprints"]["model_structure_sha256"]:
+            raise CompatibilityError("Refresh model changes the recorded architecture contract; use ordinary conversion")
+        recorded_design = recorded_manifest["resolved_design"]
+        if canonical_sha256(recorded_design) != recorded_manifest["generated_plan_sha256"]:
+            raise CompatibilityError("Recorded plan identity does not match its manifest")
+        generation_identity = recorded_manifest["profile"]["generation"]
     model_family, applicability, resolved_design, multi_report = resolve_model_design(
-        generation, typed_facts, frontend_provenance, choices, parameter_payload, native, dense_facts)
+        generation, typed_facts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls_values, recorded_design)
     if resolved_design is None:
         dense_facts = {} if model_family is None else dense_facts
     analysis = ModelAnalysis._from_report(
         {
             **multi_report,
             "schema_version": 1,
-            "generation": generation.identity,
+            "generation": generation_identity,
             "model_family": model_family,
             "applicability": applicability,
             "frontend_provenance": frontend_provenance,

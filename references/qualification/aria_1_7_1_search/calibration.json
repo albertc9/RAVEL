@@ -1,0 +1,168 @@
+{
+  "tool": "Vitis HLS 2023.2",
+  "part": "xcku5p-ffvb676-2-e",
+  "clock_period_ns": 5,
+  "purpose": "Development calibration only; final qualification binds final published sources separately.",
+  "records": [
+    {
+      "name": "ravel_window_f3_p1",
+      "project": "/home/work1/Works/RAVEL-env/qualification/aria171/calibration/ravel_window_f3_p1",
+      "source_closure_sha256": "3780f88889dd327d78d4686c98bc31508d831ba156fd78473d90681ed462da04",
+      "report_sha256": "5e76cbc733d6ee6ff70340a1a46e414423da409cad51b643adc3e427f96a4c83",
+      "schedule": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 3,
+        "convolution_rows": 7,
+        "drains_complete_frame": true,
+        "filters": 3,
+        "id": "captured-window-positions",
+        "input_rows": 15,
+        "input_words": 30,
+        "kernel_rows": 3,
+        "output_rows": 3,
+        "pool_rows": 2,
+        "positions": 1,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 2,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 2
+      },
+      "c_verification": "passed",
+      "hls": {
+        "Worst-caseLatency": "51",
+        "Interval-max": "44",
+        "EstimatedClockPeriod": "3.454"
+      },
+      "resources": {
+        "BRAM_18K": 0,
+        "DSP": 3,
+        "FF": 2710,
+        "LUT": 4721,
+        "URAM": 0
+      },
+      "routed_timing": "not_run",
+      "rtl_protocol": "not_run"
+    },
+    {
+      "name": "ravel_window_f3_p2",
+      "project": "/home/work1/Works/RAVEL-env/qualification/aria171/calibration/ravel_window_f3_p2",
+      "source_closure_sha256": "26bd48d525389ed45cb4631ab01055f03f0c768492d85e4d9e57263b4b16ba98",
+      "report_sha256": "b74150a68866a5d49f92c512594712cf1fdfe02bf9780fa2520b58b57c1294e7",
+      "schedule": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 3,
+        "convolution_rows": 7,
+        "drains_complete_frame": true,
+        "filters": 3,
+        "id": "captured-window-positions",
+        "input_rows": 15,
+        "input_words": 15,
+        "kernel_rows": 3,
+        "output_rows": 3,
+        "pool_rows": 2,
+        "positions": 2,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 2,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 2
+      },
+      "c_verification": "passed",
+      "hls": {
+        "Worst-caseLatency": "44",
+        "Interval-max": "35",
+        "EstimatedClockPeriod": "3.454"
+      },
+      "resources": {
+        "BRAM_18K": 0,
+        "DSP": 3,
+        "FF": 2096,
+        "LUT": 4365,
+        "URAM": 0
+      },
+      "routed_timing": "not_run",
+      "rtl_protocol": "not_run"
+    },
+    {
+      "name": "ravel_window_f12_p1",
+      "project": "/home/work1/Works/RAVEL-env/qualification/aria171/calibration/ravel_window_f12_p1",
+      "source_closure_sha256": "4f93e31c7336d94c602ccc89acb6a03ca1def82e5ad07dd24e6024a5ba03486b",
+      "report_sha256": "635316d1b9a00b37de299f2b208f57bc1faba2cff382d989650d4c74cc93cd46",
+      "schedule": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 12,
+        "convolution_rows": 13,
+        "drains_complete_frame": true,
+        "filters": 12,
+        "id": "captured-window-positions",
+        "input_rows": 42,
+        "input_words": 168,
+        "kernel_rows": 5,
+        "output_rows": 6,
+        "pool_rows": 2,
+        "positions": 1,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 3,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 4
+      },
+      "c_verification": "passed",
+      "hls": {
+        "Worst-caseLatency": "214",
+        "Interval-max": "208",
+        "EstimatedClockPeriod": "4.289"
+      },
+      "resources": {
+        "BRAM_18K": 61,
+        "DSP": 48,
+        "FF": 19267,
+        "LUT": 51388,
+        "URAM": 0
+      },
+      "routed_timing": "not_run",
+      "rtl_protocol": "not_run"
+    },
+    {
+      "name": "ravel_window_f12_p2",
+      "project": "/home/work1/Works/RAVEL-env/qualification/aria171/calibration/ravel_window_f12_p2",
+      "source_closure_sha256": "72b7715748475fd5520587a97a8ae90db684e442fc462436de6380dba6f51800",
+      "report_sha256": "31a88d00c38d4f55b7aa76ad83f2942a9d9677297849c07f3c038a193224d233",
+      "schedule": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 12,
+        "convolution_rows": 13,
+        "drains_complete_frame": true,
+        "filters": 12,
+        "id": "captured-window-positions",
+        "input_rows": 42,
+        "input_words": 84,
+        "kernel_rows": 5,
+        "output_rows": 6,
+        "pool_rows": 2,
+        "positions": 2,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 3,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 4
+      },
+      "c_verification": "passed",
+      "hls": {
+        "Worst-caseLatency": "129",
+        "Interval-max": "124",
+        "EstimatedClockPeriod": "4.289"
+      },
+      "resources": {
+        "BRAM_18K": 108,
+        "DSP": 48,
+        "FF": 21807,
+        "LUT": 74550,
+        "URAM": 0
+      },
+      "routed_timing": "not_run",
+      "rtl_protocol": "not_run"
+    }
+  ]
+}

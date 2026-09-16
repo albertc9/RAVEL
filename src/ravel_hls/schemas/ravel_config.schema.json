@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_config.schema.json",
-  "title": "RAVEL Aria 1.7.0 configuration",
+  "title": "RAVEL Aria 1.7.1 configuration",
   "type": "object",
   "additionalProperties": false,
   "required": ["HLS"],
@@ -28,7 +28,17 @@
       "additionalProperties": false,
       "properties": {
         "TemporalPacking": {"enum": [2, 4, 8], "default": 8},
-        "DenseParallelism": {"enum": [1, 2, 4], "default": 4}
+        "DenseParallelism": {"enum": [1, 2, 4], "default": 4},
+        "ResourceLimits": {
+          "type": "object", "additionalProperties": false,
+          "description": "Optional per-core ceilings; BRAM is counted in 18-Kib blocks.",
+          "properties": {
+            "LUT": {"type": "integer", "minimum": 0},
+            "FF": {"type": "integer", "minimum": 0},
+            "DSP": {"type": "integer", "minimum": 0},
+            "BRAM": {"type": "integer", "minimum": 0}
+          }
+        }
       },
       "allOf": [
         {

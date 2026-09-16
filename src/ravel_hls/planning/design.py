@@ -6,8 +6,10 @@ from ..profiles.aria.plan import build_implementation_plan
 from ..planning.temporal import plan_temporal_chain
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
+from .calibration import WINDOW_COST_PROFILE
+from .replay import replay_design
 
-def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts):
+def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls=None, recorded_design=None):
     model_facts = facts.to_dict()
     model_family, applicability = generation.match_model_family(
         model_facts, frontend_provenance
@@ -53,6 +55,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 coefficient_realization=coefficient_realization,
             )
     multi_report = {}
+    if recorded_design is not None and resolved_design is not None:
+        return model_family, applicability, replay_design(recorded_design, resolved_design, generation), multi_report
     if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
         multi_report["recognition"] = recognition.chain.to_dict()
         outside_release = len(recognition.chain.blocks) > 2
@@ -63,23 +67,29 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
             "message": "Aria 1.7 qualifies only one- and two-block plans",
         }]}
         elif resolved_design is not None:
-            composed = plan_temporal_chain(
+            search = plan_temporal_chain(
                 recognition.chain, temporal_packing=plan["temporal_pack"],
                 dense_parallelism=plan["dense_parallelism"], input_strategy=strategy.id,
                 input_cycles=plan.get("phara", {}).get("stage_cycles", {}).get("fused_region", plan["input_words_per_inference"]),
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
+                part=(hls or {}).get("Part"), clock_period=(hls or {}).get("ClockPeriod"),
+                resource_limits=choices.get("ResourceLimits"),
                 bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
+            composed = search.selected
+            multi_report["optimization_search"] = search.to_dict()
             if composed.findings:
                 resolved_design = None
                 applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
             else:
                 resolved_design.update(
+                    optimization_search=search.to_dict(),
                     model_family=model_family, strategy={"id": "aria-composed", "version": 1},
                     resolver={"id": generation.chain_resolver.id, "version": generation.chain_resolver.version},
                     components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],
                                 "bridge_strategies": [{"id": entry.id, "version": entry.version} for entry in generation.bridge_strategies],
-                                "cost_policy": {"id": "temporal-lexicographic", "version": 1, "unknown_cycles": "rank-after-finite-estimates"}},
+                                "cost_policy": {"id": "aria-stream-search", "version": 1,
+                                                "calibration_profile": WINDOW_COST_PROFILE.to_dict()}},
                     semantic_stages=[{"kind": "temporal-block", "operation_ids": [block.convolution.id, block.activation.id, block.pooling.id],
                                       "dropped_pool_rows": block.pooling.attribute("in_height") - ((block.pooling.attribute("out_height") - 1) * block.pooling.attribute("stride_height") + block.pooling.attribute("pool_height")),
                                       "dead_row_elimination": False, "logical_axes": ["temporal", "feature", "channel"]} for block in recognition.chain.blocks] + [
@@ -100,4 +110,10 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 resolved_design["report_bindings"] = report_bindings(resolved_design)
                 resolved_design["rendering"]["dense_filter_lanes"] = recognition.chain.layout.input.shape[-1]
                 resolved_design["resolved_design_sha256"] = canonical_sha256({key: value for key, value in resolved_design.items() if key != "resolved_design_sha256"})
+    if choices.get("ResourceLimits") and model_family and model_family["id"] != "hgq-temporal-block-chain":
+        resolved_design = None
+        applicability = {"status": "unsupported", "findings": [{
+            "code": "search.resource_limits.unavailable", "severity": "error", "operation_id": None,
+            "message": "Resource-constrained search is currently available for two-block plans; single-block resource estimates are uncalibrated",
+        }]}
     return model_family, applicability, resolved_design, multi_report

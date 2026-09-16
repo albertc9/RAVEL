@@ -1,0 +1,239 @@
+{
+  "generation_fingerprint": "f9b5057fb3932a656f8597c4c7dd7307fed12561d72f51ec0b3d82f2edf6d78d",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 2,
+      "input_scalar_bits": 10,
+      "input_words_per_inference": 128,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 24,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 8
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 10,
+        "input_tdata_bits": 128,
+        "input_tdata_port": "waveform_TDATA",
+        "output_scalar_bits": 24,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer9_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "manifest_sha256": "467888d9da318f4ec65f769d7b0ad42af3d09429620031e333d33fa3d5e2e9b2",
+  "ooc": {
+    "clock_period_ns": 5.0,
+    "manifest_sha256": "467888d9da318f4ec65f769d7b0ad42af3d09429620031e333d33fa3d5e2e9b2",
+    "part": "xcku5p-ffvb676-2-e",
+    "report_files": {
+      "binding.json": "4143a2922a0bcdd180eef4708ab6d218dce70c3de3cccde0b0df078a77ce667d",
+      "timing.rpt": "13a3f1c981889b89b69a4710f8b8b09ea76a1e432536037711776409a65745b3",
+      "utilization.rpt": "b1cfd91d00715edcc7aabb7bdc252ab8cff15acf3d9d62ea6320b590c708b23a"
+    },
+    "resources": {
+      "BRAM_TILES": 2.0,
+      "DSP": 40.0,
+      "FF": 7504.0,
+      "LUT": 11304.0
+    },
+    "source_closure_sha256": "94f7613e8edad6b81e0f51eca15bd1d09761d72b488464c5c30a72130aeb640d",
+    "status": "recorded",
+    "timing": {
+      "target_clock_ns": 5.0,
+      "tns_ns": 0.0,
+      "wns_ns": 0.673
+    },
+    "tool_version": "2023.2",
+    "top": "legacy_p2d2"
+  },
+  "part": "xcku5p-ffvb676-2-e",
+  "performance": {
+    "initiation_interval": 135,
+    "latency_cycles": 140
+  },
+  "report_files": {
+    "legacy_p2d2_prj/solution1/sim/report/legacy_p2d2_cosim.rpt": "072434019b1fb47a34e579ba6c36de1cca40e150709c096e558204574ca07dc0",
+    "legacy_p2d2_prj/solution1/syn/report/first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_80u_config4_s_csynth.xml": "a295bacbabdc8499bf968526ddec2533113a046e4c259053d373d3d7040b2010",
+    "legacy_p2d2_prj/solution1/syn/report/legacy_p2d2_csynth.xml": "2697b64623619ae581b48baecc3a12f90a15a9ccbf3110e73b24d6362413a31e"
+  },
+  "resources": {
+    "BRAM_18K": 7,
+    "DSP": 24,
+    "FF": 9751,
+    "LUT": 23489,
+    "URAM": 0
+  },
+  "rtl_cosimulation": "passed",
+  "rtl_ports": {
+    "ap_clk": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_done": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_idle": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_ready": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_rst_n": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_start": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer9_out_TDATA": {
+      "bits": 32,
+      "direction": "out"
+    },
+    "layer9_out_TREADY": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer9_out_TVALID": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "waveform_TDATA": {
+      "bits": 128,
+      "direction": "in"
+    },
+    "waveform_TREADY": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "waveform_TVALID": {
+      "bits": 1,
+      "direction": "in"
+    }
+  },
+  "rtl_protocol": {
+    "completed_samples": 77,
+    "consecutive_samples": 74,
+    "input_gap_cycles": 1649,
+    "interfaces": {
+      "hls_stream_interface": {
+        "block_control": "ap_ctrl_hs",
+        "channels_per_row": 4,
+        "input_rows_per_word": 2,
+        "input_scalar_bits": 10,
+        "input_words_per_inference": 128,
+        "optional_axis_sidebands": [],
+        "ordering": "row-major; time before channel",
+        "output_scalar_bits": 24,
+        "output_words_per_inference": 1,
+        "protocol": "axis",
+        "values_per_input_word": 8
+      },
+      "logical_model_interface": {
+        "input_shape": [
+          256,
+          4
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl_interface": {
+        "expected": {
+          "input_scalar_bits": 10,
+          "input_tdata_bits": 128,
+          "input_tdata_port": "waveform_TDATA",
+          "output_scalar_bits": 24,
+          "output_tdata_bits": 32,
+          "output_tdata_port": "layer9_out_TDATA",
+          "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+        },
+        "measured": null
+      }
+    },
+    "log_sha256": "d4fb61af9789ac69d627191edc0e0a624143388c046aef341b6bf934fede4d57",
+    "manifest_sha256": "467888d9da318f4ec65f769d7b0ad42af3d09429620031e333d33fa3d5e2e9b2",
+    "output_stall_cycles": 63,
+    "report_sha256": "eb0c37395fb50c935fe6b2f9b7f4bb6952bac06025e82270d6151a2f262fb77e",
+    "reset_aborts": 1,
+    "reset_between_epochs": 1,
+    "rtl_files": {
+      "legacy_p2d2.v": "740302a0eaf2ed66587a75c77593ad9fff794bdd3760da55d1d9d2edc4ee624e",
+      "legacy_p2d2_dense_wide_stream_array_array_ap_fixed_1u_config9_Pipeline_DenseValues.v": "592e998a6d9a987efccee9ee0037e99f511a06c105a7024db4dda142979bf4b6",
+      "legacy_p2d2_dense_wide_stream_array_array_ap_fixed_1u_config9_Pipeline_DenseValues_w9_ravbkb.v": "e585e602eb30ec441a4198b2355533247f4e6924c75ca86fa3e801251ebf9fdf",
+      "legacy_p2d2_dense_wide_stream_array_array_ap_fixed_24_14_5_3_0_1u_config9_s.v": "27f17985014e1de2065b7e9fe1d2117032395d98d3a018b115fec2d425214e07",
+      "legacy_p2d2_fifo_w1200_d4_S.v": "e6fe371df8487130daf4e6c2686c0d1f7f11527b4709b412550d91184bc380f9",
+      "legacy_p2d2_fifo_w1280_d4_S.v": "88c53ac31f23c23dbd5f897d69493d383b113ae46e1e6de4746e2b992597e3df",
+      "legacy_p2d2_fifo_w800_d4_S.v": "39b4fd30ae960d1417abe7dbf88375d52eff88ee10aa0b7281bfd0bcddc80e1a",
+      "legacy_p2d2_first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_80u_config4_s.v": "dc5497e9ffbca71d00d87e7a68996eb9a1b326cc5e9372f3aa82cb4c0117b2d1",
+      "legacy_p2d2_flow_control_loop_pipe.v": "c7a9392d74e328aa77929c0d282a7d50cd8ae5dc28b50a27350f392c66e84fc3",
+      "legacy_p2d2_flow_control_loop_pipe_sequential_init.v": "7e47b9aecf17e206524880a860dfbd72ea8bdd645e337d03c8e8572511ce3cec",
+      "legacy_p2d2_mac_muladd_10s_4s_16s_16_1_1.v": "c4a42a55de440e892d397bc61580a5d012afba732652fade12e5c70955182ab4",
+      "legacy_p2d2_mac_muladd_10s_6s_16s_17_1_1.v": "fff15bcbbb00aa518bf4ff691229baf6a0ceb931c17189f0d495012831d26376",
+      "legacy_p2d2_mac_muladd_10s_6s_17s_17_1_1.v": "996986aca188d955b423ea0a7f4fe82713b06a5e4eb937585a04b5944a16bc4d",
+      "legacy_p2d2_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_80u_config6_s.v": "dfec8de41f4ed7f9c258530cf1a78b1edbd656f6ce3d79236ddc26b37050a91e",
+      "legacy_p2d2_mul_10s_6s_16_1_1.v": "b63f54b27ca1ae42a0d6c541f9d3cee13726187f1b93dd3340b16efc69508c63",
+      "legacy_p2d2_regslice_both.v": "5b2e3e615876f3122d0fa7fba6e41affb772e7ed4e2d8c9e4e1648e849c072bf",
+      "legacy_p2d2_relu_array_ap_fixed_80u_array_ap_ufixed_15_5_5_3_0_80u_relu_config5_s.v": "120eeddba072e508a9b7739be8f6ff9f45b9ab3b6978e0530a67353096ff1bf5"
+    },
+    "schema_version": 1,
+    "simulator": {
+      "name": "xsim",
+      "version": "Vivado Simulator v2023.2"
+    },
+    "source_closure_sha256": "94f7613e8edad6b81e0f51eca15bd1d09761d72b488464c5c30a72130aeb640d",
+    "status": "passed",
+    "testbench_sha256": "1591334806888a4fe7d1c99eaa5acc8585fe87c04b280b54007ec18e26bbcfba",
+    "top": "legacy_p2d2",
+    "vector_files": {
+      "rtl_expected_words.hex": "aec91ed08b8a49bc51a6beaeb5ed356c5c6d071125c2807a30f817825abf2b4d",
+      "rtl_input_words.hex": "e64b4067c418fe5bfe0995545bed7e1cc02685848f83187de197d86ef1d29855"
+    }
+  },
+  "schema_version": 5,
+  "source_closure_sha256": "94f7613e8edad6b81e0f51eca15bd1d09761d72b488464c5c30a72130aeb640d",
+  "stage_plan": [],
+  "stages": {
+    "first_convolution": {
+      "initiation_interval": 131,
+      "latency_cycles": 131,
+      "loop": {
+        "name": "ReadPairsWide",
+        "pipeline_depth": 3,
+        "pipeline_ii": 1,
+        "trip_count": 128
+      },
+      "top": "first_conv_2row_4lane_temporal_wide_cl_array_array_ap_fixed_80u_config4_s"
+    }
+  },
+  "status": "recorded",
+  "timing": {
+    "estimated_clock_ns": 3.445,
+    "target_clock_ns": 5.0
+  },
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "top": "legacy_p2d2",
+  "warnings": []
+}

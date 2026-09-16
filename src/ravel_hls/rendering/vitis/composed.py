@@ -10,6 +10,7 @@ from ...domain import ParameterPayload
 from ...exceptions import ProjectGenerationError
 from ..ownership import SourceStep
 from .renderer import render_aria_project
+from .windows import LOWERINGS, SOURCE as WINDOW_SOURCE
 
 
 def render_project(path: Path, name: str, design: Mapping[str, Any], parameters: ParameterPayload) -> tuple[SourceStep, ...]:
@@ -57,7 +58,10 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
             observe(target["tensor_id"], current_symbol, target["shape"])
             bridge_index += 1
         strategy = stage["strategy"]["id"]
-        if strategy in {"aria-wide-stream", "phara"}:
+        if strategy in LOWERINGS:
+            current_symbol, current_type = LOWERINGS[strategy](
+                stage, native, payload, current_symbol, current_type, stream, observe, calls, typedefs)
+        elif strategy in {"aria-wide-stream", "phara"}:
             convolution, activation, pooling = stage["operation_ids"]
             conv = legacy[convolution]
             relu = legacy[activation]
@@ -113,9 +117,12 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
     dense_weight = payload[f"{design['stages'][-1]['operation_ids'][0]}:weight"]
     loads = [f'        nnet::load_weights_from_txt<{tensor.type_name}, {tensor.values.size}>({tensor.symbol}, "{tensor.symbol}.txt");'
              for tensor in parameters.tensors]
+    window_header = "firmware/nnet_utils/ravel_windows.h"
+    generated_windows = any(stage["strategy"]["id"] in LOWERINGS for stage in design["stages"])
     text = '\n'.join([
         f'#include "{name}.h"', '#include "parameters.h"', '#include "nnet_utils/nnet_aria.h"',
         '#include "nnet_utils/ravel_bridges.h"', f'#include "weights/{dense_weight.symbol}_ravel_packed.h"',
+        *(['#include "nnet_utils/ravel_windows.h"'] if generated_windows else []),
         f'void {name}(hls::stream<{rendering["types"]["input_wide"]}> &{input_binding["output_symbol"]}, hls::stream<{output_binding["output_type"]}> &{output_binding["output_symbol"]}) {{',
         f'    #pragma HLS INTERFACE axis port={input_binding["output_symbol"]},{output_binding["output_symbol"]}',
         '    #pragma HLS DATAFLOW', '#ifndef __SYNTHESIS__', '    static bool loaded = false;',
@@ -130,6 +137,8 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
     defines.write_text(body + "\n".join(typedefs) + "\n#endif" + suffix)
     bridge_header = "firmware/nnet_utils/ravel_bridges.h"
     (path / bridge_header).write_text(BRIDGE_SOURCE)
+    if generated_windows:
+        (path / window_header).write_text(WINDOW_SOURCE)
     top_paths = (f"firmware/{name}.cpp", "firmware/defines.h")
     dense_path = f"firmware/weights/{dense_weight.symbol}_ravel_packed.h"
     return (
@@ -137,6 +146,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
         SourceStep("compose-top-and-contracts", 1, top_paths),
         SourceStep("lossless-stream-repack", 2, (bridge_header,)),
         SourceStep("dense-rom-packing", 1, (dense_path,)),
+        *((SourceStep("captured-window-positions", 1, (window_header,)),) if generated_windows else ()),
     )
 
 

@@ -1,0 +1,14 @@
+{
+  "corpus": "built_in",
+  "files": {
+    "rtl_expected_words.hex": "fdeafb17a6024fa2ce0718c509a2f3a0dccb6106a096e98a0c9fdb674ebccab7",
+    "rtl_input_words.hex": "4da6e1324a92844fcd434381177f4716b7794a3bc29100bef25b381b116167c5"
+  },
+  "input_tdata_bits": 512,
+  "input_words_per_inference": 32,
+  "output_tdata_bits": 32,
+  "padding": "zero",
+  "reference": "clean-hls4ml",
+  "sample_count": 96,
+  "schema_version": 1
+}
