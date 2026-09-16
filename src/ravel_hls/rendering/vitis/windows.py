@@ -141,4 +141,6 @@ def emit_window(stage, native, payload, current_symbol, current_type, stream, ob
     return current_symbol, current_type
 
 
-LOWERINGS = {"aria-window-stream": emit_window}
+from .affine import emit_affine
+
+LOWERINGS = {"aria-window-stream": emit_window, "aria-affine-window": emit_affine}

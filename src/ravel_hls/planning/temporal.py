@@ -4,6 +4,8 @@ from ..domain.temporal import TemporalChain, Finding
 from .chain import ChainPlan, Cost, TEMPORAL_RESOLVER
 from .calibration import WINDOW_COST_PROFILE
 from dataclasses import replace
+from itertools import product
+from .arithmetic import constant_arithmetic
 from .bridges import LOSSLESS_BRIDGES
 from .strategies import StageContext, StageRequest, TEMPORAL_STRATEGIES
 from .search import SearchReport, SEARCH_CANDIDATE_LIMIT, plan_identity
@@ -14,9 +16,13 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
                         dense_parallelism: int, input_strategy: str,
                         input_cycles: int, dense_cycles: int,
                         part=None, clock_period=None, resource_limits=None, target_ii=None,
+                        parameters=None, native=None,
                         strategies=TEMPORAL_STRATEGIES, bridges=LOSSLESS_BRIDGES, resolver=TEMPORAL_RESOLVER) -> SearchReport:
+    arithmetic = {block.convolution.id: constant_arithmetic(
+        block, parameters, native, paired=index == 0 and input_strategy == "phara")
+        for index, block in enumerate(chain.blocks)}
     context = StageContext(chain.blocks[0].input.id, input_strategy, temporal_packing,
-                           dense_parallelism, input_cycles, dense_cycles, part, clock_period)
+                           dense_parallelism, input_cycles, dense_cycles, part, clock_period, arithmetic)
     findings = []
     def candidates(request):
         evaluations = [strategy.evaluate(request) for strategy in sorted(strategies, key=lambda entry: (entry.id, entry.version))]
@@ -33,18 +39,22 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
     plans = []
     # Always evaluate the legal incumbent before bounded alternatives. Bounds
     # never authorize selecting an illegal or uncalibrated replacement.
-    ordered = sorted(domains[-1], key=lambda candidate: (candidate.implementation is not None, candidate.identity))
+    ordered = sorted(product(*domains), key=lambda entries: (
+        sum(candidate.arithmetic is not None for candidate in entries),
+        sum(candidate.implementation is not None for candidate in entries),
+        tuple(candidate.identity for candidate in entries)))
     explored = ordered[:SEARCH_CANDIDATE_LIMIT]
     bound_reasons = ["search.candidate_bound"] if len(explored) < len(ordered) else []
-    for downstream in explored:
+    for stages in explored:
+        downstream = stages[-1]
         layouts = candidates(StageRequest(chain.layout, context, previous=downstream.output))
         head = candidates(StageRequest(chain.head, context, layout=chain.layout))
-        domain = (*domains[:-1], (downstream,), layouts, head)
+        domain = (*((stage,) for stage in stages), layouts, head)
         plan = resolver.resolve(domain, bridge_strategies=bridges)
         bound_reasons.extend(finding.code for finding in plan.findings if finding.code.endswith("_bound"))
         if not plan.findings:
             if downstream.confidence == "calibrated":
-                cycles = max([stage.cost.cycles + (0 if stage.implementation else 16)
+                cycles = max([stage.cost.cycles + (0 if stage.implementation or stage.arithmetic else 16)
                               for stage in plan.stages]
                              + [WINDOW_COST_PROFILE.bridge_cycles(bridge) for bridge in plan.bridges]) + 1
                 plan = replace(plan, cost=Cost(cycles, plan.cost.resource, plan.cost.latency))

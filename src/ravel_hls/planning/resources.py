@@ -33,6 +33,24 @@ def estimate_resources(plan, chain) -> ResourceEstimate:
     first_products = prod(next(p.shape for p in first.parameters if p.role == "weight")) * chain.blocks[0].input.shape[1]
     dense_lanes = plan.stages[-1].cost.resource
     history_bits = window.kernel_rows * window.width * window.channels * plan.stages[1].input.numeric.width
+    if any(stage.arithmetic for stage in plan.stages):
+        lut, ff, dsp = 6000, 4000 + history_bits, 128
+        for stage in plan.stages[:2]:
+            if stage.arithmetic:
+                arithmetic = stage.arithmetic
+                summary = arithmetic["graph_summary"]
+                replicas = stage.implementation.positions if stage.implementation else chain.blocks[0].input.shape[1]
+                width = arithmetic["accumulator_numeric"]["width"]
+                adders = sum(summary.get(name, 0) for name in ("add_nodes", "subtract_nodes", "negate_nodes"))
+                lut += ceil(0.7 * width * adders * replicas)
+                ff += width * (adders + summary["output_values"]) * replicas
+                dsp += summary.get("multiply_nodes", 0) * replicas
+            else:
+                products = stage.implementation.products if stage.implementation else first_products
+                lut += 96 * products
+                ff += 32 * products
+                dsp += products
+        return ResourceEstimate(lut, ff, dsp, 24 + ceil(dense_lanes / 12))
     # Deliberately reserve independent envelopes: no LUT/DSP interchange is used
     # to waive a limit. Native constant folding may consume considerably less.
     return ResourceEstimate(

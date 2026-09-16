@@ -1,0 +1,151 @@
+{
+  "profile": "ku5p-constant-matrix-counter-2023.2",
+  "version": 1,
+  "part": "xcku5p-ffvb676-2-e",
+  "clock_ns": 5,
+  "tool_version": "2023.2",
+  "measurements": [
+    {
+      "project": "counter_f12_p4",
+      "source_closure_sha256": "cb57e52d05cc7769a6bdeb5b21fbbd4466ccafd147b0394bf66f9d04f4ed0e3f",
+      "manifest_sha256": "cdf33603f54682812926f73c1b4110fd2c1b46809ea18a03b227a5be6d6a2375",
+      "hls_report_sha256": "63398b71f6bca2d94ae284dc95d1316cd543760f78c2a0015001390ed8afd040",
+      "ii": 49,
+      "latency": 56,
+      "c_verification": "passed",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "summary": {
+            "add_nodes": 116,
+            "constant_nodes": 6,
+            "convolution_rows": 2,
+            "depth": 6,
+            "filter_lanes": 12,
+            "input_rows": 8,
+            "max_fanout": 12,
+            "negate_nodes": 24,
+            "output_values": 24,
+            "shared_pair_uses": 5,
+            "shared_product_uses": 24,
+            "shift_nodes": 30,
+            "subtract_nodes": 46
+          }
+        },
+        {
+          "operation_id": "conv2d_1",
+          "summary": {
+            "add_nodes": 502,
+            "constant_nodes": 6,
+            "convolution_rows": 1,
+            "depth": 16,
+            "filter_lanes": 12,
+            "input_rows": 60,
+            "max_fanout": 9,
+            "negate_nodes": 121,
+            "output_values": 12,
+            "shared_pair_uses": 145,
+            "shared_product_uses": 253,
+            "shift_nodes": 137,
+            "subtract_nodes": 111
+          }
+        }
+      ]
+    },
+    {
+      "project": "counter_c3_p4",
+      "source_closure_sha256": "6ebef42550cc42312ed59fa59411c71d45b1d628d31180504519f95fc67b2c1b",
+      "manifest_sha256": "c833b37a17bec6f878d9d932ca74eabd2aefdb9a12fffd4b9aa2fe4232c69e90",
+      "hls_report_sha256": "189b141b55b81208dc8e4878e3f44562994632cb4f701af5c23903806182a7da",
+      "ii": 48,
+      "latency": 54,
+      "c_verification": "passed",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "summary": {
+            "add_nodes": 20,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 5,
+            "filter_lanes": 3,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 16,
+            "output_values": 6,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 13,
+            "subtract_nodes": 2
+          }
+        },
+        {
+          "operation_id": "conv2d_1",
+          "summary": {
+            "add_nodes": 40,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 3,
+            "input_rows": 15,
+            "max_fanout": 5,
+            "negate_nodes": 13,
+            "output_values": 3,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 3,
+            "shift_nodes": 28,
+            "subtract_nodes": 16
+          }
+        }
+      ]
+    },
+    {
+      "project": "counter_heldout",
+      "source_closure_sha256": "e88656f31a0ee46e09060a2ac8a447da89ddeb8f2a710df0848254448929b22f",
+      "manifest_sha256": "00dd849fc17eadb038f5a72b8e5940793b9342b4f9985789dd99d78dd91c5709",
+      "hls_report_sha256": "12ddfce699a69a3d8b97490066bd3c92bf61b2b673224e671d1a143905a0a8ce",
+      "ii": 37,
+      "latency": 43,
+      "c_verification": "passed",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "summary": {
+            "add_nodes": 18,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 6,
+            "filter_lanes": 2,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 9,
+            "output_values": 4,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 12,
+            "subtract_nodes": 4
+          }
+        },
+        {
+          "operation_id": "conv2d_1",
+          "summary": {
+            "add_nodes": 33,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 4,
+            "input_rows": 10,
+            "max_fanout": 5,
+            "negate_nodes": 11,
+            "output_values": 4,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 4,
+            "shift_nodes": 20,
+            "subtract_nodes": 13
+          }
+        }
+      ]
+    }
+  ],
+  "notes": "Development measurements; ordinary conversion reports predictions, not timing or fit certificates."
+}

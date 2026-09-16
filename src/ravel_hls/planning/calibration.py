@@ -48,3 +48,37 @@ class WindowCostProfile:
 
 
 WINDOW_COST_PROFILE = WindowCostProfile()
+
+
+@dataclass(frozen=True)
+class ConstantMatrixCostProfile:
+    """Offline-qualified counter schedules with modular shared arithmetic."""
+
+    id: str = "ku5p-constant-matrix-counter-2023.2"
+    version: int = 1
+
+    def covers(self, block, arithmetic, part, clock, schedule=None):
+        conv = block.convolution
+        summary = arithmetic["graph_summary"]
+        return (part == "xcku5p-ffvb676-2-e" and clock == 5
+                and conv.attribute("filt_height") == 5 and conv.attribute("stride_height") == 3
+                and conv.attribute("in_width") == 4 and conv.attribute("in_height") <= 256
+                and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 12
+                and block.pooling.attribute("pool_height") == 2
+                and arithmetic["input_numeric"]["width"] <= 10
+                and arithmetic["accumulator_numeric"]["width"] <= 24
+                and arithmetic["dsp_product_budget"] == 0
+                and summary["depth"] <= 16 and summary["max_fanout"] <= 16
+                and (schedule is None or schedule.positions == 4))
+
+    def cycles(self, arithmetic, input_words):
+        return input_words + ceil(arithmetic["graph_summary"]["depth"] / 4) + 3
+
+    def to_dict(self):
+        return {"id": self.id, "version": self.version, "status": "predicted",
+                "tool": "Vitis HLS 2023.2", "part": "xcku5p-ffvb676-2-e",
+                "clock_period_ns": 5,
+                "evidence": "references/qualification/aria_1_7_2_search/calibration.json"}
+
+
+CONSTANT_MATRIX_COST_PROFILE = ConstantMatrixCostProfile()

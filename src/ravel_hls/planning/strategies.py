@@ -1,6 +1,6 @@
 """Closed, pure strategy capabilities over immutable semantic stage facts."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from math import prod
 from typing import Callable
 
@@ -9,7 +9,7 @@ from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
 from .windows import window_schedules
-from .calibration import WINDOW_COST_PROFILE
+from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
 
 
 @dataclass(frozen=True)
@@ -22,6 +22,7 @@ class StageContext:
     dense_cycles: int
     part: str | None = None
     clock_period: float | None = None
+    arithmetic: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -81,9 +82,16 @@ def _temporal(request, strategy, version):
     except ValueError as error:
         return Capability(findings=(Finding("strategy.schedule.event_bound", str(error), convolution.id),))
     lower_bound = max(source.words, target.words)
-    return Capability((Candidate(strategy, version, (convolution.id, block.activation.id, block.pooling.id), source, target,
+    base = Candidate(strategy, version, (convolution.id, block.activation.id, block.pooling.id), source, target,
                                 Cost(context.input_cycles if specialized else lower_bound, multipliers, lower_bound), specialized,
-                                "analytical" if specialized else "uncalibrated-native", schedule),))
+                                "analytical" if specialized else "uncalibrated-native", schedule)
+    variants = tuple(replace(base, arithmetic=arithmetic,
+                            cost=Cost(context.input_cycles + 5, multipliers, context.input_cycles + 5),
+                            confidence="calibrated" if CONSTANT_MATRIX_COST_PROFILE.covers(
+                                block, arithmetic, context.part, context.clock_period) else "uncalibrated")
+                     for arithmetic in context.arithmetic.get(convolution.id, ())
+                     if strategy == "phara")
+    return Capability((base, *variants))
 
 
 def _layout(request, strategy, version):
@@ -138,11 +146,27 @@ def _dense(request, strategy, version):
                                 schedule=TokenSchedule(source.words, target.words, (source.words,) * target.words)),))
 
 
+def _affine(request, strategy, version):
+    capability = _scheduled(request, strategy, version)
+    if not capability.candidates:
+        return capability
+    return Capability(tuple(replace(candidate, arithmetic=arithmetic,
+                                   cost=Cost(CONSTANT_MATRIX_COST_PROFILE.cycles(arithmetic, candidate.input.words),
+                                             candidate.cost.resource, candidate.cost.latency),
+                                   confidence="calibrated" if CONSTANT_MATRIX_COST_PROFILE.covers(
+                                       request.semantic, arithmetic, request.context.part, request.context.clock_period,
+                                       candidate.implementation) else "uncalibrated")
+                            for candidate in capability.candidates
+                            for arithmetic in request.context.arithmetic.get(request.semantic.convolution.id, ())),
+                      capability.findings)
+
+
 TEMPORAL_STRATEGIES = (
     StageStrategy("aria-wide-stream", 2, _temporal),
     StageStrategy("phara", 1, _temporal),
     StageStrategy("hls4ml-temporal-block", 1, _temporal),
     StageStrategy("aria-window-stream", 1, _scheduled),
+    StageStrategy("aria-affine-window", 1, _affine),
     StageStrategy("identity-layout-view", 1, _layout),
     StageStrategy("aria-dense-wide", 1, _dense),
 )

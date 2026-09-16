@@ -5,7 +5,7 @@ import pytest
 from ravel_hls import analyze, convert
 
 
-def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed", padding="valid"):
+def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed", padding="valid", kernel=3, stride=2):
     import keras
     from hgq.layers import QConv2D, QDense
 
@@ -18,7 +18,7 @@ def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="ren
     value = inputs
     for block in range(blocks):
         config = {**convolution, "name": f"{prefix}_conv_{block}", "filters": filters[block] if isinstance(filters, tuple) else filters,
-                  "kernel_size": (3, 1), "strides": (2, 1),
+                  "kernel_size": (kernel, 1), "strides": (stride, 1),
                   "padding": padding[block] if isinstance(padding, tuple) else padding}
         value = QConv2D.from_config(config)(value)
         value = keras.layers.MaxPool2D((2, 1), strides=(2, 1), name=f"{prefix}_pool_{block}")(value)
@@ -203,6 +203,51 @@ def test_unattainable_ii_target_retains_a_feasible_plan_and_reports_the_shortfal
     assert report["applicability"]["status"] == "applicable"
     assert report["optimization_search"]["target"] == {"ii_cycles": 1, "status": "predicted-unmet"}
     assert report["optimization_search"]["selection_reason"] == "best-effort-ii-target-unmet"
+
+
+def test_analysis_exposes_proven_constant_arithmetic_choices_for_both_convolutions():
+    report = analyze(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3), {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 4},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+    }).to_dict()
+    choices = [arithmetic for candidate in report["optimization_search"]["candidates"]
+               for arithmetic in candidate.get("arithmetic", [])]
+    assert {entry["operation_id"] for entry in choices} == {"conv2d_0", "conv2d_1"}
+    assert all(entry["proof"]["status"] == "proven" for entry in choices)
+    assert all(not candidate["selectable"] for candidate in report["optimization_search"]["candidates"]
+               if candidate.get("arithmetic"))
+
+
+def test_targeted_joint_arithmetic_conversion_preserves_all_observed_codes(tmp_path):
+    project = convert(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3),
+                      tmp_path / "joint", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 85},
+        "Verification": {"Mode": "required", "Samples": 16},
+    })
+    assert project.status["correctness_verification"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+    assert all(stage.get("arithmetic") for stage in project.manifest["resolved_design"]["stages"][:2])
+
+
+def test_joint_arithmetic_refresh_rebuilds_coefficients_without_changing_the_schedule(tmp_path):
+    from ravel_hls import refresh
+    model = make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3)
+    original = convert(model, tmp_path / "joint_refresh", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 85},
+        "Verification": {"Mode": "required", "Samples": 8},
+    })
+    kernel = [layer.kernel for layer in model.layers if hasattr(layer, "kernel")][1]
+    values = kernel.numpy()
+    values.reshape(-1)[0] += 0.125
+    kernel.assign(values)
+    renewed = refresh(original, model)
+    assert renewed.status["correctness_verification"] == "passed"
+    assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
+    old, new = (p.manifest["resolved_design"]["stages"][1] for p in (original, renewed))
+    assert old["implementation"] == new["implementation"]
+    assert old["arithmetic"]["graph_sha256"] != new["arithmetic"]["graph_sha256"]
 
 
 def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defaults(tmp_path):

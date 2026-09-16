@@ -24,6 +24,7 @@ phys_opt_design
 route_design
 report_timing_summary -file timing.rpt
 report_utilization -file utilization.rpt
+report_utilization -hierarchical -file utilization_hierarchical.rpt
 write_checkpoint -force routed.dcp
 exit
 """
@@ -38,6 +39,7 @@ def main():
     parser.add_argument("--dense-parallelism", type=int, choices=(1, 2, 4), default=4)
     parser.add_argument("--part", default="xcku5p-ffvb676-2-e")
     parser.add_argument("--clock-ns", type=float, default=5.0)
+    parser.add_argument("--target-ii", type=int, help="Optional best-effort analytical II target")
     parser.add_argument("--skip-ooc", action="store_true")
     args = parser.parse_args()
     inputs = None
@@ -46,7 +48,8 @@ def main():
             inputs = data["X"].copy()
     project = convert(args.model, args.output, {
         "HLS": {"Part": args.part, "ClockPeriod": args.clock_ns},
-        "Optimization": {"TemporalPacking": args.temporal_packing, "DenseParallelism": args.dense_parallelism},
+        "Optimization": {"TemporalPacking": args.temporal_packing, "DenseParallelism": args.dense_parallelism,
+                         **({"TargetII": args.target_ii} if args.target_ii is not None else {})},
         "Verification": {"Mode": "required", "Samples": 32},
         "Vitis": {"Stages": {"CSim": True, "Synth": True, "CoSim": True}},
     }, verification_inputs=inputs)
