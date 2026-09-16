@@ -242,11 +242,12 @@ def test_search_explores_finite_arithmetic_reuse_without_changing_stream_width()
     assert search["exploration"]["evaluated"] <= search["exploration"]["limit"]
 
 
-def test_relaxed_ii_target_selects_shared_position_engines_and_preserves_codes(tmp_path):
+@pytest.mark.parametrize("target", [85, 100])
+def test_ii_target_selects_shared_position_engines_and_preserves_codes(tmp_path, target):
     project = convert(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3),
                       tmp_path / "shared", {
         "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
-        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 100},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": target},
         "Verification": {"Mode": "required", "Samples": 8},
     })
     assert project.manifest["resolved_design"]["stages"][1]["arithmetic_schedule"]["reuse_factor"] == 2

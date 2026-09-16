@@ -55,7 +55,7 @@ class ConstantMatrixCostProfile:
     """Offline-qualified counter schedules with modular shared arithmetic."""
 
     id: str = "ku5p-constant-matrix-counter-2023.2"
-    version: int = 1
+    version: int = 2
 
     def covers(self, block, arithmetic, part, clock, schedule=None):
         conv = block.convolution
@@ -71,8 +71,9 @@ class ConstantMatrixCostProfile:
                 and arithmetic.count("depth") <= 16 and arithmetic.count("max_fanout") <= 16
                 and (schedule is None or schedule.positions == 4))
 
-    def cycles(self, arithmetic, input_words, reuse=1):
-        return input_words * reuse + ceil(arithmetic.count("depth") / 4) + 3 + (reuse > 1)
+    def cycles(self, arithmetic, schedule, reuse=1):
+        active_words = schedule.convolution_rows * schedule.width // schedule.positions
+        return schedule.input_words + active_words * (reuse - 1) + ceil(arithmetic.count("depth") / 4) + 3 + (reuse > 1)
 
     def to_dict(self):
         return {"id": self.id, "version": self.version, "status": "predicted",

@@ -71,9 +71,10 @@ class ArithmeticSchedule:
         return self.position_lanes // self.engines
 
     def to_dict(self):
-        return {"id": "phased-position-engines", "version": 1,
+        return {"id": "phased-position-engines", "version": 2,
                 "position_lanes": self.position_lanes, "engines": self.engines,
-                "reuse_factor": self.reuse_factor, "phase_loop_ii": 1}
+                "reuse_factor": self.reuse_factor, "phase_loop_ii": 1,
+                "extra_phases": "complete-convolution-windows-only"}
 
 
 def arithmetic_schedules(positions):

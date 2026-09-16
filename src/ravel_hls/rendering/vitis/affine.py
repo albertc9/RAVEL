@@ -104,6 +104,7 @@ void shared_conv(hls::stream<IN>& input, hls::stream<OUT>& output) {
     typedef typename OUT::value_type result;
     typedef typename CONFIG::mult_config MULT;
     const unsigned ENGINES = POSITIONS / REUSE;
+    const unsigned STEPS = (CONFIG::in_height + CONFIG::out_height * (REUSE - 1)) * CONFIG::in_width / POSITIONS;
     static scalar history[CONFIG::filt_height][CONFIG::in_width][CONFIG::n_chan];
     scalar window[POSITIONS][CONFIG::filt_height*CONFIG::n_chan];
     OUT outgoing;
@@ -112,8 +113,9 @@ void shared_conv(hls::stream<IN>& input, hls::stream<OUT>& output) {
     #pragma HLS ARRAY_PARTITION variable=outgoing complete dim=0
     unsigned row=0, column=0, phase=0, reuse_phase=0;
 ReusePhases:
-    for (unsigned step=0; step<CONFIG::in_height*CONFIG::in_width/POSITIONS*REUSE; ++step) {
+    for (unsigned step=0; step<STEPS; ++step) {
         #pragma HLS PIPELINE II=1
+        bool ready = row+1>=CONFIG::filt_height && phase==0;
         if (reuse_phase==0) {
             IN incoming=input.read();
             for(unsigned position=0; position<POSITIONS; ++position) {
@@ -130,7 +132,7 @@ ReusePhases:
                 }
             }
         }
-        if(row+1>=CONFIG::filt_height && phase==0) {
+        if(ready) {
             for(unsigned engine=0; engine<ENGINES; ++engine) {
                 #pragma HLS UNROLL
                 typename MULT::accum_t sums[MULT::n_out];
@@ -144,7 +146,7 @@ ReusePhases:
             }
             if(reuse_phase+1==REUSE) output.write(outgoing);
         }
-        if(reuse_phase+1==REUSE) {
+        if(!ready || reuse_phase+1==REUSE) {
             reuse_phase=0;
             column+=POSITIONS;
             if(column==CONFIG::in_width) {

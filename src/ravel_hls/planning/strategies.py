@@ -156,7 +156,7 @@ def _affine(request, strategy, version):
         return capability
     return Capability(tuple(replace(
         candidate, arithmetic=arithmetic, arithmetic_schedule=schedule,
-        cost=Cost(CONSTANT_MATRIX_COST_PROFILE.cycles(arithmetic, candidate.input.words, schedule.reuse_factor),
+        cost=Cost(CONSTANT_MATRIX_COST_PROFILE.cycles(arithmetic, candidate.implementation, schedule.reuse_factor),
                   candidate.cost.resource, candidate.cost.latency),
         confidence="calibrated" if schedule.reuse_factor in (1, 2) and CONSTANT_MATRIX_COST_PROFILE.covers(
             request.semantic, arithmetic, request.context.part, request.context.clock_period,
