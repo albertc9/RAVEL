@@ -102,6 +102,7 @@ def _scheduled(request, strategy, version):
     if not isinstance(block, TemporalBlock) or block.input.id == request.context.external_endpoint:
         return Capability()
     candidates = []
+    findings = []
     for implementation in window_schedules(block):
         calibrated = WINDOW_COST_PROFILE.covers(block, implementation, request.context.part, request.context.clock_period)
         pooled = block.pooling.outputs[0]
@@ -109,14 +110,19 @@ def _scheduled(request, strategy, version):
                                 implementation.positions * implementation.channels)
         target = StreamContract(pooled.id, pooled.shape, pooled.numeric_type,
                                 implementation.positions * implementation.filters)
+        try:
+            schedule = temporal_schedule(block, source.lanes, target.lanes)
+        except ValueError as error:
+            findings.append(Finding("strategy.schedule.event_bound", str(error), block.convolution.id))
+            continue
         candidates.append(Candidate(
             strategy, version,
             (block.convolution.id, block.activation.id, block.pooling.id), source, target,
             Cost(WINDOW_COST_PROFILE.window_cycles(implementation) if calibrated else implementation.input_words,
                  implementation.products, implementation.input_words),
-            True, "calibrated" if calibrated else "uncalibrated", temporal_schedule(block, source.lanes, target.lanes), implementation,
+            True, "calibrated" if calibrated else "uncalibrated", schedule, implementation,
         ))
-    return Capability(tuple(candidates))
+    return Capability(tuple(candidates), tuple(findings))
 
 
 def _dense(request, strategy, version):

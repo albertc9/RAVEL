@@ -21,8 +21,7 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
     def candidates(request):
         evaluations = [strategy.evaluate(request) for strategy in sorted(strategies, key=lambda entry: (entry.id, entry.version))]
         result = tuple(candidate for evaluation in evaluations for candidate in evaluation.candidates)
-        if not result:
-            findings.extend(finding for evaluation in evaluations for finding in evaluation.findings)
+        findings.extend(finding for evaluation in evaluations for finding in evaluation.findings)
         return result
     domains = []
     for block in chain.blocks:
@@ -62,7 +61,8 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
         return plan.cost.cycles, normalized, plan.cost.latency, plan_identity(plan)
     selected = min(calibrated, key=ranking, default=incumbent)
     if selected is None:
-        selected = ChainPlan(findings=(Finding("search.no_feasible_plan", "No selectable plan meets the requested core constraints"),))
+        selected = ChainPlan(findings=(*findings, Finding("search.no_feasible_plan", "No selectable plan meets the requested core constraints")))
+    bound_reasons.extend(finding.code for finding in findings if finding.code.endswith("_bound"))
     return SearchReport(tuple(plans), selected, complete=not bound_reasons,
                         resources=resources, constraints=constraints,
                         generated=len(ordered), evaluated=len(explored), bound_reasons=tuple(bound_reasons))

@@ -116,7 +116,7 @@ class Project:
 
         if self.manifest.get("schema_version") not in {2, 3, 4, 5, 6, 7}:
             raise BuildError(
-                "Vitis builds require a schema-v2 through schema-v6 RAVEL project"
+                "Vitis builds require a schema-v2 through schema-v7 RAVEL project"
             )
         if self.status.get("source_integrity") != "clean":
             raise VerificationError(
