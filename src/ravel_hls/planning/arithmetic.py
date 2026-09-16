@@ -1,8 +1,40 @@
 """Proven constant-matrix capabilities shared by both convolution stages."""
 
+from dataclasses import dataclass
+
 import numpy as np
 
-from ..analysis.phara import analyze_constant_matrix
+from ..analysis.phara import AffineGraph, AffineProof, analyze_constant_matrix
+from ..domain.graph import NumericType
+
+
+@dataclass(frozen=True)
+class ConstantArithmetic:
+    """An immutable, proved implementation of one modular coefficient matrix."""
+
+    graph: AffineGraph
+    proof: AffineProof
+    summary: tuple[tuple[str, int], ...]
+    operation_id: str
+    input_numeric: NumericType
+    accumulator_numeric: NumericType
+    paired: bool
+    dsp_product_budget: int
+
+    def count(self, name: str) -> int:
+        return next((value for key, value in self.summary if key == name), 0)
+
+    def to_dict(self):
+        return {"kind": "hybrid", "policy": {"id": "constant-matrix-csd-cse-dsp", "version": 1},
+                "graph": {"input_ids": list(self.graph.input_ids), "output_ids": list(self.graph.output_ids),
+                          "modulus": self.graph.modulus,
+                          "nodes": [{"id": node.id, "operation": node.operation,
+                                     "inputs": list(node.inputs), "value": node.value} for node in self.graph.nodes]},
+                "graph_sha256": self.proof.graph_sha256,
+                "proof": {"status": self.proof.status, "identity": self.proof.identity, "modulus": self.proof.modulus},
+                "graph_summary": dict(self.summary), "dsp_product_budget": self.dsp_product_budget,
+                "operation_id": self.operation_id, "input_numeric": self.input_numeric.to_dict(),
+                "accumulator_numeric": self.accumulator_numeric.to_dict(), "paired": self.paired}
 
 
 def constant_arithmetic(block, parameters, native, *, paired=False, dsp_budgets=(0, 16)):
@@ -52,9 +84,9 @@ def constant_arithmetic(block, parameters, native, *, paired=False, dsp_budgets=
     seen = set()
     for budget in dsp_budgets:
         realization = analyze_constant_matrix(**arguments, dsp_product_budget=budget)
-        if realization["graph_sha256"] not in seen:
-            choices.append({**realization, "operation_id": conv.id,
-                            "input_numeric": source.to_dict(),
-                            "accumulator_numeric": accumulator, "paired": paired})
-            seen.add(realization["graph_sha256"])
+        if realization.proof.status == "proven" and realization.proof.graph_sha256 not in seen:
+            choices.append(ConstantArithmetic(realization.graph, realization.proof,
+                                              tuple(sorted(realization.summary.items())), conv.id, source,
+                                              NumericType(**accumulator), paired, budget))
+            seen.add(realization.proof.graph_sha256)
     return tuple(choices)

@@ -15,6 +15,7 @@ class ResourceEstimate:
     ff: int | None = None
     dsp: int | None = None
     bram: int | None = None
+    policy: str = "conservative-structural-envelope-v1"
 
     @property
     def values(self):
@@ -22,7 +23,7 @@ class ResourceEstimate:
 
     def to_dict(self):
         return {"values": self.values, "status": "unknown" if self.lut is None else "predicted",
-                "units": {"BRAM": "18-Kib-blocks"}, "policy": "conservative-structural-envelope-v1"}
+                "units": {"BRAM": "18-Kib-blocks"}, "policy": self.policy}
 
 
 def estimate_resources(plan, chain) -> ResourceEstimate:
@@ -38,19 +39,18 @@ def estimate_resources(plan, chain) -> ResourceEstimate:
         for stage in plan.stages[:2]:
             if stage.arithmetic:
                 arithmetic = stage.arithmetic
-                summary = arithmetic["graph_summary"]
-                replicas = stage.implementation.positions if stage.implementation else chain.blocks[0].input.shape[1]
-                width = arithmetic["accumulator_numeric"]["width"]
-                adders = sum(summary.get(name, 0) for name in ("add_nodes", "subtract_nodes", "negate_nodes"))
+                replicas = stage.arithmetic_schedule.engines if stage.arithmetic_schedule else chain.blocks[0].input.shape[1]
+                width = arithmetic.accumulator_numeric.width
+                adders = sum(arithmetic.count(name) for name in ("add_nodes", "subtract_nodes", "negate_nodes"))
                 lut += ceil(0.7 * width * adders * replicas)
-                ff += width * (adders + summary["output_values"]) * replicas
-                dsp += summary.get("multiply_nodes", 0) * replicas
+                ff += width * (adders + arithmetic.count("output_values")) * replicas
+                dsp += arithmetic.count("multiply_nodes") * replicas
             else:
                 products = stage.implementation.products if stage.implementation else first_products
                 lut += 96 * products
                 ff += 32 * products
                 dsp += products
-        return ResourceEstimate(lut, ff, dsp, 24 + ceil(dense_lanes / 12))
+        return ResourceEstimate(lut, ff, dsp, 24 + ceil(dense_lanes / 12), "constant-matrix-structural-envelope-v1")
     # Deliberately reserve independent envelopes: no LUT/DSP interchange is used
     # to waive a limit. Native constant folding may consume considerably less.
     return ResourceEstimate(

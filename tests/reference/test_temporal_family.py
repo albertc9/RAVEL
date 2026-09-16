@@ -230,19 +230,44 @@ def test_targeted_joint_arithmetic_conversion_preserves_all_observed_codes(tmp_p
     assert all(stage.get("arithmetic") for stage in project.manifest["resolved_design"]["stages"][:2])
 
 
-def test_joint_arithmetic_refresh_rebuilds_coefficients_without_changing_the_schedule(tmp_path):
-    from ravel_hls import refresh
+def test_search_explores_finite_arithmetic_reuse_without_changing_stream_width():
+    search = analyze(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3), {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+    }).to_dict()["optimization_search"]
+    schedules = [candidate["arithmetic_schedule"] for candidate in search["candidates"]
+                 if (candidate.get("arithmetic_schedule") or {}).get("position_lanes") == 4]
+    assert {schedule["reuse_factor"] for schedule in schedules} == {1, 2, 4}
+    assert {schedule["engines"] for schedule in schedules} == {1, 2, 4}
+    assert search["exploration"]["evaluated"] <= search["exploration"]["limit"]
+
+
+def test_relaxed_ii_target_selects_shared_position_engines_and_preserves_codes(tmp_path):
+    project = convert(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3),
+                      tmp_path / "shared", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 100},
+        "Verification": {"Mode": "required", "Samples": 8},
+    })
+    assert project.manifest["resolved_design"]["stages"][1]["arithmetic_schedule"]["reuse_factor"] == 2
+    assert project.status["correctness_verification"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+@pytest.mark.parametrize("parameter_package", [False, True])
+def test_joint_arithmetic_refresh_rebuilds_coefficients_without_changing_the_schedule(tmp_path, parameter_package):
+    from ravel_hls import Parameters, refresh
     model = make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3)
     original = convert(model, tmp_path / "joint_refresh", {
         "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
         "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 85},
-        "Verification": {"Mode": "required", "Samples": 8},
+        "Verification": {"Mode": "auto", "Samples": 8},
     })
     kernel = [layer.kernel for layer in model.layers if hasattr(layer, "kernel")][1]
     values = kernel.numpy()
     values.reshape(-1)[0] += 0.125
     kernel.assign(values)
-    renewed = refresh(original, model)
+    renewed = refresh(original, Parameters.extract(model) if parameter_package else model)
     assert renewed.status["correctness_verification"] == "passed"
     assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
     old, new = (p.manifest["resolved_design"]["stages"][1] for p in (original, renewed))
@@ -272,6 +297,20 @@ def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defa
     assert refreshed.manifest["resolved_design"]["stages"] == original.manifest["resolved_design"]["stages"]
     assert refreshed.status["correctness_verification"] == "passed"
     assert refreshed.status["performance_qualification"] == "not_run"
+
+
+def test_refresh_retains_the_generation_and_schedule_of_a_real_aria171_project(tmp_path):
+    from zipfile import ZipFile
+    from ravel_hls import Project, refresh
+
+    path = tmp_path / "aria171_fixture"
+    with ZipFile(Path(__file__).parent / "fixtures/aria171_refresh.zip") as archive:
+        archive.extractall(path)
+    original = Project.open(path)
+    renewed = refresh(original, Path(__file__).parent / "fixtures/two_block_c3.keras")
+    assert renewed.manifest["profile"]["generation"]["version"] == "1.7.1"
+    assert renewed.manifest["resolved_design"]["stages"] == original.manifest["resolved_design"]["stages"]
+    assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
 
 
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):

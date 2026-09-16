@@ -87,7 +87,7 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
             else:
                 if composed.stages[0].arithmetic:
-                    resolved_design["coefficient_realization"] = composed.stages[0].arithmetic
+                    resolved_design["coefficient_realization"] = composed.stages[0].arithmetic.to_dict()
                 resolved_design.update(
                     optimization_search=search.to_dict(),
                     model_family=model_family, strategy={"id": "aria-composed", "version": 1},

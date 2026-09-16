@@ -59,20 +59,20 @@ class ConstantMatrixCostProfile:
 
     def covers(self, block, arithmetic, part, clock, schedule=None):
         conv = block.convolution
-        summary = arithmetic["graph_summary"]
         return (part == "xcku5p-ffvb676-2-e" and clock == 5
                 and conv.attribute("filt_height") == 5 and conv.attribute("stride_height") == 3
                 and conv.attribute("in_width") == 4 and conv.attribute("in_height") <= 256
                 and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 12
                 and block.pooling.attribute("pool_height") == 2
-                and arithmetic["input_numeric"]["width"] <= 10
-                and arithmetic["accumulator_numeric"]["width"] <= 24
-                and arithmetic["dsp_product_budget"] == 0
-                and summary["depth"] <= 16 and summary["max_fanout"] <= 16
+                and arithmetic.input_numeric.width <= 10
+                and arithmetic.accumulator_numeric.width <= 24
+                and arithmetic.dsp_product_budget in (0, 16)
+                and (arithmetic.dsp_product_budget == 0 or (arithmetic.paired and arithmetic.count("multiply_nodes") <= 4))
+                and arithmetic.count("depth") <= 16 and arithmetic.count("max_fanout") <= 16
                 and (schedule is None or schedule.positions == 4))
 
-    def cycles(self, arithmetic, input_words):
-        return input_words + ceil(arithmetic["graph_summary"]["depth"] / 4) + 3
+    def cycles(self, arithmetic, input_words, reuse=1):
+        return input_words * reuse + ceil(arithmetic.count("depth") / 4) + 3 + (reuse > 1)
 
     def to_dict(self):
         return {"id": self.id, "version": self.version, "status": "predicted",

@@ -95,26 +95,84 @@ AffineWords:
         }
     }
 }
+// A fixed number of position engines processes one accepted word in phases.
+// The external word width and order are independent of arithmetic reuse.
+template<class IN, class OUT, class CONFIG, unsigned POSITIONS, class ARITHMETIC, unsigned REUSE>
+void shared_conv(hls::stream<IN>& input, hls::stream<OUT>& output) {
+    static_assert(POSITIONS % REUSE == 0, "Reuse must divide position lanes");
+    typedef typename IN::value_type scalar;
+    typedef typename OUT::value_type result;
+    typedef typename CONFIG::mult_config MULT;
+    const unsigned ENGINES = POSITIONS / REUSE;
+    static scalar history[CONFIG::filt_height][CONFIG::in_width][CONFIG::n_chan];
+    scalar window[POSITIONS][CONFIG::filt_height*CONFIG::n_chan];
+    OUT outgoing;
+    #pragma HLS ARRAY_PARTITION variable=history complete dim=0
+    #pragma HLS ARRAY_PARTITION variable=window complete dim=0
+    #pragma HLS ARRAY_PARTITION variable=outgoing complete dim=0
+    unsigned row=0, column=0, phase=0, reuse_phase=0;
+ReusePhases:
+    for (unsigned step=0; step<CONFIG::in_height*CONFIG::in_width/POSITIONS*REUSE; ++step) {
+        #pragma HLS PIPELINE II=1
+        if (reuse_phase==0) {
+            IN incoming=input.read();
+            for(unsigned position=0; position<POSITIONS; ++position) {
+                #pragma HLS UNROLL
+                for(unsigned tap=0; tap<CONFIG::filt_height; ++tap) {
+                    #pragma HLS UNROLL
+                    for(unsigned channel=0; channel<CONFIG::n_chan; ++channel) {
+                        #pragma HLS UNROLL
+                        window[position][tap*CONFIG::n_chan+channel] =
+                            tap+1==CONFIG::filt_height ? incoming[position*CONFIG::n_chan+channel]
+                            : history[tap+1][column+position][channel];
+                        history[tap][column+position][channel]=window[position][tap*CONFIG::n_chan+channel];
+                    }
+                }
+            }
+        }
+        if(row+1>=CONFIG::filt_height && phase==0) {
+            for(unsigned engine=0; engine<ENGINES; ++engine) {
+                #pragma HLS UNROLL
+                typename MULT::accum_t sums[MULT::n_out];
+                #pragma HLS ARRAY_PARTITION variable=sums complete dim=0
+                unsigned position=reuse_phase*ENGINES+engine;
+                ARITHMETIC::template apply<scalar, MULT>(window[position], sums);
+                for(unsigned f=0; f<MULT::n_out; ++f) {
+                    #pragma HLS UNROLL
+                    outgoing[position*CONFIG::n_filt+f]=nnet::cast<scalar,result,MULT>(sums[f]);
+                }
+            }
+            if(reuse_phase+1==REUSE) output.write(outgoing);
+        }
+        if(reuse_phase+1==REUSE) {
+            reuse_phase=0;
+            column+=POSITIONS;
+            if(column==CONFIG::in_width) {
+                column=0;
+                ++row;
+                if(row>=CONFIG::filt_height)
+                    phase=phase+1==CONFIG::stride_height ? 0 : phase+1;
+            }
+        } else ++reuse_phase;
+    }
+}
+
 }
 '''
 
 
+# Keep word framing and nonlinear boundaries in the shared block emitter.
 def emit_affine(stage, native, payload, current_symbol, current_type, stream, observe, calls, typedefs):
+    from .windows import emit_window
+    return emit_window(stage, native, payload, current_symbol, current_type, stream, observe,
+                       calls, typedefs, convolution_call=affine_call)
+
+
+def affine_call(stage, binding, payload, source_symbol, source_type, output_symbol, output_type):
     positions = stage["implementation"]["positions"]
-    for operation in stage["operation_ids"]:
-        binding = native[operation]
-        output_type, output_symbol = f"ravel_{operation}_window_t", binding["output_symbol"]
-        typedefs.append(f"typedef nnet::array<{binding['output_precision_cpp']}, {stage['output']['lanes']}> {output_type};")
-        stream(output_type, output_symbol)
-        if operation == stage["operation_ids"][0]:
-            arguments = f"{current_type}, {output_type}, {binding['config_symbol']}, {positions}, ravel_matrix_{operation}"
-            calls.append(f"    ravel::scheduled_affine_conv<{arguments}>({current_symbol}, {output_symbol});")
-        elif operation == stage["operation_ids"][1]:
-            config = binding["config_symbol"].replace("config", "relu_config")
-            calls.append(f"    nnet::relu<{current_type}, {output_type}, {config}>({current_symbol}, {output_symbol});")
-        else:
-            calls.append(f"    ravel::scheduled_pool<{current_type}, {output_type}, {binding['config_symbol']}, {positions}>({current_symbol}, {output_symbol});")
-        if operation != stage["operation_ids"][-1]:
-            observe(f"{operation}:out0", output_symbol, binding["output_shape"])
-        current_symbol, current_type = output_symbol, output_type
-    return current_symbol, current_type
+    reuse = stage.get("arithmetic_schedule", {}).get("reuse_factor", 1)
+    function = "scheduled_affine_conv" if reuse == 1 else "shared_conv"
+    arguments = f"{source_type}, {output_type}, {binding['config_symbol']}, {positions}, ravel_matrix_{stage['operation_ids'][0]}"
+    if reuse != 1:
+        arguments += f", {reuse}"
+    return f"    ravel::{function}<{arguments}>({source_symbol}, {output_symbol});"

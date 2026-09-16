@@ -7,8 +7,9 @@ from typing import Callable
 from ..domain.graph import NumericType
 from ..domain.temporal import Finding
 from .bridges import Bridge, BridgeStrategy, LOSSLESS_BRIDGES
+from .arithmetic import ConstantArithmetic
 from .schedules import TokenSchedule
-from .windows import WindowSchedule
+from .windows import ArithmeticSchedule, WindowSchedule
 
 
 @dataclass(frozen=True)
@@ -63,15 +64,18 @@ class Candidate:
     confidence: str = "analytical"
     schedule: TokenSchedule | None = None
     implementation: WindowSchedule | None = None
-    arithmetic: dict | None = field(default=None, compare=False)
+    arithmetic: ConstantArithmetic | None = None
+    arithmetic_schedule: ArithmeticSchedule | None = None
 
     @property
-    def identity(self) -> tuple[str, int, int, str]:
+    def identity(self) -> tuple[str, int, int, str, int]:
         return (self.id, self.version, self.implementation.positions if self.implementation else 0,
-                self.arithmetic["graph_sha256"] if self.arithmetic else "")
+                self.arithmetic.proof.graph_sha256 if self.arithmetic else "",
+                self.arithmetic_schedule.reuse_factor if self.arithmetic_schedule else 1)
 
     def to_dict(self) -> dict[str, object]:
-        return {**({"arithmetic": self.arithmetic} if self.arithmetic else {}),
+        return {**({"arithmetic": self.arithmetic.to_dict()} if self.arithmetic else {}),
+                **({"arithmetic_schedule": self.arithmetic_schedule.to_dict()} if self.arithmetic_schedule else {}),
                 "strategy": {"id": self.id, "version": self.version},
                 "operation_ids": list(self.operation_ids), "input": self.input.to_dict(),
                 "output": self.output.to_dict(), "specialized": self.specialized,
@@ -110,7 +114,7 @@ class ChainPlan:
         return (float("inf") if unknown else self.cost.cycles, self.cost.resource, self.cost.latency)
 
     @property
-    def identity(self) -> tuple[tuple[str, int, int, str], ...]:
+    def identity(self) -> tuple[tuple[str, int, int, str, int], ...]:
         return tuple(stage.identity for stage in self.stages)
 
 

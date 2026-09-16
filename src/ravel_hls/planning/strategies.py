@@ -3,12 +3,13 @@
 from dataclasses import dataclass, field, replace
 from math import prod
 from typing import Callable
+from .arithmetic import ConstantArithmetic
 
 from ..domain.temporal import Finding, LayoutView, TemporalBlock
 from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
-from .windows import window_schedules
+from .windows import arithmetic_schedules, window_schedules
 from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
 
 
@@ -22,7 +23,10 @@ class StageContext:
     dense_cycles: int
     part: str | None = None
     clock_period: float | None = None
-    arithmetic: dict = field(default_factory=dict)
+    arithmetic: tuple[tuple[str, tuple[ConstantArithmetic, ...]], ...] = ()
+
+    def arithmetic_for(self, operation_id):
+        return next((choices for name, choices in self.arithmetic if name == operation_id), ())
 
 
 @dataclass(frozen=True)
@@ -87,9 +91,9 @@ def _temporal(request, strategy, version):
                                 "analytical" if specialized else "uncalibrated-native", schedule)
     variants = tuple(replace(base, arithmetic=arithmetic,
                             cost=Cost(context.input_cycles + 5, multipliers, context.input_cycles + 5),
-                            confidence="calibrated" if CONSTANT_MATRIX_COST_PROFILE.covers(
+                            confidence="calibrated" if context.temporal_packing == 8 and CONSTANT_MATRIX_COST_PROFILE.covers(
                                 block, arithmetic, context.part, context.clock_period) else "uncalibrated")
-                     for arithmetic in context.arithmetic.get(convolution.id, ())
+                     for arithmetic in context.arithmetic_for(convolution.id)
                      if strategy == "phara")
     return Capability((base, *variants))
 
@@ -150,15 +154,17 @@ def _affine(request, strategy, version):
     capability = _scheduled(request, strategy, version)
     if not capability.candidates:
         return capability
-    return Capability(tuple(replace(candidate, arithmetic=arithmetic,
-                                   cost=Cost(CONSTANT_MATRIX_COST_PROFILE.cycles(arithmetic, candidate.input.words),
-                                             candidate.cost.resource, candidate.cost.latency),
-                                   confidence="calibrated" if CONSTANT_MATRIX_COST_PROFILE.covers(
-                                       request.semantic, arithmetic, request.context.part, request.context.clock_period,
-                                       candidate.implementation) else "uncalibrated")
-                            for candidate in capability.candidates
-                            for arithmetic in request.context.arithmetic.get(request.semantic.convolution.id, ())),
-                      capability.findings)
+    return Capability(tuple(replace(
+        candidate, arithmetic=arithmetic, arithmetic_schedule=schedule,
+        cost=Cost(CONSTANT_MATRIX_COST_PROFILE.cycles(arithmetic, candidate.input.words, schedule.reuse_factor),
+                  candidate.cost.resource, candidate.cost.latency),
+        confidence="calibrated" if schedule.reuse_factor in (1, 2) and CONSTANT_MATRIX_COST_PROFILE.covers(
+            request.semantic, arithmetic, request.context.part, request.context.clock_period,
+            candidate.implementation) else "uncalibrated")
+        for candidate in capability.candidates
+        for arithmetic in request.context.arithmetic_for(request.semantic.convolution.id)
+        for schedule in arithmetic_schedules(candidate.implementation.positions)), capability.findings)
+
 
 
 TEMPORAL_STRATEGIES = (

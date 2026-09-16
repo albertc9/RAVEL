@@ -8,7 +8,7 @@ from .chain import ChainPlan
 from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
 from .resources import ResourceEstimate, rejection_reasons
 
-SEARCH_CANDIDATE_LIMIT = 32
+SEARCH_CANDIDATE_LIMIT = 64
 
 
 def plan_identity(plan: ChainPlan) -> str:
@@ -71,8 +71,10 @@ class SearchReport:
                 {
                     "id": plan_identity(plan),
                     "strategies": [stage.id for stage in plan.stages],
-                    "arithmetic": [{key: value for key, value in stage.arithmetic.items() if key != "graph"}
+                    "arithmetic": [{key: value for key, value in stage.arithmetic.to_dict().items() if key != "graph"}
                                    for stage in plan.stages if stage.arithmetic],
+                    "arithmetic_schedule": next((stage.arithmetic_schedule.to_dict() for stage in plan.stages
+                                                 if stage.arithmetic_schedule), None),
                     "predicted_frame_cycles": plan.cost.cycles,
                     "resources": resource.to_dict(),
                     "rejection_reasons": exclusions(plan, resource),

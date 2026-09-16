@@ -31,9 +31,9 @@ def replay_design(recorded, fresh, generation, *, chain=None, parameters=None, n
                                          paired=previous["paired"], dsp_budgets=(previous["dsp_product_budget"],))
         if not candidates:
             raise CompatibilityError("Refreshed parameters no longer satisfy the recorded arithmetic contract; use ordinary conversion")
-        stage["arithmetic"] = candidates[0]
+        stage["arithmetic"] = candidates[0].to_dict()
         if previous["paired"]:
-            result["coefficient_realization"] = candidates[0]
+            result["coefficient_realization"] = candidates[0].to_dict()
         rebuilt = True
     if rebuilt:
         result["optimization_search"]["evidence_scope"] = "original-selection-before-parameter-refresh"

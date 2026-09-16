@@ -798,10 +798,7 @@ def analyze_constant_matrix(*, weight_codes, aligned_bias_codes, modulus,
         convolution_stride=row_offset, modulus=modulus,
         dsp_product_budget=dsp_product_budget, convolution_rows=output_rows, balanced=True,
     )
-    return {"kind": "hybrid", "policy": {"id": "constant-matrix-csd-cse-dsp", "version": 1},
-            "graph": _graph_to_dict(graph), "graph_sha256": proof.graph_sha256,
-            "proof": {"status": proof.status, "identity": proof.identity, "modulus": modulus},
-            "graph_summary": dict(summary), "dsp_product_budget": dsp_product_budget}
+    return HybridSupertileAnalysis(graph, proof, summary)
 
 
 def _canonical_signed_digits(value: int) -> tuple[tuple[int, int], ...]:

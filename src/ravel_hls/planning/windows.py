@@ -57,3 +57,25 @@ def window_schedules(block: TemporalBlock) -> tuple[WindowSchedule, ...]:
         for positions in range(1, min(width, 4) + 1)
         if width % positions == 0
     )
+
+
+@dataclass(frozen=True)
+class ArithmeticSchedule:
+    """Share position engines across finite phases of an accepted stream word."""
+
+    position_lanes: int
+    engines: int
+
+    @property
+    def reuse_factor(self):
+        return self.position_lanes // self.engines
+
+    def to_dict(self):
+        return {"id": "phased-position-engines", "version": 1,
+                "position_lanes": self.position_lanes, "engines": self.engines,
+                "reuse_factor": self.reuse_factor, "phase_loop_ii": 1}
+
+
+def arithmetic_schedules(positions):
+    return tuple(ArithmeticSchedule(positions, engines) for engines in range(positions, 0, -1)
+                 if positions % engines == 0)
