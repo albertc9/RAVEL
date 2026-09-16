@@ -1,21 +1,26 @@
 {
   "profile": "ku5p-constant-matrix-counter-2023.2",
-  "version": 1,
+  "version": 2,
   "part": "xcku5p-ffvb676-2-e",
   "clock_ns": 5,
   "tool_version": "2023.2",
   "measurements": [
     {
       "project": "counter_f12_p4",
+      "phase_policy": "unshared",
       "source_closure_sha256": "cb57e52d05cc7769a6bdeb5b21fbbd4466ccafd147b0394bf66f9d04f4ed0e3f",
       "manifest_sha256": "cdf33603f54682812926f73c1b4110fd2c1b46809ea18a03b227a5be6d6a2375",
       "hls_report_sha256": "63398b71f6bca2d94ae284dc95d1316cd543760f78c2a0015001390ed8afd040",
+      "hls_report_file": "calibration_reports/counter_f12_p4_csynth.xml",
       "ii": 49,
       "latency": 56,
       "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "ff43728c75d552cb931518750b2c9c0710630d9e5e142991a34711a936df104f",
       "arithmetic": [
         {
           "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
           "summary": {
             "add_nodes": 116,
             "constant_nodes": 6,
@@ -30,10 +35,12 @@
             "shared_product_uses": 24,
             "shift_nodes": 30,
             "subtract_nodes": 46
-          }
+          },
+          "schedule": null
         },
         {
           "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
           "summary": {
             "add_nodes": 502,
             "constant_nodes": 6,
@@ -48,21 +55,27 @@
             "shared_product_uses": 253,
             "shift_nodes": 137,
             "subtract_nodes": 111
-          }
+          },
+          "schedule": null
         }
       ]
     },
     {
       "project": "counter_c3_p4",
+      "phase_policy": "unshared",
       "source_closure_sha256": "6ebef42550cc42312ed59fa59411c71d45b1d628d31180504519f95fc67b2c1b",
       "manifest_sha256": "c833b37a17bec6f878d9d932ca74eabd2aefdb9a12fffd4b9aa2fe4232c69e90",
       "hls_report_sha256": "189b141b55b81208dc8e4878e3f44562994632cb4f701af5c23903806182a7da",
+      "hls_report_file": "calibration_reports/counter_c3_p4_csynth.xml",
       "ii": 48,
       "latency": 54,
       "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "a7d761322668d80d20eb3c0b801bdca3bb24400af25449a5112c69bfcd162bd6",
       "arithmetic": [
         {
           "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
           "summary": {
             "add_nodes": 20,
             "constant_nodes": 0,
@@ -77,10 +90,12 @@
             "shared_product_uses": 3,
             "shift_nodes": 13,
             "subtract_nodes": 2
-          }
+          },
+          "schedule": null
         },
         {
           "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
           "summary": {
             "add_nodes": 40,
             "constant_nodes": 0,
@@ -95,21 +110,27 @@
             "shared_product_uses": 3,
             "shift_nodes": 28,
             "subtract_nodes": 16
-          }
+          },
+          "schedule": null
         }
       ]
     },
     {
       "project": "counter_heldout",
+      "phase_policy": "unshared",
       "source_closure_sha256": "e88656f31a0ee46e09060a2ac8a447da89ddeb8f2a710df0848254448929b22f",
       "manifest_sha256": "00dd849fc17eadb038f5a72b8e5940793b9342b4f9985789dd99d78dd91c5709",
       "hls_report_sha256": "12ddfce699a69a3d8b97490066bd3c92bf61b2b673224e671d1a143905a0a8ce",
+      "hls_report_file": "calibration_reports/counter_heldout_csynth.xml",
       "ii": 37,
       "latency": 43,
       "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "79f59ecfb27bd9a3d811af40a89342672ed3fc79ca6ef4f32665afaf538f3ed4",
       "arithmetic": [
         {
           "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
           "summary": {
             "add_nodes": 18,
             "constant_nodes": 0,
@@ -124,10 +145,12 @@
             "shared_product_uses": 3,
             "shift_nodes": 12,
             "subtract_nodes": 4
-          }
+          },
+          "schedule": null
         },
         {
           "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
           "summary": {
             "add_nodes": 33,
             "constant_nodes": 0,
@@ -142,10 +165,904 @@
             "shared_product_uses": 4,
             "shift_nodes": 20,
             "subtract_nodes": 13
+          },
+          "schedule": null
+        }
+      ]
+    },
+    {
+      "project": "hybrid_f12_p4",
+      "phase_policy": "unshared",
+      "source_closure_sha256": "0d9544e1fba7c60721e906816e7890910d23f068cf7606aab1390678031aacf0",
+      "manifest_sha256": "a92935c3ad16cab67bc36731801dce93bffd12d26b9a60f57743618e25b42c4b",
+      "hls_report_sha256": "1ca68ab028753f6d2ae2a5046fd8406c4fa0e16950219cc1e3dbcdb3644c0bec",
+      "hls_report_file": "calibration_reports/hybrid_f12_p4_csynth.xml",
+      "ii": 49,
+      "latency": 57,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "24d0564f022a2b4e4ae3db081cc8e70db34b050724da4f6652899f4c7c8ece50",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 16,
+          "summary": {
+            "add_nodes": 114,
+            "constant_nodes": 6,
+            "convolution_rows": 2,
+            "depth": 6,
+            "dsp_product_budget": 16,
+            "dsp_product_uses": 4,
+            "filter_lanes": 12,
+            "input_rows": 8,
+            "max_fanout": 12,
+            "multiply_nodes": 4,
+            "negate_nodes": 24,
+            "output_values": 24,
+            "shared_pair_uses": 5,
+            "shared_product_uses": 24,
+            "shift_nodes": 28,
+            "subtract_nodes": 40
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 502,
+            "constant_nodes": 6,
+            "convolution_rows": 1,
+            "depth": 16,
+            "filter_lanes": 12,
+            "input_rows": 60,
+            "max_fanout": 9,
+            "negate_nodes": 121,
+            "output_values": 12,
+            "shared_pair_uses": 145,
+            "shared_product_uses": 253,
+            "shift_nodes": 137,
+            "subtract_nodes": 111
+          },
+          "schedule": null
+        }
+      ]
+    },
+    {
+      "project": "hybrid_c3_p4",
+      "phase_policy": "unshared",
+      "source_closure_sha256": "6ed08c2d1b17e6a0f52bb92bc0246ce61a31c60d0709004624662598e4439266",
+      "manifest_sha256": "444bb46b660292dadf61745119853fd48f97b38e707bc6c9749e25a6ad893a83",
+      "hls_report_sha256": "d01a5f27f314cd8b8619f283d3f345d65a2e06b31571bc7d3f9c5ebbb1cbb4bf",
+      "hls_report_file": "calibration_reports/hybrid_c3_p4_csynth.xml",
+      "ii": 48,
+      "latency": 54,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "120f4680baff11bed18fdd6d768704c3a14e10f67c00867118891c6f82dd292b",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 20,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 5,
+            "filter_lanes": 3,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 16,
+            "output_values": 6,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 13,
+            "subtract_nodes": 2
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 40,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 3,
+            "input_rows": 15,
+            "max_fanout": 5,
+            "negate_nodes": 13,
+            "output_values": 3,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 3,
+            "shift_nodes": 28,
+            "subtract_nodes": 16
+          },
+          "schedule": {
+            "engines": 4,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 1,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "hybrid_heldout",
+      "phase_policy": "unshared",
+      "source_closure_sha256": "4f2fc9c451dd883088e744db9d2c8d1b91055dd2381624faefd05be897a815b9",
+      "manifest_sha256": "9a3b8f1d8a6a511802c8101210cecbff280e395271de1d54a07ee0fecc0e0fc4",
+      "hls_report_sha256": "a8af0fbcab1d11f0db8952367f346caad15d5212a3737a12c8a7151fecc82aa3",
+      "hls_report_file": "calibration_reports/hybrid_heldout_csynth.xml",
+      "ii": 37,
+      "latency": 43,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "7d717fdff8f4e253ff14f41d1d07076cbb9930f71a1a24f20124bf659a5a6de0",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 18,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 6,
+            "filter_lanes": 2,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 9,
+            "output_values": 4,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 12,
+            "subtract_nodes": 4
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 33,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 4,
+            "input_rows": 10,
+            "max_fanout": 5,
+            "negate_nodes": 11,
+            "output_values": 4,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 4,
+            "shift_nodes": 20,
+            "subtract_nodes": 13
+          },
+          "schedule": {
+            "engines": 4,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 1,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "hybrid_varied",
+      "phase_policy": "unshared",
+      "source_closure_sha256": "504a932e2b6e8ac2f29ca276a447d5c705e707e4dc3626a63eaa55ca57e5dd0b",
+      "manifest_sha256": "d09e9c92bbd7de51536122388edd2741a99dcb1cded3e83836901e2a7b4eb004",
+      "hls_report_sha256": "2956510a91ea6210a6e13cc1582a8d26c2cfb6ff5e81b4a8d366840950fc2407",
+      "hls_report_file": "calibration_reports/hybrid_varied_csynth.xml",
+      "ii": 38,
+      "latency": 45,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "e6aef2f6a8a46ee7e51ca3e83037d2acf42617ebf6fe1d6951080541e19eeb73",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 16,
+          "summary": {
+            "add_nodes": 114,
+            "constant_nodes": 6,
+            "convolution_rows": 2,
+            "depth": 6,
+            "dsp_product_budget": 16,
+            "dsp_product_uses": 4,
+            "filter_lanes": 12,
+            "input_rows": 8,
+            "max_fanout": 12,
+            "multiply_nodes": 4,
+            "negate_nodes": 24,
+            "output_values": 24,
+            "shared_pair_uses": 5,
+            "shared_product_uses": 24,
+            "shift_nodes": 28,
+            "subtract_nodes": 40
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 502,
+            "constant_nodes": 6,
+            "convolution_rows": 1,
+            "depth": 16,
+            "filter_lanes": 12,
+            "input_rows": 60,
+            "max_fanout": 9,
+            "negate_nodes": 121,
+            "output_values": 12,
+            "shared_pair_uses": 145,
+            "shared_product_uses": 253,
+            "shift_nodes": 137,
+            "subtract_nodes": 111
+          },
+          "schedule": {
+            "engines": 4,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 1,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "reuse2_c3",
+      "phase_policy": "uniform-word-phases",
+      "source_closure_sha256": "50b8a3b584af58dbd15cae3671381329ec2b9259bc5ed5f9142607998070e6be",
+      "manifest_sha256": "54c4aca63b28ad6ab6b3af21a866dca844fd6e8b36a3e55bbdb8dbbfd2669a2c",
+      "hls_report_sha256": "751e5ed1143fcd5d06f6fa45be265c745da7a56adcfad555e1ef6c1ac506ec30",
+      "hls_report_file": "calibration_reports/reuse2_c3_csynth.xml",
+      "ii": 91,
+      "latency": 98,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "79c42ae7419dcbb20ad65e440f253d80a7806f9950781ecb8ee60b604188ca89",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 20,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 5,
+            "filter_lanes": 3,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 16,
+            "output_values": 6,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 13,
+            "subtract_nodes": 2
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 40,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 3,
+            "input_rows": 15,
+            "max_fanout": 5,
+            "negate_nodes": 13,
+            "output_values": 3,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 3,
+            "shift_nodes": 28,
+            "subtract_nodes": 16
+          },
+          "schedule": {
+            "engines": 2,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "reuse2_f12",
+      "phase_policy": "uniform-word-phases",
+      "source_closure_sha256": "1ca8cce6f271bb24f8c697fd2ddfe9eb0fef52f2ce563dcf8e0d4dd2f5f3cc53",
+      "manifest_sha256": "41ed828aa2a5cb6d29eb19757824f9e95274053c91e00b8e1b008b89db333ef7",
+      "hls_report_sha256": "9527ff4f36e6770e01937dc898ed74e90cdb458b26b72151ca73bcbab4dba778",
+      "hls_report_file": "calibration_reports/reuse2_f12_csynth.xml",
+      "ii": 92,
+      "latency": 100,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "274712752f7e7e3393e3f24d8c73fe8f78be642457316ce63c4ca87b96e6bd69",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 16,
+          "summary": {
+            "add_nodes": 114,
+            "constant_nodes": 6,
+            "convolution_rows": 2,
+            "depth": 6,
+            "dsp_product_budget": 16,
+            "dsp_product_uses": 4,
+            "filter_lanes": 12,
+            "input_rows": 8,
+            "max_fanout": 12,
+            "multiply_nodes": 4,
+            "negate_nodes": 24,
+            "output_values": 24,
+            "shared_pair_uses": 5,
+            "shared_product_uses": 24,
+            "shift_nodes": 28,
+            "subtract_nodes": 40
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 502,
+            "constant_nodes": 6,
+            "convolution_rows": 1,
+            "depth": 16,
+            "filter_lanes": 12,
+            "input_rows": 60,
+            "max_fanout": 9,
+            "negate_nodes": 121,
+            "output_values": 12,
+            "shared_pair_uses": 145,
+            "shared_product_uses": 253,
+            "shift_nodes": 137,
+            "subtract_nodes": 111
+          },
+          "schedule": {
+            "engines": 2,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "reuse2_heldout",
+      "phase_policy": "uniform-word-phases",
+      "source_closure_sha256": "30d9d01d04614c9f99e24a3e04c0687df4e325e92be7079927d4ec25b01d0b09",
+      "manifest_sha256": "36ac2e27b444eee4cd5821c1050cb981e715b308a0a09490a067471e3b729dd8",
+      "hls_report_sha256": "af3aa766d989050ae939ac3c4f32d491fd0737d173598e139e8e5b75ea25cbea",
+      "hls_report_file": "calibration_reports/reuse2_heldout_csynth.xml",
+      "ii": 68,
+      "latency": 75,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "404cfbecce3756e4e3d9239c25b8760d85e0a874033018ead5bce6e8c92c5afd",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 18,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 6,
+            "filter_lanes": 2,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 9,
+            "output_values": 4,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 12,
+            "subtract_nodes": 4
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 33,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 4,
+            "input_rows": 10,
+            "max_fanout": 5,
+            "negate_nodes": 11,
+            "output_values": 4,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 4,
+            "shift_nodes": 20,
+            "subtract_nodes": 13
+          },
+          "schedule": {
+            "engines": 2,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "reuse4_c3",
+      "phase_policy": "uniform-word-phases",
+      "source_closure_sha256": "95a9fb2cc9046b436c0f1bba02f9e209d4060f0524a67b1df4d4e2eb26b7aad4",
+      "manifest_sha256": "38d8a266c1dd210429695b68bce605ca2036ffe0e8a95bed5a4cafb2fd1ee574",
+      "hls_report_sha256": "5381418a925c919a3677bfb056b00e55d516a83b0a7b07e4971bff8e88638d2b",
+      "hls_report_file": "calibration_reports/reuse4_c3_csynth.xml",
+      "ii": 175,
+      "latency": 182,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "485549c1076e9577e5c1d75898485cf18ab99b74e784356482f6a8a2f85f2cfd",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 20,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 5,
+            "filter_lanes": 3,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 16,
+            "output_values": 6,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 13,
+            "subtract_nodes": 2
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 40,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 3,
+            "input_rows": 15,
+            "max_fanout": 5,
+            "negate_nodes": 13,
+            "output_values": 3,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 3,
+            "shift_nodes": 28,
+            "subtract_nodes": 16
+          },
+          "schedule": {
+            "engines": 1,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 4,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "active_f12",
+      "phase_policy": "complete-convolution-windows-only",
+      "source_closure_sha256": "1be7d9daabec1ee3868d717080a09695db61ed1ed8956e0396a2f2818e3f93e1",
+      "manifest_sha256": "f54a7e5054116c1cc20e11b093dc7257ca6a12b3f378423b168983d3737b2d71",
+      "hls_report_sha256": "7c30c4085f169f93a75cdf888848481cad72bf56bcd060365d53ca4e0b8f6561",
+      "hls_report_file": "calibration_reports/active_f12_csynth.xml",
+      "ii": 63,
+      "latency": 71,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "b014aeae9eade071f7e94cf1322dbe5d3072bb6d472dfbcf4733e5afbc35ee44",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 16,
+          "summary": {
+            "add_nodes": 114,
+            "constant_nodes": 6,
+            "convolution_rows": 2,
+            "depth": 6,
+            "dsp_product_budget": 16,
+            "dsp_product_uses": 4,
+            "filter_lanes": 12,
+            "input_rows": 8,
+            "max_fanout": 12,
+            "multiply_nodes": 4,
+            "negate_nodes": 24,
+            "output_values": 24,
+            "shared_pair_uses": 5,
+            "shared_product_uses": 24,
+            "shift_nodes": 28,
+            "subtract_nodes": 40
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 502,
+            "constant_nodes": 6,
+            "convolution_rows": 1,
+            "depth": 16,
+            "filter_lanes": 12,
+            "input_rows": 60,
+            "max_fanout": 9,
+            "negate_nodes": 121,
+            "output_values": 12,
+            "shared_pair_uses": 145,
+            "shared_product_uses": 253,
+            "shift_nodes": 137,
+            "subtract_nodes": 111
+          },
+          "schedule": {
+            "engines": 2,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "active_c3",
+      "phase_policy": "complete-convolution-windows-only",
+      "source_closure_sha256": "2c33161736e9f083917ea787ef940b4933dd608002e2006255c8af41c338c526",
+      "manifest_sha256": "129dcdc8cb7e64b664d77f1087947da44007c6714a69911064b4c12fd3715ae5",
+      "hls_report_sha256": "a98003f46d8181981d229913c0e148cb513f4075c66764289a7d825bcf9b3d26",
+      "hls_report_file": "calibration_reports/active_c3_csynth.xml",
+      "ii": 61,
+      "latency": 68,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "19b40e73ed9fa6147d273594f3eef294d50559e45e8150952270223d63bf4450",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 20,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 5,
+            "filter_lanes": 3,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 16,
+            "output_values": 6,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 13,
+            "subtract_nodes": 2
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 40,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 3,
+            "input_rows": 15,
+            "max_fanout": 5,
+            "negate_nodes": 13,
+            "output_values": 3,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 3,
+            "shift_nodes": 28,
+            "subtract_nodes": 16
+          },
+          "schedule": {
+            "engines": 2,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "active_heldout",
+      "phase_policy": "complete-convolution-windows-only",
+      "source_closure_sha256": "e65983cea3e96fd69dbccef82867b57cf8944e2699747a9b6406a8ececc2cf61",
+      "manifest_sha256": "bea7373643457281ef8de7a7a7886be9b1e0e7817849ec20bcc574f61699f7bb",
+      "hls_report_sha256": "7efcb7ac7568e06843de4a12e38d8a95715229da01d0f33f4ff43f6f39f1af21",
+      "hls_report_file": "calibration_reports/active_heldout_csynth.xml",
+      "ii": 46,
+      "latency": 53,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "857d719acc90906769d6bc45498870176760abb041bcba6d944e64acfc5eaccf",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 18,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 6,
+            "filter_lanes": 2,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 9,
+            "output_values": 4,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 12,
+            "subtract_nodes": 4
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 33,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 4,
+            "input_rows": 10,
+            "max_fanout": 5,
+            "negate_nodes": 11,
+            "output_values": 4,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 4,
+            "shift_nodes": 20,
+            "subtract_nodes": 13
+          },
+          "schedule": {
+            "engines": 2,
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 1
+          }
+        }
+      ]
+    },
+    {
+      "project": "final_f12",
+      "phase_policy": "complete-convolution-windows-only",
+      "source_closure_sha256": "dc8b69bb16e6743878b3c2be82f638a2ab11853081c9c286a533fecfc9d36a4e",
+      "manifest_sha256": "dccf2fc4f15a509a8cf453c5c8f28f0620e64191894433ab08fbd7b7bb85ca98",
+      "hls_report_sha256": "30b99e6eb07e588f27d4ed80f8691e10e5a06871bac4d0a20eace28181de7335",
+      "hls_report_file": "calibration_reports/final_f12_csynth.xml",
+      "ii": 63,
+      "latency": 71,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "14f6f7f6074d406dcf6ff520304699929096a459132e618f2be539f4ef2003cc",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 16,
+          "summary": {
+            "add_nodes": 114,
+            "constant_nodes": 6,
+            "convolution_rows": 2,
+            "depth": 6,
+            "dsp_product_budget": 16,
+            "dsp_product_uses": 4,
+            "filter_lanes": 12,
+            "input_rows": 8,
+            "max_fanout": 12,
+            "multiply_nodes": 4,
+            "negate_nodes": 24,
+            "output_values": 24,
+            "shared_pair_uses": 5,
+            "shared_product_uses": 24,
+            "shift_nodes": 28,
+            "subtract_nodes": 40
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 502,
+            "constant_nodes": 6,
+            "convolution_rows": 1,
+            "depth": 16,
+            "filter_lanes": 12,
+            "input_rows": 60,
+            "max_fanout": 9,
+            "negate_nodes": 121,
+            "output_values": 12,
+            "shared_pair_uses": 145,
+            "shared_product_uses": 253,
+            "shift_nodes": 137,
+            "subtract_nodes": 111
+          },
+          "schedule": {
+            "engines": 2,
+            "extra_phases": "complete-convolution-windows-only",
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 2
+          }
+        }
+      ]
+    },
+    {
+      "project": "final_c3",
+      "phase_policy": "complete-convolution-windows-only",
+      "source_closure_sha256": "0689c52f6a60dada55a88671a12b5857ff1f6ead105e83aba2ee700dd2054c30",
+      "manifest_sha256": "e75344ef247256a22afd370696ec9735ca5ea069318b5343f1aa61d770164e3e",
+      "hls_report_sha256": "a8074124996f51b919008e3f8ffadf0c9557eba948f6eac1e9beffe5daf396cb",
+      "hls_report_file": "calibration_reports/final_c3_csynth.xml",
+      "ii": 61,
+      "latency": 68,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "e9705d2dd23f0bf0ffe51eb68debe9b565645a7761934cc0b9caa496f1a7130d",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 20,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 5,
+            "filter_lanes": 3,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 16,
+            "output_values": 6,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 13,
+            "subtract_nodes": 2
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 40,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 3,
+            "input_rows": 15,
+            "max_fanout": 5,
+            "negate_nodes": 13,
+            "output_values": 3,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 3,
+            "shift_nodes": 28,
+            "subtract_nodes": 16
+          },
+          "schedule": {
+            "engines": 2,
+            "extra_phases": "complete-convolution-windows-only",
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 2
+          }
+        }
+      ]
+    },
+    {
+      "project": "final_heldout",
+      "phase_policy": "complete-convolution-windows-only",
+      "source_closure_sha256": "a6a1c0b09ab545bdf435a7e3254248ee211cf05fbe8cdacf5f8eb628f447229f",
+      "manifest_sha256": "01683ea882b813e87d36906f98fcb1fc219b2c11ae9b44b14682b728af15acbb",
+      "hls_report_sha256": "0515884b380fc060b368434f45a1613455f2765852de38118b8950d8a4710bc8",
+      "hls_report_file": "calibration_reports/final_heldout_csynth.xml",
+      "ii": 46,
+      "latency": 53,
+      "c_verification": "passed",
+      "rtl_protocol": "passed",
+      "protocol_report_sha256": "d3673c3b43d122429259fcf253e721faaf631cadb14df4c9bd4e3c84817ecbf3",
+      "arithmetic": [
+        {
+          "operation_id": "conv2d_0",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 18,
+            "constant_nodes": 0,
+            "convolution_rows": 2,
+            "depth": 6,
+            "filter_lanes": 2,
+            "input_rows": 8,
+            "max_fanout": 5,
+            "negate_nodes": 9,
+            "output_values": 4,
+            "shared_pair_uses": 0,
+            "shared_product_uses": 3,
+            "shift_nodes": 12,
+            "subtract_nodes": 4
+          },
+          "schedule": null
+        },
+        {
+          "operation_id": "conv2d_1",
+          "dsp_product_budget": 0,
+          "summary": {
+            "add_nodes": 33,
+            "constant_nodes": 0,
+            "convolution_rows": 1,
+            "depth": 6,
+            "filter_lanes": 4,
+            "input_rows": 10,
+            "max_fanout": 5,
+            "negate_nodes": 11,
+            "output_values": 4,
+            "shared_pair_uses": 1,
+            "shared_product_uses": 4,
+            "shift_nodes": 20,
+            "subtract_nodes": 13
+          },
+          "schedule": {
+            "engines": 2,
+            "extra_phases": "complete-convolution-windows-only",
+            "id": "phased-position-engines",
+            "phase_loop_ii": 1,
+            "position_lanes": 4,
+            "reuse_factor": 2,
+            "version": 2
           }
         }
       ]
     }
   ],
-  "notes": "Development measurements; ordinary conversion reports predictions, not timing or fit certificates."
+  "coverage": {
+    "positions": 4,
+    "reuse_factors": [
+      1,
+      2
+    ],
+    "extra_phases": "complete-convolution-windows-only",
+    "dsp_budgets": [
+      0,
+      16
+    ],
+    "dsp_scope": "paired first stage only, at most four multiply nodes; downstream DSP choices remain uncalibrated",
+    "first_stage_temporal_packing": 8
+  },
+  "notes": "Development measurements, including rejected reuse4. Identical graphs at different requested budgets are deduplicated. Ordinary conversion reports predictions, not timing or fit certificates."
 }

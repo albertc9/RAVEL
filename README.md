@@ -2,10 +2,12 @@
 # RAVEL
 
 RAVEL (Rate-Aware Vectorized Engine for Low-latency) generates a specialized,
-hls4ml-compatible FPGA inference project. Aria 1.7.0 supports one or two
+hls4ml-compatible FPGA inference project. Aria 1.7.2 supports one or two
 Conv/ReLU/Pool blocks followed by Flatten and one Dense output. It composes
-PHARA or a wide first-convolution stage, a qualified hls4ml channel-mixing
-stage when needed, lossless stream bridges, and RAVEL's packed Dense stage.
+PHARA or a wide first-convolution stage, qualified channel-mixing implementations,
+lossless stream bridges, and RAVEL's packed Dense stage.
+[Aria 1.7.2](docs/design/aria-1.7.2-optimization.md) searches shared arithmetic and
+finite reuse across both convolutions, with an optional per-core II target.
 New conversions default to P8/D4. P2 and P4 remain available through explicit
 configuration. [Compatibility](docs/compatibility.md) describes the supported
 geometry and [architecture](docs/architecture.md) describes the typed planner.

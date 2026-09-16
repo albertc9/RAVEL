@@ -1,0 +1,16 @@
+{
+  "implementation_revision": "409da03",
+  "software_tests": {
+    "passed": 291,
+    "command": "PYTHONPATH=src KERAS_BACKEND=tensorflow .venv/bin/pytest --lf -q tests --ignore=tests/reference/test_aria_1_7_2_evidence.py",
+    "note": "No cached failures remained, so pytest ran the complete 291-test software set."
+  },
+  "frozen_evidence_tests": {
+    "passed": 6,
+    "command": "PYTHONPATH=src .venv/bin/pytest -q tests/reference/test_aria_1_7_2_evidence.py"
+  },
+  "build": "passed",
+  "twine_metadata_check": "passed",
+  "release_workflow_changes": false,
+  "publication": "not_run"
+}

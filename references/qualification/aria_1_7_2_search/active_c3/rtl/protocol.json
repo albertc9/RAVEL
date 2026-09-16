@@ -1,0 +1,85 @@
+{
+  "completed_samples": 99,
+  "consecutive_samples": 96,
+  "input_gap_cycles": 464,
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 8,
+      "input_scalar_bits": 9,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 22,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 32
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 9,
+        "input_tdata_bits": 512,
+        "input_tdata_port": "calibration_input_TDATA",
+        "output_scalar_bits": 22,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer11_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "log_sha256": "e33ab65bd55cac5e74e92453953a969baa74ed6994c0d1be41046eb77340747f",
+  "manifest_sha256": "129dcdc8cb7e64b664d77f1087947da44007c6714a69911064b4c12fd3715ae5",
+  "output_stall_cycles": 88,
+  "reset_aborts": 1,
+  "reset_between_epochs": 1,
+  "rtl_files": {
+    "active_c3.v": "b89ba470f9f31d079bc7514143e568562483b079b1fd8dbe70ea04861235ab0e",
+    "active_c3_dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues.v": "e49356ac251234662b2b95e801d141afc8f6092388582331b27c93bc15192f55",
+    "active_c3_dense_wide_stream_array_array_ap_fixed_1u_config11_Pipeline_DenseValues_w11_rbkb.v": "04ad76273f690138f2f3762dfcb4f0d8b733edf8d0f2360e4621b816cdc99c7b",
+    "active_c3_dense_wide_stream_array_array_ap_fixed_22_10_5_3_0_1u_config11_s.v": "b3997c3da39f09a63c91784af363fa365556d1b763b4ed9c41110fcce273a1fb",
+    "active_c3_fifo_w108_d4_S.v": "c77b941aa48174a2fd3e22ed66d72d8beed860fe2c2bff9d35cc37fc88b34e13",
+    "active_c3_fifo_w168_d4_S.v": "922d501afbf807631783547f36a2d31c86206aa55c689df96caae0ec094b3d8a",
+    "active_c3_fifo_w180_d4_S.v": "aa421cdab148a5e1a1b541f4c6a0064eb119865bd7a4cabb593b0b728b2a83ba",
+    "active_c3_flow_control_loop_pipe.v": "c513bac2fe9fce70993da056d2b6c02a169e46410209019cff199b4273ab0004",
+    "active_c3_flow_control_loop_pipe_sequential_init.v": "676d2b59d2403dd1207c5d318e661b1b7f17f00405d9d3da92ee70bccbde1d73",
+    "active_c3_mac_muladd_14ns_4s_19s_20_1_1.v": "78073c83dfd4cecf48b1fbf65b62cbab654597d2025b948338e9036662ec9a4f",
+    "active_c3_mac_muladd_14ns_5s_19s_20_1_1.v": "71a1a584bce253049f67c0e89ce89c49cbda091ab5cd58263c0b6c5ec604c7b8",
+    "active_c3_mac_muladd_14ns_5s_20s_21_1_1.v": "436ed196ff66e545c23a53509904559b2d6c96a2bc7390381846d696d4efc537",
+    "active_c3_mul_14ns_5s_19_1_1.v": "a8839a0e15cbd0540055df425066b3e1d0722ee59c3a36318897531ad8164455",
+    "active_c3_phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s.v": "292ec17199ed88da1270b26e64e6d983b0051acb2499849ab572e8fbc7aad9d1",
+    "active_c3_regslice_both.v": "4669c7f599f6e02eefd786e2a81cdd9a9dc21e25e9397e741384cf069d33c329",
+    "active_c3_relu_array_ap_fixed_12u_array_ap_ufixed_14_6_5_3_0_12u_relu_config8_s.v": "30cfed307c2d4f49f5d6a498bb635087d7319dcb49c575f08808d814c768ca83",
+    "active_c3_scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_12u_config9_4u_s.v": "8aac8ea33004ec7d384324314eedd72b7053e6e3385d3d568add697a8b486e99",
+    "active_c3_shared_conv_array_array_ap_fixed_12u_config7_4u_ravel_matrix_conv2d_1_2u_s.v": "452981a17369d71e49abd736ab13993e895ee261b79857cdb801c35e9e841a3a",
+    "active_c3_sparsemux_17_3_9_1_1.v": "1f9a6187011c1eab735ea5e577af2a81e8e5fd249bcfdcf8cf53bc613508e920",
+    "active_c3_start_for_dense_wide_stream_array_array_ap_fixed_22_10_5_3_0_1u_config11_U0.v": "e8279df9cf14f1319ee7a03c225baf99907fd8f8de34a5c3d0498bf195059901",
+    "active_c3_start_for_relu_array_ap_fixed_12u_array_ap_ufixed_14_6_5_3_0_12u_relu_config8dEe.v": "041f0bf0f0341183d573c71a3d33ac47cb1efa6da55a447e4bb17a5583aa3129",
+    "active_c3_start_for_scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_12u_config9_4u_U0.v": "8081730770974f30b188cf78f1c6f1e997e2d36a2818fdb553ed5eb6bd5becff",
+    "active_c3_start_for_shared_conv_array_array_ap_fixed_12u_config7_4u_ravel_matrix_conv2dcud.v": "af266f67d13c977638e0dca055412213aac8e10ed4a947e0e8c61385d5840b73"
+  },
+  "schema_version": 1,
+  "simulator": {
+    "name": "xsim",
+    "version": "Vivado Simulator v2023.2"
+  },
+  "source_closure_sha256": "2c33161736e9f083917ea787ef940b4933dd608002e2006255c8af41c338c526",
+  "status": "passed",
+  "testbench_sha256": "08eaafff708a5cc1d5443d253774e7be0d6b1978dfb751c28babc7138b72eae3",
+  "top": "active_c3",
+  "vector_files": {
+    "rtl_expected_words.hex": "40ebec4d107d91b0a42ba83e7df831b55274bcb3dcaed6d7330e312e409e3148",
+    "rtl_input_words.hex": "43e594e9e97b3e3a1c469c81f76ad2f52b432f4f82436e489c43e459971895d2"
+  }
+}
