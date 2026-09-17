@@ -148,7 +148,7 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
         )
     )
 
-    assert schema["title"] == "RAVEL Aria 1.7.1 configuration"
+    assert schema["title"] == "RAVEL Aria 1.7.2 configuration"
     assert schema["required"] == ["HLS"]
     assert set(schema["properties"]) == {
         "Project",
@@ -157,7 +157,7 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
         "Verification",
         "Vitis",
     }
-    assert {key: value for key, value in schema["properties"]["Optimization"]["properties"].items() if key != "ResourceLimits"} == {
+    assert {key: value for key, value in schema["properties"]["Optimization"]["properties"].items() if key not in {"ResourceLimits", "TargetII"}} == {
         "TemporalPacking": {"enum": [2, 4, 8], "default": 8},
         "DenseParallelism": {"enum": [1, 2, 4], "default": 4},
     }
@@ -173,9 +173,9 @@ def test_manifest_schema_describes_the_v5_envelope_and_realization() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 7}
+    assert schema["properties"]["schema_version"] == {"const": 8}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
-        "const": "1.7.1"
+        "const": "1.7.2"
     }
     assert "source_closure" in schema["required"]
     assert "source_closure_sha256" in schema["required"]

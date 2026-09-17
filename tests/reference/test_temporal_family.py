@@ -5,7 +5,7 @@ import pytest
 from ravel_hls import analyze, convert
 
 
-def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed", padding="valid"):
+def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="renamed", padding="valid", kernel=3, stride=2):
     import keras
     from hgq.layers import QConv2D, QDense
 
@@ -18,7 +18,7 @@ def make_temporal_model(*, blocks=2, height=128, width=3, filters=5, prefix="ren
     value = inputs
     for block in range(blocks):
         config = {**convolution, "name": f"{prefix}_conv_{block}", "filters": filters[block] if isinstance(filters, tuple) else filters,
-                  "kernel_size": (3, 1), "strides": (2, 1),
+                  "kernel_size": (kernel, 1), "strides": (stride, 1),
                   "padding": padding[block] if isinstance(padding, tuple) else padding}
         value = QConv2D.from_config(config)(value)
         value = keras.layers.MaxPool2D((2, 1), strides=(2, 1), name=f"{prefix}_pool_{block}")(value)
@@ -179,6 +179,103 @@ def test_search_is_deterministic_and_accounts_for_its_finite_exploration():
     assert first["optimality"] == "within-enumerated-calibrated-domain"
 
 
+def test_requested_ii_prefers_lower_lut_after_the_target_is_met():
+    model = make_temporal_model(height=64, width=2, filters=3)
+    config = {"HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+              "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
+    fastest = analyze(model, config).to_dict()["optimization_search"]
+    targeted = analyze(model, {**config, "Optimization": {
+        **config["Optimization"], "TargetII": 100,
+    }}).to_dict()["optimization_search"]
+    def selected(report):
+        return next(c for c in report["candidates"] if c["id"] == report["selected_candidate"])
+    fast, small = selected(fastest), selected(targeted)
+    assert small["resources"]["values"]["LUT"] < fast["resources"]["values"]["LUT"]
+    assert small["predicted_frame_cycles"] <= 100
+    assert targeted["target"] == {"ii_cycles": 100, "status": "predicted-met"}
+
+
+def test_unattainable_ii_target_retains_a_feasible_plan_and_reports_the_shortfall():
+    report = analyze(make_temporal_model(height=64, width=2, filters=3), {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1, "TargetII": 1},
+    }).to_dict()
+    assert report["applicability"]["status"] == "applicable"
+    assert report["optimization_search"]["target"] == {"ii_cycles": 1, "status": "predicted-unmet"}
+    assert report["optimization_search"]["selection_reason"] == "best-effort-ii-target-unmet"
+
+
+def test_analysis_exposes_proven_constant_arithmetic_choices_for_both_convolutions():
+    report = analyze(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3), {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 4},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+    }).to_dict()
+    choices = [arithmetic for candidate in report["optimization_search"]["candidates"]
+               for arithmetic in candidate.get("arithmetic", [])]
+    assert {entry["operation_id"] for entry in choices} == {"conv2d_0", "conv2d_1"}
+    assert all(entry["proof"]["status"] == "proven" for entry in choices)
+    assert all(not candidate["selectable"] for candidate in report["optimization_search"]["candidates"]
+               if candidate.get("arithmetic"))
+
+
+def test_targeted_joint_arithmetic_conversion_preserves_all_observed_codes(tmp_path):
+    project = convert(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3),
+                      tmp_path / "joint", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 85},
+        "Verification": {"Mode": "required", "Samples": 16},
+    })
+    assert project.status["correctness_verification"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+    assert all(stage.get("arithmetic") for stage in project.manifest["resolved_design"]["stages"][:2])
+
+
+def test_search_explores_finite_arithmetic_reuse_without_changing_stream_width():
+    search = analyze(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3), {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4},
+    }).to_dict()["optimization_search"]
+    schedules = [candidate["arithmetic_schedule"] for candidate in search["candidates"]
+                 if (candidate.get("arithmetic_schedule") or {}).get("position_lanes") == 4]
+    assert {schedule["reuse_factor"] for schedule in schedules} == {1, 2, 4}
+    assert {schedule["engines"] for schedule in schedules} == {1, 2, 4}
+    assert search["exploration"]["evaluated"] <= search["exploration"]["limit"]
+
+
+@pytest.mark.parametrize("target", [85, 100])
+def test_ii_target_selects_shared_position_engines_and_preserves_codes(tmp_path, target):
+    project = convert(make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3),
+                      tmp_path / "shared", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": target},
+        "Verification": {"Mode": "required", "Samples": 8},
+    })
+    assert project.manifest["resolved_design"]["stages"][1]["arithmetic_schedule"]["reuse_factor"] == 2
+    assert project.status["correctness_verification"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+@pytest.mark.parametrize("parameter_package", [False, True])
+def test_joint_arithmetic_refresh_rebuilds_coefficients_without_changing_the_schedule(tmp_path, parameter_package):
+    from ravel_hls import Parameters, refresh
+    model = make_temporal_model(height=256, width=4, filters=3, kernel=5, stride=3)
+    original = convert(model, tmp_path / "joint_refresh", {
+        "HLS": {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5},
+        "Optimization": {"TemporalPacking": 8, "DenseParallelism": 4, "TargetII": 85},
+        "Verification": {"Mode": "auto", "Samples": 8},
+    })
+    kernel = [layer.kernel for layer in model.layers if hasattr(layer, "kernel")][1]
+    values = kernel.numpy()
+    values.reshape(-1)[0] += 0.125
+    kernel.assign(values)
+    renewed = refresh(original, Parameters.extract(model) if parameter_package else model)
+    assert renewed.status["correctness_verification"] == "passed"
+    assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
+    old, new = (p.manifest["resolved_design"]["stages"][1] for p in (original, renewed))
+    assert old["implementation"] == new["implementation"]
+    assert old["arithmetic"]["graph_sha256"] != new["arithmetic"]["graph_sha256"]
+
+
 def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defaults(tmp_path):
     from zipfile import ZipFile
     from ravel_hls import Project, refresh
@@ -201,6 +298,20 @@ def test_refresh_replays_a_real_aria170_project_without_adopting_new_search_defa
     assert refreshed.manifest["resolved_design"]["stages"] == original.manifest["resolved_design"]["stages"]
     assert refreshed.status["correctness_verification"] == "passed"
     assert refreshed.status["performance_qualification"] == "not_run"
+
+
+def test_refresh_retains_the_generation_and_schedule_of_a_real_aria171_project(tmp_path):
+    from zipfile import ZipFile
+    from ravel_hls import Project, refresh
+
+    path = tmp_path / "aria171_fixture"
+    with ZipFile(Path(__file__).parent / "fixtures/aria171_refresh.zip") as archive:
+        archive.extractall(path)
+    original = Project.open(path)
+    renewed = refresh(original, Path(__file__).parent / "fixtures/two_block_c3.keras")
+    assert renewed.manifest["profile"]["generation"]["version"] == "1.7.1"
+    assert renewed.manifest["resolved_design"]["stages"] == original.manifest["resolved_design"]["stages"]
+    assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
 
 
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):

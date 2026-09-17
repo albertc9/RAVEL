@@ -1,0 +1,765 @@
+{
+  "schema_version": 5,
+  "manifest_sha256": "ab71f305c5f03f9e0bec94beaba12533810f3b1c1d6911ca9a173d1f121db76c",
+  "generation_fingerprint": "6bf0b6272c23852ab84584aed0e6fe1f5a661f6f9524ea0d946e630646b7c2a9",
+  "source_closure_sha256": "67613b74221e5b0de3620be66ec0ac060dc81b506f6ccc8f637784ad5fe314ce",
+  "top": "ravel_window_f12_p4",
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "part": "xcku5p-ffvb676-2-e",
+  "timing": {
+    "target_clock_ns": 5.0,
+    "estimated_clock_ns": 4.289
+  },
+  "performance": {
+    "initiation_interval": 82,
+    "latency_cycles": 85
+  },
+  "stages": {
+    "conv2d_0": {
+      "functions": [
+        {
+          "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s",
+          "initiation_interval": 47,
+          "latency_cycles": 47,
+          "loops": [
+            {
+              "name": "ProduceP8Words",
+              "pipeline_ii": 1
+            }
+          ]
+        }
+      ],
+      "realization": "measured"
+    },
+    "conv2d_1": {
+      "functions": [
+        {
+          "top": "scheduled_conv_array_array_ap_fixed_18_9_5_3_0_48u_config7_4u_s",
+          "initiation_interval": 81,
+          "latency_cycles": 81,
+          "loops": [
+            {
+              "name": "WindowWords",
+              "pipeline_ii": 1
+            }
+          ]
+        },
+        {
+          "top": "relu_array_ap_fixed_48u_array_ap_ufixed_17_8_5_3_0_48u_relu_config8_s",
+          "initiation_interval": 16,
+          "latency_cycles": 16,
+          "loops": [
+            {
+              "name": "ReLUActLoop",
+              "pipeline_ii": 1
+            }
+          ]
+        },
+        {
+          "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s",
+          "initiation_interval": 16,
+          "latency_cycles": 16,
+          "loops": [
+            {
+              "name": "PoolWords",
+              "pipeline_ii": 1
+            }
+          ]
+        }
+      ],
+      "realization": "measured"
+    },
+    "reshape_0": {
+      "functions": [],
+      "realization": "zero-hardware-view"
+    },
+    "dense_0": {
+      "functions": [
+        {
+          "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues",
+          "initiation_interval": 13,
+          "latency_cycles": 13,
+          "loops": [
+            {
+              "name": "DenseValues",
+              "pipeline_ii": 1
+            }
+          ]
+        },
+        {
+          "top": "dense_wide_stream_array_array_ap_fixed_21_12_5_3_0_1u_config12_s",
+          "initiation_interval": 16,
+          "latency_cycles": 16,
+          "loops": []
+        }
+      ],
+      "realization": "measured"
+    }
+  },
+  "resources": {
+    "BRAM_18K": 155,
+    "DSP": 48,
+    "FF": 27148,
+    "LUT": 94643,
+    "URAM": 0
+  },
+  "rtl_ports": {
+    "waveform_TDATA": {
+      "direction": "in",
+      "bits": 512
+    },
+    "waveform_TVALID": {
+      "direction": "in",
+      "bits": 1
+    },
+    "waveform_TREADY": {
+      "direction": "out",
+      "bits": 1
+    },
+    "layer12_out_TDATA": {
+      "direction": "out",
+      "bits": 32
+    },
+    "layer12_out_TVALID": {
+      "direction": "out",
+      "bits": 1
+    },
+    "layer12_out_TREADY": {
+      "direction": "in",
+      "bits": 1
+    },
+    "ap_clk": {
+      "direction": "in",
+      "bits": 1
+    },
+    "ap_rst_n": {
+      "direction": "in",
+      "bits": 1
+    },
+    "ap_start": {
+      "direction": "in",
+      "bits": 1
+    },
+    "ap_done": {
+      "direction": "out",
+      "bits": 1
+    },
+    "ap_ready": {
+      "direction": "out",
+      "bits": 1
+    },
+    "ap_idle": {
+      "direction": "out",
+      "bits": 1
+    }
+  },
+  "rtl_cosimulation": "passed",
+  "report_files": {
+    "ravel_window_f12_p4_prj/solution1/syn/report/ravel_window_f12_p4_csynth.xml": "5cf9d63f5693623426a956d6369fedf51d4a1f4bec9b1f024627bd0da65646f8",
+    "ravel_window_f12_p4_prj/solution1/sim/report/ravel_window_f12_p4_cosim.rpt": "71c45f46e86313de0b519b3e57af9957c3c89c4397c120fff46f8f819593bee5",
+    "ravel_window_f12_p4_prj/solution1/syn/report/phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s_csynth.xml": "09cb628566ddcb5b591b83b3a5478498a5de461a6fa9263c2c2eca710a2fbd88",
+    "ravel_window_f12_p4_prj/solution1/syn/report/scheduled_conv_array_array_ap_fixed_18_9_5_3_0_48u_config7_4u_s_csynth.xml": "fe706dbb84c2036f4c21ec6e7ecea1d1612037328df7d1390324605befc3e681",
+    "ravel_window_f12_p4_prj/solution1/syn/report/relu_array_ap_fixed_48u_array_ap_ufixed_17_8_5_3_0_48u_relu_config8_s_csynth.xml": "d76e15bad5ebc0aefcbf4234eb62aa75f40b5e26d8eda2e0c06f46ffd0c7576a",
+    "ravel_window_f12_p4_prj/solution1/syn/report/scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s_csynth.xml": "8f768d426559e75dd331634a246e65fd58036aa65fa3be9eb586b85c8ae642f8",
+    "ravel_window_f12_p4_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues_csynth.xml": "8134b554d350197a9df74f2d03584aa649458e53b47d6c875646a0804ceb5e89",
+    "ravel_window_f12_p4_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_21_12_5_3_0_1u_config12_s_csynth.xml": "9e262df271da9140362a8e695b68feb5cfab3a4ba45e3eb87863df2cadd3c063"
+  },
+  "stage_plan": [
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 32,
+        "latency": 42,
+        "resource_proxy": 60,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 32,
+        "output_lanes": 48,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "selected-legacy-streaming-plan"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          256,
+          4,
+          1
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "input_0:out0",
+        "words": 32
+      },
+      "operation_ids": [
+        "conv2d_0",
+        "relu_0",
+        "max_pool2d_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 48,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          42,
+          4,
+          12
+        ],
+        "tail_valid_lanes": 48,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 42
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 1,
+        "id": "complete-window-dependencies",
+        "input_words": 32,
+        "output_words": 42,
+        "production_after_input_words": [
+          1,
+          2,
+          3,
+          4,
+          4,
+          5,
+          6,
+          7,
+          7,
+          8,
+          9,
+          10,
+          10,
+          11,
+          12,
+          13,
+          13,
+          14,
+          15,
+          16,
+          16,
+          17,
+          18,
+          19,
+          19,
+          20,
+          21,
+          22,
+          22,
+          23,
+          24,
+          25,
+          25,
+          26,
+          27,
+          28,
+          28,
+          29,
+          30,
+          31,
+          31,
+          32
+        ],
+        "rational_rate": [
+          21,
+          16
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "phara",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "uncalibrated",
+        "cycles": 42,
+        "latency": 42,
+        "resource_proxy": 2880,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 48,
+        "output_lanes": 48,
+        "reset": "discard-in-flight",
+        "source_owner": "captured-window-positions",
+        "storage": "partitioned-row-history-and-local-window"
+      },
+      "implementation": {
+        "arithmetic_order": "kernel-channel-filter",
+        "channels": 12,
+        "convolution_rows": 13,
+        "drains_complete_frame": true,
+        "filters": 12,
+        "id": "captured-window-positions",
+        "input_rows": 42,
+        "input_words": 42,
+        "kernel_rows": 5,
+        "output_rows": 6,
+        "pool_rows": 2,
+        "positions": 4,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 3,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 4
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 48,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          42,
+          4,
+          12
+        ],
+        "tail_valid_lanes": 48,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 42
+      },
+      "operation_ids": [
+        "conv2d_1",
+        "relu_1",
+        "max_pool2d_1"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 48,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          6,
+          4,
+          12
+        ],
+        "tail_valid_lanes": 48,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 6
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 4,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 8,
+        "id": "complete-window-dependencies",
+        "input_words": 42,
+        "output_words": 6,
+        "production_after_input_words": [
+          8,
+          14,
+          20,
+          26,
+          32,
+          38
+        ],
+        "rational_rate": [
+          1,
+          7
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-window-stream",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 0,
+        "latency": 0,
+        "resource_proxy": 0,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 48,
+        "output_lanes": 48,
+        "reset": "discard-in-flight",
+        "source_owner": "compose-top-and-contracts",
+        "storage": "zero-alias"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 48,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          6,
+          4,
+          12
+        ],
+        "tail_valid_lanes": 48,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 6
+      },
+      "operation_ids": [
+        "reshape_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 48,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          288
+        ],
+        "tail_valid_lanes": 48,
+        "tensor_id": "reshape_0:out0",
+        "words": 6
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 1,
+        "id": "complete-window-dependencies",
+        "input_words": 6,
+        "output_words": 6,
+        "production_after_input_words": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "rational_rate": [
+          1,
+          1
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": false,
+      "strategy": {
+        "id": "identity-layout-view",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 6,
+        "latency": 6,
+        "resource_proxy": 48,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 48,
+        "output_lanes": 1,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "dense-rom-packing-and-accumulator"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 48,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 10
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          288
+        ],
+        "tail_valid_lanes": 48,
+        "tensor_id": "reshape_0:out0",
+        "words": 6
+      },
+      "operation_ids": [
+        "dense_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 1,
+        "numeric": {
+          "integer": 12,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 21
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          1
+        ],
+        "tail_valid_lanes": 1,
+        "tensor_id": "dense_0:out0",
+        "words": 1
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 6,
+        "id": "complete-window-dependencies",
+        "input_words": 6,
+        "output_words": 1,
+        "production_after_input_words": [
+          6
+        ],
+        "rational_rate": [
+          1,
+          6
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-dense-wide",
+        "version": 1
+      }
+    }
+  ],
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 8,
+      "input_scalar_bits": 10,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 21,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 32
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 10,
+        "input_tdata_bits": 512,
+        "input_tdata_port": "waveform_TDATA",
+        "output_scalar_bits": 21,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer12_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "warnings": [
+    {
+      "code": "estimate.uncalibrated_native",
+      "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"
+    }
+  ],
+  "status": "recorded",
+  "ooc": {
+    "manifest_sha256": "ab71f305c5f03f9e0bec94beaba12533810f3b1c1d6911ca9a173d1f121db76c",
+    "source_closure_sha256": "67613b74221e5b0de3620be66ec0ac060dc81b506f6ccc8f637784ad5fe314ce",
+    "top": "ravel_window_f12_p4",
+    "part": "xcku5p-ffvb676-2-e",
+    "clock_period_ns": 5,
+    "tool_version": "2023.2",
+    "timing": {
+      "wns_ns": 0.308,
+      "tns_ns": 0.0,
+      "target_clock_ns": 5.0
+    },
+    "resources": {
+      "LUT": 48507.0,
+      "FF": 24078.0,
+      "BRAM_TILES": 0.0,
+      "DSP": 64.0
+    },
+    "status": "recorded",
+    "report_files": {
+      "binding.json": "a392ef932035ab4ca15c59a9f0f44dbae1abb05d2a394a1de02e2adf15dcdb1e",
+      "timing.rpt": "97ae5aed326f48b2b1bd0141a5adf5c44fa1e5b5fa5aa4f0006f0e7aff01ec9c",
+      "utilization.rpt": "16a8ba6fff76ffd43846097220f9d14b59f9a9b1999f59a2a40a0218b9abda6e"
+    }
+  },
+  "rtl_protocol": {
+    "completed_samples": 99,
+    "consecutive_samples": 96,
+    "input_gap_cycles": 451,
+    "interfaces": {
+      "hls_stream_interface": {
+        "block_control": "ap_ctrl_hs",
+        "channels_per_row": 4,
+        "input_rows_per_word": 8,
+        "input_scalar_bits": 10,
+        "input_words_per_inference": 32,
+        "optional_axis_sidebands": [],
+        "ordering": "row-major; time before channel",
+        "output_scalar_bits": 21,
+        "output_words_per_inference": 1,
+        "protocol": "axis",
+        "values_per_input_word": 32
+      },
+      "logical_model_interface": {
+        "input_shape": [
+          256,
+          4,
+          1
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl_interface": {
+        "expected": {
+          "input_scalar_bits": 10,
+          "input_tdata_bits": 512,
+          "input_tdata_port": "waveform_TDATA",
+          "output_scalar_bits": 21,
+          "output_tdata_bits": 32,
+          "output_tdata_port": "layer12_out_TDATA",
+          "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+        },
+        "measured": null
+      }
+    },
+    "log_sha256": "bce9b1a04290e496c4c7648397b99fa0bfe5817ef96d8c944ae4a4d0b6316b12",
+    "manifest_sha256": "ab71f305c5f03f9e0bec94beaba12533810f3b1c1d6911ca9a173d1f121db76c",
+    "output_stall_cycles": 87,
+    "reset_aborts": 1,
+    "reset_between_epochs": 1,
+    "rtl_files": {
+      "ravel_window_f12_p4.v": "eb627eaa636eb4a1108962cabce1679b8c84be56cff5929856ddcae3d0f21404",
+      "ravel_window_f12_p4_dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues.v": "acb67d13948a01a40eb1c15d5a55614c8843e0d0c9f0ad20897602ef3bfbe380",
+      "ravel_window_f12_p4_dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues_w12_rbkb.v": "1f47f1ac85c06f9740331b6562b75ed9fcdb0ab8ab5094c39134e8b3fb3e8c66",
+      "ravel_window_f12_p4_dense_wide_stream_array_array_ap_fixed_21_12_5_3_0_1u_config12_s.v": "024bdfa5e630a253173bf4995d1b18ce5c1868fc349e6211bbbd4f5743c53e17",
+      "ravel_window_f12_p4_fifo_w480_d4_A.v": "18ac40c24be359bcee775cc41c205931f0327e9ebf87c546128e6173db5a7857",
+      "ravel_window_f12_p4_fifo_w816_d4_A.v": "ee066cdeb7aad0595fa29ce2de4863d0cd58dba03ac5e65bc19d1b60d89e95e1",
+      "ravel_window_f12_p4_fifo_w864_d4_A.v": "0b7f03df8c4a61f19bcff547deeeff3c0671997f3aa7205df43f8820795e027a",
+      "ravel_window_f12_p4_flow_control_loop_pipe.v": "2d3eee73470d9e9fef72037e4975479d3efa331c27a24b86135b61d8820b51af",
+      "ravel_window_f12_p4_flow_control_loop_pipe_sequential_init.v": "06fce704305739d2bb175315d97d4b197c47379d16fec2b0e91147785f1b30be",
+      "ravel_window_f12_p4_mac_muladd_10s_4ns_13s_15_1_1.v": "3586e55b0d744c7640b9fcad23672ca500a8579b07aca6f51d4d49788665e60d",
+      "ravel_window_f12_p4_mac_muladd_10s_4ns_15s_15_1_1.v": "c4131eddf03ce86b89a5515ecfef68f06975cc6a4c08e1370f601479591530d4",
+      "ravel_window_f12_p4_mac_muladd_10s_5s_15s_16_1_1.v": "45918506a6725415cff191a8d6810f5d6aaea8c0fe7fb6f0362914dc7c44d147",
+      "ravel_window_f12_p4_mac_muladd_10s_5s_16s_16_1_1.v": "82f7a9db8f018137a5109c070cb4262f5d5a5927980bcca69ba9caaf5d8ffc6f",
+      "ravel_window_f12_p4_mul_10s_5s_15_1_1.v": "f3f262879d0247d233938c77deebbb81053fd22f622cc296f42502c690dc1740",
+      "ravel_window_f12_p4_phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s.v": "fa8a4d4b6d765a13460d8589ef6d512f954cbc8ca39a4afeab953a1344b2012d",
+      "ravel_window_f12_p4_regslice_both.v": "bf64d2ee90cafcd9b22c8b5342a3ea511f62490b1bdea4df52796cdf8f2006b4",
+      "ravel_window_f12_p4_relu_array_ap_fixed_48u_array_ap_ufixed_17_8_5_3_0_48u_relu_config8_s.v": "42b76e45ac54c9c928f414ac0cf5a25729609427dff41763138ffedb5d0e6ae8",
+      "ravel_window_f12_p4_scheduled_conv_array_array_ap_fixed_18_9_5_3_0_48u_config7_4u_s.v": "ec53b48294814b4e53d4d3eadfcde0e8b6b753f3a7fbd36201fb5917df229cda",
+      "ravel_window_f12_p4_scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s.v": "dee0c869c81dadbfc8bedf280f61e7372dc593ca9acf34a850a4f263a45ecfa2",
+      "ravel_window_f12_p4_sparsemux_17_3_10_1_1.v": "1092307749364e59e23ec4e1df9a286c98375d1a833fb9af4ba77e3516d64984",
+      "ravel_window_f12_p4_start_for_dense_wide_stream_array_array_ap_fixed_21_12_5_3_0_1u_config12_U0.v": "36780876d9235bf4c911fc28709592b6062230b624e72aa94c8c31c6141049b9",
+      "ravel_window_f12_p4_start_for_relu_array_ap_fixed_48u_array_ap_ufixed_17_8_5_3_0_48u_relu_config8cud.v": "2fd98da85044191f6e907eed07bed324fe2f324e70ce0643d6e8a4d28d4eeee6",
+      "ravel_window_f12_p4_start_for_scheduled_conv_array_array_ap_fixed_18_9_5_3_0_48u_config7_4u_U0.v": "a439d143bac133bbba4a9f1346a57f103f34a3a08ca3a880556fc41df7624aa6",
+      "ravel_window_f12_p4_start_for_scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_U0.v": "d38237711f2e1d40cd0583e83a761b5a6d769588decdad1a76b119dd163b9ca3",
+      "ravel_window_f12_p4_urem_32s_3ns_2_36_1.v": "50a02c5b0e0b28bef7fefd3cbb136028f4d37acae4f6b616aa3ca457a2b6c4aa"
+    },
+    "schema_version": 1,
+    "simulator": {
+      "name": "xsim",
+      "version": "Vivado Simulator v2023.2"
+    },
+    "source_closure_sha256": "67613b74221e5b0de3620be66ec0ac060dc81b506f6ccc8f637784ad5fe314ce",
+    "status": "passed",
+    "testbench_sha256": "c4996b6ccfb5dcaff63a9a483c36e7801f832221c77c97d2971f2522185a95aa",
+    "top": "ravel_window_f12_p4",
+    "vector_files": {
+      "rtl_expected_words.hex": "fdeafb17a6024fa2ce0718c509a2f3a0dccb6106a096e98a0c9fdb674ebccab7",
+      "rtl_input_words.hex": "4da6e1324a92844fcd434381177f4716b7794a3bc29100bef25b381b116167c5"
+    },
+    "report_sha256": "2bc1a0eb71ca2d6dbda433a9bf093af8da960733e73a1abb755fe95dca29aaa7"
+  }
+}

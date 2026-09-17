@@ -271,7 +271,7 @@ class Parameters:
             )
         return ParameterPayload(tuple(tensors))
 
-    def _apply_to_analysis(self, analyzed: Any) -> tuple[ParameterPayload, dict[str, Any]]:
+    def _apply_to_analysis(self, analyzed: Any, config) -> tuple[ParameterPayload, dict[str, Any]]:
         """Replace one analyzed ModelGraph payload by canonical operation bindings."""
 
         payload = self._payload_for(analyzed.parameter_payload)
@@ -303,6 +303,22 @@ class Parameters:
         report["fingerprints"]["parameter_state_sha256"] = self._manifest[
             "parameter_state_sha256"
         ]
+        # Replay after installing the payload: constant arithmetic embeds these
+        # codes, so updating only the native weight arrays leaves stale logic.
+        from .analysis.dense import analyze_dense_facts
+        from .domain.graph import GraphFacts
+        from .frontend.extraction import _native_rendering_contract
+        from .generations import builtin_generation
+        from .planning.design import resolve_model_design
+
+        layers = ordered_layers(analyzed.graph)
+        generation = builtin_generation(report["generation"]["id"], report["generation"]["version"])
+        _, applicability, design, _ = resolve_model_design(
+            generation, GraphFacts.from_dict(report["model_facts"]), report["frontend_provenance"],
+            config["Optimization"], payload, _native_rendering_contract(layers),
+            {"dense": analyze_dense_facts(layers)}, config["HLS"], report["resolved_design"],
+        )
+        report["applicability"], report["resolved_design"] = applicability, design
         return payload, report
 
 

@@ -6,7 +6,7 @@ from ..profiles.aria.plan import build_implementation_plan
 from ..planning.temporal import plan_temporal_chain
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
 from ..manifest import canonical_sha256
-from .calibration import WINDOW_COST_PROFILE
+from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
 from .replay import replay_design
 
 def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, choices, parameter_payload, native, dense_facts, hls=None, recorded_design=None):
@@ -56,7 +56,9 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
             )
     multi_report = {}
     if recorded_design is not None and resolved_design is not None:
-        return model_family, applicability, replay_design(recorded_design, resolved_design, generation), multi_report
+        return model_family, applicability, replay_design(
+            recorded_design, resolved_design, generation, chain=recognition.chain,
+            parameters=parameter_payload, native=native), multi_report
     if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
         multi_report["recognition"] = recognition.chain.to_dict()
         outside_release = len(recognition.chain.blocks) > 2
@@ -74,6 +76,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 dense_cycles=plan["dense_steps"], strategies=generation.stage_strategies,
                 part=(hls or {}).get("Part"), clock_period=(hls or {}).get("ClockPeriod"),
                 resource_limits=choices.get("ResourceLimits"),
+                target_ii=choices.get("TargetII"),
+                parameters=parameter_payload, native=native,
                 bridges=generation.bridge_strategies, resolver=generation.chain_resolver,
             )
             composed = search.selected
@@ -82,14 +86,17 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                 resolved_design = None
                 applicability = {"status": "unsupported", "findings": [item.to_dict() for item in composed.findings]}
             else:
+                if composed.stages[0].arithmetic:
+                    resolved_design["coefficient_realization"] = composed.stages[0].arithmetic.to_dict()
                 resolved_design.update(
                     optimization_search=search.to_dict(),
                     model_family=model_family, strategy={"id": "aria-composed", "version": 1},
                     resolver={"id": generation.chain_resolver.id, "version": generation.chain_resolver.version},
                     components={"stage_strategies": [entry.to_dict() for entry in generation.stage_strategies],
                                 "bridge_strategies": [{"id": entry.id, "version": entry.version} for entry in generation.bridge_strategies],
-                                "cost_policy": {"id": "aria-stream-search", "version": 1,
-                                                "calibration_profile": WINDOW_COST_PROFILE.to_dict()}},
+                                "cost_policy": {"id": "aria-stream-search", "version": 2,
+                                                "calibration_profile": (CONSTANT_MATRIX_COST_PROFILE if any(
+                                                    stage.arithmetic for stage in composed.stages) else WINDOW_COST_PROFILE).to_dict()}},
                     semantic_stages=[{"kind": "temporal-block", "operation_ids": [block.convolution.id, block.activation.id, block.pooling.id],
                                       "dropped_pool_rows": block.pooling.attribute("in_height") - ((block.pooling.attribute("out_height") - 1) * block.pooling.attribute("stride_height") + block.pooling.attribute("pool_height")),
                                       "dead_row_elimination": False, "logical_axes": ["temporal", "feature", "channel"]} for block in recognition.chain.blocks] + [

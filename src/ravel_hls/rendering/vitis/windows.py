@@ -115,7 +115,7 @@ PoolWords:
 '''
 
 
-def emit_window(stage, native, payload, current_symbol, current_type, stream, observe, calls, typedefs):
+def emit_window(stage, native, payload, current_symbol, current_type, stream, observe, calls, typedefs, *, convolution_call=None):
     positions = stage["implementation"]["positions"]
     convolution, activation, pooling = stage["operation_ids"]
     for operation, function in ((convolution, "ravel::scheduled_conv"),
@@ -134,11 +134,14 @@ def emit_window(stage, native, payload, current_symbol, current_type, stream, ob
             template += f", {positions}"
         if operation == convolution:
             arguments += f", {payload[f'{operation}:weight'].symbol}, {payload[f'{operation}:bias'].symbol}"
-        calls.append(f"    {function}<{template}>({arguments});")
+        calls.append(convolution_call(stage, binding, payload, current_symbol, current_type, output_symbol, output_type)
+                     if operation == convolution and convolution_call else f"    {function}<{template}>({arguments});")
         if operation != pooling:
             observe(f"{operation}:out0", output_symbol, binding["output_shape"])
         current_symbol, current_type = output_symbol, output_type
     return current_symbol, current_type
 
 
-LOWERINGS = {"aria-window-stream": emit_window}
+from .affine import emit_affine
+
+LOWERINGS = {"aria-window-stream": emit_window, "aria-affine-window": emit_affine}

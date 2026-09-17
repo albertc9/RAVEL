@@ -162,9 +162,9 @@ def refresh(
     from .analysis.model import _analyze_model, analyze
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {5, 6, 7}:
+    if project_view.manifest.get("schema_version") not in {5, 6, 7, 8}:
         raise CompatibilityError(
-            "PHARA refresh requires a schema-v5, schema-v6 or schema-v7 generated project"
+            "PHARA refresh requires a a schema-v5 through schema-v8 generated project"
         )
     if isinstance(model_or_parameters, Parameters):
         config = _refresh_configuration(project_view)
@@ -193,7 +193,7 @@ def refresh(
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
         analyzed = _analyze_model(template, config, recorded_manifest=project_view.manifest)
-        payload, report = model_or_parameters._apply_to_analysis(analyzed)
+        payload, report = model_or_parameters._apply_to_analysis(analyzed, config)
         if architecture_contract_sha256(report) != project_view.manifest.get(
             "architecture_contract_sha256"
         ):

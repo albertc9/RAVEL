@@ -15,8 +15,11 @@ def report_bindings(design: Mapping[str, Any]) -> list[dict[str, Any]]:
         if strategy == "identity-layout-view":
             bindings.append({"stage_id": operation_ids[0], "functions": [], "realization": "zero-hardware-view"})
             continue
-        if strategy == "aria-window-stream":
-            functions = [{"name": "scheduled_conv", "config": native[operation_ids[0]]["config_symbol"]},
+        if strategy in {"aria-window-stream", "aria-affine-window"}:
+            function = {"aria-window-stream": "scheduled_conv", "aria-affine-window": "scheduled_affine_conv"}[strategy]
+            if stage.get("arithmetic_schedule", {}).get("reuse_factor", 1) > 1:
+                function = "shared_conv"
+            functions = [{"name": function, "config": native[operation_ids[0]]["config_symbol"]},
                          {"name": "relu", "config": native[operation_ids[1]]["config_symbol"].replace("config", "relu_config")},
                          {"name": "scheduled_pool", "config": native[operation_ids[2]]["config_symbol"]}]
         elif strategy == "hls4ml-temporal-block":

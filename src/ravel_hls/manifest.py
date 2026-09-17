@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from copy import deepcopy
 
 from .compatibility.dependencies import inspect_dependencies
 from .config import AGGRESSIVE_SPECIALIZATION_POLICY, RavelConfig
@@ -73,6 +74,12 @@ def build_architecture_envelope(
 
     if "stages" in design:
         envelope.update({key: design[key] for key in ("stages", "bridges", "delegation", "control", "components", "semantic_stages")})
+        if any(stage.get("arithmetic") for stage in design["stages"]):
+            envelope["stages"] = deepcopy(design["stages"])
+            for stage in envelope["stages"]:
+                if stage.get("arithmetic"):
+                    stage["arithmetic"] = {key: stage["arithmetic"][key] for key in (
+                        "kind", "policy", "dsp_product_budget", "operation_id", "input_numeric", "accumulator_numeric", "paired")}
         envelope["cost_policy"] = design["components"]["cost_policy"]
     return envelope
 

@@ -1,0 +1,18 @@
+
+****** xsim v2023.2 (64-bit)
+  **** SW Build 4029153 on Fri Oct 13 20:13:54 MDT 2023
+  **** IP Build 4028589 on Sat Oct 14 00:45:43 MDT 2023
+  **** SharedData Build 4025554 on Tue Oct 10 17:18:54 MDT 2023
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2023 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source xsim.dir/ravel_protocol_snapshot/xsim_script.tcl
+# xsim {ravel_protocol_snapshot} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+RAVEL_EPOCH samples=96
+RAVEL_EPOCH samples=3
+RAVEL_PROTOCOL_PASS completed=99 stalls=87 gaps=451
+$finish called at time : 41432500 ps : File "/home/work1/Works/RAVEL-env/qualification/aria172/p4_baseline_protocol/ravel_protocol_tb.sv" Line 71
+exit
+INFO: [Common 17-206] Exiting xsim at Wed Sep 16 10:48:19 2026...

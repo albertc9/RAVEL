@@ -59,6 +59,8 @@ def _native_rendering_contract(layers: list[Any]) -> dict[str, Any]:
             "native_call": layer.get_attr("function_cpp"),
             "config_symbol": f"config{layer.get_attr('index')}",
             "input_symbol": layer.get_input_variable().name if layer.inputs and kind != "input" else None,
+            **({"accumulator_numeric": _numeric_type(layer.get_attr("accum_t").precision)}
+               if kind == "conv2d" else {}),
         }
     return result
 

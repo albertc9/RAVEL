@@ -22,7 +22,8 @@ def main() -> int:
     for model_path in models:
         report = analyze(
             model_path,
-            {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+            {"HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+             "Optimization": {"TemporalPacking": 4, "DenseParallelism": 2}},
         ).to_dict()
         output = SNAPSHOT_ROOT / f"{model_path.parent.name}.json"
         output.write_text(

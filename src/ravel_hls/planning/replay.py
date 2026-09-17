@@ -4,9 +4,10 @@ from copy import deepcopy
 
 from ..exceptions import CompatibilityError
 from ..manifest import canonical_sha256
+from .arithmetic import constant_arithmetic
 
 
-def replay_design(recorded, fresh, generation):
+def replay_design(recorded, fresh, generation, *, chain=None, parameters=None, native=None):
     supported = {(entry.id, entry.version) for entry in generation.stage_strategies}
     for stage in recorded.get("stages", ()):
         identity = stage["strategy"]
@@ -20,5 +21,22 @@ def replay_design(recorded, fresh, generation):
     result["parameter_bindings"] = deepcopy(fresh["parameter_bindings"])
     if "coefficient_realization" in fresh:
         result["coefficient_realization"] = deepcopy(fresh["coefficient_realization"])
+    rebuilt = False
+    blocks = {block.convolution.id: block for block in chain.blocks} if chain else {}
+    for stage in result.get("stages", ()):
+        previous = stage.get("arithmetic")
+        if not previous:
+            continue
+        candidates = constant_arithmetic(blocks[previous["operation_id"]], parameters, native,
+                                         paired=previous["paired"], dsp_budgets=(previous["dsp_product_budget"],))
+        if not candidates:
+            raise CompatibilityError("Refreshed parameters no longer satisfy the recorded arithmetic contract; use ordinary conversion")
+        stage["arithmetic"] = candidates[0].to_dict()
+        if previous["paired"]:
+            result["coefficient_realization"] = candidates[0].to_dict()
+        rebuilt = True
+    if rebuilt:
+        result["optimization_search"]["evidence_scope"] = "original-selection-before-parameter-refresh"
+        result["optimization_search"]["target"]["status"] = "not-reestimated"
     result["resolved_design_sha256"] = canonical_sha256({key: value for key, value in result.items() if key != "resolved_design_sha256"})
     return result

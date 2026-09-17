@@ -1,0 +1,40 @@
+{
+  "implementation_revision": "409da03114115d714923b86e2519557f129d93c8",
+  "generator_branch": "v4.3",
+  "generator_model_revision": "170771f22e648b3040535d1cd24a2cf5affe13bc",
+  "toolchain": {
+    "Vitis HLS": "2023.2",
+    "Vivado": "2023.2"
+  },
+  "reference_acceptance": {
+    "part": "xcku5p-ffvb676-2-e",
+    "clock_ns": 5,
+    "target_ii": 85,
+    "maximum_resource_fraction_exclusive": 0.2,
+    "scope": "reference-single-core-only"
+  },
+  "models": {
+    "final_f12": {
+      "model_sha256": "382bd79b7d9cb78a35d81a32fa2ffb1da07d8e94e4ad93d62dd2eea2585bc0c8",
+      "model_path": "../UC_Irvine_Group/CNN-Core-Generator/models/fpga_2cv_k5s3_f12_es0/run_2cv_k5s3_f12_es0.keras",
+      "manifest_sha256": "dccf2fc4f15a509a8cf453c5c8f28f0620e64191894433ab08fbd7b7bb85ca98",
+      "qualification_sha256": "1fd5b60c868b259da548977f8f6b22f86a797ac91392a751a4944352721f944a",
+      "source_closure_sha256": "dc8b69bb16e6743878b3c2be82f638a2ab11853081c9c286a533fecfc9d36a4e",
+      "supplied_npz_sha256": "c662edb897f09ea93de1f524b1ce12f00e54b9b028565d4d2082d4c1bb0b64a4"
+    },
+    "final_c3": {
+      "model_sha256": "abf426df1f330c692dc045528bce20e4a2d3aac34de0c216214f83b96ff5e835",
+      "model_path": "tests/reference/fixtures/two_block_k5s3_c3.keras",
+      "manifest_sha256": "e75344ef247256a22afd370696ec9735ca5ea069318b5343f1aa61d770164e3e",
+      "qualification_sha256": "ec3de0566e9fbb0953469ad16afc60b9475b87334c201b0e4d17253402693eba",
+      "source_closure_sha256": "0689c52f6a60dada55a88671a12b5857ff1f6ead105e83aba2ee700dd2054c30"
+    },
+    "final_heldout": {
+      "model_sha256": "5280536793b5fcd70ae634a669c42d445fce92a72c321797ba2556ee006576f1",
+      "model_path": "tests/reference/fixtures/two_block_k5s3_heldout.keras",
+      "manifest_sha256": "01683ea882b813e87d36906f98fcb1fc219b2c11ae9b44b14682b728af15acbb",
+      "qualification_sha256": "2c5487587ce11f1d0a96685a77978c32da92862e267e6cf71bfad094acf2a31d",
+      "source_closure_sha256": "a6a1c0b09ab545bdf435a7e3254248ee211cf05fbe8cdacf5f8eb628f447229f"
+    }
+  }
+}

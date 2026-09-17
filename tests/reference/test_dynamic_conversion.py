@@ -47,8 +47,8 @@ def test_user_can_convert_a_retrained_model_without_building_hls4ml_config(
 
     assert isinstance(project, Project)
     assert project.path == output_dir
-    assert project.manifest["schema_version"] == 7
-    assert project.manifest["ravel"]["release"] == "1.7.1"
+    assert project.manifest["schema_version"] == 8
+    assert project.manifest["ravel"]["release"] == "1.7.2"
     assert project.manifest["source_model"]["model_family"] == {
         "id": "hgq-conv-pool-dense",
         "version": 1,
@@ -334,7 +334,7 @@ def test_phara_manifest_separates_the_envelope_from_coefficients(
     )
 
     manifest = project.manifest
-    assert manifest["schema_version"] == 7
+    assert manifest["schema_version"] == 8
     envelope = manifest["architecture_envelope"]
     assert envelope["schema_version"] == 1
     assert envelope["strategy"] == {"id": "phara", "version": 1}

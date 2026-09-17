@@ -5,10 +5,10 @@ import hashlib
 import json
 
 from .chain import ChainPlan
-from .calibration import WINDOW_COST_PROFILE
+from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
 from .resources import ResourceEstimate, rejection_reasons
 
-SEARCH_CANDIDATE_LIMIT = 32
+SEARCH_CANDIDATE_LIMIT = 64
 
 
 def plan_identity(plan: ChainPlan) -> str:
@@ -32,11 +32,12 @@ class SearchReport:
     generated: int = 0
     evaluated: int = 0
     bound_reasons: tuple[str, ...] = ()
+    target_ii: int | None = None
 
     def to_dict(self) -> dict:
         def exclusions(plan, resource):
             reasons = rejection_reasons(resource, self.constraints) if self.constraints else []
-            if any(stage.implementation and stage.confidence != "calibrated" for stage in plan.stages):
+            if any((stage.implementation or stage.arithmetic) and stage.confidence != "calibrated" for stage in plan.stages):
                 reasons.append("cost.outside_calibrated_coverage")
             return reasons
 
@@ -45,9 +46,17 @@ class SearchReport:
             selection_reason = ("calibrated-predicted-frame-interval" if any(
                 stage.confidence == "calibrated" for stage in self.selected.stages)
                 else "retain-incumbent-without-calibrated-coverage")
+        target_status = "not-requested"
+        if self.target_ii is not None:
+            target_status = "unqualified"
+            if self.selected.stages and all(s.confidence in {"analytical", "calibrated"} for s in self.selected.stages):
+                met = self.selected.cost.cycles <= self.target_ii
+                target_status = "predicted-met" if met else "predicted-unmet"
+                selection_reason = "lowest-lut-within-ii-target" if met else "best-effort-ii-target-unmet"
         return {
-            "policy": {"id": "aria-stream-search", "version": 1},
+            "policy": {"id": "aria-stream-search", "version": 2},
             "mode": "analytical",
+            "target": {"ii_cycles": self.target_ii, "status": target_status},
             "status": "complete" if self.complete else "incomplete",
             "candidate_count": len(self.candidates),
             "exploration": {"generated": self.generated, "evaluated": self.evaluated,
@@ -62,6 +71,10 @@ class SearchReport:
                 {
                     "id": plan_identity(plan),
                     "strategies": [stage.id for stage in plan.stages],
+                    "arithmetic": [{key: value for key, value in stage.arithmetic.to_dict().items() if key != "graph"}
+                                   for stage in plan.stages if stage.arithmetic],
+                    "arithmetic_schedule": next((stage.arithmetic_schedule.to_dict() for stage in plan.stages
+                                                 if stage.arithmetic_schedule), None),
                     "predicted_frame_cycles": plan.cost.cycles,
                     "resources": resource.to_dict(),
                     "rejection_reasons": exclusions(plan, resource),
@@ -69,11 +82,13 @@ class SearchReport:
                     "schedule": next((stage.implementation.to_dict() for stage in plan.stages
                                       if stage.implementation is not None), None),
                     "confidence": (
-                        "calibrated" if any(stage.confidence == "calibrated" for stage in plan.stages)
+                        "uncalibrated" if any(stage.confidence == "uncalibrated" for stage in plan.stages)
+                        else "calibrated" if any(stage.confidence == "calibrated" for stage in plan.stages)
                         else "analytical" if all(stage.confidence == "analytical" for stage in plan.stages)
                         else "uncalibrated"
                     ),
-                    "calibration_profile": WINDOW_COST_PROFILE.to_dict() if any(
+                    "calibration_profile": (CONSTANT_MATRIX_COST_PROFILE if any(s.arithmetic for s in plan.stages)
+                                            else WINDOW_COST_PROFILE).to_dict() if any(
                         stage.confidence == "calibrated" for stage in plan.stages) else None,
                 }
                 for plan, resource in zip(self.candidates, self.resources or (ResourceEstimate(),) * len(self.candidates))

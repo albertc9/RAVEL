@@ -551,13 +551,14 @@ def _analyze_csd_supertile(
     convolution_stride: int,
     modulus: int,
     dsp_product_budget: int,
+    convolution_rows: int = 2,
+    balanced: bool = False,
 ) -> tuple[AffineGraph, AffineProof, Mapping[str, int]]:
     """Build the shared affine graph used by DA and hybrid realizations."""
 
     kernel_rows = len(weight_codes)
     filter_lanes = len(aligned_bias_codes)
-    convolution_rows = 2
-    input_rows = kernel_rows + convolution_stride
+    input_rows = kernel_rows + (convolution_rows - 1) * convolution_stride
     input_ids = tuple(f"x{row}" for row in range(input_rows))
     nodes: list[AffineNode] = []
     shifted_nodes: dict[tuple[str, int], str] = {}
@@ -730,6 +731,12 @@ def _analyze_csd_supertile(
             terms.append(shared)
 
     for output_name, terms in zip(output_names, expressions):
+        if balanced:
+            level = 0
+            while len(terms) > 1:
+                terms = [combine("add", terms[i], terms[i + 1], f"{output_name}_tree{level}_{i}")
+                         if i + 1 < len(terms) else terms[i] for i in range(0, len(terms), 2)]
+                level += 1
         accumulator = terms[0]
         for ordinal, term in enumerate(terms[1:], start=1):
             accumulator = combine(
@@ -781,6 +788,17 @@ def _analyze_csd_supertile(
             }
         )
     return graph, proof, MappingProxyType(summary)
+
+
+def analyze_constant_matrix(*, weight_codes, aligned_bias_codes, modulus,
+                            dsp_product_budget=0, row_offset=0, output_rows=1):
+    """Reuse PHARA's shared arithmetic and proof for a flattened channel matrix."""
+    graph, proof, summary = _analyze_csd_supertile(
+        weight_codes=weight_codes, aligned_bias_codes=aligned_bias_codes,
+        convolution_stride=row_offset, modulus=modulus,
+        dsp_product_budget=dsp_product_budget, convolution_rows=output_rows, balanced=True,
+    )
+    return HybridSupertileAnalysis(graph, proof, summary)
 
 
 def _canonical_signed_digits(value: int) -> tuple[tuple[int, int], ...]:

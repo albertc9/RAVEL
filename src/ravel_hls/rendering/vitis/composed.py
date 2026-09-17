@@ -11,6 +11,7 @@ from ...exceptions import ProjectGenerationError
 from ..ownership import SourceStep
 from .renderer import render_aria_project
 from .windows import LOWERINGS, SOURCE as WINDOW_SOURCE
+from .affine import SOURCE as AFFINE_SOURCE, matrix_struct
 
 
 def render_project(path: Path, name: str, design: Mapping[str, Any], parameters: ParameterPayload) -> tuple[SourceStep, ...]:
@@ -119,10 +120,13 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
              for tensor in parameters.tensors]
     window_header = "firmware/nnet_utils/ravel_windows.h"
     generated_windows = any(stage["strategy"]["id"] in LOWERINGS for stage in design["stages"])
+    matrices = [stage for stage in design["stages"] if stage["strategy"]["id"] == "aria-affine-window"]
+    affine_header = "firmware/nnet_utils/ravel_affine.h"
     text = '\n'.join([
         f'#include "{name}.h"', '#include "parameters.h"', '#include "nnet_utils/nnet_aria.h"',
         '#include "nnet_utils/ravel_bridges.h"', f'#include "weights/{dense_weight.symbol}_ravel_packed.h"',
         *(['#include "nnet_utils/ravel_windows.h"'] if generated_windows else []),
+        *(['#include "nnet_utils/ravel_affine.h"'] if matrices else []),
         f'void {name}(hls::stream<{rendering["types"]["input_wide"]}> &{input_binding["output_symbol"]}, hls::stream<{output_binding["output_type"]}> &{output_binding["output_symbol"]}) {{',
         f'    #pragma HLS INTERFACE axis port={input_binding["output_symbol"]},{output_binding["output_symbol"]}',
         '    #pragma HLS DATAFLOW', '#ifndef __SYNTHESIS__', '    static bool loaded = false;',
@@ -139,6 +143,11 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
     (path / bridge_header).write_text(BRIDGE_SOURCE)
     if generated_windows:
         (path / window_header).write_text(WINDOW_SOURCE)
+    if matrices:
+        (path / affine_header).write_text("\n".join([
+            "#ifndef RAVEL_AFFINE_H_", "#define RAVEL_AFFINE_H_",
+            *(matrix_struct(stage["arithmetic"], f"ravel_matrix_{stage['operation_ids'][0]}") for stage in matrices),
+            AFFINE_SOURCE, "#endif", ""]))
     top_paths = (f"firmware/{name}.cpp", "firmware/defines.h")
     dense_path = f"firmware/weights/{dense_weight.symbol}_ravel_packed.h"
     return (
@@ -147,6 +156,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
         SourceStep("lossless-stream-repack", 2, (bridge_header,)),
         SourceStep("dense-rom-packing", 1, (dense_path,)),
         *((SourceStep("captured-window-positions", 1, (window_header,)),) if generated_windows else ()),
+        *((SourceStep("constant-matrix-csd-cse-dsp", 1, (affine_header,)),) if matrices else ()),
     )
 
 
