@@ -112,8 +112,42 @@ def test_other_unpooled_block_chains_are_recognized_but_outside_the_support_doma
     assert report["resolved_design"] is None
 
 
-def test_a_grouped_convolution_is_reported_before_the_compiler_fails():
-    model = make_block_chain([conv(3), conv(3, relu=False, pool=False, groups=3), conv(4, kernel=1, stride=1)])
+def grouped_chain():
+    return make_block_chain([conv(4), conv(4, relu=False, pool=False, groups=4), conv(5, kernel=1, stride=1)])
+
+
+def test_a_grouped_convolution_is_rewritten_with_a_block_diagonal_kernel_of_equal_outputs():
+    import numpy as np
+    from ravel_hls.frontend.hls4ml import _normalize_grouped_convolutions
+
+    model = grouped_chain()
+    rewritten = _normalize_grouped_convolutions(model)
+    inputs = np.random.default_rng(1800).normal(0.0, 2.0, (16, 64, 2, 1)).astype("float32")
+
+    assert [layer.groups for layer in rewritten.layers if hasattr(layer, "groups")] == [1, 1, 1]
+    kernel = np.asarray(rewritten.layers[3].kernel)
+    assert kernel.shape[2:] == (4, 4) and np.count_nonzero(kernel[:, :, ~np.eye(4, dtype=bool)]) == 0
+    assert np.array_equal(model.predict(inputs, verbose=0), rewritten.predict(inputs, verbose=0))
+
+
+def test_a_grouped_convolution_converts_bit_exactly_as_a_separable_group(tmp_path):
+    project = convert(grouped_chain(), tmp_path / "grouped", {**PACKING, "Verification": {"Mode": "required", "Samples": 8}})
+
+    stages = project.manifest["resolved_design"]["stages"]
+    assert [stage["operation_ids"] for stage in stages[1:3]] == [["conv2d_1"], ["conv2d_2", "relu_1", "max_pool2d_1"]]
+    assert project.manifest["verification"]["source_conversion_consistency"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+def test_a_grouped_convolution_outside_hgq2_is_reported_before_the_compiler_fails():
+    import keras
+
+    inputs = keras.Input((64, 2, 1))
+    value = keras.layers.Conv2D(4, (3, 1), strides=(2, 1), activation="relu")(inputs)
+    value = keras.layers.MaxPool2D((2, 1), strides=(2, 1))(value)
+    value = keras.layers.Conv2D(4, (3, 1), strides=(2, 1), groups=4)(value)
+    value = keras.layers.Flatten()(value)
+    model = keras.Model(inputs, keras.layers.Dense(1)(value))
 
     with pytest.raises(CompatibilityError) as raised:
         analyze(model, PACKING)
