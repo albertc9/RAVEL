@@ -59,12 +59,13 @@ class ConstantMatrixCostProfile:
 
     def covers(self, block, arithmetic, part, clock, schedule=None):
         # Version 3 adds measured points for kernels of one to seven rows,
-        # strides of one to three rows, blocks without a pool and 11-bit inputs.
+        # strides of one to three rows, blocks without a pool, 11-bit inputs
+        # and up to 16 filters.
         conv = block.convolution
         return (part == "xcku5p-ffvb676-2-e" and clock == 5
                 and 1 <= conv.attribute("filt_height") <= 7 and 1 <= conv.attribute("stride_height") <= 3
                 and conv.attribute("in_width") == 4 and conv.attribute("in_height") <= 256
-                and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 12
+                and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 16
                 and block.pool_rows in (1, 2)
                 and arithmetic.input_numeric.width <= 11
                 and arithmetic.accumulator_numeric.width <= 24
