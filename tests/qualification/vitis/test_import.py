@@ -551,6 +551,30 @@ def test_composed_reports_follow_selected_stage_bindings_not_legacy_function_nam
     assert "native_csynth.xml" in record["report_files"]
 
 
+def test_composed_reports_accept_a_function_reported_under_its_bare_name(tmp_path):
+    # Vitis drops the template suffix of a long instance name and reports the bare function.
+    project_path = tmp_path / "project"
+    _write_project(project_path, schema_version=6)
+    manifest_path = project_path / "ravel_manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    function = "phara_pool_aligned_hybrid_p8_scheduled_cl"
+    manifest["resolved_design"] = {
+        "strategy": {"id": "aria-composed", "version": 1},
+        "stages": [{"operation_ids": ["conv2d_0", "relu_0", "max_pool2d_0"], "strategy": {"id": "phara", "version": 1}}],
+        "rendering": {"phara_fused_function": function},
+        "report_bindings": [{"stage_id": "conv2d_0", "functions": [{"name": function}]}],
+    }
+    manifest_path.write_text(json.dumps(manifest))
+    report_dir = tmp_path / "reports"
+    report_dir.mkdir()
+    (report_dir / "aria_top_csynth.xml").write_text(_CSYNTH_XML)
+    (report_dir / "fused_csynth.xml").write_text(_stage_wrapper_csynth_xml(top=function, latency=66, interval=63))
+    (report_dir / "other_csynth.xml").write_text(_stage_wrapper_csynth_xml(top=function + "ock", latency=1, interval=1))
+    record = Project.open(project_path).record(report_dir).to_dict()
+    assert [entry["top"] for entry in record["stages"]["conv2d_0"]["functions"]] == [function]
+    assert record["stages"]["conv2d_0"]["functions"][0]["initiation_interval"] == 63
+
+
 def test_ooc_measurements_are_bound_and_a_timing_miss_is_recorded_as_warning(tmp_path):
     project_path = tmp_path / "project"
     _write_project(project_path, schema_version=6)
