@@ -1,11 +1,45 @@
-# Aria 1.8.0 separable-block calibration
+# Aria 1.8.0 separable-block qualification
 
-Development measurements for constant-matrix coverage version 3. All vendor
-runs use Vitis HLS/Vivado 2023.2, KU5P `xcku5p-ffvb676-2-e`, 5 ns, external
-P8/D4. Evidence layer: HLS synthesis, RTL CoSim and the RTL protocol test.
-No routed implementation, board or multi-core result is claimed here.
+Implementation: `f4f25d7` on `devel`. No release or publication was performed.
+All vendor runs use Vitis HLS/Vivado 2023.2, KU5P `xcku5p-ffvb676-2-e`, 5 ns,
+external P8/D4, on `work1@100.71.11.92`. The trained model of the target
+structure was not available; `final_target` is a synthetic model of the same
+shape with random weights, so its numbers are not a result for trained weights.
 
-## Predicted and measured intervals
+## Final projects, ordinary automatic selection
+
+HLS supplies II and latency. Resources and WNS are routed out-of-context
+results for one core; a passing 5 ns route establishes timing at 200 MHz.
+Capacities are 216,960 LUT, 433,920 FF and 1,824 DSP.
+
+| Project | Model | Predicted | HLS II | Latency | LUT | FF | DSP | BRAM | Routed WNS |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `final_target` | Synthetic target shape: 8x7 step 2, depthwise 7 step 2, 1x1 to 8 | 69 | 67 | 77 | 14,172 (6.53%) | 12,809 (2.95%) | 32 (1.75%) | 0 | +0.343 ns |
+| `final_m09de` | Package model 09, dense-equivalent | 48 | 48 | 59 | 30,080 (13.86%) | 22,130 (5.10%) | 48 (2.63%) | 0 | +0.582 ns |
+| `final_m13` | Package model 13 (half rate, current layers) | 29 | 31 | 38 | 51,346 (23.67%) | 33,486 (7.72%) | 48 (2.63%) | 0 | +0.265 ns |
+| `final_heldout` | Held-out synthetic separable geometry | 53 | 52 | 60 | not routed | | | | |
+| `final_m05` | Package model 05 (K7/S2 in both convolutions) | 70 | 73 | 80 | not routed | | | | |
+| `final_m06` | Package model 06 (second convolution K3/S1) | 49 | 50 | 57 | not routed | | | | |
+| `final_m12` | Package model 12 (half rate, K5/S1 then K5/S2) | 69 | 72 | 78 | not routed | | | | |
+| `final_m01_t85` | Package model 01, `TargetII` 85 | 64 | 66 | 73 | not routed | | | | |
+
+Every final project passed C verification on the built-in corpus with
+intermediate boundaries, RTL CoSim and the RTL protocol test (input gaps, output
+backpressure, reset between epochs, in-flight abort). Package models also pass
+the additive 1,000 supplied events in C. `final_m13` uses throughput-first
+ranking; no `TargetII` was given, so no lower-LUT plan was requested.
+`final.json` records manifest, source-closure and file hashes, the selected
+stages and the routed figures.
+
+Before this work the target shape was rejected at P8, and with the native
+hls4ml second group it measures II 1492 (`target_native` below).
+
+## Calibration measurements
+
+Development measurements for constant-matrix coverage version 3, made at
+`b1bb8cb`. Evidence layer: HLS synthesis, RTL CoSim and the RTL protocol test.
+
+### Predicted and measured intervals
 
 Predicted values are the analytical frame cycles of the selected plan. The
 held-out prediction was recorded before its run.
@@ -32,7 +66,7 @@ With a native hls4ml second group, the synthetic target shape measures II 1492
 (`target_native`) and package model 09 measures II 844 (`m09de_native`). Their
 native-stage estimates are uncalibrated lower bounds.
 
-## Coverage added in version 3
+### Coverage added in version 3
 
 Kernels of one to seven rows, strides of one to three rows, blocks without a
 pool, 11-bit inputs and first stages with a fill-cycle row schedule. Width 4,

@@ -38,3 +38,31 @@ def test_shared_arithmetic_predictions_stay_close_to_the_measured_intervals():
 
     assert len(engines) >= 7
     assert all(-2 <= item["ii"] - item["predicted_frame_cycles"] <= 3 for item in engines)
+
+
+def test_final_projects_bind_their_frozen_files_and_pass_every_recorded_layer():
+    final = read(ROOT / "final.json")
+
+    assert {item["project"] for item in final} >= {"final_target", "final_m09de", "final_heldout"}
+    for item in final:
+        assert item["generation"] == {"id": "aria", "version": "1.8.0"}
+        assert item["manifest_schema_version"] == 9
+        for filename, expected in item["files"].items():
+            assert digest(ROOT / item["project"] / filename) == expected
+        assert item["c_verification"] == item["stage_boundaries"] == item["rtl_cosimulation"] == "passed"
+        assert item["rtl_protocol"]["status"] == "passed" and item["rtl_protocol"]["output_stall_cycles"] > 0
+        assert item["search_status"] == "complete"
+    routed = [item for item in final if "ooc" in item]
+    assert {item["project"] for item in routed} == {"final_target", "final_m09de", "final_m13"}
+    assert all(item["ooc"]["timing"]["wns_ns"] >= 0 and item["ooc"]["timing"]["tns_ns"] == 0 for item in routed)
+
+
+def test_the_target_shape_is_selected_with_shared_arithmetic_in_its_separable_group():
+    target = next(item for item in read(ROOT / "final.json") if item["project"] == "final_target")
+
+    assert [stage["strategy"] for stage in target["stages"]] == [
+        "phara", "aria-affine-window", "aria-affine-window", "identity-layout-view", "aria-dense-wide"]
+    assert target["first_stage_scheduler"]["version"] == 2
+    record = read(ROOT / "final_target/qualification.json")
+    assert record["manifest_sha256"] == target["manifest_sha256"]
+    assert record["performance"] == {"initiation_interval": target["ii"], "latency_cycles": target["latency"]}

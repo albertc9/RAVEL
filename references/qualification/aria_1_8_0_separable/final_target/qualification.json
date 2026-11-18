@@ -1,0 +1,4458 @@
+{
+  "generation_fingerprint": "46d01073764ddf94f2cd83594494e5356a2c3f34200680708d4b2017d1c01a60",
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 8,
+      "input_scalar_bits": 9,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 23,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 32
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 9,
+        "input_tdata_bits": 512,
+        "input_tdata_port": "target_input_TDATA",
+        "output_scalar_bits": 23,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer13_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "manifest_sha256": "de66a0266954b23dbac8531c2fad0edf0a0fae21369067bcf3af6663a9986508",
+  "ooc": {
+    "clock_period_ns": 5.0,
+    "manifest_sha256": "de66a0266954b23dbac8531c2fad0edf0a0fae21369067bcf3af6663a9986508",
+    "part": "xcku5p-ffvb676-2-e",
+    "report_files": {
+      "binding.json": "9e565b87bd6e017663880ed224772e7578cad85ce2a3b2b061f27c93e817ffe0",
+      "timing.rpt": "bde343c5fd1e9380fa5cfc81a60571c171a94fc6f3b02fc916740cc10c06100f",
+      "utilization.rpt": "fabdd3cb7460a6ffd6ba0eefd6bfa2e61195b46fe1690b72dca9462b74f8da06"
+    },
+    "resources": {
+      "BRAM_TILES": 0.0,
+      "DSP": 32.0,
+      "FF": 12809.0,
+      "LUT": 14172.0
+    },
+    "source_closure_sha256": "affd2005b8d8d6c285d6b8706c9740f5e7d7dcb6f99f8bdcb7e64294a5c1d1c4",
+    "status": "recorded",
+    "timing": {
+      "target_clock_ns": 5.0,
+      "tns_ns": 0.0,
+      "wns_ns": 0.343
+    },
+    "tool_version": "2023.2",
+    "top": "final_target"
+  },
+  "part": "xcku5p-ffvb676-2-e",
+  "performance": {
+    "initiation_interval": 67,
+    "latency_cycles": 77
+  },
+  "report_files": {
+    "final_target_prj/solution1/sim/report/final_target_cosim.rpt": "5c6167c4cf6c7137bd47ad65407d3647cb0eca0333b7a9887ad980134c5ad966",
+    "final_target_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues_csynth.xml": "74cc8234ef63024fbc3161ac03809fbb0b4fec5cbbb18608305f692071c0dde3",
+    "final_target_prj/solution1/syn/report/dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s_csynth.xml": "292f3924cfdbe70fb0d99a4d9783195f9d95d3ee34e2e9a066832b2c85c26356",
+    "final_target_prj/solution1/syn/report/final_target_csynth.xml": "06f0b5c5206b88173e2be61cf4ce3021022ffc29bf1002772514b5ca00ac976a",
+    "final_target_prj/solution1/syn/report/phara_pool_aligned_hybrid_p8_scheduled_cl_csynth.xml": "3643453ac7fd145f2d33f731298443ba344a94b9921eff389b294114a6ef5625",
+    "final_target_prj/solution1/syn/report/relu_array_ap_fixed_32u_array_ap_ufixed_14_6_5_3_0_32u_relu_config10_s_csynth.xml": "7a6531c25613825d5235d71a1afc2eedeb532dd567cd620810c23d37d5149ccf",
+    "final_target_prj/solution1/syn/report/scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s_csynth.xml": "33d987825412e107065b2d0f2799eaf5f238a773e601326b3dde07e431adb4f2",
+    "final_target_prj/solution1/syn/report/scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_32u_config11_4u_s_csynth.xml": "977132e4ad9b34d8ebe96610cfb09be28bfe809dbba972bc0010f59b9e6f8dbf",
+    "final_target_prj/solution1/syn/report/shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_s_csynth.xml": "2550bcbf5fc7fc350347a74fd20f187696027394adc4d0247991c80fc14b1526"
+  },
+  "resources": {
+    "BRAM_18K": 114,
+    "DSP": 32,
+    "FF": 13303,
+    "LUT": 29785,
+    "URAM": 0
+  },
+  "rtl_cosimulation": "passed",
+  "rtl_ports": {
+    "ap_clk": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_done": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_idle": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_ready": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "ap_rst_n": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "ap_start": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer13_out_TDATA": {
+      "bits": 32,
+      "direction": "out"
+    },
+    "layer13_out_TREADY": {
+      "bits": 1,
+      "direction": "in"
+    },
+    "layer13_out_TVALID": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "target_input_TDATA": {
+      "bits": 512,
+      "direction": "in"
+    },
+    "target_input_TREADY": {
+      "bits": 1,
+      "direction": "out"
+    },
+    "target_input_TVALID": {
+      "bits": 1,
+      "direction": "in"
+    }
+  },
+  "rtl_protocol": {
+    "completed_samples": 97,
+    "consecutive_samples": 94,
+    "input_gap_cycles": 444,
+    "interfaces": {
+      "hls_stream_interface": {
+        "block_control": "ap_ctrl_hs",
+        "channels_per_row": 4,
+        "input_rows_per_word": 8,
+        "input_scalar_bits": 9,
+        "input_words_per_inference": 32,
+        "optional_axis_sidebands": [],
+        "ordering": "row-major; time before channel",
+        "output_scalar_bits": 23,
+        "output_words_per_inference": 1,
+        "protocol": "axis",
+        "values_per_input_word": 32
+      },
+      "logical_model_interface": {
+        "input_shape": [
+          256,
+          4,
+          1
+        ],
+        "output_shape": [
+          1
+        ]
+      },
+      "rtl_interface": {
+        "expected": {
+          "input_scalar_bits": 9,
+          "input_tdata_bits": 512,
+          "input_tdata_port": "target_input_TDATA",
+          "output_scalar_bits": 23,
+          "output_tdata_bits": 32,
+          "output_tdata_port": "layer13_out_TDATA",
+          "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+        },
+        "measured": null
+      }
+    },
+    "log_sha256": "820987fe8d93a128d0dcc2a62af0df92b867995b113643309ccac960b05c871b",
+    "manifest_sha256": "de66a0266954b23dbac8531c2fad0edf0a0fae21369067bcf3af6663a9986508",
+    "output_stall_cycles": 88,
+    "report_sha256": "bdb22d1206971a1419011fc4a227a6afcbaf26f6741e36cee43c995e62f221c2",
+    "reset_aborts": 1,
+    "reset_between_epochs": 1,
+    "rtl_files": {
+      "final_target.v": "226ae301cdd33bbeefcc0421ce8586aba0066ff89aa916090cdc53a81968bc26",
+      "final_target_dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues.v": "b8ae8d702991d3950c1573ce7af62d66d1d446257381369dd0a2aa2ccd1c25e2",
+      "final_target_dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues_w13_rbkb.v": "b3c1f94d200836792316c274b0ed249aca44d4543eb763d81e13b8ad8f61e57b",
+      "final_target_dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s.v": "cd60dfe2d1380c4e17379bec282dc1b447cb564929f795dbe6d60d253434828f",
+      "final_target_fifo_w288_d4_A.v": "25aef9536bb91763a484c4049f4b247277cf856c519acdecde9ef7cb5405a91d",
+      "final_target_fifo_w448_d4_A.v": "394110603c7e403ded44a65ebe1206c5e24179748d3834b7871da5baa451e5e1",
+      "final_target_fifo_w480_d4_A.v": "7d92f952c767774316c97dd312d72aec7f1cdf2c644cb9a2c4e4a78a3b12b605",
+      "final_target_flow_control_loop_pipe.v": "dd0226a839daedf0e3058f64362da1cacaebd50ba0b0b6ef795c3dec4e20e6b6",
+      "final_target_flow_control_loop_pipe_sequential_init.v": "5e06bdccefe9bc8ac50fffbe06e93f794eb3086213a340a42a31da9f27723328",
+      "final_target_mac_muladd_14ns_2s_19s_20_1_1.v": "8b6935a83b592c3654a5c281d82b95348a3c31be2a8fea995f63db645bb185f1",
+      "final_target_mac_muladd_14ns_5s_19s_20_1_1.v": "ba7d0cf087b8e875290d809cf448d387cb15ff825e7dca11bcc17d920fb5516a",
+      "final_target_mul_14ns_5s_19_1_1.v": "571da4790d90985dc10a9a70d1b57f577e66c81c62d7854a9c0389ab0e4343e6",
+      "final_target_phara_pool_aligned_hybrid_p8_scheduled_cl.v": "c0a07a649230d7e2e220a76c721359b10d066072db9c8bd580b053d6ae834609",
+      "final_target_regslice_both.v": "e9d08dceab6035ef9db30389479abea6dd5bebfaebf00d2d59596eb5ff587335",
+      "final_target_relu_array_ap_fixed_32u_array_ap_ufixed_14_6_5_3_0_32u_relu_config10_s.v": "e690b4eb3a9b990f690cf27455babd1de747ca0e31efea519b40817a23083c48",
+      "final_target_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s.v": "ae42e80e3b40a46c7874579e6d1a4d43cd4f04b08bb3f4e3489a0fc28dcc2a7c",
+      "final_target_scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_32u_config11_4u_s.v": "a12cefcd7b7dad4458c491d8eeb8c06d80a1c7b07a5c415b4d528d34ab2eb51c",
+      "final_target_shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_s.v": "cbe81fa05241340225d720c2725476a06213b991423ab258817768f16c930c09",
+      "final_target_sparsemux_9_2_9_1_1.v": "acbd43d1dd24fe6f9e5b036f5cfc39b83190ca997db7d28d5ea26e3028a909ae",
+      "final_target_start_for_dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_U0.v": "3c8c14f1a46f426ca6c421c49302f72291514f54c469db2dcf3b83a54f65c3b6",
+      "final_target_start_for_relu_array_ap_fixed_32u_array_ap_ufixed_14_6_5_3_0_32u_relu_config1cud.v": "373bfb6cf1d469a1c17d930e14e9a3d28bffdca76c197afdbc5ef6d3901874b2",
+      "final_target_start_for_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_U0.v": "6684cd5e0688280a6aff429765adb7781ade99f8c9341d7e4f8deeee9e781579",
+      "final_target_start_for_scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_32u_config11_4u_U0.v": "d91dd2eb870c5d0a18711f4389bc6700b61cbd0b443f27974642f30304894a6c",
+      "final_target_start_for_shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_U0.v": "817d7d6cb073320ca82fae2a0e55fcbb23030c7f2ba954ecad8a36d38aa2f077"
+    },
+    "schema_version": 1,
+    "simulator": {
+      "name": "xsim",
+      "version": "Vivado Simulator v2023.2"
+    },
+    "source_closure_sha256": "affd2005b8d8d6c285d6b8706c9740f5e7d7dcb6f99f8bdcb7e64294a5c1d1c4",
+    "status": "passed",
+    "testbench_sha256": "080afe3a833a0f269eda62ca73dd425a65943a92dfbb44231168737f93bc88f9",
+    "top": "final_target",
+    "vector_files": {
+      "rtl_expected_words.hex": "63aa91b1460f377e25f56902ff242f7d9b4592241d314fa0552692dc8e93b6e2",
+      "rtl_input_words.hex": "7837b0e9423baa7ef033ee42307131fef14eef0c8778cf5ccb1976404d24fd7f"
+    }
+  },
+  "schema_version": 5,
+  "source_closure_sha256": "affd2005b8d8d6c285d6b8706c9740f5e7d7dcb6f99f8bdcb7e64294a5c1d1c4",
+  "stage_plan": [
+    {
+      "arithmetic": {
+        "accumulator_numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 14
+        },
+        "dsp_product_budget": 0,
+        "graph": {
+          "input_ids": [
+            "x0",
+            "x1",
+            "x2",
+            "x3",
+            "x4",
+            "x5",
+            "x6",
+            "x7",
+            "x8"
+          ],
+          "modulus": 16384,
+          "nodes": [
+            {
+              "id": "x0_shift1",
+              "inputs": [
+                "x0"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x1_shift2",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x1_c-5_negate",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x1_c-5_negative1",
+              "inputs": [
+                "x1_c-5_negate",
+                "x1_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x2_shift2",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x3_shift2",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x3_c3_negative1",
+              "inputs": [
+                "x3_shift2",
+                "x3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_shift2",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x5_c3_negative1",
+              "inputs": [
+                "x5_shift2",
+                "x5"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_shift2",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x6_c-4_negate",
+              "inputs": [
+                "x6_shift2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x0_c-2_negate",
+              "inputs": [
+                "x0_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x2_c-1_negate",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x3_shift1",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x4_shift2",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x5_c-3_negative1",
+              "inputs": [
+                "x5",
+                "x5_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_c-3_negative1",
+              "inputs": [
+                "x6",
+                "x6_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x2_c-4_negate",
+              "inputs": [
+                "x2_shift2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x3_c5_positive1",
+              "inputs": [
+                "x3",
+                "x3_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x4_shift1",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x5_c-1_negate",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x6_c-1_negate",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x1_shift1",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x3_c-1_negate",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_c-4_negate",
+              "inputs": [
+                "x4_shift2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_c3_negative1",
+              "inputs": [
+                "x4_shift2",
+                "x4"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_shift1",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x0_shift2",
+              "inputs": [
+                "x0"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x2_c3_negative1",
+              "inputs": [
+                "x2_shift2",
+                "x2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x3_c-2_negate",
+              "inputs": [
+                "x3_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x6_c5_positive1",
+              "inputs": [
+                "x6",
+                "x6_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x3_c-3_negative1",
+              "inputs": [
+                "x3",
+                "x3_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x4_c-3_negative1",
+              "inputs": [
+                "x4",
+                "x4_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x1_c-4_negate",
+              "inputs": [
+                "x1_shift2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x2_c-3_negative1",
+              "inputs": [
+                "x2",
+                "x2_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_shift1",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x2_shift1",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x3_c-5_negate",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x3_c-5_negative1",
+              "inputs": [
+                "x3_c-5_negate",
+                "x3_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x7_shift2",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x7_c3_negative1",
+              "inputs": [
+                "x7_shift2",
+                "x7"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x8_shift2",
+              "inputs": [
+                "x8"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x8_c-4_negate",
+              "inputs": [
+                "x8_shift2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x2_c-2_negate",
+              "inputs": [
+                "x2_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_c-1_negate",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x7_c-3_negative1",
+              "inputs": [
+                "x7",
+                "x7_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x8_c-3_negative1",
+              "inputs": [
+                "x8",
+                "x8_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_c5_positive1",
+              "inputs": [
+                "x5",
+                "x5_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x7_c-1_negate",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x8_c-1_negate",
+              "inputs": [
+                "x8"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x6_c3_negative1",
+              "inputs": [
+                "x6_shift2",
+                "x6"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x7_shift1",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x5_c-2_negate",
+              "inputs": [
+                "x5_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x8_c5_positive1",
+              "inputs": [
+                "x8",
+                "x8_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x3_c-4_negate",
+              "inputs": [
+                "x3_shift2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x8_shift1",
+              "inputs": [
+                "x8"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "cse0",
+              "inputs": [
+                "x0_c-2_negate",
+                "x2_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "cse1",
+              "inputs": [
+                "x2_c-2_negate",
+                "x4_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "cse2",
+              "inputs": [
+                "cse0",
+                "x6_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "cse3",
+              "inputs": [
+                "cse1",
+                "x8_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "cse4",
+              "inputs": [
+                "x4_shift2",
+                "x5_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "cse5",
+              "inputs": [
+                "x6_shift2",
+                "x7_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_0",
+              "inputs": [
+                "x0_shift1",
+                "x1_c-5_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_2",
+              "inputs": [
+                "x2_shift2",
+                "x3_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_4",
+              "inputs": [
+                "x5_c3_negative1",
+                "x6_c-4_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree1_0",
+              "inputs": [
+                "y0_f0_tree0_0",
+                "y0_f0_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree2_0",
+              "inputs": [
+                "y0_f0_tree0_4",
+                "y0_f0_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_0",
+              "inputs": [
+                "x1",
+                "x3_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_2",
+              "inputs": [
+                "cse2",
+                "cse4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree1_0",
+              "inputs": [
+                "y0_f1_tree0_0",
+                "y0_f1_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_0",
+              "inputs": [
+                "x0",
+                "x1_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_2",
+              "inputs": [
+                "x2_c-4_negate",
+                "x3_c5_positive1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_4",
+              "inputs": [
+                "x4_shift1",
+                "x5_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree1_0",
+              "inputs": [
+                "y0_f2_tree0_0",
+                "y0_f2_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree1_2",
+              "inputs": [
+                "x6_c-1_negate",
+                "y0_f2_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree2_0",
+              "inputs": [
+                "y0_f2_tree1_0",
+                "y0_f2_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_0",
+              "inputs": [
+                "x1_shift1",
+                "x3_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_2",
+              "inputs": [
+                "x4_c-4_negate",
+                "x5"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_4",
+              "inputs": [
+                "cse0",
+                "x6_c-4_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree1_0",
+              "inputs": [
+                "y0_f3_tree0_0",
+                "y0_f3_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree2_0",
+              "inputs": [
+                "y0_f3_tree0_4",
+                "y0_f3_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_0",
+              "inputs": [
+                "x1_shift2",
+                "x3_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_2",
+              "inputs": [
+                "x4_c3_negative1",
+                "x5_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree1_0",
+              "inputs": [
+                "y0_f4_tree0_0",
+                "y0_f4_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree2_0",
+              "inputs": [
+                "cse2",
+                "y0_f4_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_0",
+              "inputs": [
+                "x0_shift2",
+                "x1_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_2",
+              "inputs": [
+                "x2_c3_negative1",
+                "x3_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_4",
+              "inputs": [
+                "cse4",
+                "x6_c5_positive1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree1_0",
+              "inputs": [
+                "y0_f5_tree0_0",
+                "y0_f5_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree2_0",
+              "inputs": [
+                "y0_f5_tree0_4",
+                "y0_f5_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_0",
+              "inputs": [
+                "x0_c-2_negate",
+                "x2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_2",
+              "inputs": [
+                "x3_c-3_negative1",
+                "x4_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_4",
+              "inputs": [
+                "x5_c-1_negate",
+                "x6_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree1_0",
+              "inputs": [
+                "y0_f6_tree0_0",
+                "y0_f6_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree2_0",
+              "inputs": [
+                "y0_f6_tree0_4",
+                "y0_f6_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_0",
+              "inputs": [
+                "x0_shift1",
+                "x1_c-4_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_2",
+              "inputs": [
+                "x2_c-3_negative1",
+                "x3_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_4",
+              "inputs": [
+                "x4_c3_negative1",
+                "x5_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree1_0",
+              "inputs": [
+                "y0_f7_tree0_0",
+                "y0_f7_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree1_2",
+              "inputs": [
+                "x6_shift1",
+                "y0_f7_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree2_0",
+              "inputs": [
+                "y0_f7_tree1_0",
+                "y0_f7_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f0_tree0_0",
+              "inputs": [
+                "x2_shift1",
+                "x3_c-5_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f0_tree0_2",
+              "inputs": [
+                "x4_shift2",
+                "x5_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f0_tree0_4",
+              "inputs": [
+                "x7_c3_negative1",
+                "x8_c-4_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f0_tree1_0",
+              "inputs": [
+                "y1_f0_tree0_0",
+                "y1_f0_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f0_tree2_0",
+              "inputs": [
+                "y1_f0_tree0_4",
+                "y1_f0_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f1_tree0_0",
+              "inputs": [
+                "x3",
+                "x5_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f1_tree0_2",
+              "inputs": [
+                "cse3",
+                "cse5"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f1_tree1_0",
+              "inputs": [
+                "y1_f1_tree0_0",
+                "y1_f1_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f2_tree0_0",
+              "inputs": [
+                "x2",
+                "x3_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f2_tree0_2",
+              "inputs": [
+                "x4_c-4_negate",
+                "x5_c5_positive1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f2_tree0_4",
+              "inputs": [
+                "x6_shift1",
+                "x7_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f2_tree1_0",
+              "inputs": [
+                "y1_f2_tree0_0",
+                "y1_f2_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f2_tree1_2",
+              "inputs": [
+                "x8_c-1_negate",
+                "y1_f2_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f2_tree2_0",
+              "inputs": [
+                "y1_f2_tree1_0",
+                "y1_f2_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f3_tree0_0",
+              "inputs": [
+                "x3_shift1",
+                "x5_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f3_tree0_2",
+              "inputs": [
+                "x6_c-4_negate",
+                "x7"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f3_tree0_4",
+              "inputs": [
+                "cse1",
+                "x8_c-4_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f3_tree1_0",
+              "inputs": [
+                "y1_f3_tree0_0",
+                "y1_f3_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f3_tree2_0",
+              "inputs": [
+                "y1_f3_tree0_4",
+                "y1_f3_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f4_tree0_0",
+              "inputs": [
+                "x3_shift2",
+                "x5_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f4_tree0_2",
+              "inputs": [
+                "x6_c3_negative1",
+                "x7_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f4_tree1_0",
+              "inputs": [
+                "y1_f4_tree0_0",
+                "y1_f4_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f4_tree2_0",
+              "inputs": [
+                "cse3",
+                "y1_f4_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f5_tree0_0",
+              "inputs": [
+                "x2_shift2",
+                "x3_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f5_tree0_2",
+              "inputs": [
+                "x4_c3_negative1",
+                "x5_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f5_tree0_4",
+              "inputs": [
+                "cse5",
+                "x8_c5_positive1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f5_tree1_0",
+              "inputs": [
+                "y1_f5_tree0_0",
+                "y1_f5_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f5_tree2_0",
+              "inputs": [
+                "y1_f5_tree0_4",
+                "y1_f5_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f6_tree0_0",
+              "inputs": [
+                "x2_c-2_negate",
+                "x4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f6_tree0_2",
+              "inputs": [
+                "x5_c-3_negative1",
+                "x6_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f6_tree0_4",
+              "inputs": [
+                "x7_c-1_negate",
+                "x8_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f6_tree1_0",
+              "inputs": [
+                "y1_f6_tree0_0",
+                "y1_f6_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f6_tree2_0",
+              "inputs": [
+                "y1_f6_tree0_4",
+                "y1_f6_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f7_tree0_0",
+              "inputs": [
+                "x2_shift1",
+                "x3_c-4_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f7_tree0_2",
+              "inputs": [
+                "x4_c-3_negative1",
+                "x5_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f7_tree0_4",
+              "inputs": [
+                "x6_c3_negative1",
+                "x7_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f7_tree1_0",
+              "inputs": [
+                "y1_f7_tree0_0",
+                "y1_f7_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f7_tree1_2",
+              "inputs": [
+                "x8_shift1",
+                "y1_f7_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y1_f7_tree2_0",
+              "inputs": [
+                "y1_f7_tree1_0",
+                "y1_f7_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            }
+          ],
+          "output_ids": [
+            "y0_f0_tree2_0",
+            "y0_f1_tree1_0",
+            "y0_f2_tree2_0",
+            "y0_f3_tree2_0",
+            "y0_f4_tree2_0",
+            "y0_f5_tree2_0",
+            "y0_f6_tree2_0",
+            "y0_f7_tree2_0",
+            "y1_f0_tree2_0",
+            "y1_f1_tree1_0",
+            "y1_f2_tree2_0",
+            "y1_f3_tree2_0",
+            "y1_f4_tree2_0",
+            "y1_f5_tree2_0",
+            "y1_f6_tree2_0",
+            "y1_f7_tree2_0"
+          ]
+        },
+        "graph_sha256": "cbf97a8bb96a2f8370c8e5f872bdee799135b033b58a7f50655f9c8baedac8fe",
+        "graph_summary": {
+          "add_nodes": 88,
+          "constant_nodes": 0,
+          "convolution_rows": 2,
+          "depth": 6,
+          "filter_lanes": 8,
+          "input_rows": 9,
+          "max_fanout": 8,
+          "negate_nodes": 19,
+          "output_values": 16,
+          "shared_pair_uses": 8,
+          "shared_product_uses": 47,
+          "shift_nodes": 18,
+          "subtract_nodes": 15
+        },
+        "input_numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "kind": "hybrid",
+        "operation_id": "conv2d_0",
+        "paired": true,
+        "policy": {
+          "id": "constant-matrix-csd-cse-dsp",
+          "version": 1
+        },
+        "proof": {
+          "identity": "55e076c58a95d4b17a0d1d2f65e0927ebc8015ef0411c69a402009466c532cef",
+          "modulus": 16384,
+          "status": "proven"
+        }
+      },
+      "estimate": {
+        "confidence": "calibrated",
+        "cycles": 68,
+        "latency": 68,
+        "resource_proxy": 56,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 32,
+        "output_lanes": 32,
+        "reset": "discard-in-flight",
+        "source_owner": "constant-matrix-csd-cse-dsp",
+        "storage": "selected-legacy-streaming-plan"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          256,
+          4,
+          1
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "input_0:out0",
+        "words": 32
+      },
+      "operation_ids": [
+        "conv2d_0",
+        "relu_0",
+        "max_pool2d_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          62,
+          4,
+          8
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 62
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 2,
+        "id": "complete-window-dependencies",
+        "input_words": 32,
+        "output_words": 62,
+        "production_after_input_words": [
+          2,
+          2,
+          3,
+          3,
+          4,
+          4,
+          5,
+          5,
+          6,
+          6,
+          7,
+          7,
+          8,
+          8,
+          9,
+          9,
+          10,
+          10,
+          11,
+          11,
+          12,
+          12,
+          13,
+          13,
+          14,
+          14,
+          15,
+          15,
+          16,
+          16,
+          17,
+          17,
+          18,
+          18,
+          19,
+          19,
+          20,
+          20,
+          21,
+          21,
+          22,
+          22,
+          23,
+          23,
+          24,
+          24,
+          25,
+          25,
+          26,
+          26,
+          27,
+          27,
+          28,
+          28,
+          29,
+          29,
+          30,
+          30,
+          31,
+          31,
+          32,
+          32
+        ],
+        "rational_rate": [
+          31,
+          16
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "phara",
+        "version": 1
+      }
+    },
+    {
+      "arithmetic": {
+        "accumulator_numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 14
+        },
+        "dsp_product_budget": 0,
+        "graph": {
+          "input_ids": [
+            "x0",
+            "x1",
+            "x2",
+            "x3",
+            "x4",
+            "x5",
+            "x6",
+            "x7",
+            "x8",
+            "x9",
+            "x10",
+            "x11",
+            "x12",
+            "x13",
+            "x14",
+            "x15",
+            "x16",
+            "x17",
+            "x18",
+            "x19",
+            "x20",
+            "x21",
+            "x22",
+            "x23",
+            "x24",
+            "x25",
+            "x26",
+            "x27",
+            "x28",
+            "x29",
+            "x30",
+            "x31",
+            "x32",
+            "x33",
+            "x34",
+            "x35",
+            "x36",
+            "x37",
+            "x38",
+            "x39",
+            "x40",
+            "x41",
+            "x42",
+            "x43",
+            "x44",
+            "x45",
+            "x46",
+            "x47",
+            "x48",
+            "x49",
+            "x50",
+            "x51",
+            "x52",
+            "x53",
+            "x54",
+            "x55"
+          ],
+          "modulus": 16384,
+          "nodes": [
+            {
+              "id": "x0_shift1",
+              "inputs": [
+                "x0"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x0_c-2_negate",
+              "inputs": [
+                "x0_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x8_shift2",
+              "inputs": [
+                "x8"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x8_c-3_negative1",
+              "inputs": [
+                "x8",
+                "x8_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x16_c-1_negate",
+              "inputs": [
+                "x16"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x24_c-1_negate",
+              "inputs": [
+                "x24"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x32_shift1",
+              "inputs": [
+                "x32"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x32_c-2_negate",
+              "inputs": [
+                "x32_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x48_shift1",
+              "inputs": [
+                "x48"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x48_c-2_negate",
+              "inputs": [
+                "x48_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x1_shift2",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x1_c3_negative1",
+              "inputs": [
+                "x1_shift2",
+                "x1"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x9_shift1",
+              "inputs": [
+                "x9"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x17_shift2",
+              "inputs": [
+                "x17"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x17_c3_negative1",
+              "inputs": [
+                "x17_shift2",
+                "x17"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x41_shift1",
+              "inputs": [
+                "x41"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x49_c-1_negate",
+              "inputs": [
+                "x49"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x10_shift1",
+              "inputs": [
+                "x10"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x10_c-2_negate",
+              "inputs": [
+                "x10_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x18_shift2",
+              "inputs": [
+                "x18"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x18_c-3_negative1",
+              "inputs": [
+                "x18",
+                "x18_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x26_shift2",
+              "inputs": [
+                "x26"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x26_c-3_negative1",
+              "inputs": [
+                "x26",
+                "x26_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x34_shift1",
+              "inputs": [
+                "x34"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x34_c-2_negate",
+              "inputs": [
+                "x34_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x3_shift2",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x3_c-3_negative1",
+              "inputs": [
+                "x3",
+                "x3_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x11_shift2",
+              "inputs": [
+                "x11"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x11_c-3_negative1",
+              "inputs": [
+                "x11",
+                "x11_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x27_shift2",
+              "inputs": [
+                "x27"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x27_c-3_negative1",
+              "inputs": [
+                "x27",
+                "x27_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x35_shift2",
+              "inputs": [
+                "x35"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x51_shift2",
+              "inputs": [
+                "x51"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x4_shift2",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x4_c3_negative1",
+              "inputs": [
+                "x4_shift2",
+                "x4"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x12_shift1",
+              "inputs": [
+                "x12"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x12_c-2_negate",
+              "inputs": [
+                "x12_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x20_shift1",
+              "inputs": [
+                "x20"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x28_shift1",
+              "inputs": [
+                "x28"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x28_c-2_negate",
+              "inputs": [
+                "x28_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x36_shift2",
+              "inputs": [
+                "x36"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x36_c3_negative1",
+              "inputs": [
+                "x36_shift2",
+                "x36"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x44_shift1",
+              "inputs": [
+                "x44"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x5_shift1",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x21_shift1",
+              "inputs": [
+                "x21"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x21_c-2_negate",
+              "inputs": [
+                "x21_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x29_shift2",
+              "inputs": [
+                "x29"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x29_c3_negative1",
+              "inputs": [
+                "x29_shift2",
+                "x29"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x37_shift1",
+              "inputs": [
+                "x37"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x45_shift1",
+              "inputs": [
+                "x45"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x45_c-2_negate",
+              "inputs": [
+                "x45_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x53_c-1_negate",
+              "inputs": [
+                "x53"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x14_shift2",
+              "inputs": [
+                "x14"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x14_c-3_negative1",
+              "inputs": [
+                "x14",
+                "x14_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x22_shift1",
+              "inputs": [
+                "x22"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x30_c-1_negate",
+              "inputs": [
+                "x30"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x38_shift2",
+              "inputs": [
+                "x38"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x38_c-3_negative1",
+              "inputs": [
+                "x38",
+                "x38_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x54_shift2",
+              "inputs": [
+                "x54"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x54_c3_negative1",
+              "inputs": [
+                "x54_shift2",
+                "x54"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x15_shift2",
+              "inputs": [
+                "x15"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x15_c-3_negative1",
+              "inputs": [
+                "x15",
+                "x15_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x31_shift1",
+              "inputs": [
+                "x31"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x39_shift2",
+              "inputs": [
+                "x39"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x39_c-3_negative1",
+              "inputs": [
+                "x39",
+                "x39_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x47_shift2",
+              "inputs": [
+                "x47"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x47_c3_negative1",
+              "inputs": [
+                "x47_shift2",
+                "x47"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x55_shift1",
+              "inputs": [
+                "x55"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "y0_f0_tree0_0",
+              "inputs": [
+                "x0_c-2_negate",
+                "x8_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_2",
+              "inputs": [
+                "x16_c-1_negate",
+                "x24_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_4",
+              "inputs": [
+                "x32_c-2_negate",
+                "x40"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree1_0",
+              "inputs": [
+                "y0_f0_tree0_0",
+                "y0_f0_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree1_2",
+              "inputs": [
+                "x48_c-2_negate",
+                "y0_f0_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree2_0",
+              "inputs": [
+                "y0_f0_tree1_0",
+                "y0_f0_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_0",
+              "inputs": [
+                "x1_c3_negative1",
+                "x9_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_2",
+              "inputs": [
+                "x17_c3_negative1",
+                "x33"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_4",
+              "inputs": [
+                "x41_shift1",
+                "x49_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree1_0",
+              "inputs": [
+                "y0_f1_tree0_0",
+                "y0_f1_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree2_0",
+              "inputs": [
+                "y0_f1_tree0_4",
+                "y0_f1_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_0",
+              "inputs": [
+                "x10_c-2_negate",
+                "x2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_2",
+              "inputs": [
+                "x18_c-3_negative1",
+                "x26_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree1_0",
+              "inputs": [
+                "y0_f2_tree0_0",
+                "y0_f2_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree2_0",
+              "inputs": [
+                "x34_c-2_negate",
+                "y0_f2_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_0",
+              "inputs": [
+                "x11_c-3_negative1",
+                "x3_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_2",
+              "inputs": [
+                "x19",
+                "x27_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_4",
+              "inputs": [
+                "x35_shift2",
+                "x43"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree1_0",
+              "inputs": [
+                "y0_f3_tree0_0",
+                "y0_f3_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree1_2",
+              "inputs": [
+                "x51_shift2",
+                "y0_f3_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree2_0",
+              "inputs": [
+                "y0_f3_tree1_0",
+                "y0_f3_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_0",
+              "inputs": [
+                "x12_c-2_negate",
+                "x4_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_2",
+              "inputs": [
+                "x20_shift1",
+                "x28_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_4",
+              "inputs": [
+                "x36_c3_negative1",
+                "x44_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree1_0",
+              "inputs": [
+                "y0_f4_tree0_0",
+                "y0_f4_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree1_2",
+              "inputs": [
+                "x52",
+                "y0_f4_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree2_0",
+              "inputs": [
+                "y0_f4_tree1_0",
+                "y0_f4_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_0",
+              "inputs": [
+                "x13",
+                "x5_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_2",
+              "inputs": [
+                "x21_c-2_negate",
+                "x29_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_4",
+              "inputs": [
+                "x37_shift1",
+                "x45_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree1_0",
+              "inputs": [
+                "y0_f5_tree0_0",
+                "y0_f5_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree1_2",
+              "inputs": [
+                "x53_c-1_negate",
+                "y0_f5_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree2_0",
+              "inputs": [
+                "y0_f5_tree1_0",
+                "y0_f5_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_0",
+              "inputs": [
+                "x14_c-3_negative1",
+                "x22_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_2",
+              "inputs": [
+                "x30_c-1_negate",
+                "x38_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree1_0",
+              "inputs": [
+                "y0_f6_tree0_0",
+                "y0_f6_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree2_0",
+              "inputs": [
+                "x54_c3_negative1",
+                "y0_f6_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_0",
+              "inputs": [
+                "x15_c-3_negative1",
+                "x7"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_2",
+              "inputs": [
+                "x31_shift1",
+                "x39_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_4",
+              "inputs": [
+                "x47_c3_negative1",
+                "x55_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree1_0",
+              "inputs": [
+                "y0_f7_tree0_0",
+                "y0_f7_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree2_0",
+              "inputs": [
+                "y0_f7_tree0_4",
+                "y0_f7_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            }
+          ],
+          "output_ids": [
+            "y0_f0_tree2_0",
+            "y0_f1_tree2_0",
+            "y0_f2_tree2_0",
+            "y0_f3_tree2_0",
+            "y0_f4_tree2_0",
+            "y0_f5_tree2_0",
+            "y0_f6_tree2_0",
+            "y0_f7_tree2_0"
+          ]
+        },
+        "graph_sha256": "4f1547b51c933f4b9158846de76bc0267754a434eef328c2f34e684bbfcc800d",
+        "graph_summary": {
+          "add_nodes": 42,
+          "constant_nodes": 0,
+          "convolution_rows": 1,
+          "depth": 5,
+          "filter_lanes": 8,
+          "input_rows": 56,
+          "max_fanout": 2,
+          "negate_nodes": 14,
+          "output_values": 8,
+          "shared_pair_uses": 0,
+          "shared_product_uses": 0,
+          "shift_nodes": 37,
+          "subtract_nodes": 17
+        },
+        "input_numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "kind": "hybrid",
+        "operation_id": "conv2d_1",
+        "paired": false,
+        "policy": {
+          "id": "constant-matrix-csd-cse-dsp",
+          "version": 1
+        },
+        "proof": {
+          "identity": "5f62d4e40396f147586de8081bcdc0c9468c2f5865539a365dc116fe60450caa",
+          "modulus": 16384,
+          "status": "proven"
+        }
+      },
+      "arithmetic_schedule": {
+        "engines": 4,
+        "extra_phases": "complete-convolution-windows-only",
+        "id": "phased-position-engines",
+        "phase_loop_ii": 1,
+        "position_lanes": 4,
+        "reuse_factor": 1,
+        "version": 2
+      },
+      "estimate": {
+        "confidence": "calibrated",
+        "cycles": 67,
+        "latency": 62,
+        "resource_proxy": 1792,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 32,
+        "output_lanes": 32,
+        "reset": "discard-in-flight",
+        "source_owner": "constant-matrix-csd-cse-dsp",
+        "storage": "partitioned-row-history-and-local-window"
+      },
+      "implementation": {
+        "arithmetic_order": "proven-modular-affine-graph",
+        "channels": 8,
+        "convolution_rows": 28,
+        "drains_complete_frame": true,
+        "filters": 8,
+        "id": "captured-window-positions",
+        "input_rows": 62,
+        "input_words": 62,
+        "kernel_rows": 7,
+        "output_rows": 28,
+        "pool_rows": 1,
+        "positions": 4,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 2,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 4
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          62,
+          4,
+          8
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "max_pool2d_0:out0",
+        "words": 62
+      },
+      "operation_ids": [
+        "conv2d_1"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          28,
+          4,
+          8
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "conv2d_1:out0",
+        "words": 28
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 1,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 7,
+        "id": "complete-window-dependencies",
+        "input_words": 62,
+        "output_words": 28,
+        "production_after_input_words": [
+          7,
+          9,
+          11,
+          13,
+          15,
+          17,
+          19,
+          21,
+          23,
+          25,
+          27,
+          29,
+          31,
+          33,
+          35,
+          37,
+          39,
+          41,
+          43,
+          45,
+          47,
+          49,
+          51,
+          53,
+          55,
+          57,
+          59,
+          61
+        ],
+        "rational_rate": [
+          14,
+          31
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-affine-window",
+        "version": 1
+      }
+    },
+    {
+      "arithmetic": {
+        "accumulator_numeric": {
+          "integer": 7,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 15
+        },
+        "dsp_product_budget": 0,
+        "graph": {
+          "input_ids": [
+            "x0",
+            "x1",
+            "x2",
+            "x3",
+            "x4",
+            "x5",
+            "x6",
+            "x7"
+          ],
+          "modulus": 32768,
+          "nodes": [
+            {
+              "id": "x1_shift1",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x1_shift3",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x1_c-6_negative1",
+              "inputs": [
+                "x1_shift1",
+                "x1_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x2_shift3",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x2_c9_positive1",
+              "inputs": [
+                "x2",
+                "x2_shift3"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x4_shift2",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x4_c5_positive1",
+              "inputs": [
+                "x4",
+                "x4_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x5_shift2",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x6_shift3",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x6_c-7_negative1",
+              "inputs": [
+                "x6",
+                "x6_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x7_shift1",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x1_c-9_negate",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x1_c-9_negative1",
+              "inputs": [
+                "x1_c-9_negate",
+                "x1_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x2_shift1",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x2_c6_negative1",
+              "inputs": [
+                "x2_shift3",
+                "x2_shift1"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x3_shift3",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x3_c-7_negative1",
+              "inputs": [
+                "x3",
+                "x3_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_shift3",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x5_c7_negative1",
+              "inputs": [
+                "x5_shift3",
+                "x5"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x7_shift3",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x7_c9_positive1",
+              "inputs": [
+                "x7",
+                "x7_shift3"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x0_shift2",
+              "inputs": [
+                "x0"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x1_c-7_negative1",
+              "inputs": [
+                "x1",
+                "x1_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x2_shift2",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x2_c-3_negative1",
+              "inputs": [
+                "x2",
+                "x2_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x4_c-3_negative1",
+              "inputs": [
+                "x4",
+                "x4_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_c-8_negate",
+              "inputs": [
+                "x5_shift3"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x6_shift1",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x6_c6_negative1",
+              "inputs": [
+                "x6_shift3",
+                "x6_shift1"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x0_shift3",
+              "inputs": [
+                "x0"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x0_c9_positive1",
+              "inputs": [
+                "x0",
+                "x0_shift3"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x1_shift2",
+              "inputs": [
+                "x1"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x2_c-6_negative1",
+              "inputs": [
+                "x2_shift1",
+                "x2_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x3_shift1",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x3_c-6_negative1",
+              "inputs": [
+                "x3_shift1",
+                "x3_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x4_c-5_negate",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_c-5_negative1",
+              "inputs": [
+                "x4_c-5_negate",
+                "x4_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_c-9_negate",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x5_c-9_negative1",
+              "inputs": [
+                "x5_c-9_negate",
+                "x5_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_shift2",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x6_c5_positive1",
+              "inputs": [
+                "x6",
+                "x6_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x7_c-2_negate",
+              "inputs": [
+                "x7_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_c-1_negate",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x5_c-7_negative1",
+              "inputs": [
+                "x5",
+                "x5_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_c-1_negate",
+              "inputs": [
+                "x6"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x7_c-1_negate",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x3_c-1_negate",
+              "inputs": [
+                "x3"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_shift3",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "shift",
+              "value": 3
+            },
+            {
+              "id": "x4_c-8_negate",
+              "inputs": [
+                "x4_shift3"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x7_shift2",
+              "inputs": [
+                "x7"
+              ],
+              "operation": "shift",
+              "value": 2
+            },
+            {
+              "id": "x7_c5_positive1",
+              "inputs": [
+                "x7",
+                "x7_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x0_c3_negative1",
+              "inputs": [
+                "x0_shift2",
+                "x0"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x1_c6_negative1",
+              "inputs": [
+                "x1_shift3",
+                "x1_shift1"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x3_c6_negative1",
+              "inputs": [
+                "x3_shift3",
+                "x3_shift1"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x4_c7_negative1",
+              "inputs": [
+                "x4_shift3",
+                "x4"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x5_shift1",
+              "inputs": [
+                "x5"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x5_c-10_negate",
+              "inputs": [
+                "x5_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x5_c-10_negative1",
+              "inputs": [
+                "x5_c-10_negate",
+                "x5_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_c-2_negate",
+              "inputs": [
+                "x6_shift1"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x7_c-3_negative1",
+              "inputs": [
+                "x7",
+                "x7_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x2_c-5_negate",
+              "inputs": [
+                "x2"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x2_c-5_negative1",
+              "inputs": [
+                "x2_c-5_negate",
+                "x2_shift2"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x3_c-8_negate",
+              "inputs": [
+                "x3_shift3"
+              ],
+              "operation": "negate",
+              "value": null
+            },
+            {
+              "id": "x4_shift1",
+              "inputs": [
+                "x4"
+              ],
+              "operation": "shift",
+              "value": 1
+            },
+            {
+              "id": "x4_c10_positive1",
+              "inputs": [
+                "x4_shift1",
+                "x4_shift3"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "x5_c-6_negative1",
+              "inputs": [
+                "x5_shift1",
+                "x5_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x6_c-6_negative1",
+              "inputs": [
+                "x6_shift1",
+                "x6_shift3"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "x7_c3_negative1",
+              "inputs": [
+                "x7_shift2",
+                "x7"
+              ],
+              "operation": "subtract",
+              "value": null
+            },
+            {
+              "id": "cse0",
+              "inputs": [
+                "x0_shift2",
+                "x6_c6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "cse1",
+              "inputs": [
+                "x1_shift2",
+                "x2_c-6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_0",
+              "inputs": [
+                "x0",
+                "x1_c-6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_2",
+              "inputs": [
+                "x2_c9_positive1",
+                "x3"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_4",
+              "inputs": [
+                "x4_c5_positive1",
+                "x5_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree0_6",
+              "inputs": [
+                "x6_c-7_negative1",
+                "x7_shift1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree1_0",
+              "inputs": [
+                "y0_f0_tree0_0",
+                "y0_f0_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree1_2",
+              "inputs": [
+                "y0_f0_tree0_4",
+                "y0_f0_tree0_6"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f0_tree2_0",
+              "inputs": [
+                "y0_f0_tree1_0",
+                "y0_f0_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_0",
+              "inputs": [
+                "x1_c-9_negative1",
+                "x2_c6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_2",
+              "inputs": [
+                "x3_c-7_negative1",
+                "x4_shift2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree0_4",
+              "inputs": [
+                "x5_c7_negative1",
+                "x6_c-7_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree1_0",
+              "inputs": [
+                "y0_f1_tree0_0",
+                "y0_f1_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree1_2",
+              "inputs": [
+                "x7_c9_positive1",
+                "y0_f1_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f1_tree2_0",
+              "inputs": [
+                "y0_f1_tree1_0",
+                "y0_f1_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_0",
+              "inputs": [
+                "x1_c-7_negative1",
+                "x2_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_2",
+              "inputs": [
+                "x4_c-3_negative1",
+                "x5_c-8_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree0_4",
+              "inputs": [
+                "cse0",
+                "x7_c9_positive1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree1_0",
+              "inputs": [
+                "y0_f2_tree0_0",
+                "y0_f2_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f2_tree2_0",
+              "inputs": [
+                "y0_f2_tree0_4",
+                "y0_f2_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_0",
+              "inputs": [
+                "x0_c9_positive1",
+                "x3_c-6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_2",
+              "inputs": [
+                "x4_c-5_negative1",
+                "x5_c-9_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree0_4",
+              "inputs": [
+                "x6_c5_positive1",
+                "x7_c-2_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree1_0",
+              "inputs": [
+                "y0_f3_tree0_0",
+                "y0_f3_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree1_2",
+              "inputs": [
+                "cse1",
+                "y0_f3_tree0_4"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f3_tree2_0",
+              "inputs": [
+                "y0_f3_tree1_0",
+                "y0_f3_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_0",
+              "inputs": [
+                "x0_shift2",
+                "x1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_2",
+              "inputs": [
+                "x2_shift1",
+                "x3_c-6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_4",
+              "inputs": [
+                "x4_c-1_negate",
+                "x5_c-7_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree0_6",
+              "inputs": [
+                "x6_c-1_negate",
+                "x7_c-1_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree1_0",
+              "inputs": [
+                "y0_f4_tree0_0",
+                "y0_f4_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree1_2",
+              "inputs": [
+                "y0_f4_tree0_4",
+                "y0_f4_tree0_6"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f4_tree2_0",
+              "inputs": [
+                "y0_f4_tree1_0",
+                "y0_f4_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_0",
+              "inputs": [
+                "x3_c-1_negate",
+                "x4_c-8_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_2",
+              "inputs": [
+                "x5_c7_negative1",
+                "x7_c5_positive1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree0_4",
+              "inputs": [
+                "cse0",
+                "cse1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree1_0",
+              "inputs": [
+                "y0_f5_tree0_0",
+                "y0_f5_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f5_tree2_0",
+              "inputs": [
+                "y0_f5_tree0_4",
+                "y0_f5_tree1_0"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_0",
+              "inputs": [
+                "x0_c3_negative1",
+                "x1_c6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_2",
+              "inputs": [
+                "x2_shift1",
+                "x3_c6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_4",
+              "inputs": [
+                "x4_c7_negative1",
+                "x5_c-10_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree0_6",
+              "inputs": [
+                "x6_c-2_negate",
+                "x7_c-3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree1_0",
+              "inputs": [
+                "y0_f6_tree0_0",
+                "y0_f6_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree1_2",
+              "inputs": [
+                "y0_f6_tree0_4",
+                "y0_f6_tree0_6"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f6_tree2_0",
+              "inputs": [
+                "y0_f6_tree1_0",
+                "y0_f6_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_0",
+              "inputs": [
+                "x0",
+                "x1_shift3"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_2",
+              "inputs": [
+                "x2_c-5_negative1",
+                "x3_c-8_negate"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_4",
+              "inputs": [
+                "x4_c10_positive1",
+                "x5_c-6_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree0_6",
+              "inputs": [
+                "x6_c-6_negative1",
+                "x7_c3_negative1"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree1_0",
+              "inputs": [
+                "y0_f7_tree0_0",
+                "y0_f7_tree0_2"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree1_2",
+              "inputs": [
+                "y0_f7_tree0_4",
+                "y0_f7_tree0_6"
+              ],
+              "operation": "add",
+              "value": null
+            },
+            {
+              "id": "y0_f7_tree2_0",
+              "inputs": [
+                "y0_f7_tree1_0",
+                "y0_f7_tree1_2"
+              ],
+              "operation": "add",
+              "value": null
+            }
+          ],
+          "output_ids": [
+            "y0_f0_tree2_0",
+            "y0_f1_tree2_0",
+            "y0_f2_tree2_0",
+            "y0_f3_tree2_0",
+            "y0_f4_tree2_0",
+            "y0_f5_tree2_0",
+            "y0_f6_tree2_0",
+            "y0_f7_tree2_0"
+          ]
+        },
+        "graph_sha256": "1740a8628c80e30f6a046a39169a4081683392baf77cef381f93c1358dc58ce6",
+        "graph_summary": {
+          "add_nodes": 59,
+          "constant_nodes": 0,
+          "convolution_rows": 1,
+          "depth": 6,
+          "filter_lanes": 8,
+          "input_rows": 8,
+          "max_fanout": 8,
+          "negate_nodes": 14,
+          "output_values": 8,
+          "shared_pair_uses": 2,
+          "shared_product_uses": 11,
+          "shift_nodes": 22,
+          "subtract_nodes": 25
+        },
+        "input_numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "kind": "hybrid",
+        "operation_id": "conv2d_2",
+        "paired": false,
+        "policy": {
+          "id": "constant-matrix-csd-cse-dsp",
+          "version": 1
+        },
+        "proof": {
+          "identity": "b7e93ea0bacc473436cbdb3fdbe3854784620b2068ec6094bf967c4f370bba5b",
+          "modulus": 32768,
+          "status": "proven"
+        }
+      },
+      "arithmetic_schedule": {
+        "engines": 2,
+        "extra_phases": "complete-convolution-windows-only",
+        "id": "phased-position-engines",
+        "phase_loop_ii": 1,
+        "position_lanes": 4,
+        "reuse_factor": 2,
+        "version": 2
+      },
+      "estimate": {
+        "confidence": "calibrated",
+        "cycles": 62,
+        "latency": 28,
+        "resource_proxy": 256,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 32,
+        "output_lanes": 32,
+        "reset": "discard-in-flight",
+        "source_owner": "constant-matrix-csd-cse-dsp",
+        "storage": "partitioned-row-history-and-local-window"
+      },
+      "implementation": {
+        "arithmetic_order": "proven-modular-affine-graph",
+        "channels": 8,
+        "convolution_rows": 28,
+        "drains_complete_frame": true,
+        "filters": 8,
+        "id": "captured-window-positions",
+        "input_rows": 28,
+        "input_words": 28,
+        "kernel_rows": 1,
+        "output_rows": 14,
+        "pool_rows": 2,
+        "positions": 4,
+        "storage": "partitioned-row-history-and-local-window",
+        "stride_rows": 1,
+        "target_loop_ii": 1,
+        "version": 1,
+        "width": 4
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 5,
+          "kind": "fixed",
+          "rounding": "RND",
+          "saturation": "SAT_SYM",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 9
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          28,
+          4,
+          8
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "conv2d_1:out0",
+        "words": 28
+      },
+      "operation_ids": [
+        "conv2d_2",
+        "relu_1",
+        "max_pool2d_1"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          14,
+          4,
+          8
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 14
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 2,
+        "id": "complete-window-dependencies",
+        "input_words": 28,
+        "output_words": 14,
+        "production_after_input_words": [
+          2,
+          4,
+          6,
+          8,
+          10,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          26,
+          28
+        ],
+        "rational_rate": [
+          1,
+          2
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-affine-window",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 0,
+        "latency": 0,
+        "resource_proxy": 0,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 32,
+        "output_lanes": 32,
+        "reset": "discard-in-flight",
+        "source_owner": "compose-top-and-contracts",
+        "storage": "zero-alias"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          14,
+          4,
+          8
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "max_pool2d_1:out0",
+        "words": 14
+      },
+      "operation_ids": [
+        "reshape_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          448
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "reshape_0:out0",
+        "words": 14
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 1,
+        "id": "complete-window-dependencies",
+        "input_words": 14,
+        "output_words": 14,
+        "production_after_input_words": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "rational_rate": [
+          1,
+          1
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": false,
+      "strategy": {
+        "id": "identity-layout-view",
+        "version": 1
+      }
+    },
+    {
+      "estimate": {
+        "confidence": "analytical",
+        "cycles": 14,
+        "latency": 14,
+        "resource_proxy": 32,
+        "status": "estimated"
+      },
+      "execution": {
+        "control": "ap_ctrl_hs-dataflow-process",
+        "input_lanes": 32,
+        "output_lanes": 1,
+        "reset": "discard-in-flight",
+        "source_owner": "legacy-template-adapter",
+        "storage": "dense-rom-packing-and-accumulator"
+      },
+      "input": {
+        "backpressure": "blocking",
+        "lanes": 32,
+        "numeric": {
+          "integer": 6,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": false,
+          "width": 14
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          448
+        ],
+        "tail_valid_lanes": 32,
+        "tensor_id": "reshape_0:out0",
+        "words": 14
+      },
+      "operation_ids": [
+        "dense_0"
+      ],
+      "output": {
+        "backpressure": "blocking",
+        "lanes": 1,
+        "numeric": {
+          "integer": 11,
+          "kind": "fixed",
+          "rounding": "TRN",
+          "saturation": "WRAP",
+          "saturation_bits": 0,
+          "signed": true,
+          "width": 23
+        },
+        "order": "C",
+        "protocol": "blocking-stream",
+        "reset": "per-inference",
+        "shape": [
+          1
+        ],
+        "tail_valid_lanes": 1,
+        "tensor_id": "dense_0:out0",
+        "words": 1
+      },
+      "schedule": {
+        "consecutive_inference": "repeat-complete-frame",
+        "drain_input_words": 0,
+        "elastic_gaps": "arbitrary-with-eventual-progress",
+        "fifo_depth_words": 4,
+        "fill_input_words": 14,
+        "id": "complete-window-dependencies",
+        "input_words": 14,
+        "output_words": 1,
+        "production_after_input_words": [
+          14
+        ],
+        "rational_rate": [
+          1,
+          14
+        ],
+        "timebase": "accepted-input-words-not-clock-cycles",
+        "version": 1
+      },
+      "specialized": true,
+      "strategy": {
+        "id": "aria-dense-wide",
+        "version": 1
+      }
+    }
+  ],
+  "stages": {
+    "conv2d_0": {
+      "functions": [
+        {
+          "initiation_interval": 66,
+          "latency_cycles": 66,
+          "loops": [
+            {
+              "name": "ScheduleP8Words",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+        }
+      ],
+      "realization": "measured"
+    },
+    "conv2d_1": {
+      "functions": [
+        {
+          "initiation_interval": 66,
+          "latency_cycles": 66,
+          "loops": [
+            {
+              "name": "AffineWords",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "conv2d_2": {
+      "functions": [
+        {
+          "initiation_interval": 61,
+          "latency_cycles": 61,
+          "loops": [
+            {
+              "name": "ReusePhases",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_s"
+        },
+        {
+          "initiation_interval": 31,
+          "latency_cycles": 31,
+          "loops": [
+            {
+              "name": "ReLUActLoop",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "relu_array_ap_fixed_32u_array_ap_ufixed_14_6_5_3_0_32u_relu_config10_s"
+        },
+        {
+          "initiation_interval": 31,
+          "latency_cycles": 31,
+          "loops": [
+            {
+              "name": "PoolWords",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_32u_config11_4u_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "dense_0": {
+      "functions": [
+        {
+          "initiation_interval": 19,
+          "latency_cycles": 19,
+          "loops": [
+            {
+              "name": "DenseValues",
+              "pipeline_ii": 1
+            }
+          ],
+          "top": "dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues"
+        },
+        {
+          "initiation_interval": 22,
+          "latency_cycles": 22,
+          "loops": [],
+          "top": "dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s"
+        }
+      ],
+      "realization": "measured"
+    },
+    "reshape_0": {
+      "functions": [],
+      "realization": "zero-hardware-view"
+    }
+  },
+  "status": "recorded",
+  "timing": {
+    "estimated_clock_ns": 5.733,
+    "target_clock_ns": 5.0
+  },
+  "tool": {
+    "name": "Vitis HLS",
+    "version": "2023.2"
+  },
+  "top": "final_target",
+  "warnings": [
+    {
+      "code": "estimate.uncalibrated_native",
+      "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"
+    }
+  ]
+}
