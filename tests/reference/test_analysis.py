@@ -281,7 +281,8 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
 ) -> None:
     report = analyze(
         noncanonical_geometry_model,
-        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+         "Optimization": {"TemporalPacking": 4, "DenseParallelism": 1}},
     ).to_dict()
 
     assert report["model_family"] == {
@@ -290,7 +291,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     }
     assert report["applicability"]["status"] == "unsupported"
     assert report["resolved_design"] is None
-    assert "strategy.geometry.phara" in {
+    assert "strategy.geometry.p4" in {
         finding["code"] for finding in report["applicability"]["findings"]
     }
 

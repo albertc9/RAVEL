@@ -119,6 +119,11 @@ def render_aria_project(
         "dense_bias": _weight_context(parameters["dense_0:bias"]),
         "phara": phara,
         "phara_affine": phara_affine,
+        "phara_schedule": (
+            phara["scheduler"]
+            if phara is not None and phara.get("scheduler", {}).get("version") == 2
+            else None
+        ),
         "phara_realization": phara["realization"] if phara is not None else None,
         "phara_function": (
             rendering.get(

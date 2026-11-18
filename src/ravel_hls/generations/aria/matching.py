@@ -253,16 +253,14 @@ def evaluate_aria_wide_stream(
             observed=convolution[field],
             message=f"Aria streaming convolution does not support {field}={convolution[field]}",
         )
-    if temporal_pack in {4, 8}:
-        geometry_code = (
-            "strategy.geometry.phara"
-            if temporal_pack == 8
-            else "strategy.geometry.p4"
-        )
+    if temporal_pack == 8:
+        # The row schedule is derived from kernel, stride and pool; see the plan.
+        pass
+    elif temporal_pack == 4:
         for field, expected in {"filt_height": 5, "stride_height": 3}.items():
             require(
                 convolution[field] == expected,
-                code=geometry_code,
+                code="strategy.geometry.p4",
                 operation_id="conv2d_0",
                 field=field,
                 expected=expected,

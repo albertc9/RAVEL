@@ -169,6 +169,67 @@ def build_row_credit_schedule(
     )
 
 
+@dataclass(frozen=True)
+class FillCycleSchedule:
+    """Row-credit schedule for any kernel and stride: one read and one output per cycle at most."""
+
+    input_words: int
+    output_words: int
+    cycles: int
+    fill_cycles: int
+    drain_cycles: int
+    max_live_rows: int
+    buffer_rows: int
+
+
+# The canonical row-credit lowering reads at most once per pooled output and is
+# qualified for this geometry only. Other geometries use the fill-cycle schedule.
+CANONICAL_ROW_CREDIT = (("kernel_rows", 5), ("convolution_stride", 3))
+
+
+def canonical_row_credit(*, kernel_rows: int, convolution_stride: int) -> bool:
+    return (("kernel_rows", kernel_rows), ("convolution_stride", convolution_stride)) == CANONICAL_ROW_CREDIT
+
+
+def build_fill_cycle_schedule(
+    *,
+    input_rows: int,
+    temporal_pack: int,
+    kernel_rows: int,
+    convolution_stride: int,
+    pool_rows: int,
+) -> FillCycleSchedule:
+    """Derive the cycles that keep every supertile complete before it is computed.
+
+    A cycle reads one input word while the next supertile is incomplete, or
+    while unread words remain after the last output. It produces when the
+    supertile is complete. The row buffer holds whole input words.
+    """
+
+    input_words = input_rows // temporal_pack
+    convolution_rows = (input_rows - kernel_rows) // convolution_stride + 1
+    output_words = convolution_rows // pool_rows
+    advance = pool_rows * convolution_stride
+    span = kernel_rows + (pool_rows - 1) * convolution_stride
+    words_read = produced = cycles = fill_cycles = drain_cycles = max_live_rows = 0
+    while produced < output_words or words_read < input_words:
+        producing = produced < output_words
+        required_words = (produced * advance + span - 1) // temporal_pack + 1 if producing else input_words
+        if words_read < input_words and words_read < required_words:
+            words_read += 1
+        if producing and words_read >= required_words:
+            max_live_rows = max(max_live_rows, words_read * temporal_pack - produced * advance)
+            produced += 1
+        elif producing:
+            fill_cycles += 1
+        else:
+            drain_cycles += 1
+        cycles += 1
+    buffer_rows = -(-max(max_live_rows, temporal_pack) // temporal_pack) * temporal_pack
+    return FillCycleSchedule(input_words, output_words, cycles, fill_cycles, drain_cycles,
+                             max_live_rows, buffer_rows)
+
+
 def evaluate(graph: AffineGraph, input_codes: tuple[int, ...]) -> tuple[int, ...]:
     """Evaluate one PHARA graph over integer codes with explicit wrapping."""
 

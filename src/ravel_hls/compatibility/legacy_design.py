@@ -77,8 +77,9 @@ def _rendering_contract(
     }
     if "phara" in implementation_plan:
         realization = implementation_plan["phara"]["realization"]
+        scheduled = implementation_plan["phara"].get("scheduler", {}).get("version") == 2
         contract["phara_fused_function"] = (
-            f"phara_pool_aligned_{realization}_p{temporal_pack}_cl"
+            f"phara_pool_aligned_{realization}_p{temporal_pack}{'_scheduled' if scheduled else ''}_cl"
         )
         contract["dense_function"] = "dense_wide_stream"
     return contract
