@@ -767,5 +767,773 @@
    }
   ],
   "target_ii": null
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 100,
+   "supplied": 1000
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 768,
+   "generated": 768,
+   "limit": 4096
+  },
+  "files": {
+   "csynth.xml": "428e1cbfbba66ad50ec4c3ce538d548b9c2720fafe63a90c32d586a38ee78110",
+   "ooc/binding.json": "26c16043691725d35cb488390eebc7de175b1de4ad0ca6f6e62afbb6fd4163a6",
+   "ooc/timing.rpt": "ca3dfbfc0e11f203b50647ed548069e92b2b6da0616c5dd568b243891b152b9e",
+   "ooc/utilization.rpt": "65d3b04f88c645573985801af3d329ab268b5eb6203462f1447785d3dc00a02c",
+   "rtl_protocol.json": "a1beb5cbebb68c5eec3022dadabe667fa5177cf0df6bc993350c0f5593306d27"
+  },
+  "first_stage_scheduler": {
+   "buffer_rows": 16,
+   "id": "row-credit",
+   "max_live_rows": 14,
+   "read_cycles": 32,
+   "version": 1
+  },
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 49,
+  "implementation_commit": "a65927a",
+  "latency": 63,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "574fdc9f76e0c2638b67d248af6c3a66d0e075dd68f30c9ece9a87d0060fc1d0",
+  "model": "package model 08 (three convolutions)",
+  "ooc": {
+   "capacity": {
+    "DSP": 1824,
+    "FF": 433920,
+    "LUT": 216960
+   },
+   "resources": {
+    "BRAM_TILES": 0.0,
+    "DSP": 48.0,
+    "FF": 24134.0,
+    "LUT": 41914.0
+   },
+   "timing": {
+    "target_clock_ns": 5.0,
+    "tns_ns": 0.0,
+    "wns_ns": 0.427
+   },
+   "utilization_percent": {
+    "DSP": 2.63,
+    "FF": 5.56,
+    "LUT": 19.32
+   }
+  },
+  "predicted_frame_cycles": 48,
+  "project": "final_m08",
+  "qualification_sha256": "f0db55b1a86c5e79c7c468955c3f50abfc98729b4a69ce57b0315e1a0e0f9593",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 103,
+   "input_gap_cycles": 513,
+   "output_stall_cycles": 80,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "calibrated-predicted-frame-interval",
+  "source_closure_sha256": "beab1685a6748e2ae0c08dba6f862e57911056c080727cf4410e8273bb26ff30",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "phara"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1",
+     "relu_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 1,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "conv2d_2",
+     "relu_2",
+     "max_pool2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 1,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-wide"
+   }
+  ],
+  "target_ii": null
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 96,
+   "supplied": 1000
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 4,
+   "generated": 4,
+   "limit": 4096
+  },
+  "files": {
+   "csynth.xml": "8a716f12055f8899e794068ebc9adc77a82b15872e89e3bd0127d71b6341e96b",
+   "rtl_protocol.json": "f348d52d40f2235889f64a30857f7ae610294e1295e836ab0b444c76db0875f7"
+  },
+  "first_stage_scheduler": null,
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 844,
+  "implementation_commit": "a65927a",
+  "latency": 872,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "0011368e01695dc3c3dd25a010579177b7a1ed0be437f1384d6b87ee548206df",
+  "model": "package model 10 (antennas mixed after the first layer), P4/D1",
+  "predicted_frame_cycles": 168,
+  "project": "final_m10_p4d1",
+  "qualification_sha256": "7c754a6147c9ddd245b964b5bf93248a4eb2269fdb792b73713faec7f0bc8651",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 99,
+   "input_gap_cycles": 909,
+   "output_stall_cycles": 87,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "retain-incumbent-without-calibrated-coverage",
+  "source_closure_sha256": "680bb15c69e89bb5cc3080dbfa63ae9d5ae659db943d6153a74a8fbe7868d547",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "aria-wide-stream"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1",
+     "relu_1"
+    ],
+    "strategy": "hls4ml-temporal-block"
+   },
+   {
+    "operation_ids": [
+     "conv2d_2",
+     "relu_2",
+     "max_pool2d_1"
+    ],
+    "strategy": "hls4ml-temporal-block"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-wide"
+   }
+  ],
+  "target_ii": null
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 96,
+   "supplied": 1000
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 768,
+   "generated": 768,
+   "limit": 4096
+  },
+  "files": {
+   "csynth.xml": "a58fa4f2e4e72eb90db4c01f0acd9789149f56b2249e978563dfe639394abff6",
+   "rtl_protocol.json": "148cd4e16dfcd48e4cab94609edb73bb5c03e2622bc79d4e416b4058106f0a9a"
+  },
+  "first_stage_scheduler": {
+   "buffer_rows": 16,
+   "id": "row-credit",
+   "max_live_rows": 14,
+   "read_cycles": 32,
+   "version": 1
+  },
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 48,
+  "implementation_commit": "f350b3e",
+  "latency": 59,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "145ea6b17bae66949b6bb1ea1eb42e78f439857df1bf06e898854fd950da6a24",
+  "model": "package model 09 in its grouped form, rewritten by the frontend",
+  "predicted_frame_cycles": 48,
+  "project": "final_m09_grouped",
+  "qualification_sha256": "176fa311c5b447454708ffffed9507b438b3cb3b6ba4c502e0d09a105850be92",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 99,
+   "input_gap_cycles": 584,
+   "output_stall_cycles": 82,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "calibrated-predicted-frame-interval",
+  "source_closure_sha256": "46cea905352cb154f113cdab1a274ab2f1374ca5bcb52e4b772d199f2d759c10",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "phara"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 1,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "conv2d_2",
+     "relu_1",
+     "max_pool2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 2,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-wide"
+   }
+  ],
+  "target_ii": null
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 88
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 1200,
+   "generated": 1200,
+   "limit": 262144
+  },
+  "files": {
+   "csynth.xml": "81edf5c38208e157c380d97aea24af21a1870b3474f81afd44b0c0a1b9b53777",
+   "ooc/binding.json": "343f1f9aa0aa3f1f8eed461ba3e9d501d3d2f2635a1489c2cd9bf85852a282b8",
+   "ooc/timing.rpt": "a709ef341113b7ced55baefe32c0f4f38e5a63a1473f5c0dd59f3aee22616776",
+   "ooc/utilization.rpt": "076d45c7480d2cc186b068b6135bed290dfc150126a2dd19601f32ee8a175529",
+   "rtl_protocol.json": "ed8ae32806770e0766775f25091ac5c9b031fb0c428db0794011dc68acf0480c"
+  },
+  "first_stage_scheduler": {
+   "buffer_rows": 16,
+   "cycles": 63,
+   "drain_cycles": 0,
+   "fill_cycles": 1,
+   "id": "row-credit",
+   "max_live_rows": 16,
+   "read_cycles": 32,
+   "version": 2
+  },
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 69,
+  "implementation_commit": "6e546ec",
+  "latency": 81,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "31afbe129b0a36ecd0f54aaad168cdccd0963c44e7012ec843d2a815375bc938",
+  "model": "synthetic model with the shape of the Dense-32 design (12x7 step 2, depthwise 7 step 2, 1x1 to 16, Dense 32), random weights",
+  "ooc": {
+   "capacity": {
+    "DSP": 1824,
+    "FF": 433920,
+    "LUT": 216960
+   },
+   "resources": {
+    "BRAM_TILES": 16.0,
+    "DSP": 525.0,
+    "FF": 25446.0,
+    "LUT": 27340.0
+   },
+   "timing": {
+    "target_clock_ns": 5.0,
+    "tns_ns": 0.0,
+    "wns_ns": 0.413
+   },
+   "utilization_percent": {
+    "DSP": 28.78,
+    "FF": 5.86,
+    "LUT": 12.6
+   }
+  },
+  "predicted_frame_cycles": 69,
+  "project": "final2_dense32",
+  "qualification_sha256": "c99fa65c622c2cf582959a47a7083154f0f467916ef553f26855108703c87bda",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 91,
+   "input_gap_cycles": 415,
+   "output_stall_cycles": 81,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "calibrated-predicted-frame-interval",
+  "source_closure_sha256": "3ef07cc8f08b056fc0bed7bd65cdce119196ff3a0bd72243c665ed8b7f0d3a92",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "phara"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 1,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "conv2d_2",
+     "relu_1",
+     "max_pool2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 2,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-matrix"
+   },
+   {
+    "operation_ids": [
+     "relu_2",
+     "dense_1"
+    ],
+    "strategy": "hls4ml-head-tail"
+   }
+  ],
+  "target_ii": null
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 96,
+   "supplied": 1000
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 240,
+   "generated": 240,
+   "limit": 4096
+  },
+  "files": {
+   "csynth.xml": "aa6c2c983c4f64268c45c97568f6e8cbc39fac023177cf75baf1d1099a006c99",
+   "ooc/binding.json": "f0c603a6e407771abb670770c9244558a0aac1eb027d13b6e2ab57da9dc12f14",
+   "ooc/timing.rpt": "e0c43bc4896faf68b6281e22b5b8ec4e2cb9b3a234252f10e35b17b1217405aa",
+   "ooc/utilization.rpt": "2c3d05d8b5cddec745ed49ba3be233851a6b2eadbb22a513be7a8e216db3d999",
+   "rtl_protocol.json": "efd15fec2c8ef0d7ec03674911e2c585969b5e043869f02ee54a1825abe3bdcf"
+  },
+  "first_stage_scheduler": {
+   "buffer_rows": 16,
+   "id": "row-credit",
+   "max_live_rows": 14,
+   "read_cycles": 32,
+   "version": 1
+  },
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 51,
+  "implementation_commit": "6e546ec",
+  "latency": 58,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "e65e41324abae7d6114e69ac1954445c3b068c898186a7171d62fd9b1487b758",
+  "model": "package model 07 (hidden Dense 16)",
+  "ooc": {
+   "capacity": {
+    "DSP": 1824,
+    "FF": 433920,
+    "LUT": 216960
+   },
+   "resources": {
+    "BRAM_TILES": 14.5,
+    "DSP": 200.0,
+    "FF": 31916.0,
+    "LUT": 50125.0
+   },
+   "timing": {
+    "target_clock_ns": 5.0,
+    "tns_ns": 0.0,
+    "wns_ns": 0.077
+   },
+   "utilization_percent": {
+    "DSP": 10.96,
+    "FF": 7.36,
+    "LUT": 23.1
+   }
+  },
+  "predicted_frame_cycles": 50,
+  "project": "final2_m07",
+  "qualification_sha256": "5b420f8d3e8d183dce154bc8ce513f9f91b4f7aa4f366c0bbd54b6fc4b918991",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 99,
+   "input_gap_cycles": 452,
+   "output_stall_cycles": 88,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "calibrated-predicted-frame-interval",
+  "source_closure_sha256": "c4eb2cabe58f5a0793b5e818e602288f43b7bba8a5876eebe7854653f59913cc",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "phara"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1",
+     "relu_1",
+     "max_pool2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 1,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-matrix"
+   },
+   {
+    "operation_ids": [
+     "relu_2",
+     "dense_1"
+    ],
+    "strategy": "hls4ml-head-tail"
+   }
+  ],
+  "target_ii": null
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 96,
+   "supplied": 1000
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 240,
+   "generated": 240,
+   "limit": 4096
+  },
+  "files": {
+   "csynth.xml": "573ee99cb66089b4717f12d7448ffbb16f5cd3e9300c9a4c4b533c3b01fe87c8",
+   "ooc/binding.json": "64c0eacdf00e78622a99272268356557e8498d6bb01ee25e407d9f5de18dfa71",
+   "ooc/timing.rpt": "740068977cc7e53a32078b168f6ac5b06c933d644b28c2fd2a3c5b07cb268ecd",
+   "ooc/utilization.rpt": "572a4d5b3a76e0903c1ab36ea1b6e86075ae3db4657274eb56cc33e3a488faf3",
+   "rtl_protocol.json": "90987219d1aa47c6c8d6a57c40097947b934ea7a95c39dd69e36328d2e28c24e"
+  },
+  "first_stage_scheduler": {
+   "buffer_rows": 16,
+   "id": "row-credit",
+   "max_live_rows": 14,
+   "read_cycles": 32,
+   "version": 1
+  },
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 65,
+  "implementation_commit": "6e546ec",
+  "latency": 73,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "5329c1061e9aa2fadc63c2806df879e10eeb2379642a214f5778336a3abf5154",
+  "model": "package model 07 (hidden Dense 16), TargetII 85",
+  "ooc": {
+   "capacity": {
+    "DSP": 1824,
+    "FF": 433920,
+    "LUT": 216960
+   },
+   "resources": {
+    "BRAM_TILES": 8.0,
+    "DSP": 100.0,
+    "FF": 22645.0,
+    "LUT": 34669.0
+   },
+   "timing": {
+    "target_clock_ns": 5.0,
+    "tns_ns": 0.0,
+    "wns_ns": 0.3
+   },
+   "utilization_percent": {
+    "DSP": 5.48,
+    "FF": 5.22,
+    "LUT": 15.98
+   }
+  },
+  "predicted_frame_cycles": 64,
+  "project": "final2_m07_t85",
+  "qualification_sha256": "ac98aac2a5261b2e66ac98f3e1f34e5ffa341bf6bf83d225094946cdeee8959c",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 99,
+   "input_gap_cycles": 491,
+   "output_stall_cycles": 84,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "lowest-lut-within-ii-target",
+  "source_closure_sha256": "4b08940b637c21b280508ec1ec1160e7259db6746ee73e9a9ab94a51ea93aa48",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "phara"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1",
+     "relu_1",
+     "max_pool2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 2,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-matrix"
+   },
+   {
+    "operation_ids": [
+     "relu_2",
+     "dense_1"
+    ],
+    "strategy": "hls4ml-head-tail"
+   }
+  ],
+  "target_ii": 85
+ },
+ {
+  "c_verification": "passed",
+  "corpus_samples": {
+   "built_in": 88
+  },
+  "exploration": {
+   "bound_reasons": [],
+   "evaluated": 1200,
+   "generated": 1200,
+   "limit": 262144
+  },
+  "files": {
+   "csynth.xml": "d715593dcbb453230aa8501f8dfd1b8b9dda0a0cb7c45992b5ecea81b4d8e9e8",
+   "ooc/binding.json": "621eb2935038d273551b9682c49f43c01da9dd455122d97e4622541b1a2bc914",
+   "ooc/timing.rpt": "480724b33e144813d6b00c8aead3ff49255d21e087eaa7d8c0023eea0e1c0b34",
+   "ooc/utilization.rpt": "6df1d40bf13dbbd6685e5e9ee8ee5c8ed897a83a42d663301d05cfc89e1656fd",
+   "rtl_protocol.json": "e46f4278b90584408de646c5dda0b2e138d774a139ead510326c89f6bc3e15ae"
+  },
+  "first_stage_scheduler": {
+   "buffer_rows": 16,
+   "cycles": 63,
+   "drain_cycles": 0,
+   "fill_cycles": 1,
+   "id": "row-credit",
+   "max_live_rows": 16,
+   "read_cycles": 32,
+   "version": 2
+  },
+  "generation": {
+   "id": "aria",
+   "version": "1.8.0"
+  },
+  "ii": 67,
+  "implementation_commit": "f350b3e",
+  "latency": 78,
+  "manifest_schema_version": 9,
+  "manifest_sha256": "b0554dfbb245c578453891fc5bac650d35dee913b70edbec3a56346c618e11a0",
+  "model": "synthetic Dense-32 design shape before the accumulator loop change; kept as the record of the timing miss",
+  "ooc": {
+   "capacity": {
+    "DSP": 1824,
+    "FF": 433920,
+    "LUT": 216960
+   },
+   "resources": {
+    "BRAM_TILES": 16.0,
+    "DSP": 536.0,
+    "FF": 23921.0,
+    "LUT": 26919.0
+   },
+   "timing": {
+    "target_clock_ns": 5.0,
+    "tns_ns": -36.967,
+    "wns_ns": -0.253
+   },
+   "utilization_percent": {
+    "DSP": 29.39,
+    "FF": 5.51,
+    "LUT": 12.41
+   }
+  },
+  "predicted_frame_cycles": 69,
+  "project": "final_dense32",
+  "qualification_sha256": "b459dae3066c355597382b7bb55d77020223c74a47441a44af82e84a3b8a23df",
+  "rtl_cosimulation": "passed",
+  "rtl_protocol": {
+   "completed_samples": 91,
+   "input_gap_cycles": 416,
+   "output_stall_cycles": 71,
+   "reset_aborts": 1,
+   "status": "passed"
+  },
+  "search_status": "complete",
+  "selection_reason": "calibrated-predicted-frame-interval",
+  "source_closure_sha256": "4cc7c5b50aca6b5fa82b6322e9d7983748b99eb8d7964db401e38838e505b695",
+  "stage_boundaries": "passed",
+  "stages": [
+   {
+    "operation_ids": [
+     "conv2d_0",
+     "relu_0",
+     "max_pool2d_0"
+    ],
+    "strategy": "phara"
+   },
+   {
+    "operation_ids": [
+     "conv2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 1,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "conv2d_2",
+     "relu_1",
+     "max_pool2d_1"
+    ],
+    "positions": 4,
+    "reuse_factor": 2,
+    "strategy": "aria-affine-window"
+   },
+   {
+    "operation_ids": [
+     "reshape_0"
+    ],
+    "strategy": "identity-layout-view"
+   },
+   {
+    "operation_ids": [
+     "dense_0"
+    ],
+    "strategy": "aria-dense-matrix"
+   },
+   {
+    "operation_ids": [
+     "relu_2",
+     "dense_1"
+    ],
+    "strategy": "hls4ml-head-tail"
+   }
+  ],
+  "target_ii": null
  }
 ]

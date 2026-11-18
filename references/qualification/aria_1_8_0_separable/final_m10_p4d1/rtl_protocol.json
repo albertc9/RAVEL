@@ -1,0 +1,116 @@
+{
+  "completed_samples": 99,
+  "consecutive_samples": 96,
+  "input_gap_cycles": 909,
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 4,
+      "input_scalar_bits": 10,
+      "input_words_per_inference": 64,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 21,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 16
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 10,
+        "input_tdata_bits": 256,
+        "input_tdata_port": "waveform_TDATA",
+        "output_scalar_bits": 21,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer15_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "log_sha256": "317cc682ec371cc52a8793f4f13d400d18bb9126275715910e3a25ac565dcc8e",
+  "manifest_sha256": "0011368e01695dc3c3dd25a010579177b7a1ed0be437f1384d6b87ee548206df",
+  "output_stall_cycles": 87,
+  "reset_aborts": 1,
+  "reset_between_epochs": 1,
+  "rtl_files": {
+    "final_m10_p4d1.v": "2c48322768984207d7664035c3f252ca4a5f8e0335780489d1dce095855432cf",
+    "final_m10_p4d1_compute_output_buffer_1d_array_array_ap_fixed_14_8_5_3_0_12u_config7_s.v": "d870c478cf2ff93da014441f48b3c57ad56bb6ee56c4e192115f973996bd12f1",
+    "final_m10_p4d1_compute_output_buffer_2d_array_array_ap_fixed_19_9_5_3_0_12u_config10_s.v": "fbf6b4a9a1548f09633552a6ebb1e3dca47a2236fa285def7e172020a0b343c1",
+    "final_m10_p4d1_conv_2d_cl_array_ap_fixed_12u_array_ap_fixed_14_8_5_3_0_12u_config7_s.v": "b7f112919de2cb987acc9caa435255bfb7dc51d05ba264e4550e7de9a1be4c80",
+    "final_m10_p4d1_conv_2d_cl_array_ap_fixed_12u_array_ap_fixed_19_9_5_3_0_12u_config10_s.v": "f1c50d96840d8c93189b40031de9f4c9d53f33b8c33ed4b8fc5b76bf54ed305c",
+    "final_m10_p4d1_dense_latency_ap_fixed_10_5_0_2_0_ap_fixed_14_8_5_3_0_config7_mult_s.v": "685a9f9fc085c097ef311a34c08d8dcce29ac4dd172ea30233ba7a24e65ddbb5",
+    "final_m10_p4d1_dense_latency_ap_fixed_10_5_0_2_0_ap_fixed_19_9_5_3_0_config10_mult_s.v": "2a9ec44fb1f15c04a2bd3a13f2fd2e7531227079e8b394ca56b76567c2391535",
+    "final_m10_p4d1_dense_wide_stream_array_array_ap_fixed_1u_config15_Pipeline_DenseValues.v": "f48516e061bd7a7236fce981b307a656502bab11d236ce1f744e4a55a9308d32",
+    "final_m10_p4d1_dense_wide_stream_array_array_ap_fixed_1u_config15_Pipeline_DenseValues_w15_r9j0.v": "64b72884bb4de418860c0983f7e297c3e237ae5e7d9ba8d2a37923eae2dc4559",
+    "final_m10_p4d1_dense_wide_stream_array_array_ap_fixed_21_10_5_3_0_1u_config15_s.v": "84c5d6b6a5e7c667a75cb8c287932077c8e9578449a3da3e624e71bcc611e1f6",
+    "final_m10_p4d1_fifo_w120_d4_S.v": "4094a9c2df75b73827600cfca7956a903f4e1f224b03048b3545cc06d05d33b8",
+    "final_m10_p4d1_fifo_w168_d4_S.v": "893466ce09e734712cde1b4a77552c5afb07cdafe2be2a5cacac4adee0df5e43",
+    "final_m10_p4d1_fifo_w216_d4_S.v": "9b1faa4fc7d43a5c6775f870b08e5f2508b26a29869a6d843330ad01f5d3f737",
+    "final_m10_p4d1_fifo_w228_d4_S.v": "56e072ea100351cc733e9a11cf417da2c814bacdb89afaf416daf5595760be35",
+    "final_m10_p4d1_fifo_w480_d4_A.v": "50c9a73e7241c6e1e653ab1f889980a1996b0ba8651cff3e9cd3b18bc9bdc019",
+    "final_m10_p4d1_fifo_w768_d4_A.v": "f0871ed4dd081c6aabd51e5b1ef42643fbeb89405425bcbb8a66b8366a4bbda1",
+    "final_m10_p4d1_fifo_w816_d4_A.v": "d16115f305ed40e327ac8f02d3cae31bd1d7a2c5fb55eeef1d3173d5728f54b2",
+    "final_m10_p4d1_first_conv_4row_4lane_temporal_wide_cl_array_array_ap_fixed_48u_config3_s.v": "6c766b4a77fcc99b5aaf45b9bcbbf440ec901f5389619e368b4b691f4a466691",
+    "final_m10_p4d1_flow_control_loop_pipe.v": "44f0c01a1ff376c785526e59b19ef581f44877f8e1d71f4b79ab63b56d80fd8d",
+    "final_m10_p4d1_flow_control_loop_pipe_sequential_init.v": "c46c821777829bbb3d9e3ef0d4a8726329193fa965bcd89af59994007a4e8f62",
+    "final_m10_p4d1_mac_muladd_10s_5s_17s_17_1_1.v": "26f9d20e9aa4bb4ef5cf2a6bb5a08fa88e8082690b36f223cfac11ea59e70a52",
+    "final_m10_p4d1_mac_muladd_10s_7s_17s_18_1_1.v": "01eec5507407216fe3b3ed169adac0c4755245736fecb07cb058494ccf49c355",
+    "final_m10_p4d1_mac_muladd_10s_7s_18s_18_1_1.v": "dfd79c6154de132f1632a06756084da692dc87343c49ab25b9340237f4db5814",
+    "final_m10_p4d1_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_48u_config5_s.v": "8f9ba3ce8e8d1b2a530f05c0de83ec7c7e8fc4ee4cc5b2976132a88f3080e332",
+    "final_m10_p4d1_mul_10s_5ns_14_1_1.v": "e552e3b3ce4548ea38f72f4ee21551bd5ef38d0c7e2aa50a1dded1c0a78cad73",
+    "final_m10_p4d1_mul_10s_5ns_15_1_1.v": "0f5422acb80559cbf29c0c82cf4a1b5d1aff1a79b6b2b146db05cb7a626d89b5",
+    "final_m10_p4d1_mul_10s_5s_15_1_0.v": "294e0b1f739775d65557a9ba0b1867449370317c75b50d0e576af86c32c3f403",
+    "final_m10_p4d1_mul_10s_6s_15_1_1.v": "4220ac879b88cc9ad2438c35afbd03f5dc31eecc057643b2813f99245a383bec",
+    "final_m10_p4d1_mul_10s_6s_16_1_1.v": "cfed69d5837dfda36806d2496254b8c6add8fe999554be03bdb5edba7ebac51c",
+    "final_m10_p4d1_mul_10s_7s_17_1_1.v": "c452314cbd8fc89d98c92ab92bd9529d016f45edb80bcec239e9fccc393bdf7b",
+    "final_m10_p4d1_mul_11s_6ns_16_1_1.v": "eefd7c3b35f3d70ba5c7c98996c3d2a146d21429a295aa4d91b19d67a760c82a",
+    "final_m10_p4d1_mul_11s_6ns_17_1_1.v": "b49c358e153ff9f47aa7965762742eb733dc0cf5d6d0e8a61207d8a44daeed55",
+    "final_m10_p4d1_pooling2d_cl_array_array_ap_fixed_10_5_0_2_0_12u_config12_s.v": "53d21e65ce6a924dff4038849150b147eb53c6964f2dbf1e442ae0b7f315ac81",
+    "final_m10_p4d1_regslice_both.v": "d62370d40e5c5ed033649cdd3a107498a4e485d47c945a234393bca3e787aa64",
+    "final_m10_p4d1_relu_array_ap_fixed_12u_array_ap_fixed_10_5_0_2_0_12u_relu_config8_s.v": "b0593d6eeb3d11c69c626feccb3532c4911efa971715d27948cde510d512d0f0",
+    "final_m10_p4d1_relu_array_ap_fixed_12u_array_ap_ufixed_18_8_5_3_0_12u_relu_config11_s.v": "f12c445c5a4f1f04d2b4a9f831d8f43325491816cad4e0e10a4ee46ad1de7818",
+    "final_m10_p4d1_relu_array_ap_fixed_48u_array_ap_ufixed_16_5_5_3_0_48u_relu_config4_s.v": "993817109f3d00e64d7140e1f001a9669f69d0f73756932319754553ad695b14",
+    "final_m10_p4d1_repack_array_ap_fixed_48u_array_ap_fixed_10_5_0_2_0_12u_2016u_12u_s.v": "1c32a6a609bd04b1349808d43bcabda550bb3c7796277193c94d6b4ed02e55e4",
+    "final_m10_p4d1_shift_line_buffer_array_ap_fixed_10_5_0_2_0_12u_config10_s.v": "eb62e9e59be53dcdffa4b506f79b37cca9d1dcab76e68771858a83043e1b8ada",
+    "final_m10_p4d1_shift_line_buffer_array_ap_fixed_10_5_0_2_0_12u_config10_s_p_ZZN4nnet25conv_2bkb.v": "6a452d4c9ed3a5dfda75bcfe852d26c2827c3e6991336de7480c56c60602e0b9",
+    "final_m10_p4d1_shift_line_buffer_array_ap_ufixed_18_8_5_3_0_12u_config12_s.v": "75aff3cefec61170652107fe3420db1b614fffd987b73c8b32203df2617c8cb9",
+    "final_m10_p4d1_shift_line_buffer_array_ap_ufixed_18_8_5_3_0_12u_config12_s_void_pooling2d_clXh4.v": "50c2b45ee9a7881f04379a30bfb2325db64e684c23bb92725a3db0c354f24aab",
+    "final_m10_p4d1_sparsemux_7_2_10_1_1.v": "c34f9a2e27e14186b56ec35a3740be2f7b46d04b1b98cfe9036f0d7e2e0fb94a",
+    "final_m10_p4d1_sparsemux_97_6_10_1_1.v": "de969de382cba57fd00839beb7c19401a6418cdec14f53e679fcb248f96c97de",
+    "final_m10_p4d1_start_for_conv_2d_cl_array_ap_fixed_12u_array_ap_fixed_14_8_5_3_0_12u_config7bbk.v": "3dc97c651a67dadd5af1851b08e59aade3df29fdc74ed589d8328900bb3e6ff1",
+    "final_m10_p4d1_start_for_conv_2d_cl_array_ap_fixed_12u_array_ap_fixed_19_9_5_3_0_12u_config1bck.v": "62213ec1f0b0ebbbf27c09a0faebd29bdce6295517a1b5540b437aa7d8221200",
+    "final_m10_p4d1_start_for_dense_wide_stream_array_array_ap_fixed_21_10_5_3_0_1u_config15_U0.v": "7c28f8ca54399ffb5d5386784a40e239272b1b2a977793dbc34b516647c86e38",
+    "final_m10_p4d1_start_for_maxpool2d_wide_nonoverlap_cl_array_array_ap_fixed_48u_config5_U0.v": "ca2b150adcf90821770be579a9aa5be5cb8d583aea88c3eac330b64c5e2b9273",
+    "final_m10_p4d1_start_for_pooling2d_cl_array_array_ap_fixed_10_5_0_2_0_12u_config12_U0.v": "39f6dca97c188e579ba6e990eeeb2bca6559599a7fb83560ef09880abc26c590",
+    "final_m10_p4d1_start_for_relu_array_ap_fixed_12u_array_ap_fixed_10_5_0_2_0_12u_relu_config8_U0.v": "2cc7b19aaecdc31cb2a5a0edc77dbca68f9366f012aa5b66b1a7dfddb1ca8265",
+    "final_m10_p4d1_start_for_relu_array_ap_fixed_12u_array_ap_ufixed_18_8_5_3_0_12u_relu_config1bdk.v": "986a1751296588417a125100750b168152e44f4bea8e514dc4e823938ca228f9",
+    "final_m10_p4d1_start_for_relu_array_ap_fixed_48u_array_ap_ufixed_16_5_5_3_0_48u_relu_config4bak.v": "60007ddbc7c86e943378c2664f25027edda423b759353d8fa6570617d208f5a9",
+    "final_m10_p4d1_start_for_repack_array_ap_fixed_48u_array_ap_fixed_10_5_0_2_0_12u_2016u_12u_U0.v": "bcfd905012537f9ae74e89b6cb1b515acb68d4e590466350c283951cf30a2114",
+    "final_m10_p4d1_urem_11ns_7ns_6_15_1.v": "4b3c8ec90646f1ec97d9be3b33de8b15f221e77f65acc01f25a9d8d63d3064f3"
+  },
+  "schema_version": 1,
+  "simulator": {
+    "name": "xsim",
+    "version": "Vivado Simulator v2023.2"
+  },
+  "source_closure_sha256": "680bb15c69e89bb5cc3080dbfa63ae9d5ae659db943d6153a74a8fbe7868d547",
+  "status": "passed",
+  "testbench_sha256": "d21c4d1a634775c18239df2be415607b406b55761ddfeaea55ef16f187492239",
+  "top": "final_m10_p4d1",
+  "vector_files": {
+    "rtl_expected_words.hex": "a6a7ad7bc3ca301bad9ed81c7a07d8bac835fc182684bb62342980d0ceb2fcd9",
+    "rtl_input_words.hex": "6926ada0076efea89b5d5201956a6d5de811866669b5f54f645caea2e404b0f2"
+  }
+}

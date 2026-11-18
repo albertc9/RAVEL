@@ -34,10 +34,21 @@ def test_calibration_record_matches_the_profile_and_its_frozen_reports():
 def test_shared_arithmetic_predictions_stay_close_to_the_measured_intervals():
     measurements = read(ROOT / "calibration.json")["measurements"]
     engines = [item for item in measurements
-               if all(stage.get("arithmetic") for stage in item["stages"] if stage["operation_ids"][0].startswith("conv2d_"))]
+               if all(stage.get("arithmetic") for stage in item["stages"] if stage["operation_ids"][0].startswith("conv2d_"))
+               and not any(stage["strategy"]["id"] == "aria-dense-matrix" for stage in item["stages"])]
 
     assert len(engines) >= 7
     assert all(-2 <= item["ii"] - item["predicted_frame_cycles"] <= 3 for item in engines)
+
+
+def test_the_dense_matrix_overhead_matches_its_recorded_stage_measurements():
+    from ravel_hls.planning.calibration import DENSE_MATRIX_OVERHEAD_CYCLES
+
+    record = read(ROOT / "calibration.json")["dense_matrix_overhead"]
+
+    assert record["cycles"] == DENSE_MATRIX_OVERHEAD_CYCLES
+    overheads = [item["stage_ii"] - item["steps"] for item in record["measurements"]]
+    assert len(overheads) >= 3 and max(overheads) == DENSE_MATRIX_OVERHEAD_CYCLES and min(overheads) >= 9
 
 
 def test_final_projects_bind_their_frozen_files_and_pass_every_recorded_layer():
@@ -52,9 +63,11 @@ def test_final_projects_bind_their_frozen_files_and_pass_every_recorded_layer():
         assert item["c_verification"] == item["stage_boundaries"] == item["rtl_cosimulation"] == "passed"
         assert item["rtl_protocol"]["status"] == "passed" and item["rtl_protocol"]["output_stall_cycles"] > 0
         assert item["search_status"] == "complete"
-    routed = [item for item in final if "ooc" in item]
-    assert {item["project"] for item in routed} == {"final_target", "final_m09de", "final_m13"}
-    assert all(item["ooc"]["timing"]["wns_ns"] >= 0 and item["ooc"]["timing"]["tns_ns"] == 0 for item in routed)
+    routed = {item["project"]: item["ooc"]["timing"] for item in final if "ooc" in item}
+    assert set(routed) >= {"final_target", "final_m09de", "final_m13", "final_m08", "final2_m07", "final2_dense32"}
+    # The Dense-32 shape missed timing before the accumulator loop carried one addition.
+    assert routed.pop("final_dense32")["wns_ns"] < 0
+    assert all(timing["wns_ns"] >= 0 and timing["tns_ns"] == 0 for timing in routed.values())
 
 
 def test_the_target_shape_is_selected_with_shared_arithmetic_in_its_separable_group():

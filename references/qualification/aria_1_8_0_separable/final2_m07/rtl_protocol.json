@@ -1,0 +1,105 @@
+{
+  "completed_samples": 99,
+  "consecutive_samples": 96,
+  "input_gap_cycles": 452,
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 8,
+      "input_scalar_bits": 10,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 20,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 32
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 10,
+        "input_tdata_bits": 512,
+        "input_tdata_port": "waveform_TDATA",
+        "output_scalar_bits": 20,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer15_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "log_sha256": "72420359ed383e4d5601deb4c1d1f076cbcbf69eed30a1d6e71a295bbaa765be",
+  "manifest_sha256": "e65e41324abae7d6114e69ac1954445c3b068c898186a7171d62fd9b1487b758",
+  "output_stall_cycles": 88,
+  "reset_aborts": 1,
+  "reset_between_epochs": 1,
+  "rtl_files": {
+    "final2_m07.v": "34d670fba4ac9bd027043025ca7823019e0cf2c77ba6b2faeea905213dd08fe2",
+    "final2_m07_dense_array_ap_fixed_16u_array_ap_fixed_20_9_5_3_0_1u_config15_s.v": "ef18596fbf57fac092f4bf8c0a3e4569e4df231e7b73bb8318a512d7f1056adf",
+    "final2_m07_dense_latency_wrapper_ap_fixed_ap_fixed_20_9_5_3_0_config15_s.v": "42ec787058d198f0da12dc8013942682b43c751256f0513c805513ef8471cc38",
+    "final2_m07_dense_matrix_stream_array_array_ap_fixed_16u_config12_48u_4u_7u_24u_s.v": "48b4cdcbaed1683ee9bdb6d0dd996191141234db0ab18d6846dc56d722e33057",
+    "final2_m07_dense_matrix_stream_array_array_config12_48u_4u_7u_24u_Pipeline_DenseMatrix.v": "9f894f65855ad13ecbb4e97cfa6ffac44feeaaccda876e170ab36018a7f43cfb",
+    "final2_m07_dense_matrix_stream_array_array_config12_48u_4u_7u_24u_Pipeline_DenseMatrix_pbkb.v": "a6fef34f6294db6d66f8c52ab0ac1795bdfc4d9a116c158ad79c6a8e8a9e11ab",
+    "final2_m07_dense_matrix_stream_array_array_config12_48u_4u_7u_24u_Pipeline_DenseMatrix_pcud.v": "c4c7daa302eec4a80712256b10efb516a471da7390ed7aaf8020cd3f0efafdbb",
+    "final2_m07_dense_matrix_stream_array_array_config12_48u_4u_7u_24u_Pipeline_DenseMatrix_pdEe.v": "e3342b4805835d4a13ddee91c4d31312d88c86c9ea0956d385d67d70e61b14b8",
+    "final2_m07_dense_matrix_stream_array_array_config12_48u_4u_7u_24u_Pipeline_DenseMatrix_peOg.v": "bb72a6b18177e63cdd53a83e5bcee72d8c7a2b6e02d70767e0922647b06e1d9d",
+    "final2_m07_fifo_w160_d4_S.v": "8dfab721171a7c8adb170da5c6434674c5ac05281fe4142e405f0424aab6b8b2",
+    "final2_m07_fifo_w256_d4_S.v": "360f685689a5e221ce28e4cabf56816cf2712501f55ea7fd24d73a5f2b7d35de",
+    "final2_m07_fifo_w480_d4_A.v": "b7623cdef23b7ef950bab13fd0165a38ccb43fc7a5a9af49c29beb04921bdf18",
+    "final2_m07_fifo_w816_d4_A.v": "f5ba5a4e60fe3d0209a65b2d15034f3418741a61b9b8d512497f2e1341e81f91",
+    "final2_m07_fifo_w864_d4_A.v": "6ed1e37ac2157a743e1a46d86732febe44f8b3016c700a00914f0ba70f67c727",
+    "final2_m07_flow_control_loop_pipe.v": "1cf754e7c6e5fe4dc7f360945e12bbd33360a807326a4af4f3110871eb683aa3",
+    "final2_m07_flow_control_loop_pipe_sequential_init.v": "0fac7a11eb214be4e30590a42fdd609797906e716509b3cf2adc60add2b2e919",
+    "final2_m07_mac_muladd_10s_4s_17s_17_1_1.v": "a5607882f7dffbeb9fe816f8bf1510be5e04ec32cd3ed25b085f41145b1bd9be",
+    "final2_m07_mac_muladd_10s_5s_17s_17_1_1.v": "2300a840e018402217e8cb04f430f5dd6597279b77dd9a519b96dabd31e299ae",
+    "final2_m07_mac_muladd_10s_7s_17s_18_1_1.v": "a7a19e518cba9fa12ca968e5e64fc18d0fbd47526d91bdce8f3375e55ff9da7f",
+    "final2_m07_mac_muladd_10s_7s_18s_18_1_1.v": "153436b41c09ec1120123926c6923093a5bc111cb8809ccc74265a6a4e904a4c",
+    "final2_m07_mac_muladd_10s_7s_18s_19_1_1.v": "d2227a31c4d4ad083840d60753771593c5e2c973958ac46a0d4a9d4a07af187a",
+    "final2_m07_mac_muladd_10s_7s_18s_20_1_1.v": "27922dc45df0a48f40dc03ae316b81c97e4d4fc37e7686b40d3a07fc950c7194",
+    "final2_m07_mac_muladd_10s_7s_18s_21_1_1.v": "14cbcb704dfb9c2ad54d07012a6bc1353c00471700ed2840a7bdd470c2b8864b",
+    "final2_m07_mul_10s_5s_15_1_1.v": "efde206980dfee499c1205e1c56102e12fdccd47577cb1716a0a4fc3189cca4b",
+    "final2_m07_mul_10s_6ns_16_1_1.v": "b4a6ab2ef354220901c0bc55d160f0e9a694ba17f1500e06e6bbd709e0a2a9e1",
+    "final2_m07_mul_10s_6s_16_1_1.v": "16c4f005ad985b479dfee85fd7d8bd5e2f72579d3901b64b1cefaaeb1ec13fd7",
+    "final2_m07_mul_10s_7ns_17_1_1.v": "e1791b7214c6a6c9ba6092e9ab79a094f491ea4b2c94e551bdc5f0d4c90d4330",
+    "final2_m07_mul_10s_7s_17_1_1.v": "83c51d1a18555eaf754356333a205629c7b05a1eda16524ee8339853ff5a4ae1",
+    "final2_m07_mul_10s_8ns_18_1_1.v": "688e83b322ad204e710592193754b79f91358d9734d6783abf0f8b1cfd33f882",
+    "final2_m07_phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s.v": "3d07f80bf0c0559bdbc72745d85bfde88f8a7caec492134f657553319332c9da",
+    "final2_m07_regslice_both.v": "81aa1b49e654a3186dfbfa35db7d4cb69a1b479aac09cea41f35d11bd4e796e6",
+    "final2_m07_relu_array_ap_fixed_16u_array_ap_fixed_10_5_0_2_0_16u_relu_config13_s.v": "67d42288e137154789f25cf4b54958bb53afbf0f236b7eea8c0f96308224f326",
+    "final2_m07_relu_array_ap_fixed_48u_array_ap_ufixed_17_7_5_3_0_48u_relu_config8_s.v": "515ecca1f2dfe7bf3442ec265ffa61d689406e97a075ee47204a9919f81e5960",
+    "final2_m07_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s.v": "232c40075b9b2d6b86ac9d9dc4f3b160831f64b10af50ba94773dd3cfe5d6ad9",
+    "final2_m07_scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s.v": "174bfbd0f9061d3b0e311a1fde1b151a308ded3c354d8d0157581e1b67dd197e",
+    "final2_m07_sparsemux_17_3_10_1_1.v": "db30bcb035dfbdf5c41836b88ccf6c9810ea9be9b5ca2b63243023c08c2a1ced",
+    "final2_m07_sparsemux_9_2_21_1_1.v": "5e45e282dcce882c073b5115e4998fc5c2116074820643763e054f28f707877b",
+    "final2_m07_start_for_dense_array_ap_fixed_16u_array_ap_fixed_20_9_5_3_0_1u_config15_U0.v": "491631e4b62fe01d81a4ef2db228ed97e588b195d007b8eee98af001a00f1c1c",
+    "final2_m07_start_for_dense_matrix_stream_array_array_ap_fixed_16u_config12_48u_4u_7u_24ug8j.v": "fbb4c0bd5bc82f4ec30f33a6c9b58fec9fb761139f34e7bcdf0ba42fbad50e23",
+    "final2_m07_start_for_relu_array_ap_fixed_16u_array_ap_fixed_10_5_0_2_0_16u_relu_config13hbi.v": "9c92bde6303205046cea0ab8c7f0b60da3d0d82548da625ddd4867b37228dc09",
+    "final2_m07_start_for_relu_array_ap_fixed_48u_array_ap_ufixed_17_7_5_3_0_48u_relu_config8fYi.v": "b02b776d6419d0cc4e943875ed6dfad2ae824a3706e3813df75dbf4ca7743b64",
+    "final2_m07_start_for_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_U0.v": "7459ed091a11ea2f0d365f20eb4ee1d76d759bf36fd6cdf41e072a16ad0c7705",
+    "final2_m07_start_for_scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_U0.v": "d9092ac4d5994a985f466d9af7a062039b18691aa9696ea25689865b72e675a7"
+  },
+  "schema_version": 1,
+  "simulator": {
+    "name": "xsim",
+    "version": "Vivado Simulator v2023.2"
+  },
+  "source_closure_sha256": "c4eb2cabe58f5a0793b5e818e602288f43b7bba8a5876eebe7854653f59913cc",
+  "status": "passed",
+  "testbench_sha256": "72eb2e0c5d0e9fc8a2340eda25748f1a826dad562da4620527d897bf8def09d6",
+  "top": "final2_m07",
+  "vector_files": {
+    "rtl_expected_words.hex": "c32fc72e3105005cec15d76e34597cbbe32318149242f416c4d2f7307335ee01",
+    "rtl_input_words.hex": "5817e1b960e576751f9309079959055945966d1949570e7809fce467761380ae"
+  }
+}
