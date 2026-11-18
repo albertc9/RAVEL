@@ -191,7 +191,7 @@ def support_findings(chain: TemporalChain) -> tuple[Finding, ...]:
     """
     blocks = chain.blocks
     if sum(block.pooling is not None for block in blocks) > 2:
-        return (Finding("family.support.block_count", "Aria 1.7 qualifies only one- and two-block plans"),)
+        return (Finding("family.support.block_count", "Aria 1.8 qualifies at most two pooled temporal blocks"),)
     findings = []
     if blocks[0].pooling is None:
         findings.append(Finding("family.support.block_form",
