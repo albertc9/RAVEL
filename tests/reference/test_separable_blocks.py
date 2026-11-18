@@ -136,3 +136,24 @@ def test_new_block_forms_use_shared_arithmetic_inside_calibrated_coverage_only()
     assert covered["components"]["cost_policy"]["calibration_profile"]["version"] == 3
     assert [stage["strategy"]["id"] for stage in uncovered["stages"][1:3]] == ["hls4ml-temporal-block", "hls4ml-temporal-block"]
     assert uncovered["optimization_search"]["selection_reason"] == "retain-incumbent-without-calibrated-coverage"
+
+
+def test_refresh_preserves_the_plan_and_rebuilds_the_arithmetic_of_a_separable_project(tmp_path):
+    from ravel_hls import Project, refresh
+
+    model = make_block_chain([conv(3, kernel=7, stride=2), conv(3, kernel=7, stride=2, relu=False, pool=False, diagonal=True),
+                              conv(4, kernel=1, stride=1)], height=128, width=4)
+    project = convert(model, tmp_path / "separable_refresh", {"HLS": KU5P, "Verification": {"Mode": "required", "Samples": 8}})
+    original = project.manifest
+    assert [stage["strategy"]["id"] for stage in original["resolved_design"]["stages"][:3]] == [
+        "phara", "aria-affine-window", "aria-affine-window"]
+    assert Project.open(project.path).status["source_integrity"] == "clean"
+
+    renewed = refresh(project, model).manifest
+
+    assert renewed["schema_version"] == 9
+    assert renewed["architecture_envelope_sha256"] == original["architecture_envelope_sha256"]
+    for before, after in zip(original["resolved_design"]["stages"], renewed["resolved_design"]["stages"]):
+        assert (before["strategy"], before["operation_ids"], before.get("arithmetic_schedule")) == (
+            after["strategy"], after["operation_ids"], after.get("arithmetic_schedule"))
+    assert renewed["verification"]["stage_boundaries"]["status"] == "passed"
