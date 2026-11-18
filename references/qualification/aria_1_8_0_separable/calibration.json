@@ -1,0 +1,2329 @@
+{
+ "profile": "ku5p-constant-matrix-counter-2023.2",
+ "version": 3,
+ "part": "xcku5p-ffvb676-2-e",
+ "clock_ns": 5,
+ "tool_version": "2023.2",
+ "evidence_layer": "HLS synthesis, RTL CoSim and RTL protocol test; no routed implementation",
+ "host": "work1@100.71.11.92, /home/work1/Works/RAVEL-env/qualification/aria180",
+ "measurements": [
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_target_engines_csynth.xml",
+   "hls_report_sha256": "eb30029a76b9e01698b6bbdde16a2bee8735556df3df2dba0ced8207d66a213e",
+   "ii": 67,
+   "latency": 77,
+   "manifest_sha256": "7d41c59751f65f38d133e9dcfd0e96de42972b24428543644c08811b8b4a41c8",
+   "model_sha256": null,
+   "predicted_frame_cycles": 69,
+   "project": "dev_target_engines",
+   "protocol_output_stall_cycles": 88,
+   "protocol_report_sha256": "e5487d06e742a3cdcca42cc39bff1032c9485a9f6aaffdde5aee0758c6b3e454",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "cc0f931ebb9b735f8a4fb6ec4b60e857ea9afaf680c372536309fb65733cca0c",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 14,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": true,
+      "summary": {
+       "add_nodes": 88,
+       "constant_nodes": 0,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 8,
+       "input_rows": 9,
+       "max_fanout": 8,
+       "negate_nodes": 19,
+       "output_values": 16,
+       "shared_pair_uses": 8,
+       "shared_product_uses": 47,
+       "shift_nodes": 18,
+       "subtract_nodes": 15
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 68,
+     "measured_functions": [
+      {
+       "ii": 66,
+       "latency": 66,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 14,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": false,
+      "summary": {
+       "add_nodes": 42,
+       "constant_nodes": 0,
+       "convolution_rows": 1,
+       "depth": 5,
+       "filter_lanes": 8,
+       "input_rows": 56,
+       "max_fanout": 2,
+       "negate_nodes": 14,
+       "output_values": 8,
+       "shared_pair_uses": 0,
+       "shared_product_uses": 0,
+       "shift_nodes": 37,
+       "subtract_nodes": 17
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 67,
+     "measured_functions": [
+      {
+       "ii": 66,
+       "latency": 66,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 15,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": false,
+      "summary": {
+       "add_nodes": 59,
+       "constant_nodes": 0,
+       "convolution_rows": 1,
+       "depth": 6,
+       "filter_lanes": 8,
+       "input_rows": 8,
+       "max_fanout": 8,
+       "negate_nodes": 14,
+       "output_values": 8,
+       "shared_pair_uses": 2,
+       "shared_product_uses": 11,
+       "shift_nodes": 22,
+       "subtract_nodes": 25
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 62,
+     "measured_functions": [
+      {
+       "ii": 61,
+       "latency": 61,
+       "top": "shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "relu_array_ap_fixed_32u_array_ap_ufixed_14_6_5_3_0_32u_relu_config10_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_32u_config11_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 14,
+     "measured_functions": [
+      {
+       "ii": 19,
+       "latency": 19,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues"
+      },
+      {
+       "ii": 22,
+       "latency": 22,
+       "top": "dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "synthetic target shape",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": -2
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "id": "row-credit",
+    "max_live_rows": 14,
+    "read_cycles": 32,
+    "version": 1
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_m09de_engines_csynth.xml",
+   "hls_report_sha256": "d2f212930dd6d12bd35a0dbdfda5a36040711bf3a078eacbd1ef49d70ed78f2a",
+   "ii": 48,
+   "latency": 59,
+   "manifest_sha256": "9a26c676d340b8984e3fc3895288ffa036791a4a671be21327316d62115692e9",
+   "model_sha256": null,
+   "predicted_frame_cycles": 48,
+   "project": "dev_m09de_engines",
+   "protocol_output_stall_cycles": 95,
+   "protocol_report_sha256": "abbd6aef760b594d1cd74162e708fa4546352ed1f14e9f6d2154f0ee5a098c0a",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "8f0af5dff986526070572e04f76381597ef30f0efb2d40be80421bebf9a19a89",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 17,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": true,
+      "summary": {
+       "add_nodes": 148,
+       "constant_nodes": 8,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 8,
+       "max_fanout": 13,
+       "negate_nodes": 17,
+       "output_values": 24,
+       "shared_pair_uses": 12,
+       "shared_product_uses": 22,
+       "shift_nodes": 39,
+       "subtract_nodes": 67
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 47,
+     "measured_functions": [
+      {
+       "ii": 47,
+       "latency": 47,
+       "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 16,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 69,
+       "constant_nodes": 7,
+       "convolution_rows": 1,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 60,
+       "max_fanout": 3,
+       "negate_nodes": 18,
+       "output_values": 12,
+       "shared_pair_uses": 0,
+       "shared_product_uses": 0,
+       "shift_nodes": 71,
+       "subtract_nodes": 36
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 47,
+     "measured_functions": [
+      {
+       "ii": 46,
+       "latency": 46,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 0,
+      "input_width": 11,
+      "paired": false,
+      "summary": {
+       "add_nodes": 167,
+       "constant_nodes": 10,
+       "convolution_rows": 1,
+       "depth": 7,
+       "filter_lanes": 12,
+       "input_rows": 12,
+       "max_fanout": 13,
+       "negate_nodes": 30,
+       "output_values": 12,
+       "shared_pair_uses": 8,
+       "shared_product_uses": 17,
+       "shift_nodes": 54,
+       "subtract_nodes": 88
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 32,
+     "measured_functions": [
+      {
+       "ii": 32,
+       "latency": 32,
+       "top": "shared_conv_array_array_config15_4u_ravel_matrix_conv2d_2_2u_s"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "relu_array_ap_fixed_48u_array_ap_ufixed_18_7_5_3_0_48u_relu_config10_s"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config11_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 6,
+     "measured_functions": [
+      {
+       "ii": 12,
+       "latency": 12,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config14_Pipeline_DenseValues"
+      },
+      {
+       "ii": 15,
+       "latency": 15,
+       "top": "dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config14_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 09, dense-equivalent",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": 0
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 47,
+    "drain_cycles": 0,
+    "fill_cycles": 0,
+    "id": "row-credit",
+    "max_live_rows": 12,
+    "read_cycles": 24,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_heldout_engines_csynth.xml",
+   "hls_report_sha256": "6cdf91fe93c66aa4e07b0dceb9b2e1314bd1d3f8819d53703358a971fe8f0504",
+   "ii": 52,
+   "latency": 60,
+   "manifest_sha256": "5f7e80ef2b161e0f621fb7c218265e1d0fac6f5a95e1c1327d1d95399936463e",
+   "model_sha256": null,
+   "predicted_frame_cycles": 53,
+   "project": "dev_heldout_engines",
+   "protocol_output_stall_cycles": 76,
+   "protocol_report_sha256": "69e1dbfceacccfda0f886b9cea02617c5928d026f13eb571bcee83c2d1dc51f0",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "7b6d7d12f77bf31fe3cf545b15156d41bcd383694f51fd742e4a64ee3750096b",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 14,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": true,
+      "summary": {
+       "add_nodes": 48,
+       "constant_nodes": 0,
+       "convolution_rows": 2,
+       "depth": 5,
+       "filter_lanes": 6,
+       "input_rows": 7,
+       "max_fanout": 8,
+       "negate_nodes": 16,
+       "output_values": 12,
+       "shared_pair_uses": 2,
+       "shared_product_uses": 15,
+       "shift_nodes": 20,
+       "subtract_nodes": 18
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 52,
+     "measured_functions": [
+      {
+       "ii": 50,
+       "latency": 50,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 13,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": false,
+      "summary": {
+       "add_nodes": 15,
+       "constant_nodes": 0,
+       "convolution_rows": 1,
+       "depth": 4,
+       "filter_lanes": 6,
+       "input_rows": 18,
+       "max_fanout": 2,
+       "negate_nodes": 9,
+       "output_values": 6,
+       "shared_pair_uses": 0,
+       "shared_product_uses": 0,
+       "shift_nodes": 18,
+       "subtract_nodes": 3
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 51,
+     "measured_functions": [
+      {
+       "ii": 51,
+       "latency": 51,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 15,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": false,
+      "summary": {
+       "add_nodes": 52,
+       "constant_nodes": 0,
+       "convolution_rows": 1,
+       "depth": 6,
+       "filter_lanes": 10,
+       "input_rows": 6,
+       "max_fanout": 8,
+       "negate_nodes": 11,
+       "output_values": 10,
+       "shared_pair_uses": 2,
+       "shared_product_uses": 15,
+       "shift_nodes": 18,
+       "subtract_nodes": 21
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 52,
+     "measured_functions": [
+      {
+       "ii": 50,
+       "latency": 50,
+       "top": "shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_s"
+      },
+      {
+       "ii": 26,
+       "latency": 26,
+       "top": "relu_array_ap_fixed_40u_array_ap_ufixed_14_6_5_3_0_40u_relu_config10_s"
+      },
+      {
+       "ii": 26,
+       "latency": 26,
+       "top": "scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_40u_config11_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 11,
+     "measured_functions": [
+      {
+       "ii": 17,
+       "latency": 17,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues"
+      },
+      {
+       "ii": 20,
+       "latency": 20,
+       "top": "dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "held-out synthetic geometry; prediction recorded before the run",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": -1
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_m05_engines_csynth.xml",
+   "hls_report_sha256": "2cd4991996db0a4064e7bcea9f4afd8e08ee981245efd16ac1e96d00d17651b7",
+   "ii": 73,
+   "latency": 80,
+   "manifest_sha256": "56db31f7574324280ab87f0bdbe6738bf2868bfd092282e186f437c95c5f8174",
+   "model_sha256": null,
+   "predicted_frame_cycles": 70,
+   "project": "dev_m05_engines",
+   "protocol_output_stall_cycles": 79,
+   "protocol_report_sha256": "a64d0c127da27616f925573f0a049dd42d9256aea71797f41e43d9f0b2c813c8",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "e6f58dae006552e2914ef732f9341d8c5d9a9ccde6c33dc0a2729a7383730c7d",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 17,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": true,
+      "summary": {
+       "add_nodes": 185,
+       "constant_nodes": 8,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 9,
+       "max_fanout": 14,
+       "negate_nodes": 32,
+       "output_values": 24,
+       "shared_pair_uses": 13,
+       "shared_product_uses": 23,
+       "shift_nodes": 40,
+       "subtract_nodes": 93
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 68,
+     "measured_functions": [
+      {
+       "ii": 67,
+       "latency": 67,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 774,
+       "constant_nodes": 6,
+       "convolution_rows": 1,
+       "depth": 15,
+       "filter_lanes": 12,
+       "input_rows": 84,
+       "max_fanout": 9,
+       "negate_nodes": 227,
+       "output_values": 12,
+       "shared_pair_uses": 191,
+       "shared_product_uses": 289,
+       "shift_nodes": 254,
+       "subtract_nodes": 293
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 69,
+     "measured_functions": [
+      {
+       "ii": 72,
+       "latency": 72,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "relu_array_ap_fixed_48u_array_ap_ufixed_18_8_5_3_0_48u_relu_config8_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 14,
+     "measured_functions": [
+      {
+       "ii": 21,
+       "latency": 21,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues"
+      },
+      {
+       "ii": 24,
+       "latency": 24,
+       "top": "dense_wide_stream_array_array_ap_fixed_22_12_5_3_0_1u_config12_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 05",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": 3
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "id": "row-credit",
+    "max_live_rows": 14,
+    "read_cycles": 32,
+    "version": 1
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_m06_engines_csynth.xml",
+   "hls_report_sha256": "8cb67adfddcd2308956d04799b1e177311083b191809a6ecab9b783c14cff57a",
+   "ii": 50,
+   "latency": 57,
+   "manifest_sha256": "6e0d5605e134e47bef5a87b2d5c0f6d7bd5a6498410a7c26012332d5eaa30139",
+   "model_sha256": null,
+   "predicted_frame_cycles": 49,
+   "project": "dev_m06_engines",
+   "protocol_output_stall_cycles": 93,
+   "protocol_report_sha256": "12e654a2cfb4e7bff110163846a640222077194014ace7e0dd743aee5db7a56e",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "d5bc9170b48b72b7ebde68b49540d18870d742171ba419532baed4ffdcaae373",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 17,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": true,
+      "summary": {
+       "add_nodes": 130,
+       "constant_nodes": 6,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 8,
+       "max_fanout": 15,
+       "negate_nodes": 24,
+       "output_values": 24,
+       "shared_pair_uses": 6,
+       "shared_product_uses": 13,
+       "shift_nodes": 34,
+       "subtract_nodes": 77
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 47,
+     "measured_functions": [
+      {
+       "ii": 47,
+       "latency": 47,
+       "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 18,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 422,
+       "constant_nodes": 6,
+       "convolution_rows": 1,
+       "depth": 11,
+       "filter_lanes": 12,
+       "input_rows": 36,
+       "max_fanout": 11,
+       "negate_nodes": 101,
+       "output_values": 12,
+       "shared_pair_uses": 37,
+       "shared_product_uses": 84,
+       "shift_nodes": 126,
+       "subtract_nodes": 170
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 48,
+     "measured_functions": [
+      {
+       "ii": 49,
+       "latency": 49,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      },
+      {
+       "ii": 43,
+       "latency": 43,
+       "top": "relu_array_ap_fixed_48u_array_ap_ufixed_17_7_5_3_0_48u_relu_config8_s"
+      },
+      {
+       "ii": 43,
+       "latency": 43,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 20,
+     "measured_functions": [
+      {
+       "ii": 27,
+       "latency": 27,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues"
+      },
+      {
+       "ii": 30,
+       "latency": 30,
+       "top": "dense_wide_stream_array_array_ap_fixed_23_12_5_3_0_1u_config12_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 06",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": 1
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_target_t85_csynth.xml",
+   "hls_report_sha256": "3ac5fc5a0c14dd84b7318f3b8aa1ab59a36480a30ced119b7f0a92e2dcd57c98",
+   "ii": 67,
+   "latency": 77,
+   "manifest_sha256": "97dae8b6db6a6985cd289449522fa493453beffc9d03ad15f7cb34b01d811759",
+   "model_sha256": null,
+   "predicted_frame_cycles": 69,
+   "project": "dev_target_t85",
+   "protocol_output_stall_cycles": 79,
+   "protocol_report_sha256": "9fa172528dda217a094b6f265c7588fa15615e36899b2014b05b94f8224b1e8e",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "lowest-lut-within-ii-target",
+   "source_closure_sha256": "454dba7f3ff239d66514ece57b7143f66b531c228dd3d93427010f82d7375343",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 14,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": true,
+      "summary": {
+       "add_nodes": 88,
+       "constant_nodes": 0,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 8,
+       "input_rows": 9,
+       "max_fanout": 8,
+       "negate_nodes": 19,
+       "output_values": 16,
+       "shared_pair_uses": 8,
+       "shared_product_uses": 47,
+       "shift_nodes": 18,
+       "subtract_nodes": 15
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 68,
+     "measured_functions": [
+      {
+       "ii": 66,
+       "latency": 66,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 14,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": false,
+      "summary": {
+       "add_nodes": 42,
+       "constant_nodes": 0,
+       "convolution_rows": 1,
+       "depth": 5,
+       "filter_lanes": 8,
+       "input_rows": 56,
+       "max_fanout": 2,
+       "negate_nodes": 14,
+       "output_values": 8,
+       "shared_pair_uses": 0,
+       "shared_product_uses": 0,
+       "shift_nodes": 37,
+       "subtract_nodes": 17
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 67,
+     "measured_functions": [
+      {
+       "ii": 66,
+       "latency": 66,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 15,
+      "dsp_product_budget": 0,
+      "input_width": 9,
+      "paired": false,
+      "summary": {
+       "add_nodes": 59,
+       "constant_nodes": 0,
+       "convolution_rows": 1,
+       "depth": 6,
+       "filter_lanes": 8,
+       "input_rows": 8,
+       "max_fanout": 8,
+       "negate_nodes": 14,
+       "output_values": 8,
+       "shared_pair_uses": 2,
+       "shared_product_uses": 11,
+       "shift_nodes": 22,
+       "subtract_nodes": 25
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 62,
+     "measured_functions": [
+      {
+       "ii": 61,
+       "latency": 61,
+       "top": "shared_conv_array_array_config14_4u_ravel_matrix_conv2d_2_2u_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "relu_array_ap_fixed_32u_array_ap_ufixed_14_6_5_3_0_32u_relu_config10_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "scheduled_pool_array_array_ap_ufixed_14_6_5_3_0_32u_config11_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 14,
+     "measured_functions": [
+      {
+       "ii": 19,
+       "latency": 19,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues"
+      },
+      {
+       "ii": 22,
+       "latency": 22,
+       "top": "dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": 85,
+   "model": "synthetic target shape, TargetII 85",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": -2
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "id": "row-credit",
+    "max_live_rows": 14,
+    "read_cycles": 32,
+    "version": 1
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/dev_m09de_t85_csynth.xml",
+   "hls_report_sha256": "6e6134c60f2271e63e44667cd506a8c5122cb8d7b996978173b4de8807c0487b",
+   "ii": 62,
+   "latency": 79,
+   "manifest_sha256": "709f1e17d6cbf5824a85ad5a48b14b02682516010acfb4c2921f3e8d1f81198d",
+   "model_sha256": null,
+   "predicted_frame_cycles": 62,
+   "project": "dev_m09de_t85",
+   "protocol_output_stall_cycles": 83,
+   "protocol_report_sha256": "1080d4d7f047772df5d24ec0cf05939e41a156b41e4165f2d3c91bb19fdd15d7",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "lowest-lut-within-ii-target",
+   "source_closure_sha256": "bc015462df0c128d183cee934d63ee84b3404bfa3df0cc0fb03f01d1186b9da4",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 17,
+      "dsp_product_budget": 16,
+      "input_width": 10,
+      "paired": true,
+      "summary": {
+       "add_nodes": 143,
+       "constant_nodes": 8,
+       "convolution_rows": 2,
+       "depth": 6,
+       "dsp_product_budget": 16,
+       "dsp_product_uses": 23,
+       "filter_lanes": 12,
+       "input_rows": 8,
+       "max_fanout": 15,
+       "multiply_nodes": 16,
+       "negate_nodes": 15,
+       "output_values": 24,
+       "shared_pair_uses": 5,
+       "shared_product_uses": 22,
+       "shift_nodes": 35,
+       "subtract_nodes": 47
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 47,
+     "measured_functions": [
+      {
+       "ii": 48,
+       "latency": 48,
+       "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 16,
+      "dsp_product_budget": 16,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 67,
+       "constant_nodes": 7,
+       "convolution_rows": 1,
+       "depth": 6,
+       "dsp_product_budget": 16,
+       "dsp_product_uses": 5,
+       "filter_lanes": 12,
+       "input_rows": 60,
+       "max_fanout": 3,
+       "multiply_nodes": 5,
+       "negate_nodes": 18,
+       "output_values": 12,
+       "shared_pair_uses": 0,
+       "shared_product_uses": 0,
+       "shift_nodes": 61,
+       "subtract_nodes": 28
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 61,
+     "measured_functions": [
+      {
+       "ii": 61,
+       "latency": 61,
+       "top": "shared_conv_array_array_ap_fixed_48u_config7_4u_ravel_matrix_conv2d_1_2u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 16,
+      "input_width": 11,
+      "paired": false,
+      "summary": {
+       "add_nodes": 160,
+       "constant_nodes": 10,
+       "convolution_rows": 1,
+       "depth": 7,
+       "dsp_product_budget": 16,
+       "dsp_product_uses": 22,
+       "filter_lanes": 12,
+       "input_rows": 12,
+       "max_fanout": 13,
+       "multiply_nodes": 16,
+       "negate_nodes": 30,
+       "output_values": 12,
+       "shared_pair_uses": 4,
+       "shared_product_uses": 17,
+       "shift_nodes": 51,
+       "subtract_nodes": 67
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 58,
+     "measured_functions": [
+      {
+       "ii": 58,
+       "latency": 58,
+       "top": "shared_conv_array_array_config15_2u_ravel_matrix_conv2d_2_2u_s"
+      },
+      {
+       "ii": 29,
+       "latency": 29,
+       "top": "relu_array_ap_fixed_24u_array_ap_ufixed_18_7_5_3_0_24u_relu_config10_s"
+      },
+      {
+       "ii": 29,
+       "latency": 29,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_24u_config11_2u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 2,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 6,
+     "measured_functions": [
+      {
+       "ii": 12,
+       "latency": 12,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config14_Pipeline_DenseValues"
+      },
+      {
+       "ii": 15,
+       "latency": 15,
+       "top": "dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config14_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": 85,
+   "model": "package model 09, dense-equivalent, TargetII 85",
+   "selection": "coverage opened for measurement",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": 0
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "id": "row-credit",
+    "max_live_rows": 14,
+    "read_cycles": 16,
+    "version": 1
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/m13_p8d4_csynth.xml",
+   "hls_report_sha256": "5522585a1fdbdc526a59062886bebca8186eaaac5094b57fe8cef1af7dbdad3e",
+   "ii": 31,
+   "latency": 38,
+   "manifest_sha256": "2e404f5d8b7f10a2d58b5e6405970c76160cc4dbff7a3792cdd8aa1225f10089",
+   "model_sha256": null,
+   "predicted_frame_cycles": 29,
+   "project": "m13_p8d4",
+   "protocol_output_stall_cycles": 75,
+   "protocol_report_sha256": "c0bfd5df0efcd74c2bb302fdceee69ac0bb71c697497c548fb32a5dc8a283555",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "6791e7f63bc2c9b16ee657f48f8962381a3acd6690d73d0d5e3548b8921758a4",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 17,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": true,
+      "summary": {
+       "add_nodes": 133,
+       "constant_nodes": 5,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 8,
+       "max_fanout": 14,
+       "negate_nodes": 32,
+       "output_values": 24,
+       "shared_pair_uses": 8,
+       "shared_product_uses": 23,
+       "shift_nodes": 34,
+       "subtract_nodes": 54
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 26,
+     "measured_functions": [
+      {
+       "ii": 26,
+       "latency": 26,
+       "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 635,
+       "constant_nodes": 5,
+       "convolution_rows": 1,
+       "depth": 13,
+       "filter_lanes": 12,
+       "input_rows": 60,
+       "max_fanout": 11,
+       "negate_nodes": 146,
+       "output_values": 12,
+       "shared_pair_uses": 102,
+       "shared_product_uses": 181,
+       "shift_nodes": 194,
+       "subtract_nodes": 215
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 28,
+     "measured_functions": [
+      {
+       "ii": 30,
+       "latency": 30,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      },
+      {
+       "ii": 9,
+       "latency": 9,
+       "top": "relu_array_ap_fixed_48u_array_ap_ufixed_18_8_5_3_0_48u_relu_config8_s"
+      },
+      {
+       "ii": 9,
+       "latency": 9,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 3,
+     "measured_functions": [
+      {
+       "ii": 9,
+       "latency": 9,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues"
+      },
+      {
+       "ii": 12,
+       "latency": 12,
+       "top": "dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config12_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 13",
+   "selection": "ordinary selection, version 2 coverage",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": 2
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "id": "row-credit",
+    "max_live_rows": 14,
+    "read_cycles": 32,
+    "version": 1
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/m02_p8d4_csynth.xml",
+   "hls_report_sha256": "35527f7196944544ccb674e79656183061465628004ed3c4af724a3d34b6613a",
+   "ii": 51,
+   "latency": 58,
+   "manifest_sha256": "8a7111000e4e7fcc5c15fec0e3b7c1c282017132b08cdd4cc33d9f13b3751f65",
+   "model_sha256": null,
+   "predicted_frame_cycles": 49,
+   "project": "m02_p8d4",
+   "protocol_output_stall_cycles": 70,
+   "protocol_report_sha256": "60fda20c14ef1a2dffe55f46e88a2ba6558d469e52a096caccdf93291ef1c4c1",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "a5ee552636fe87ce692983e09092a5da616a67f3120a609fb929d15ae243138b",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 17,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": true,
+      "summary": {
+       "add_nodes": 91,
+       "constant_nodes": 5,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 8,
+       "input_rows": 8,
+       "max_fanout": 14,
+       "negate_nodes": 23,
+       "output_values": 16,
+       "shared_pair_uses": 5,
+       "shared_product_uses": 3,
+       "shift_nodes": 39,
+       "subtract_nodes": 64
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 47,
+     "measured_functions": [
+      {
+       "ii": 47,
+       "latency": 47,
+       "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 306,
+       "constant_nodes": 6,
+       "convolution_rows": 1,
+       "depth": 12,
+       "filter_lanes": 8,
+       "input_rows": 40,
+       "max_fanout": 10,
+       "negate_nodes": 91,
+       "output_values": 8,
+       "shared_pair_uses": 27,
+       "shared_product_uses": 48,
+       "shift_nodes": 134,
+       "subtract_nodes": 128
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 48,
+     "measured_functions": [
+      {
+       "ii": 50,
+       "latency": 50,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "relu_array_ap_fixed_32u_array_ap_ufixed_18_8_5_3_0_32u_relu_config8_s"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_32u_config9_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 6,
+     "measured_functions": [
+      {
+       "ii": 11,
+       "latency": 11,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues"
+      },
+      {
+       "ii": 14,
+       "latency": 14,
+       "top": "dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config12_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 02",
+   "selection": "ordinary selection, version 2 coverage",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": 2
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 43,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/m03_p8d4_csynth.xml",
+   "hls_report_sha256": "cd72bcbaae375f3cbe3e468a977fc7e328a904246d85a3b7bca3c9cdd3fb3805",
+   "ii": 51,
+   "latency": 58,
+   "manifest_sha256": "0308d26aee303b64af16bc52aadc5e9e370d48481266816b19a00a7d10cde648",
+   "model_sha256": null,
+   "predicted_frame_cycles": 60,
+   "project": "m03_p8d4",
+   "protocol_output_stall_cycles": 485,
+   "protocol_report_sha256": "9d9cf5d2478e67141425fc7c2cf14d5fea402f34772e663860445b7aa4eb3bdc",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "bac776471639ea7a0c53f6eefbb73bc6f8e22b0f79290b6035017b29bbb9874c",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 43,
+     "measured_functions": [
+      {
+       "ii": 47,
+       "latency": 47,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 623,
+       "constant_nodes": 8,
+       "convolution_rows": 1,
+       "depth": 16,
+       "filter_lanes": 12,
+       "input_rows": 60,
+       "max_fanout": 10,
+       "negate_nodes": 156,
+       "output_values": 12,
+       "shared_pair_uses": 103,
+       "shared_product_uses": 177,
+       "shift_nodes": 196,
+       "subtract_nodes": 238
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 49,
+     "measured_functions": [
+      {
+       "ii": 50,
+       "latency": 50,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "relu_array_ap_fixed_48u_array_ap_ufixed_18_8_5_3_0_48u_relu_config8_s"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 6,
+     "measured_functions": [
+      {
+       "ii": 13,
+       "latency": 13,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues"
+      },
+      {
+       "ii": 16,
+       "latency": 16,
+       "top": "dense_wide_stream_array_array_ap_fixed_22_12_5_3_0_1u_config12_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 03",
+   "selection": "ordinary selection, version 2 coverage, fill-cycle first stage",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": -9
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 0,
+    "id": "row-credit",
+    "max_live_rows": 12,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/m04_p8d4_csynth.xml",
+   "hls_report_sha256": "3017ab71b3ff81bcbd11270449f74fe7de46a0d5d4c0efc4429bcea107c8413d",
+   "ii": 74,
+   "latency": 80,
+   "manifest_sha256": "cb7caccb0696d547ae48361917893db13c19001be2ecde6a377f5be9b1fa0b5d",
+   "model_sha256": null,
+   "predicted_frame_cycles": 80,
+   "project": "m04_p8d4",
+   "protocol_output_stall_cycles": 86,
+   "protocol_report_sha256": "102c87e91ce54679a1531afdaa032f676cf5df6cec4661d8dccd295a5cb6677a",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "79c9ebe45e804268d77124fd2ee2d77ee7417fe39a7505e0f02091a83349e6e2",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 63,
+     "measured_functions": [
+      {
+       "ii": 67,
+       "latency": 67,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 19,
+      "dsp_product_budget": 0,
+      "input_width": 10,
+      "paired": false,
+      "summary": {
+       "add_nodes": 634,
+       "constant_nodes": 6,
+       "convolution_rows": 1,
+       "depth": 13,
+       "filter_lanes": 12,
+       "input_rows": 60,
+       "max_fanout": 10,
+       "negate_nodes": 177,
+       "output_values": 12,
+       "shared_pair_uses": 86,
+       "shared_product_uses": 162,
+       "shift_nodes": 198,
+       "subtract_nodes": 228
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 70,
+     "measured_functions": [
+      {
+       "ii": 73,
+       "latency": 73,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      },
+      {
+       "ii": 23,
+       "latency": 23,
+       "top": "relu_array_ap_fixed_48u_array_ap_ufixed_18_8_5_3_0_48u_relu_config8_s"
+      },
+      {
+       "ii": 23,
+       "latency": 23,
+       "top": "scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config9_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 10,
+     "measured_functions": [
+      {
+       "ii": 17,
+       "latency": 17,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config12_Pipeline_DenseValues"
+      },
+      {
+       "ii": 20,
+       "latency": 20,
+       "top": "dense_wide_stream_array_array_ap_fixed_23_12_5_3_0_1u_config12_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 04",
+   "selection": "ordinary selection, version 2 coverage, fill-cycle first stage",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": -6
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/target_native_csynth.xml",
+   "hls_report_sha256": "cbd0099ba365444f200b42f4ea50833f9ac8449827afd37af4f2904b9fb8d912",
+   "ii": 1492,
+   "latency": 1504,
+   "manifest_sha256": "66aa10a4c02d1085be0e9cef9094be33c0819208eedf45085f26b2d86972e1d4",
+   "model_sha256": null,
+   "predicted_frame_cycles": 248,
+   "project": "target_native",
+   "protocol_output_stall_cycles": 88,
+   "protocol_report_sha256": "c288f260f55fff2c51bde5d43d5a9be06ec43de57139bcb97b3adcb9ed750f4f",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "retain-incumbent-without-calibrated-coverage",
+   "source_closure_sha256": "d0e9edb07eb52d2eaef6f89beccff47e4201ad99697471ae7d867bf15f720096",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 63,
+     "measured_functions": [
+      {
+       "ii": 66,
+       "latency": 66,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "uncalibrated-native",
+     "estimated_cycles": 248,
+     "measured_functions": [
+      {
+       "ii": 1491,
+       "latency": 1491,
+       "top": "conv_2d_cl_array_ap_fixed_8u_array_ap_fixed_9_5_0_2_0_8u_config7_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-temporal-block",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "uncalibrated-native",
+     "estimated_cycles": 112,
+     "measured_functions": [
+      {
+       "ii": 116,
+       "latency": 116,
+       "top": "pointwise_conv_2d_cl_array_array_ap_fixed_15_7_5_3_0_8u_config14_s"
+      },
+      {
+       "ii": 115,
+       "latency": 115,
+       "top": "relu_array_ap_fixed_8u_array_ap_ufixed_14_6_5_3_0_8u_relu_config10_s"
+      },
+      {
+       "ii": 226,
+       "latency": 226,
+       "top": "pooling2d_cl_array_array_ap_ufixed_14_6_5_3_0_8u_config11_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-temporal-block",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 14,
+     "measured_functions": [
+      {
+       "ii": 19,
+       "latency": 19,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config13_Pipeline_DenseValues"
+      },
+      {
+       "ii": 22,
+       "latency": 22,
+       "top": "dense_wide_stream_array_array_ap_fixed_23_11_5_3_0_1u_config13_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "synthetic target shape",
+   "selection": "ordinary selection before coverage; native second group",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": null
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "id": "row-credit",
+    "max_live_rows": 14,
+    "read_cycles": 32,
+    "version": 1
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.7.2"
+   },
+   "hls_report_file": "calibration_reports/m09de_native_csynth.xml",
+   "hls_report_sha256": "7b9ca5cfbefea11cd1beae0f084c0f209666fa2289785ae636492c705d308c89",
+   "ii": 844,
+   "latency": 870,
+   "manifest_sha256": "c48e8a42781e05059addf9d9aae36ba90ad62fa5f95c097978e1ad5aaab2bb0f",
+   "model_sha256": null,
+   "predicted_frame_cycles": 168,
+   "project": "m09de_native",
+   "protocol_output_stall_cycles": 89,
+   "protocol_report_sha256": "db8affaf74c1902f64310d4f4304b6f8f6146e9f079505012ac0896c08a91faa",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection_reason": "retain-incumbent-without-calibrated-coverage",
+   "source_closure_sha256": "b7b9496c3fa6f6caf1f6bba145cd0064e3dce5def2cb38965f61312538c145f5",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 42,
+     "measured_functions": [
+      {
+       "ii": 48,
+       "latency": 48,
+       "top": "phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "uncalibrated-native",
+     "estimated_cycles": 168,
+     "measured_functions": [
+      {
+       "ii": 843,
+       "latency": 843,
+       "top": "conv_2d_cl_array_ap_fixed_12u_array_ap_fixed_11_5_0_2_0_12u_config7_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-temporal-block",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "uncalibrated-native",
+     "estimated_cycles": 52,
+     "measured_functions": [
+      {
+       "ii": 57,
+       "latency": 57,
+       "top": "pointwise_conv_2d_cl_array_array_ap_fixed_19_8_5_3_0_12u_config15_s"
+      },
+      {
+       "ii": 55,
+       "latency": 55,
+       "top": "relu_array_ap_fixed_12u_array_ap_ufixed_18_7_5_3_0_12u_relu_config10_s"
+      },
+      {
+       "ii": 107,
+       "latency": 107,
+       "top": "pooling2d_cl_array_array_ap_fixed_10_5_0_2_0_12u_config11_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-temporal-block",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 6,
+     "measured_functions": [
+      {
+       "ii": 12,
+       "latency": 12,
+       "top": "dense_wide_stream_array_array_ap_fixed_1u_config14_Pipeline_DenseValues"
+      },
+      {
+       "ii": 15,
+       "latency": 15,
+       "top": "dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config14_s"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-wide",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null,
+   "model": "package model 09, dense-equivalent",
+   "selection": "ordinary selection before coverage; native second group",
+   "implementation_commit": "b1bb8cb",
+   "prediction_error_cycles": null
+  }
+ ],
+ "coverage": {
+  "positions": 4,
+  "reuse_factors": [
+   1,
+   2
+  ],
+  "extra_phases": "complete-convolution-windows-only",
+  "dsp_budgets": [
+   0,
+   16
+  ],
+  "dsp_scope": "paired first stage only, at most four multiply nodes; downstream DSP choices remain uncalibrated",
+  "first_stage_temporal_packing": 8,
+  "kernel_rows": [
+   1,
+   7
+  ],
+  "stride_rows": [
+   1,
+   3
+  ],
+  "pool_rows": [
+   1,
+   2
+  ],
+  "input_width_bits_max": 11,
+  "width": 4,
+  "channels_max": 12,
+  "filters_max": 12,
+  "added_in_version_3": "kernels of one to seven rows, strides of one to three rows, blocks without a pool, 11-bit inputs, first stages with a fill-cycle row schedule"
+ },
+ "notes": "Development measurements made with coverage opened, plus ordinary conversions under version 2 coverage. prediction_error_cycles is measured II minus predicted frame cycles; observed range -9 to +3, and -2 to +3 for plans whose every convolution stage uses shared arithmetic. Native-stage estimates are uncalibrated lower bounds and are not compared. Ordinary conversion reports predictions, not timing or fit certificates."
+}

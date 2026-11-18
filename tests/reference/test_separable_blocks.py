@@ -123,14 +123,16 @@ def test_ravel_engines_lower_unpooled_and_pointwise_blocks_bit_exactly(tmp_path,
     assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
 
 
-def test_new_block_forms_stay_uncalibrated_and_keep_the_native_incumbent():
+def test_new_block_forms_use_shared_arithmetic_inside_calibrated_coverage_only():
     model = make_block_chain([conv(3, kernel=5, stride=3), conv(3, kernel=5, stride=2, relu=False, pool=False, diagonal=True),
                               conv(4, kernel=1, stride=1)], height=128, width=4)
 
-    design = analyze(model, {"HLS": KU5P}).to_dict()["resolved_design"]
+    covered = analyze(model, {"HLS": KU5P}).to_dict()["resolved_design"]
+    uncovered = analyze(model, {"HLS": {}}).to_dict()["resolved_design"]
 
-    assert [stage["strategy"]["id"] for stage in design["stages"][1:3]] == ["hls4ml-temporal-block", "hls4ml-temporal-block"]
-    search = design["optimization_search"]
-    assert search["selection_reason"] == "retain-incumbent-without-calibrated-coverage"
-    assert search["status"] == "complete"
-    assert search["exploration"]["generated"] == search["exploration"]["evaluated"]
+    assert [stage["strategy"]["id"] for stage in covered["stages"][1:3]] == ["aria-affine-window", "aria-affine-window"]
+    assert covered["optimization_search"]["selection_reason"] == "calibrated-predicted-frame-interval"
+    assert covered["optimization_search"]["status"] == "complete"
+    assert covered["components"]["cost_policy"]["calibration_profile"]["version"] == 3
+    assert [stage["strategy"]["id"] for stage in uncovered["stages"][1:3]] == ["hls4ml-temporal-block", "hls4ml-temporal-block"]
+    assert uncovered["optimization_search"]["selection_reason"] == "retain-incumbent-without-calibrated-coverage"
