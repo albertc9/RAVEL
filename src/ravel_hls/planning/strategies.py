@@ -10,7 +10,7 @@ from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
 from .windows import arithmetic_schedules, dense_schedules, window_schedules
-from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
+from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE, DENSE_MATRIX_OVERHEAD_CYCLES
 
 
 @dataclass(frozen=True)
@@ -177,7 +177,7 @@ def _dense_matrix(request, strategy, version):
     target = StreamContract(output.id, output.shape, output.numeric_type, head.attribute("n_out"))
     return Capability(tuple(Candidate(
         strategy, version, (head.id,), source, target,
-        Cost(schedule.steps, schedule.multipliers, schedule.steps), True,
+        Cost(schedule.steps + DENSE_MATRIX_OVERHEAD_CYCLES, schedule.multipliers, schedule.steps + DENSE_MATRIX_OVERHEAD_CYCLES), True,
         schedule=TokenSchedule(source.words, target.words, (source.words,) * target.words), dense=schedule)
         for schedule in schedules))
 

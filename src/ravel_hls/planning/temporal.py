@@ -84,7 +84,7 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
         bound_reasons.extend(finding.code for finding in plan.findings if finding.code.endswith("_bound"))
         if not plan.findings:
             if downstream.confidence == "calibrated":
-                cycles = max([stage.cost.cycles + (0 if stage.implementation or stage.arithmetic else 16)
+                cycles = max([stage.cost.cycles + (0 if stage.implementation or stage.arithmetic or stage.dense else 16)
                               for stage in plan.stages]
                              + [WINDOW_COST_PROFILE.bridge_cycles(bridge) for bridge in plan.bridges]) + 1
                 plan = replace(plan, cost=Cost(cycles, plan.cost.resource, plan.cost.latency))

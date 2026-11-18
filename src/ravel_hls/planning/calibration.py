@@ -85,3 +85,8 @@ class ConstantMatrixCostProfile:
 
 
 CONSTANT_MATRIX_COST_PROFILE = ConstantMatrixCostProfile()
+
+# Cycles a sequential Dense matrix stage needs beyond its steps: bias load,
+# product and accumulation pipeline, output cast and process restart. Measured
+# on KU5P at 5 ns; see references/qualification/aria_1_8_0_separable.
+DENSE_MATRIX_OVERHEAD_CYCLES = 9
