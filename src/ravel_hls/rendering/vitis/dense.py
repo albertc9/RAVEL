@@ -14,8 +14,10 @@ SOURCE = r'''#ifndef RAVEL_DENSE_H_
 #include "hls_stream.h"
 #include "nnet_mult.h"
 namespace ravel {
-// One input group meets OUT_LANES outputs per step. Each output accumulates its
-// products in input order, as the native Dense does.
+// One input group meets OUT_LANES outputs per step. The products of a step are
+// reduced outside the accumulator loop, so the loop carries one addition. The
+// native Dense adds the same products one by one in a wrapping accumulator,
+// which gives the same codes.
 template<class IN, class OUT, class CONFIG, unsigned MAC_LANES, unsigned OUT_LANES, unsigned WEIGHT_BITS, unsigned STEPS>
 void dense_matrix_stream(hls::stream<IN>& input, hls::stream<OUT>& output,
                          const ap_uint<MAC_LANES * WEIGHT_BITS> packed_weights[OUT_LANES][STEPS],
@@ -55,12 +57,12 @@ DenseMatrix:
                 products[lane] = (typename CONFIG::accum_t)CONFIG::template product<
                     scalar, typename CONFIG::weight_t>::product(input_word[group * MAC_LANES + lane], weight);
             }
-            typename CONFIG::accum_t sum = accumulators[phase * OUT_LANES + out];
+            typename CONFIG::accum_t partial = 0;
             for (unsigned lane = 0; lane < MAC_LANES; ++lane) {
                 #pragma HLS UNROLL
-                sum += products[lane];
+                partial += products[lane];
             }
-            accumulators[phase * OUT_LANES + out] = sum;
+            accumulators[phase * OUT_LANES + out] += partial;
         }
         if (phase + 1 == PHASES) {
             phase = 0;
