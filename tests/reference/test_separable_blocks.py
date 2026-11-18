@@ -96,3 +96,41 @@ def test_a_grouped_convolution_is_reported_before_the_compiler_fails():
         analyze(model, PACKING)
 
     assert [finding["code"] for finding in raised.value.findings] == ["frontend.operation.grouped_convolution"]
+
+
+KU5P = {"Part": "xcku5p-ffvb676-2-e", "ClockPeriod": 5}
+
+
+@pytest.mark.parametrize("engine, window, matrix", [
+    ("aria-affine-window", True, True),
+    ("aria-window-stream", True, False),
+])
+def test_ravel_engines_lower_unpooled_and_pointwise_blocks_bit_exactly(tmp_path, monkeypatch, engine, window, matrix):
+    # Selection needs calibrated coverage; open it here to check the lowering itself.
+    from ravel_hls.planning import calibration
+    monkeypatch.setattr(calibration.WindowCostProfile, "covers", lambda self, *a, **k: window)
+    monkeypatch.setattr(calibration.ConstantMatrixCostProfile, "covers", lambda self, *a, **k: matrix)
+    model = make_block_chain([conv(3, kernel=5, stride=3), conv(3, kernel=5, stride=2, relu=False, pool=False, diagonal=True),
+                              conv(4, kernel=1, stride=1)], height=128, width=4)
+
+    project = convert(model, tmp_path / "engines", {"HLS": KU5P, "Verification": {"Mode": "required", "Samples": 8}})
+
+    design = project.manifest["resolved_design"]
+    assert [stage["strategy"]["id"] for stage in design["stages"][1:3]] == [engine, engine]
+    assert [stage["operation_ids"] for stage in design["stages"][1:3]] == [["conv2d_1"], ["conv2d_2", "relu_1", "max_pool2d_1"]]
+    assert design["optimization_search"]["status"] == "complete"
+    assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+def test_new_block_forms_stay_uncalibrated_and_keep_the_native_incumbent():
+    model = make_block_chain([conv(3, kernel=5, stride=3), conv(3, kernel=5, stride=2, relu=False, pool=False, diagonal=True),
+                              conv(4, kernel=1, stride=1)], height=128, width=4)
+
+    design = analyze(model, {"HLS": KU5P}).to_dict()["resolved_design"]
+
+    assert [stage["strategy"]["id"] for stage in design["stages"][1:3]] == ["hls4ml-temporal-block", "hls4ml-temporal-block"]
+    search = design["optimization_search"]
+    assert search["selection_reason"] == "retain-incumbent-without-calibrated-coverage"
+    assert search["status"] == "complete"
+    assert search["exploration"]["generated"] == search["exploration"]["evaluated"]

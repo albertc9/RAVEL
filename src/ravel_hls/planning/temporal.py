@@ -9,7 +9,7 @@ from math import prod
 from .arithmetic import constant_arithmetic
 from .bridges import LOSSLESS_BRIDGES
 from .strategies import StageContext, StageRequest, TEMPORAL_STRATEGIES
-from .search import SearchReport, SEARCH_CANDIDATE_LIMIT, plan_identity
+from .search import SearchReport, plan_identity, search_candidate_limit
 from .resources import constraint_report, estimate_resources, rejection_reasons
 
 
@@ -64,7 +64,8 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
     # Always evaluate the legal incumbent before bounded alternatives. Bounds
     # never authorize selecting an illegal or uncalibrated replacement.
     generated = prod(len(domain) for domain in domains)
-    explored = tuple(bounded_combinations(domains, SEARCH_CANDIDATE_LIMIT))
+    limit = search_candidate_limit(len(chain.blocks))
+    explored = tuple(bounded_combinations(domains, limit))
     bound_reasons = ["search.candidate_bound"] if len(explored) < generated else []
     for stages in explored:
         downstream = stages[-1]
@@ -99,4 +100,5 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
     bound_reasons.extend(finding.code for finding in findings if finding.code.endswith("_bound"))
     return SearchReport(tuple(plans), selected, complete=not bound_reasons,
                         resources=resources, constraints=constraints,
-                        generated=generated, evaluated=len(explored), bound_reasons=tuple(bound_reasons), target_ii=target_ii)
+                        generated=generated, evaluated=len(explored), bound_reasons=tuple(bound_reasons), target_ii=target_ii,
+                        limit=limit)
