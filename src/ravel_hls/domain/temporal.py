@@ -185,9 +185,8 @@ def recognize_temporal_chain(graph: GraphFacts) -> Recognition:
 def support_findings(chain: TemporalChain) -> tuple[Finding, ...]:
     """Report recognized chains that lie outside the qualified support domain.
 
-    Qualified chains have at most two pooled blocks. A block without a pool is
-    qualified only as an activation-free convolution whose consumer is a
-    pointwise convolution with ReLU and pool.
+    Qualified chains start with a pooled block, have at most two pooled blocks
+    and at most one convolution block without a pool.
     """
     blocks = chain.blocks
     if sum(block.pooling is not None for block in blocks) > 2:
@@ -196,14 +195,10 @@ def support_findings(chain: TemporalChain) -> tuple[Finding, ...]:
     if blocks[0].pooling is None:
         findings.append(Finding("family.support.block_form",
                                 "The first temporal block must end in ReLU and MaxPool2D", blocks[0].convolution.id))
-    for block, consumer in zip(blocks, blocks[1:]):
-        if block.pooling is not None or block is blocks[0]:
-            continue
-        if block.activation is not None or not consumer.pointwise or consumer.pooling is None:
-            findings.append(Finding(
-                "family.support.block_form",
-                "A convolution without MaxPool2D is qualified only without activation and before a pointwise convolution block",
-                block.convolution.id))
+    for block in [block for block in blocks[1:] if block.pooling is None][1:]:
+        findings.append(Finding("family.support.block_form",
+                                "Aria 1.8 qualifies at most one convolution block without MaxPool2D",
+                                block.convolution.id))
     return tuple(findings)
 
 

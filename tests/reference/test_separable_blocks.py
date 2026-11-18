@@ -10,9 +10,9 @@ from ravel_hls.exceptions import CompatibilityError
 PACKING = {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
 
 
-def conv(filters, kernel=3, stride=2, *, relu=True, pool=True, diagonal=False, groups=1):
+def conv(filters, kernel=3, stride=2, *, relu=True, pool=True, diagonal=False, groups=1, across=1):
     return {"filters": filters, "kernel": kernel, "stride": stride, "relu": relu,
-            "pool": pool, "diagonal": diagonal, "groups": groups}
+            "pool": pool, "diagonal": diagonal, "groups": groups, "across": across}
 
 
 def make_block_chain(blocks, *, height=64, width=2, prefix="renamed"):
@@ -31,7 +31,7 @@ def make_block_chain(blocks, *, height=64, width=2, prefix="renamed"):
     for index, block in enumerate(blocks):
         layer = QConv2D.from_config({
             **convolution, "name": f"{prefix}_conv_{index}", "filters": block["filters"],
-            "kernel_size": (block["kernel"], 1), "strides": (block["stride"], 1), "padding": "valid",
+            "kernel_size": (block["kernel"], block["across"]), "strides": (block["stride"], 1), "padding": "valid",
             "activation": "relu" if block["relu"] else "linear", "groups": block["groups"]})
         value = layer(value)
         if block["diagonal"]:
@@ -76,16 +76,32 @@ def test_a_separable_group_converts_bit_exactly_through_every_owned_boundary(tmp
     assert [stage["strategy"]["id"] for stage in manifest["resolved_design"]["stages"]][0] == "aria-wide-stream"
 
 
-@pytest.mark.parametrize("blocks", [
-    [conv(3), conv(3, pool=False), conv(4, kernel=1, stride=1)],
-    [conv(3), conv(3, relu=False, pool=False), conv(4)],
+@pytest.mark.parametrize("name, blocks", [
+    ("relu_unpooled", [conv(3), conv(3, pool=False), conv(4, kernel=1, stride=1)]),
+    ("linear_before_wide", [conv(3), conv(3, relu=False, pool=False), conv(4)]),
+    ("three_relu", [conv(3, kernel=5, stride=3), conv(3, kernel=3, stride=1, pool=False), conv(4, kernel=3, stride=3)]),
 ])
-def test_other_unpooled_block_forms_are_recognized_but_outside_the_support_domain(blocks):
-    report = analyze(make_block_chain(blocks, height=128), PACKING).to_dict()
+def test_one_unpooled_convolution_block_of_any_form_converts_bit_exactly(tmp_path, name, blocks):
+    project = convert(make_block_chain(blocks, height=128), tmp_path / name, {
+        **PACKING, "Verification": {"Mode": "required", "Samples": 8}})
 
-    assert report["recognition"]["block_count"] == 3
+    manifest = project.manifest
+    assert len(manifest["resolved_design"]["stages"]) == 5
+    assert manifest["verification"]["transformation_equivalence"] == "passed"
+    assert manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+@pytest.mark.parametrize("blocks, operation", [
+    ([conv(3), conv(3, pool=False), conv(3, pool=False), conv(4)], "conv2d_2"),
+    ([conv(3, pool=False), conv(3), conv(4)], "conv2d_0"),
+])
+def test_other_unpooled_block_chains_are_recognized_but_outside_the_support_domain(blocks, operation):
+    report = analyze(make_block_chain(blocks, height=256), PACKING).to_dict()
+
+    assert report["recognition"]["block_count"] == len(blocks)
     assert report["applicability"]["status"] == "unsupported"
-    assert {item["code"] for item in report["applicability"]["findings"]} == {"family.support.block_form"}
+    assert [(item["code"], item["operation_id"]) for item in report["applicability"]["findings"]] == [
+        ("family.support.block_form", operation)]
     assert report["resolved_design"] is None
 
 
@@ -157,3 +173,26 @@ def test_refresh_preserves_the_plan_and_rebuilds_the_arithmetic_of_a_separable_p
         assert (before["strategy"], before["operation_ids"], before.get("arithmetic_schedule")) == (
             after["strategy"], after["operation_ids"], after.get("arithmetic_schedule"))
     assert renewed["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+def width_mixing_chain():
+    return make_block_chain([conv(3), conv(3, kernel=1, stride=1, pool=False, across=2), conv(4)], height=128, width=2)
+
+
+def test_dense_parallelism_is_checked_against_the_width_that_reaches_the_dense_head():
+    report = analyze(width_mixing_chain(), {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 2}}).to_dict()
+
+    assert report["applicability"]["status"] == "unsupported"
+    finding = next(item for item in report["applicability"]["findings"] if item["code"] == "strategy.geometry.dense_stream")
+    assert finding["expected"] == "divisor of output width 1"
+
+
+def test_a_convolution_across_the_width_converts_through_a_delegated_stage(tmp_path):
+    project = convert(width_mixing_chain(), tmp_path / "width_mixing", {
+        **PACKING, "Verification": {"Mode": "required", "Samples": 8}})
+
+    stages = project.manifest["resolved_design"]["stages"]
+    assert (stages[1]["strategy"]["id"], stages[1]["operation_ids"]) == ("hls4ml-temporal-block", ["conv2d_1", "relu_1"])
+    assert stages[2]["input"]["shape"][1] == 1
+    assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"

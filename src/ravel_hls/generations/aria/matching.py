@@ -318,12 +318,18 @@ def evaluate_aria_wide_stream(
             observed=pooling[field],
             message=f"Aria streaming pooling requires {field}={expected}",
         )
+    # The Dense head consumes the last block's stream, whose width a later
+    # convolution may have reduced.
+    shapes = {tensor["id"]: tensor["shape"] for operation in operations for tensor in operation["outputs"]}
+    layout_inputs = [shapes[operation["inputs"][0]] for operation in operations
+                     if operation["kind"] == "reshape" and operation["inputs"] and len(shapes.get(operation["inputs"][0], ())) == 3]
+    final_width = layout_inputs[-1][1] if layout_inputs else convolution["out_width"]
     require(
-        convolution["out_width"] % dense_parallelism == 0,
+        final_width % dense_parallelism == 0,
         code="strategy.geometry.dense_stream",
         operation_id="dense_0",
         field="DenseParallelism",
-        expected=f"divisor of output width {convolution['out_width']}",
+        expected=f"divisor of output width {final_width}",
         observed=dense_parallelism,
         message="Dense parallelism must divide each streamed width group",
     )
