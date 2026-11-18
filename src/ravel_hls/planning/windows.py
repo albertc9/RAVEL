@@ -41,19 +41,23 @@ class WindowSchedule:
 
 def window_schedules(block: TemporalBlock) -> tuple[WindowSchedule, ...]:
     """Only admit the geometry implemented by the registered window lowering."""
-    conv, pool = block.convolution.attribute, block.pooling.attribute
-    if any(operation.attribute(name, 0) for operation in (block.convolution, block.pooling)
+    conv = block.convolution.attribute
+    windows = tuple(operation for operation in (block.convolution, block.pooling) if operation is not None)
+    if any(operation.attribute(name, 0) for operation in windows
            for name in ("pad_top", "pad_bottom", "pad_left", "pad_right")):
         return ()
-    if (conv("filt_width") != 1 or conv("stride_width") != 1
-            or pool("pool_width") != 1 or pool("stride_width") != 1
-            or pool("stride_height") != pool("pool_height")):
+    if conv("filt_width") != 1 or conv("stride_width") != 1:
         return ()
+    if block.pooling is not None:
+        pool = block.pooling.attribute
+        if (pool("pool_width") != 1 or pool("stride_width") != 1
+                or pool("stride_height") != pool("pool_height")):
+            return ()
     width = conv("in_width")
     return tuple(
         WindowSchedule(conv("in_height"), width, conv("n_chan"), conv("n_filt"),
                        conv("filt_height"), conv("stride_height"), conv("out_height"),
-                       pool("pool_height"), pool("out_height"), positions)
+                       block.pool_rows, block.output_rows, positions)
         for positions in range(1, min(width, 4) + 1)
         if width % positions == 0
     )

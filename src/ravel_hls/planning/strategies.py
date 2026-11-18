@@ -68,7 +68,9 @@ def _temporal(request, strategy, version):
     specialized = strategy != "hls4ml-temporal-block"
     if external != specialized or (specialized and strategy != context.input_strategy):
         return Capability()
-    convolution, pooled = block.convolution, block.pooling.outputs[0]
+    if specialized and (block.activation is None or block.pooling is None):
+        return Capability()
+    convolution, pooled = block.convolution, block.output
     input_lanes = int(convolution.attribute("n_chan"))
     output_lanes = int(convolution.attribute("n_filt"))
     if specialized:
@@ -79,14 +81,14 @@ def _temporal(request, strategy, version):
     weight = next((parameter for parameter in convolution.parameters if parameter.role == "weight"), None)
     multipliers = prod(weight.shape) if weight is not None else 0
     for operation in (block.convolution, block.pooling):
-        if any(operation.attribute(name, 0) != 0 for name in ("pad_top", "pad_bottom", "pad_left", "pad_right")):
+        if operation is not None and any(operation.attribute(name, 0) != 0 for name in ("pad_top", "pad_bottom", "pad_left", "pad_right")):
             return Capability(findings=(Finding("strategy.geometry.padding", "The qualified temporal schedule requires valid unpadded windows", operation.id),))
     try:
         schedule = temporal_schedule(block, input_lanes, output_lanes)
     except ValueError as error:
         return Capability(findings=(Finding("strategy.schedule.event_bound", str(error), convolution.id),))
     lower_bound = max(source.words, target.words)
-    base = Candidate(strategy, version, (convolution.id, block.activation.id, block.pooling.id), source, target,
+    base = Candidate(strategy, version, tuple(operation.id for operation in block.operations), source, target,
                                 Cost(context.input_cycles if specialized else lower_bound, multipliers, lower_bound), specialized,
                                 "analytical" if specialized else "uncalibrated-native", schedule)
     variants = tuple(replace(base, arithmetic=arithmetic,
@@ -117,7 +119,7 @@ def _scheduled(request, strategy, version):
     findings = []
     for implementation in window_schedules(block):
         calibrated = WINDOW_COST_PROFILE.covers(block, implementation, request.context.part, request.context.clock_period)
-        pooled = block.pooling.outputs[0]
+        pooled = block.output
         source = StreamContract(block.input.id, block.input.shape, block.input.numeric_type,
                                 implementation.positions * implementation.channels)
         target = StreamContract(pooled.id, pooled.shape, pooled.numeric_type,
@@ -129,7 +131,7 @@ def _scheduled(request, strategy, version):
             continue
         candidates.append(Candidate(
             strategy, version,
-            (block.convolution.id, block.activation.id, block.pooling.id), source, target,
+            tuple(operation.id for operation in block.operations), source, target,
             Cost(WINDOW_COST_PROFILE.window_cycles(implementation) if calibrated else implementation.input_words,
                  implementation.products, implementation.input_words),
             True, "calibrated" if calibrated else "uncalibrated", schedule, implementation,

@@ -54,6 +54,20 @@ def _homogeneous_stream_quantizer_compatibility():
         finally:
             ProcessFixedPointQuantizerLayer.transform = original_transform
 
+def _require_convertible_operations(model: Any) -> None:
+    """Report source operations the pinned hls4ml cannot convert, before it fails."""
+    findings = [
+        {"code": "frontend.operation.grouped_convolution", "severity": "error", "operation_id": None,
+         "source_layer": layer.name,
+         "message": "Grouped convolution is not converted by the pinned hls4ml; "
+                    "export it as an ordinary convolution with a block-diagonal kernel"}
+        for layer in getattr(model, "layers", ())
+        if isinstance(getattr(layer, "groups", 1), int) and getattr(layer, "groups", 1) != 1
+    ]
+    if findings:
+        raise CompatibilityError("; ".join(finding["message"] for finding in findings), findings=findings)
+
+
 def convert_model(model, hls_values):
     backend = hls_values.get("Backend", "Vitis")
     io_type = hls_values.get("IOType", "io_stream")
@@ -72,6 +86,7 @@ def convert_model(model, hls_values):
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
     normalized_model = _normalize_singleton_channel_input(normalized_model)
+    _require_convertible_operations(normalized_model)
 
     frontend_provenance = _frontend_provenance(normalized_model)
 

@@ -1,7 +1,7 @@
 """Resolve immutable frontend facts through capability and plan services."""
 from ..analysis.phara import PHARA_HYBRID_DSP_PRODUCT_BUDGET, analyze_direct_parameters, analyze_hybrid_parameters
 from ..domain.graph import GraphFacts
-from ..domain.temporal import recognize_temporal_chain
+from ..domain.temporal import recognize_temporal_chain, support_findings
 from ..profiles.aria.plan import build_implementation_plan
 from ..planning.temporal import plan_temporal_chain
 from ..compatibility.legacy_design import _parameter_bindings, _predicted_interface, _rendering_contract
@@ -17,7 +17,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
 
     resolved_design = None
     recognition = recognize_temporal_chain(facts)
-    if model_family is not None and len(recognition.chain.blocks) <= 2:
+    outside_release = support_findings(recognition.chain) if model_family is not None else ()
+    if model_family is not None and not outside_release:
         plan = build_implementation_plan(choices, {**model_facts, **dense_facts})
         strategy = generation.strategy(
             "phara" if "phara" in plan else "aria-wide-stream",
@@ -61,13 +62,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
             parameters=parameter_payload, native=native), multi_report
     if model_family is not None and model_family["id"] == "hgq-temporal-block-chain":
         multi_report["recognition"] = recognition.chain.to_dict()
-        outside_release = len(recognition.chain.blocks) > 2
         if outside_release:
-            applicability = {"status": "unsupported", "findings": [{
-            "code": "family.support.block_count",
-            "severity": "error", "operation_id": None,
-            "message": "Aria 1.7 qualifies only one- and two-block plans",
-        }]}
+            applicability = {"status": "unsupported", "findings": [item.to_dict() for item in outside_release]}
         elif resolved_design is not None:
             search = plan_temporal_chain(
                 recognition.chain, temporal_packing=plan["temporal_pack"],
@@ -97,8 +93,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                                 "cost_policy": {"id": "aria-stream-search", "version": 2,
                                                 "calibration_profile": (CONSTANT_MATRIX_COST_PROFILE if any(
                                                     stage.arithmetic for stage in composed.stages) else WINDOW_COST_PROFILE).to_dict()}},
-                    semantic_stages=[{"kind": "temporal-block", "operation_ids": [block.convolution.id, block.activation.id, block.pooling.id],
-                                      "dropped_pool_rows": block.pooling.attribute("in_height") - ((block.pooling.attribute("out_height") - 1) * block.pooling.attribute("stride_height") + block.pooling.attribute("pool_height")),
+                    semantic_stages=[{"kind": "temporal-block", "operation_ids": [operation.id for operation in block.operations],
+                                      "dropped_pool_rows": block.dropped_pool_rows,
                                       "dead_row_elimination": False, "logical_axes": ["temporal", "feature", "channel"]} for block in recognition.chain.blocks] + [
                         {"kind": "layout-view", "operation_ids": [recognition.chain.layout.operation.id], **recognition.chain.layout.to_dict()},
                         {"kind": "dense-head", "operation_ids": [recognition.chain.head.id],

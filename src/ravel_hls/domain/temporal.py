@@ -21,10 +21,40 @@ class Finding:
 
 @dataclass(frozen=True)
 class TemporalBlock:
+    """One convolution with its optional ReLU and optional non-overlapping pool."""
+
     convolution: OperationFacts
-    activation: OperationFacts
-    pooling: OperationFacts
+    activation: OperationFacts | None
+    pooling: OperationFacts | None
     input: TensorFacts
+
+    @property
+    def operations(self) -> tuple[OperationFacts, ...]:
+        return tuple(op for op in (self.convolution, self.activation, self.pooling) if op is not None)
+
+    @property
+    def output(self) -> TensorFacts:
+        return self.operations[-1].outputs[0]
+
+    @property
+    def pool_rows(self) -> int:
+        return int(self.pooling.attribute("pool_height")) if self.pooling else 1
+
+    @property
+    def output_rows(self) -> int:
+        return int(self.output.shape[0])
+
+    @property
+    def pointwise(self) -> bool:
+        attribute = self.convolution.attribute
+        return all(attribute(name) == 1 for name in ("filt_height", "filt_width", "stride_height", "stride_width"))
+
+    @property
+    def dropped_pool_rows(self) -> int:
+        if self.pooling is None:
+            return 0
+        pool = self.pooling.attribute
+        return pool("in_height") - ((pool("out_height") - 1) * pool("stride_height") + pool("pool_height"))
 
 
 @dataclass(frozen=True)
@@ -51,8 +81,9 @@ class TemporalChain:
     def to_dict(self) -> dict[str, object]:
         return {"parser": {"id": "temporal-block-grammar", "version": 1},
                 "block_count": len(self.blocks),
-                "blocks": [{"convolution": b.convolution.id, "activation": b.activation.id,
-                            "pooling": b.pooling.id} for b in self.blocks],
+                "blocks": [{"convolution": b.convolution.id,
+                            "activation": b.activation.id if b.activation else None,
+                            "pooling": b.pooling.id if b.pooling else None} for b in self.blocks],
                 "layout": self.layout.to_dict(), "head": self.head.id}
 
 
@@ -63,10 +94,11 @@ class Recognition:
 
 
 def recognize_temporal_chain(graph: GraphFacts) -> Recognition:
-    """Recognize Input -> (Conv/ReLU/Pool)+ -> layout -> Dense1.
+    """Recognize Input -> (Conv [ReLU] [Pool])+ -> layout -> Dense1.
 
-    Shape equations validate facts; no artifact extent or hardware packing is
-    a grammar constant. Unsupported operations stay visible as local findings.
+    A pool keeps its explicit ReLU and the chain ends in a pooled block. Shape
+    equations validate facts; no artifact extent or hardware packing is a
+    grammar constant. Unsupported operations stay visible as local findings.
     """
     def failure(code, message, operation=None):
         return Recognition(None, (Finding(code, message, operation.id if operation else None),))
@@ -110,20 +142,35 @@ def recognize_temporal_chain(graph: GraphFacts) -> Recognition:
         position += 1
     blocks = []
     while position < len(ordered) and ordered[position].kind == "conv2d":
-        triple = ordered[position:position + 3]
-        if tuple(op.kind for op in triple) != ("conv2d", "relu", "max_pool2d"):
-            return failure("family.topology.sequence", "Temporal block requires Conv2D, explicit ReLU, and MaxPool2D", triple[0])
-        convolution, activation, pooling = triple
-        for op, input_tensor in ((convolution, previous), (pooling, activation.outputs[0])):
-            findings = _window_geometry(op, input_tensor)
+        convolution = ordered[position]
+        position += 1
+        activation = pooling = None
+        if position < len(ordered) and ordered[position].kind == "relu":
+            activation = ordered[position]
+            position += 1
+        if position < len(ordered) and ordered[position].kind == "max_pool2d":
+            pooling = ordered[position]
+            position += 1
+        if pooling is not None and activation is None:
+            return failure("family.topology.sequence", "Temporal block requires Conv2D, explicit ReLU, and MaxPool2D", convolution)
+        findings = _window_geometry(convolution, previous)
+        if findings:
+            return Recognition(None, findings)
+        current = convolution.outputs[0]
+        if activation is not None:
+            if activation.outputs[0].shape != current.shape:
+                return failure("family.geometry.activation", "ReLU must preserve convolution shape", activation)
+            current = activation.outputs[0]
+        if pooling is not None:
+            findings = _window_geometry(pooling, current)
             if findings:
                 return Recognition(None, findings)
-        if activation.outputs[0].shape != convolution.outputs[0].shape:
-            return failure("family.geometry.activation", "ReLU must preserve convolution shape", activation)
+            current = pooling.outputs[0]
         blocks.append(TemporalBlock(convolution, activation, pooling, previous))
-        previous = pooling.outputs[0]
-        position += 3
+        previous = current
     tail = ordered[position:]
+    if blocks and blocks[-1].pooling is None:
+        return failure("family.topology.sequence", "Temporal block requires Conv2D, explicit ReLU, and MaxPool2D", blocks[-1].convolution)
     if not blocks or tuple(op.kind for op in tail) != ("reshape", "dense"):
         return failure("family.topology.sequence", "Temporal family requires repeated blocks followed by layout and Dense1", tail[0] if tail else current)
     layout, head = tail
@@ -133,6 +180,31 @@ def recognize_temporal_chain(graph: GraphFacts) -> Recognition:
     if head.attribute("n_in") != prod(layout_output.shape) or head.outputs[0].shape != (1,) or head.attribute("n_out") != 1:
         return failure("family.geometry.head", "Temporal family requires a single raw Dense output", head)
     return Recognition(TemporalChain(first.outputs[0], tuple(blocks), LayoutView(layout, previous, layout_output), head))
+
+
+def support_findings(chain: TemporalChain) -> tuple[Finding, ...]:
+    """Report recognized chains that lie outside the qualified support domain.
+
+    Qualified chains have at most two pooled blocks. A block without a pool is
+    qualified only as an activation-free convolution whose consumer is a
+    pointwise convolution with ReLU and pool.
+    """
+    blocks = chain.blocks
+    if sum(block.pooling is not None for block in blocks) > 2:
+        return (Finding("family.support.block_count", "Aria 1.7 qualifies only one- and two-block plans"),)
+    findings = []
+    if blocks[0].pooling is None:
+        findings.append(Finding("family.support.block_form",
+                                "The first temporal block must end in ReLU and MaxPool2D", blocks[0].convolution.id))
+    for block, consumer in zip(blocks, blocks[1:]):
+        if block.pooling is not None or block is blocks[0]:
+            continue
+        if block.activation is not None or not consumer.pointwise or consumer.pooling is None:
+            findings.append(Finding(
+                "family.support.block_form",
+                "A convolution without MaxPool2D is qualified only without activation and before a pointwise convolution block",
+                block.convolution.id))
+    return tuple(findings)
 
 
 def _window_geometry(operation: OperationFacts, input_tensor: TensorFacts) -> tuple[Finding, ...]:

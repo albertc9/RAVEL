@@ -27,16 +27,19 @@ class ResourceEstimate:
 
 
 def estimate_resources(plan, chain) -> ResourceEstimate:
-    window = next((s.implementation for s in plan.stages if s.implementation), None)
-    if window is None or any(s.confidence not in {"calibrated", "analytical"} for s in plan.stages):
+    block_stages = plan.stages[:len(chain.blocks)]
+    windows = tuple(s for s in block_stages if s.implementation)
+    if not windows or any(s.confidence not in {"calibrated", "analytical"} for s in plan.stages):
         return ResourceEstimate()
     first = chain.blocks[0].convolution
     first_products = prod(next(p.shape for p in first.parameters if p.role == "weight")) * chain.blocks[0].input.shape[1]
     dense_lanes = plan.stages[-1].cost.resource
-    history_bits = window.kernel_rows * window.width * window.channels * plan.stages[1].input.numeric.width
+    history_bits = sum(s.implementation.kernel_rows * s.implementation.width * s.implementation.channels
+                       * s.input.numeric.width for s in windows)
+    window_products = sum(s.implementation.products for s in windows)
     if any(stage.arithmetic for stage in plan.stages):
         lut, ff, dsp = 6000, 4000 + history_bits, 128
-        for stage in plan.stages[:2]:
+        for stage in block_stages:
             if stage.arithmetic:
                 arithmetic = stage.arithmetic
                 replicas = stage.arithmetic_schedule.engines if stage.arithmetic_schedule else chain.blocks[0].input.shape[1]
@@ -54,10 +57,10 @@ def estimate_resources(plan, chain) -> ResourceEstimate:
     # Deliberately reserve independent envelopes: no LUT/DSP interchange is used
     # to waive a limit. Native constant folding may consume considerably less.
     return ResourceEstimate(
-        8000 + 80 * window.products + 96 * first_products + 32 * dense_lanes,
-        4000 + 32 * window.products + history_bits + 16 * first_products,
-        window.products + first_products + dense_lanes,
-        24 + ceil(window.products / 12),
+        8000 + 80 * window_products + 96 * first_products + 32 * dense_lanes,
+        4000 + 32 * window_products + history_bits + 16 * first_products,
+        window_products + first_products + dense_lanes,
+        24 + ceil(window_products / 12),
     )
 
 

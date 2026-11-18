@@ -28,7 +28,7 @@ class WindowCostProfile:
             and block.input.numeric_type.kind == "fixed"
             and block.input.numeric_type.width <= 10
             and weight.numeric_type.kind == "fixed" and weight.numeric_type.width <= 8
-            and max(t.numeric_type.width for op in (block.convolution, block.activation, block.pooling)
+            and max(t.numeric_type.width for op in block.operations
                     for t in op.outputs) <= 24
         )
 
@@ -63,7 +63,7 @@ class ConstantMatrixCostProfile:
                 and conv.attribute("filt_height") == 5 and conv.attribute("stride_height") == 3
                 and conv.attribute("in_width") == 4 and conv.attribute("in_height") <= 256
                 and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 12
-                and block.pooling.attribute("pool_height") == 2
+                and block.pool_rows == 2
                 and arithmetic.input_numeric.width <= 10
                 and arithmetic.accumulator_numeric.width <= 24
                 and arithmetic.dsp_product_budget in (0, 16)

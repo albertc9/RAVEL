@@ -19,9 +19,11 @@ def report_bindings(design: Mapping[str, Any]) -> list[dict[str, Any]]:
             function = {"aria-window-stream": "scheduled_conv", "aria-affine-window": "scheduled_affine_conv"}[strategy]
             if stage.get("arithmetic_schedule", {}).get("reuse_factor", 1) > 1:
                 function = "shared_conv"
-            functions = [{"name": function, "config": native[operation_ids[0]]["config_symbol"]},
-                         {"name": "relu", "config": native[operation_ids[1]]["config_symbol"].replace("config", "relu_config")},
-                         {"name": "scheduled_pool", "config": native[operation_ids[2]]["config_symbol"]}]
+            functions = [{"name": function, "config": native[operation_ids[0]]["config_symbol"]}]
+            for operation in operation_ids[1:]:
+                config = native[operation]["config_symbol"]
+                functions.append({"name": "relu", "config": config.replace("config", "relu_config")}
+                                 if operation.startswith("relu_") else {"name": "scheduled_pool", "config": config})
         elif strategy == "hls4ml-temporal-block":
             functions = []
             for operation in operation_ids:
