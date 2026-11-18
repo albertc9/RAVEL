@@ -1,0 +1,499 @@
+{
+ "model": "11_antennas_as_channels",
+ "trained_key": "antch_f12_amphp",
+ "architecture_class": "antch_f12",
+ "chain": "amphp",
+ "threshold_1Hz": 8.326171875,
+ "versions": {
+  "main": {
+   "model": "v6_11_antennas_as_channels",
+   "input": [
+    256,
+    4,
+    1
+   ],
+   "output": [
+    1
+   ],
+   "layers": [
+    {
+     "name": "antennas_to_channels",
+     "keras_name": "antennas_to_channels",
+     "type": "Reshape",
+     "input": [
+      256,
+      4,
+      1
+     ],
+     "output": [
+      256,
+      1,
+      4
+     ],
+     "target_shape": [
+      256,
+      1,
+      4
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "conv1",
+     "keras_name": "q_conv2d_23",
+     "type": "QConv2D",
+     "input": [
+      256,
+      1,
+      4
+     ],
+     "output": [
+      84,
+      1,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      3,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 252,
+     "macs": 20160,
+     "bit_widths": {
+      "iq": {
+       "i": 4.004364967346191,
+       "f": 4.65358304977417,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.9693756103515625,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.285129070281982,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool1",
+     "keras_name": "max_pooling2d_20",
+     "type": "MaxPooling2D",
+     "input": [
+      84,
+      1,
+      12
+     ],
+     "output": [
+      42,
+      1,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "conv2",
+     "keras_name": "q_conv2d_24",
+     "type": "QConv2D",
+     "input": [
+      42,
+      1,
+      12
+     ],
+     "output": [
+      13,
+      1,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      3,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 732,
+     "macs": 9360,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.052992820739746,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.661316394805908,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.316183567047119,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool2",
+     "keras_name": "max_pooling2d_21",
+     "type": "MaxPooling2D",
+     "input": [
+      13,
+      1,
+      12
+     ],
+     "output": [
+      6,
+      1,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "flatten",
+     "keras_name": "flatten",
+     "type": "Flatten",
+     "input": [
+      6,
+      1,
+      12
+     ],
+     "output": [
+      72
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense1",
+     "keras_name": "q_dense_12",
+     "type": "QDense",
+     "input": [
+      72
+     ],
+     "output": [
+      1
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 1,
+     "weights_and_biases": 73,
+     "macs": 72,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.3419623374938965,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.3128509521484375,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.103906631469727,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    }
+   ],
+   "total_weights_and_biases": 1057,
+   "total_macs": 29592,
+   "heaviest_layer": {
+    "name": "conv1",
+    "macs": 20160
+   },
+   "version": "main",
+   "file": "run_11_antennas_as_channels.keras",
+   "input_description": "(256, 4, 1), reshaped inside the model to (256, 1, 4): antennas become input channels"
+  },
+  "channels_input": {
+   "model": "v6_11_antennas_as_channels_channels_input",
+   "input": [
+    256,
+    1,
+    4
+   ],
+   "output": [
+    1
+   ],
+   "layers": [
+    {
+     "name": "conv1",
+     "keras_name": "q_conv2d_23",
+     "type": "QConv2D",
+     "input": [
+      256,
+      1,
+      4
+     ],
+     "output": [
+      84,
+      1,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      3,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 252,
+     "macs": 20160,
+     "bit_widths": {
+      "iq": {
+       "i": 4.004364967346191,
+       "f": 4.65358304977417,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.9693756103515625,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.285129070281982,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool1",
+     "keras_name": "max_pooling2d_20",
+     "type": "MaxPooling2D",
+     "input": [
+      84,
+      1,
+      12
+     ],
+     "output": [
+      42,
+      1,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "conv2",
+     "keras_name": "q_conv2d_24",
+     "type": "QConv2D",
+     "input": [
+      42,
+      1,
+      12
+     ],
+     "output": [
+      13,
+      1,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      3,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 732,
+     "macs": 9360,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.052992820739746,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.661316394805908,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.316183567047119,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool2",
+     "keras_name": "max_pooling2d_21",
+     "type": "MaxPooling2D",
+     "input": [
+      13,
+      1,
+      12
+     ],
+     "output": [
+      6,
+      1,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "flatten",
+     "keras_name": "flatten",
+     "type": "Flatten",
+     "input": [
+      6,
+      1,
+      12
+     ],
+     "output": [
+      72
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense1",
+     "keras_name": "q_dense_12",
+     "type": "QDense",
+     "input": [
+      72
+     ],
+     "output": [
+      1
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 1,
+     "weights_and_biases": 73,
+     "macs": 72,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.3419623374938965,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.3128509521484375,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.103906631469727,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    }
+   ],
+   "total_weights_and_biases": 1057,
+   "total_macs": 29592,
+   "heaviest_layer": {
+    "name": "conv1",
+    "macs": 20160
+   },
+   "version": "channels_input",
+   "file": "run_11_antennas_as_channels__channels_input.keras",
+   "input_description": "(256, 1, 4): time, 1, antenna (same numbers as (256, 4, 1), relabelled)"
+  }
+ }
+}

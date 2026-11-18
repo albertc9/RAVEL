@@ -1,0 +1,30 @@
+10_antennas_mixed_after_conv1 [main]  run_10_antennas_mixed_after_conv1.keras
+=============================================================================
+input (256, 4, 1) -> output (1,) (raw score; trigger when score > threshold)
+
+layer                          type             filters/units  kernel   step groups     act     input shape    output shape      w+b      MACs
+conv1                          QConv2D                     12     5,1    3,1      1    relu     (256, 4, 1)     (84, 4, 12)       72    20,160
+pool1                          MaxPooling2D                 -     2,1    2,1      -       -     (84, 4, 12)     (42, 4, 12)        0         0
+conv2                          QConv2D                     12     1,4    1,1      1    relu     (42, 4, 12)     (42, 1, 12)      588    24,192
+conv3                          QConv2D                     12     5,1    3,1      1    relu     (42, 1, 12)     (13, 1, 12)      732     9,360
+pool3                          MaxPooling2D                 -     2,1    2,1      -       -     (13, 1, 12)      (6, 1, 12)        0         0
+flatten                        Flatten                      -       -      -      -       -      (6, 1, 12)           (72,)        0         0
+dense1                         QDense                       1       -      -      -  linear           (72,)            (1,)       73        72
+
+total weights+biases 1,465   total MACs per window 53,784   heaviest layer conv2 (24,192 MACs)
+
+Learned bit widths (HGQ kif fixed point, one width per tensor; iq = layer input, kq = kernel, bq = bias;
+k = sign bit, i = integer bits, f = fractional bits; values as stored in the .keras file;
+width = k + round(i) + round(f), i.e. ap_fixed<k+i+f, k+i>; the .keras file is authoritative):
+  conv1                          iq: k 1  i   3.999  f   4.626   -> 10 bits  ap_fixed<10,5>
+  conv1                          kq: k 1  i   4.000  f   5.631   -> 11 bits  ap_fixed<11,5>
+  conv1                          bq: k 1  i   4.000  f   4.541   -> 10 bits  ap_fixed<10,5>
+  conv2                          iq: k 1  i   4.000  f   5.362   -> 10 bits  ap_fixed<10,5>
+  conv2                          kq: k 1  i   4.000  f   5.104   -> 10 bits  ap_fixed<10,5>
+  conv2                          bq: k 1  i   4.000  f   4.486   ->  9 bits  ap_fixed<9,5>
+  conv3                          iq: k 1  i   4.000  f   4.993   -> 10 bits  ap_fixed<10,5>
+  conv3                          kq: k 1  i   4.000  f   5.377   -> 10 bits  ap_fixed<10,5>
+  conv3                          bq: k 1  i   4.000  f   4.202   ->  9 bits  ap_fixed<9,5>
+  dense1                         iq: k 1  i   4.000  f   5.309   -> 10 bits  ap_fixed<10,5>
+  dense1                         kq: k 1  i   4.000  f   6.290   -> 11 bits  ap_fixed<11,5>
+  dense1                         bq: k 1  i   4.000  f   4.157   ->  9 bits  ap_fixed<9,5>

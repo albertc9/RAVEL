@@ -1,0 +1,55 @@
+12_halfrate_lp150_k5s1_k5s2 [main]  run_12_halfrate_lp150_k5s1_k5s2.keras
+=========================================================================
+input (128, 4, 1) -> output (1,) (raw score; trigger when score > threshold)
+
+layer                          type             filters/units  kernel   step groups     act     input shape    output shape      w+b      MACs
+conv1                          QConv2D                     12     5,1    1,1      1    relu     (128, 4, 1)    (124, 4, 12)       72    29,760
+pool1                          MaxPooling2D                 -     2,1    2,1      -       -    (124, 4, 12)     (62, 4, 12)        0         0
+conv2                          QConv2D                     12     5,1    2,1      1    relu     (62, 4, 12)     (29, 4, 12)      732    83,520
+pool2                          MaxPooling2D                 -     2,1    2,1      -       -     (29, 4, 12)     (14, 4, 12)        0         0
+flatten                        Flatten                      -       -      -      -       -     (14, 4, 12)          (672,)        0         0
+dense1                         QDense                       1       -      -      -  linear          (672,)            (1,)      673       672
+
+total weights+biases 1,477   total MACs per window 113,952   heaviest layer conv2 (83,520 MACs)
+
+Learned bit widths (HGQ kif fixed point, one width per tensor; iq = layer input, kq = kernel, bq = bias;
+k = sign bit, i = integer bits, f = fractional bits; values as stored in the .keras file;
+width = k + round(i) + round(f), i.e. ap_fixed<k+i+f, k+i>; the .keras file is authoritative):
+  conv1                          iq: k 1  i   3.994  f   4.952   -> 10 bits  ap_fixed<10,5>
+  conv1                          kq: k 1  i   4.000  f   5.919   -> 11 bits  ap_fixed<11,5>
+  conv1                          bq: k 1  i   4.000  f   4.646   -> 10 bits  ap_fixed<10,5>
+  conv2                          iq: k 1  i   4.000  f   5.504   -> 11 bits  ap_fixed<11,5>
+  conv2                          kq: k 1  i   4.000  f   5.196   -> 10 bits  ap_fixed<10,5>
+  conv2                          bq: k 1  i   4.000  f   4.206   ->  9 bits  ap_fixed<9,5>
+  dense1                         iq: k 1  i   4.000  f   5.545   -> 11 bits  ap_fixed<11,5>
+  dense1                         kq: k 1  i   4.000  f   5.430   -> 10 bits  ap_fixed<10,5>
+  dense1                         bq: k 1  i   4.000  f   3.972   ->  9 bits  ap_fixed<9,5>
+
+
+12_halfrate_lp150_k5s1_k5s2 [decimate_in_model]  run_12_halfrate_lp150_k5s1_k5s2__decimate_in_model.keras
+=========================================================================================================
+input (256, 4, 1) -> output (1,) (raw score; trigger when score > threshold)
+
+layer                          type             filters/units  kernel   step groups     act     input shape    output shape      w+b      MACs
+decimate_keep_every_2nd        Conv2D                       1     1,1    2,1      1  linear     (256, 4, 1)     (128, 4, 1)        1         0   (fixed selection, not a learned layer (weight 1): keeps every 2nd sample)
+conv1                          QConv2D                     12     5,1    1,1      1    relu     (128, 4, 1)    (124, 4, 12)       72    29,760
+pool1                          MaxPooling2D                 -     2,1    2,1      -       -    (124, 4, 12)     (62, 4, 12)        0         0
+conv2                          QConv2D                     12     5,1    2,1      1    relu     (62, 4, 12)     (29, 4, 12)      732    83,520
+pool2                          MaxPooling2D                 -     2,1    2,1      -       -     (29, 4, 12)     (14, 4, 12)        0         0
+flatten                        Flatten                      -       -      -      -       -     (14, 4, 12)          (672,)        0         0
+dense1                         QDense                       1       -      -      -  linear          (672,)            (1,)      673       672
+
+total weights+biases 1,478   total MACs per window 113,952   heaviest layer conv2 (83,520 MACs)
+
+Learned bit widths (HGQ kif fixed point, one width per tensor; iq = layer input, kq = kernel, bq = bias;
+k = sign bit, i = integer bits, f = fractional bits; values as stored in the .keras file;
+width = k + round(i) + round(f), i.e. ap_fixed<k+i+f, k+i>; the .keras file is authoritative):
+  conv1                          iq: k 1  i   3.994  f   4.952   -> 10 bits  ap_fixed<10,5>
+  conv1                          kq: k 1  i   4.000  f   5.919   -> 11 bits  ap_fixed<11,5>
+  conv1                          bq: k 1  i   4.000  f   4.646   -> 10 bits  ap_fixed<10,5>
+  conv2                          iq: k 1  i   4.000  f   5.504   -> 11 bits  ap_fixed<11,5>
+  conv2                          kq: k 1  i   4.000  f   5.196   -> 10 bits  ap_fixed<10,5>
+  conv2                          bq: k 1  i   4.000  f   4.206   ->  9 bits  ap_fixed<9,5>
+  dense1                         iq: k 1  i   4.000  f   5.545   -> 11 bits  ap_fixed<11,5>
+  dense1                         kq: k 1  i   4.000  f   5.430   -> 10 bits  ap_fixed<10,5>
+  dense1                         bq: k 1  i   4.000  f   3.972   ->  9 bits  ap_fixed<9,5>
