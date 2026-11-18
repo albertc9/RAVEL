@@ -15,8 +15,11 @@ def conv(filters, kernel=3, stride=2, *, relu=True, pool=True, diagonal=False, g
             "pool": pool, "diagonal": diagonal, "groups": groups, "across": across}
 
 
-def make_block_chain(blocks, *, height=64, width=2, prefix="renamed"):
-    """Build an HGQ2 chain of convolutions with optional ReLU, pool and block-diagonal kernels."""
+def make_block_chain(blocks, *, height=64, width=2, prefix="renamed", hidden=()):
+    """Build an HGQ2 chain of convolutions with optional ReLU, pool and block-diagonal kernels.
+
+    `hidden` lists the units of Dense layers, each followed by ReLU, before the single output.
+    """
     import keras
     from hgq.layers import QConv2D, QDense
 
@@ -39,7 +42,11 @@ def make_block_chain(blocks, *, height=64, width=2, prefix="renamed"):
         if block["pool"]:
             value = keras.layers.MaxPool2D((2, 1), strides=(2, 1), name=f"{prefix}_pool_{index}")(value)
     value = keras.layers.Flatten(name=f"{prefix}_view")(value)
-    head = QDense.from_config({**dense, "name": f"{prefix}_head", "units": 1, "enable_iq": False, "iq_conf": None})
+    for index, units in enumerate(hidden):
+        value = QDense.from_config({**dense, "name": f"{prefix}_hidden_{index}", "units": units})(value)
+        value = keras.layers.ReLU(name=f"{prefix}_hidden_relu_{index}")(value)
+    head = QDense.from_config({**dense, "name": f"{prefix}_head", "units": 1,
+                               **({} if hidden else {"enable_iq": False, "iq_conf": None})})
     model = keras.Model(inputs, head(value))
     for layer in diagonal:
         kernel = np.asarray(keras.ops.convert_to_numpy(layer._kernel))

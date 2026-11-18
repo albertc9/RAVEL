@@ -54,6 +54,27 @@ def _homogeneous_stream_quantizer_compatibility():
         finally:
             ProcessFixedPointQuantizerLayer.transform = original_transform
 
+def _normalize_plain_relu_layers(model: Any) -> Any:
+    """Express a plain Keras ReLU layer as a ReLU activation.
+
+    The pinned hls4ml converts a standalone ReLU layer as a thresholded ReLU
+    whose zero threshold gets a degenerate fixed-point type; its C model then
+    passes negative values. An Activation("relu") layer converts correctly and
+    computes the same function.
+    """
+    def plain(layer):
+        return (type(layer).__name__ == "ReLU" and type(layer).__module__.startswith("keras")
+                and not getattr(layer, "negative_slope", 0) and not getattr(layer, "threshold", 0)
+                and getattr(layer, "max_value", None) is None)
+
+    if not any(plain(layer) for layer in getattr(model, "layers", ())):
+        return model
+    import keras
+
+    return keras.models.clone_model(
+        model, clone_function=lambda layer: keras.layers.Activation("relu", name=layer.name) if plain(layer) else layer)
+
+
 def _require_convertible_operations(model: Any) -> None:
     """Report source operations the pinned hls4ml cannot convert, before it fails."""
     findings = [
@@ -86,6 +107,7 @@ def convert_model(model, hls_values):
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
     normalized_model = _normalize_singleton_channel_input(normalized_model)
+    normalized_model = _normalize_plain_relu_layers(normalized_model)
     _require_convertible_operations(normalized_model)
 
     frontend_provenance = _frontend_provenance(normalized_model)

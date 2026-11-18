@@ -9,7 +9,7 @@ from ..domain.temporal import Finding
 from .bridges import Bridge, BridgeStrategy, LOSSLESS_BRIDGES
 from .arithmetic import ConstantArithmetic
 from .schedules import TokenSchedule
-from .windows import ArithmeticSchedule, WindowSchedule
+from .windows import ArithmeticSchedule, DenseSchedule, WindowSchedule
 
 
 @dataclass(frozen=True)
@@ -66,28 +66,33 @@ class Candidate:
     implementation: WindowSchedule | None = None
     arithmetic: ConstantArithmetic | None = None
     arithmetic_schedule: ArithmeticSchedule | None = None
+    dense: DenseSchedule | None = None
 
     @property
     def identity(self) -> tuple[str, int, int, str, int]:
-        return (self.id, self.version, self.implementation.positions if self.implementation else 0,
+        return (self.id, self.version,
+                self.implementation.positions if self.implementation else self.dense.output_lanes if self.dense else 0,
                 self.arithmetic.proof.graph_sha256 if self.arithmetic else "",
                 self.arithmetic_schedule.reuse_factor if self.arithmetic_schedule else 1)
 
     def to_dict(self) -> dict[str, object]:
         return {**({"arithmetic": self.arithmetic.to_dict()} if self.arithmetic else {}),
                 **({"arithmetic_schedule": self.arithmetic_schedule.to_dict()} if self.arithmetic_schedule else {}),
+                **({"dense": self.dense.to_dict()} if self.dense else {}),
                 "strategy": {"id": self.id, "version": self.version},
                 "operation_ids": list(self.operation_ids), "input": self.input.to_dict(),
                 "output": self.output.to_dict(), "specialized": self.specialized,
                 "execution": {"control": "ap_ctrl_hs-dataflow-process", "reset": "discard-in-flight",
                               "source_owner": ("constant-matrix-csd-cse-dsp" if self.arithmetic else
                                                "captured-window-positions" if self.implementation else
-                                               "hls4ml-native-latency-v1" if self.id == "hls4ml-temporal-block" else
-                                               "compose-top-and-contracts" if self.id == "identity-layout-view" else "legacy-template-adapter"),
+                                               "hls4ml-native-latency-v1" if self.id in {"hls4ml-temporal-block", "hls4ml-head-tail"} else
+                                               "compose-top-and-contracts" if self.id == "identity-layout-view" else
+                                               "dense-matrix-rom-and-accumulators" if self.dense else "legacy-template-adapter"),
                               "storage": ("partitioned-row-history-and-local-window" if self.implementation else
                                           "delegated-native-line-buffers" if self.id == "hls4ml-temporal-block" else
+                                          "delegated-native-registers" if self.id == "hls4ml-head-tail" else
                                           "zero-alias" if self.id == "identity-layout-view" else
-                                          "dense-rom-packing-and-accumulator" if self.id == "aria-dense-wide" else "selected-legacy-streaming-plan"),
+                                          "dense-rom-packing-and-accumulator" if self.id in {"aria-dense-wide", "aria-dense-matrix"} else "selected-legacy-streaming-plan"),
                               "input_lanes": self.input.lanes, "output_lanes": self.output.lanes},
                 "estimate": {"cycles": self.cost.cycles, "resource_proxy": self.cost.resource,
                              "latency": self.cost.latency, "status": "estimated", "confidence": self.confidence},

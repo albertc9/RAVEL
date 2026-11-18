@@ -112,6 +112,7 @@ _OPERATION_ATTRIBUTES = {
         "out_width",
     ),
     "relu": ("activation", "n_in"),
+    "parametrizedactivation": ("activation", "activ_param", "n_in"),
     "max_pool2d": (
         "in_height",
         "in_width",

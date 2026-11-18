@@ -140,6 +140,27 @@ def build_implementation_plan(
             "reasons": applicability_reasons,
         },
     }
+    if dense_outputs != 1:
+        # The search decides how many outputs share one step; the plan records
+        # the input grouping and the bound with every output in parallel.
+        dense_steps = (dense_inputs + mac_lanes - 1) // mac_lanes
+        matrix_reasons = [reason.replace("wide-sequential-v1", "matrix-sequential-v1")
+                          for reason in applicability_reasons if "one Dense output" not in reason]
+        if dense_inputs % mac_lanes:
+            matrix_reasons.append("matrix-sequential-v1 requires complete input groups")
+        weight_delivery = {
+            "id": "matrix-sequential",
+            "version": 1,
+            "lane_bits": dense_facts["numeric"]["weight"]["width"],
+            "outputs": dense_outputs,
+            "storage": {"type": "rom_1p", "implementation": "bram"},
+            "multipliers": {"implementation": "dsp"},
+            "accumulation": {"policy": "ordered"},
+            "applicability": {
+                "status": "applicable" if not matrix_reasons else "inapplicable",
+                "reasons": matrix_reasons,
+            },
+        }
     plan = {
         "template_profile": (
             f"aria-phara-p{temporal_pack}-q1-d4-v1"

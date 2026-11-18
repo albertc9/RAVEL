@@ -24,7 +24,9 @@ def report_bindings(design: Mapping[str, Any]) -> list[dict[str, Any]]:
                 config = native[operation]["config_symbol"]
                 functions.append({"name": "relu", "config": config.replace("config", "relu_config")}
                                  if operation.startswith("relu_") else {"name": "scheduled_pool", "config": config})
-        elif strategy == "hls4ml-temporal-block":
+        elif strategy == "aria-dense-matrix":
+            functions = [{"name": "dense_matrix_stream", "config": native[operation_ids[0]]["config_symbol"]}]
+        elif strategy in {"hls4ml-temporal-block", "hls4ml-head-tail"}:
             functions = []
             for operation in operation_ids:
                 call = native[operation]["native_call"]

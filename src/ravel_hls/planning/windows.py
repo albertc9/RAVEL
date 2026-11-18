@@ -64,6 +64,37 @@ def window_schedules(block: TemporalBlock) -> tuple[WindowSchedule, ...]:
 
 
 @dataclass(frozen=True)
+class DenseSchedule:
+    """Sequential Dense with several outputs: one input group and some outputs per step."""
+
+    inputs: int
+    outputs: int
+    mac_lanes: int
+    output_lanes: int
+
+    @property
+    def steps(self) -> int:
+        return self.inputs // self.mac_lanes * (self.outputs // self.output_lanes)
+
+    @property
+    def multipliers(self) -> int:
+        return self.mac_lanes * self.output_lanes
+
+    def to_dict(self) -> dict:
+        return {"id": "matrix-sequential", "version": 1, **asdict(self),
+                "steps": self.steps, "multipliers": self.multipliers,
+                "accumulation": "ordered", "target_loop_ii": 1}
+
+
+def dense_schedules(inputs: int, outputs: int, mac_lanes: int) -> tuple[DenseSchedule, ...]:
+    """Every way to share the outputs evenly across steps."""
+    if inputs % mac_lanes:
+        return ()
+    return tuple(DenseSchedule(inputs, outputs, mac_lanes, lanes)
+                 for lanes in range(1, outputs + 1) if outputs % lanes == 0)
+
+
+@dataclass(frozen=True)
 class ArithmeticSchedule:
     """Share position engines across finite phases of an accepted stream word."""
 

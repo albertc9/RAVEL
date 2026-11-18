@@ -28,7 +28,7 @@ def match_hgq_conv_pool_dense(
         return None, {"status": "unsupported", "findings": [f.to_dict() for f in recognition.findings]}
     chain = recognition.chain
     findings = []
-    for class_name, count in (("QConv2D", len(chain.blocks)), ("QDense", 1)):
+    for class_name, count in (("QConv2D", len(chain.blocks)), ("QDense", 1 + len(chain.tail) // 2)):
         observed = sum(source["class_name"] == class_name and source["module"].startswith("hgq.layers")
                        for source in provenance["source_layers"])
         if observed != count:
@@ -40,7 +40,7 @@ def match_hgq_conv_pool_dense(
                              "operation_id": None, "message": "Aria requires tensor-wide HGQ2 KIF/RND/SAT_SYM quantization"})
     if findings:
         return None, {"status": "unsupported", "findings": findings}
-    family_id = "hgq-conv-pool-dense" if len(chain.blocks) == 1 else "hgq-temporal-block-chain"
+    family_id = "hgq-conv-pool-dense" if len(chain.blocks) == 1 and not chain.tail else "hgq-temporal-block-chain"
     return {"id": family_id, "version": 1}, {"status": "applicable", "findings": []}
 
 

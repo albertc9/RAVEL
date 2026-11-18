@@ -73,13 +73,20 @@ class LayoutView:
 
 @dataclass(frozen=True)
 class TemporalChain:
+    """Blocks, the layout view, the Dense that consumes it and its optional tail.
+
+    The tail alternates a ReLU and a Dense and ends in the single output.
+    """
+
     input: TensorFacts
     blocks: tuple[TemporalBlock, ...]
     layout: LayoutView
     head: OperationFacts
+    tail: tuple[OperationFacts, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
-        return {"parser": {"id": "temporal-block-grammar", "version": 1},
+        return {**({"tail": [operation.id for operation in self.tail]} if self.tail else {}),
+                "parser": {"id": "temporal-block-grammar", "version": 1},
                 "block_count": len(self.blocks),
                 "blocks": [{"convolution": b.convolution.id,
                             "activation": b.activation.id if b.activation else None,
@@ -94,7 +101,7 @@ class Recognition:
 
 
 def recognize_temporal_chain(graph: GraphFacts) -> Recognition:
-    """Recognize Input -> (Conv [ReLU] [Pool])+ -> layout -> Dense1.
+    """Recognize Input -> (Conv [ReLU] [Pool])+ -> layout -> Dense (ReLU Dense)* with one output.
 
     A pool keeps its explicit ReLU and the chain ends in a pooled block. Shape
     equations validate facts; no artifact extent or hardware packing is a
@@ -171,15 +178,26 @@ def recognize_temporal_chain(graph: GraphFacts) -> Recognition:
     tail = ordered[position:]
     if blocks and blocks[-1].pooling is None:
         return failure("family.topology.sequence", "Temporal block requires Conv2D, explicit ReLU, and MaxPool2D", blocks[-1].convolution)
-    if not blocks or tuple(op.kind for op in tail) != ("reshape", "dense"):
+    kinds = tuple(op.kind for op in tail)
+    if not blocks or kinds[:2] != ("reshape", "dense") or kinds[2:] != ("relu", "dense") * ((len(kinds) - 2) // 2):
         return failure("family.topology.sequence", "Temporal family requires repeated blocks followed by layout and Dense1", tail[0] if tail else current)
-    layout, head = tail
+    layout, head, *rest = tail
     layout_output = layout.outputs[0]
     if layout_output.shape != (prod(previous.shape),) or not previous.numeric_type.preserves_codes_in(layout_output.numeric_type):
         return failure("family.geometry.layout", "Flatten must preserve feature order, shape product, and integer codes", layout)
-    if head.attribute("n_in") != prod(layout_output.shape) or head.outputs[0].shape != (1,) or head.attribute("n_out") != 1:
+    if head.attribute("n_in") != prod(layout_output.shape) or head.outputs[0].shape != (head.attribute("n_out"),):
         return failure("family.geometry.head", "Temporal family requires a single raw Dense output", head)
-    return Recognition(TemporalChain(first.outputs[0], tuple(blocks), LayoutView(layout, previous, layout_output), head))
+    final = head
+    for activation, dense in zip(rest[::2], rest[1::2]):
+        if (activation.outputs[0].shape != final.outputs[0].shape
+                or dense.attribute("n_in") != prod(activation.outputs[0].shape)
+                or dense.outputs[0].shape != (dense.attribute("n_out"),)):
+            return failure("family.geometry.head", "Dense tail layers must chain their widths", dense)
+        final = dense
+    if final.attribute("n_out") != 1:
+        return failure("family.geometry.head", "Temporal family requires a single raw Dense output", final)
+    return Recognition(TemporalChain(first.outputs[0], tuple(blocks), LayoutView(layout, previous, layout_output), head, tuple(rest)))
+
 
 
 def support_findings(chain: TemporalChain) -> tuple[Finding, ...]:
@@ -199,6 +217,9 @@ def support_findings(chain: TemporalChain) -> tuple[Finding, ...]:
         findings.append(Finding("family.support.block_form",
                                 "Aria 1.8 qualifies at most one convolution block without MaxPool2D",
                                 block.convolution.id))
+    if len(chain.tail) > 2:
+        findings.append(Finding("family.support.head_form",
+                                "Aria 1.8 qualifies at most one hidden Dense layer", chain.tail[2].id))
     return tuple(findings)
 
 

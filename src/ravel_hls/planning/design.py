@@ -98,7 +98,9 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                                       "dead_row_elimination": False, "logical_axes": ["temporal", "feature", "channel"]} for block in recognition.chain.blocks] + [
                         {"kind": "layout-view", "operation_ids": [recognition.chain.layout.operation.id], **recognition.chain.layout.to_dict()},
                         {"kind": "dense-head", "operation_ids": [recognition.chain.head.id],
-                         "weight_axes": ["flattened_feature", "output"], "feature_order": "C"}],
+                         "weight_axes": ["flattened_feature", "output"], "feature_order": "C"}] + (
+                        [{"kind": "dense-tail", "operation_ids": [operation.id for operation in recognition.chain.tail]}]
+                        if recognition.chain.tail else []),
                     streaming={"fifo_depth_words": 4, "liveness_proof": {"id": "linear-blocking-chain", "version": 1,
                                "assumptions": ["eventual-input", "eventual-output-ready"], "argument": "finite matched token counts, positive FIFO capacity, no feedback edges"}},
                     control={"protocol": "ap_ctrl_hs", "reset": {"level": "active-low", "scope": "all-registers", "abort": "discard-in-flight"}},
@@ -109,6 +111,8 @@ def resolve_model_design(generation, facts: GraphFacts, frontend_provenance, cho
                     warnings=[{"code": "estimate.uncalibrated_native", "message": "Native stage estimates are analytical lower bounds; vendor measurements are required"}],
                 )
                 resolved_design["rendering"]["native_operations"] = native
+                if recognition.chain.tail:
+                    resolved_design["rendering"]["output_operation"] = recognition.chain.tail[-1].id
                 from ..rendering.vitis.reports import report_bindings
                 resolved_design["report_bindings"] = report_bindings(resolved_design)
                 resolved_design["rendering"]["dense_filter_lanes"] = recognition.chain.layout.input.shape[-1]
