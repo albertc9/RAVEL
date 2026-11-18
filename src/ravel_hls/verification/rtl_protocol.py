@@ -105,7 +105,7 @@ begin
      pending=1; in_data=inputs[sent];
    end
    in_valid=pending; start=(launched < samples);
-   out_ready=(cycles%17 >= 5);
+   out_ready=((cycles + cycles/17)%17 >= 5);
    @(posedge clk);
    if(start && control_ready) launched=launched+1;
    if(blocked && (!out_valid || out_data !== held)) $fatal(1, "AXI output changed while stalled");
