@@ -237,3 +237,17 @@ def test_a_convolution_across_the_width_converts_through_a_delegated_stage(tmp_p
     assert stages[2]["input"]["shape"][1] == 1
     assert project.manifest["verification"]["transformation_equivalence"] == "passed"
     assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+
+
+def test_a_model_the_compiler_refuses_is_reported_as_a_compatibility_result():
+    import keras
+
+    chain = make_block_chain([conv(3), conv(4)], height=64)
+    inputs = keras.Input((128, 2, 1))
+    decimated = keras.layers.Conv2D(1, (1, 1), strides=(2, 1), use_bias=False, trainable=False)(inputs)
+    model = keras.Model(inputs, chain(decimated))
+
+    with pytest.raises(CompatibilityError) as raised:
+        analyze(model, PACKING)
+
+    assert [finding["code"] for finding in raised.value.findings] == ["frontend.conversion.hls4ml"]

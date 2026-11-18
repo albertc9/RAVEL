@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Any
 from ..compatibility.legacy_frontend import _normalize_singleton_channel_input
-from ..exceptions import CompatibilityError
+from ..exceptions import CompatibilityError, RavelError
 from .provenance import _frontend_provenance
 _HLS4ML_CONVERSION_LOCK = RLock()
 
@@ -174,22 +174,32 @@ def convert_model(model, hls_values):
 
     frontend_provenance = _frontend_provenance(normalized_model)
 
-    hls_config = hls4ml.utils.config_from_keras_model(
-        normalized_model, granularity="name", backend=backend
-    )
-    hls_config["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
-    conversion: dict[str, Any] = {
-        "model": normalized_model,
-        "output_dir": str(Path.cwd() / "ravel_analysis"),
-        "project_name": "ravel_analysis",
-        "hls_config": hls_config,
-        "backend": backend,
-        "io_type": io_type,
-    }
-    if hls_values.get("Part") is not None:
-        conversion["part"] = hls_values["Part"]
-    if hls_values.get("ClockPeriod") is not None:
-        conversion["clock_period"] = hls_values["ClockPeriod"]
-    with _homogeneous_stream_quantizer_compatibility():
-        graph = hls4ml.converters.convert_from_keras_model(**conversion)
+    try:
+        hls_config = hls4ml.utils.config_from_keras_model(
+            normalized_model, granularity="name", backend=backend
+        )
+        hls_config["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
+        conversion: dict[str, Any] = {
+            "model": normalized_model,
+            "output_dir": str(Path.cwd() / "ravel_analysis"),
+            "project_name": "ravel_analysis",
+            "hls_config": hls_config,
+            "backend": backend,
+            "io_type": io_type,
+        }
+        if hls_values.get("Part") is not None:
+            conversion["part"] = hls_values["Part"]
+        if hls_values.get("ClockPeriod") is not None:
+            conversion["clock_period"] = hls_values["ClockPeriod"]
+        with _homogeneous_stream_quantizer_compatibility():
+            graph = hls4ml.converters.convert_from_keras_model(**conversion)
+    except RavelError:
+        raise
+    except Exception as error:
+        # The compiler owns generic conversion; its refusal is a compatibility
+        # result, not an internal failure.
+        message = f"hls4ml could not convert the model: {error}"
+        raise CompatibilityError(message, findings=[{
+            "code": "frontend.conversion.hls4ml", "severity": "error", "operation_id": None,
+            "message": message}]) from error
     return graph, normalized_model, frontend_provenance
