@@ -107,10 +107,18 @@ P2/D1, P2/D2, P4/D1, P4/D2, and P8/D4. Omission resolves to P8/D4. For the
 canonical model, P2/P4/P8 use 128-/256-/512-bit input `TDATA`. Refresh preserves
 the recorded selection.
 
+`Optimization.TargetII` is an optional positive interval in clock cycles.
+Without it the search ranks plans by predicted interval alone. For a model with
+a hidden Dense this can select twice the multipliers for a gain of a few
+cycles, so give a target when resources matter. With a target, the plan with
+the fewest predicted LUT inside the target is selected.
+
 Aria derives a sequential packed Dense weight ROM from the converted hls4ml
 graph. A Dense with several outputs uses one ROM per output lane and computes a
-searched number of outputs per step. Word width, depth, MAC lanes, outputs per
-step, and tail handling are internal plan
+searched number of outputs per step. Two outputs of a step share one multiplier
+per input value when the packed operand fits the multiplier ports of the
+device. Word width, depth, MAC lanes, outputs per
+step, multiplier sharing, and tail handling are internal plan
 properties; they are not additional public configuration fields. Refresh may
 change parameter values but rejects changes to the recorded structural plan.
 
