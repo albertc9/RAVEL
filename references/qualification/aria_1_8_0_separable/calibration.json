@@ -5,7 +5,7 @@
  "clock_ns": 5,
  "tool_version": "2023.2",
  "evidence_layer": "HLS synthesis, RTL CoSim and RTL protocol test; no routed implementation",
- "host": "work1@100.71.11.92, /home/work1/Works/RAVEL-env/qualification/aria180",
+ "host": "/home/work1/Works/RAVEL-env/qualification/aria180",
  "measurements": [
   {
    "c_verification": "passed",

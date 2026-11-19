@@ -2,7 +2,7 @@
 
 Implementation: `f4f25d7` on `devel`. No release or publication was performed.
 All vendor runs use Vitis HLS/Vivado 2023.2, KU5P `xcku5p-ffvb676-2-e`, 5 ns,
-external P8/D4, on `work1@100.71.11.92`. The trained model of the target
+external P8/D4, on the qualification host. The trained model of the target
 structure was not available; `final_target` is a synthetic model of the same
 shape with random weights, so its numbers are not a result for trained weights.
 
