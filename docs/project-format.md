@@ -10,9 +10,9 @@ specialization. Vendor tools may or may not have run.
 - `ravel_config.yml` is the normalized RAVEL configuration, including the
   resolved `Optimization` section. Its
   published output directory is also `.`.
-- `ravel_manifest.json` is the immutable schema-v6 generation record.
+- `ravel_manifest.json` is the immutable schema-v9 generation record.
 - `ravel_qualification.json` is optional schema-v5 measured Vitis evidence;
-  manifest v1–v5 and qualification v2–v4 remain readable.
+  manifest v1–v8 and qualification v2–v4 remain readable.
 - `build_opt.tcl` contains explicit Vitis stage booleans.
 
 Published records contain no original source filename, username, hostname, or
@@ -115,3 +115,24 @@ library stamp derives from model and plan fingerprints, and the project-local
 Keras ZIP uses fixed archive metadata and a normalized save timestamp. Shared-object IDs are renumbered in traversal order while preserving alias
 relationships. Configuration semantics and HDF5 parameter bytes are preserved. These normalization
 changes have their own source-ownership record; source inputs are not edited.
+
+
+## Aria 1.8 records
+
+Manifest schema 9 adds the records of the Aria 1.8.0 block and head forms.
+
+- Each stage of `resolved_design` lists the operations it implements. A block
+  stage holds a convolution alone, with a ReLU, or with a ReLU and a MaxPool.
+- A P8 first stage whose geometry is not height 5, stride 3 records the
+  `row-credit` scheduler at version 2 with `buffer_rows`, `max_live_rows`,
+  `read_cycles`, `cycles`, `fill_cycles`, and `drain_cycles`. The height-5,
+  stride-3 geometry still records version 1.
+- A Dense with several outputs records `matrix-sequential` weight delivery and
+  a stage schedule with `inputs`, `outputs`, `mac_lanes`, `output_lanes`,
+  `steps`, and `multipliers`. Its stage is `aria-dense-matrix`; the ReLU and
+  Dense after it form the `hls4ml-head-tail` stage.
+
+These records belong to the architecture envelope. Refresh preserves them and
+regenerates only the coefficient-dependent arithmetic. A project of an earlier
+generation stays inspectable and is refreshed under its recorded generation,
+keeping its stage and arithmetic schedules.

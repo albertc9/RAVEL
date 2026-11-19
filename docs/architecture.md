@@ -5,7 +5,7 @@ project while preserving the model semantics. Training remains outside RAVEL.
 
 ## Aria workflow
 
-Aria 1.7.0 exposes three Python operations over one configuration:
+Aria 1.8.0 exposes three Python operations over one configuration:
 
 1. `analyze(model, config)` converts to a clean hls4ml `ModelGraph`, extracts
    immutable model facts, matches a versioned family, and resolves a design
@@ -81,11 +81,23 @@ The canonical stage-rate model is 32 input cycles, 42 fused-region cycles, and
 42 Dense cycles. The 42-cycle value is a structural lower bound, not a promised
 HLS II. The measured top-level II is reported separately.
 
+Aria 1.8.0 derives the supertile from the extracted geometry instead of fixing
+it. With kernel height `K`, stride `S`, and pool height `P`, one pooled row
+spans `K + (P - 1) * S` input rows and advances the input by `P * S` rows. The
+row schedule emits at most one pooled row per cycle. When the words read so far
+do not cover the next pooled row, the cycle reads one word and produces nothing
+(a fill cycle); after the last output the remaining input words are drained.
+Buffer depth, total cycles, and fill cycles follow from the geometry. The
+height-5, stride-3 geometry keeps the schedule above, its lowering, and its
+source bytes. Other geometries use a separate versioned lowering of the same
+hybrid arithmetic graph. A height-7, stride-2 convolution on 256 rows produces
+62 pooled rows, so its fused region needs at least 62 cycles.
+
 RAVEL renders owned files from the resolved design and read-only parameter
 payload through strict templates. The renderer cannot inspect a `ModelGraph`;
 unaffected project files remain hls4ml-owned.
 
-The internal built-in generation registry is immutable and closed. Aria 1.7
+The internal built-in generation registry is immutable and closed. Aria 1.8
 explicitly composes its operation extractors, family matcher, strategy,
 resolver, executed passes, and Vitis/io_stream renderer binding. Matching checks
 all declared families and rejects ambiguity; there is no import-time plugin
@@ -100,8 +112,8 @@ and whether Vitis was invoked do not change the generation fingerprint.
 The aggressive-policy identity and resolved P/D values do. Refresh reuses the
 recorded resolved values and changes model state without changing architecture.
 
-Manifest schema v6 separates the parameter-invariant `architecture_envelope`
-from the coefficient-dependent `coefficient_realization`. Refresh preserves
+Manifest schema v6 and later separate the parameter-invariant
+`architecture_envelope` from the coefficient-dependent `coefficient_realization`. Refresh preserves
 the envelope, regenerates the arithmetic graph deterministically, and requires
 a new modular proof.
 
@@ -129,7 +141,7 @@ clock, tool version, and expected RTL port widths.
   CoSim report.
 
 RTL simulation, IP export, implementation timing, and board validation remain
-separate activities. Aria 1.7 does not promote HLS synthesis into
+separate activities. Aria does not promote HLS synthesis into
 proof of any of those layers.
 
 
@@ -162,3 +174,36 @@ boundaries, bridge outputs, layout, and Dense. Production sources retain the
 ordinary interface. Qualification v5 can additionally bind independent RTL
 protocol traces and routed Vivado OOC reports to the exact source and manifest.
 Model accuracy and board-level validation remain separate.
+
+
+## Block and head forms
+
+Since Aria 1.8.0 the temporal grammar parses a block as one convolution with an
+optional ReLU and an optional MaxPool, and the head as a Dense with an optional
+tail of ReLU and Dense pairs. The support domain is decided from block facts:
+the number of pooled blocks, the number of blocks without a pool, and the
+number of hidden Dense layers. Stage capabilities receive the operations of a
+block by kind, so one captured-window or shared-arithmetic lowering serves a
+convolution alone, with ReLU, or with ReLU and MaxPool.
+
+The frontend expresses two source forms equivalently before conversion, because
+the pinned hls4ml does not convert them correctly: a plain Keras `ReLU` layer
+and a grouped HGQ2 convolution. A grouped or depthwise convolution becomes an
+ordinary convolution with a block-diagonal kernel. No grouped operator exists:
+the shared-arithmetic graph is built from the coefficient codes and creates no
+node for a zero coefficient, so the stage costs only the nonzero products.
+
+A Dense with several outputs is lowered by the `aria-dense-matrix` stage. Each
+step reads one input group and updates some of the outputs. Weights come from
+one ROM per output lane, and each output accumulates its products in input
+order, as the native Dense does. The products of one step are reduced before
+the accumulator, so the accumulator loop carries one addition. The number of
+outputs per step is enumerated by the search together with the convolution
+stages; a throughput target can therefore trade multipliers for steps. The
+ReLU and final Dense after a hidden Dense stay native as `hls4ml-head-tail`
+and carry one word per inference.
+
+Complete-chain enumeration is bounded by a factor of 64 for each searched stage
+after the first. Coverage of the shared-arithmetic cost profile is a versioned
+range of measured geometries; a legal candidate outside it stays visible and is
+not promoted over a calibrated one.
