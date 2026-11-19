@@ -1,0 +1,348 @@
+{
+ "model": "17_k7s2_depthwise_dense32",
+ "trained_key": "swing_s2_amphp_distill_c12",
+ "architecture_class": "swing_s2",
+ "chain": "amphp",
+ "threshold_1Hz": 9.169189453125,
+ "versions": {
+  "main": {
+   "model": "v6_17_k7s2_depthwise_dense32",
+   "input": [
+    256,
+    4,
+    1
+   ],
+   "output": [
+    1
+   ],
+   "layers": [
+    {
+     "name": "conv1",
+     "keras_name": "q_conv2d_6",
+     "type": "QConv2D",
+     "input": [
+      256,
+      4,
+      1
+     ],
+     "output": [
+      125,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      7,
+      1
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 96,
+     "macs": 42000,
+     "bit_widths": {
+      "iq": {
+       "i": 3.9447836875915527,
+       "f": 5.666248798370361,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 6.361780166625977,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.606767177581787,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      }
+     }
+    },
+    {
+     "name": "pool1",
+     "keras_name": "max_pooling2d_4",
+     "type": "MaxPooling2D",
+     "input": [
+      125,
+      4,
+      12
+     ],
+     "output": [
+      62,
+      4,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "conv2",
+     "keras_name": "q_conv2d_7",
+     "type": "QConv2D",
+     "input": [
+      62,
+      4,
+      12
+     ],
+     "output": [
+      28,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      7,
+      1
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "groups": 12,
+     "activation": "linear",
+     "use_bias": true,
+     "weights_and_biases": 96,
+     "macs": 9408,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.681607246398926,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.991184711456299,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.4508442878723145,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "conv3",
+     "keras_name": "q_conv2d_8",
+     "type": "QConv2D",
+     "input": [
+      28,
+      4,
+      12
+     ],
+     "output": [
+      28,
+      4,
+      16
+     ],
+     "filters": 16,
+     "kernel_size": [
+      1,
+      1
+     ],
+     "strides": [
+      1,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 208,
+     "macs": 21504,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 6.614635944366455,
+       "k": 1.0,
+       "total_rounded": 12,
+       "ap_fixed": "ap_fixed<12,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 4.690813064575195,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.609080791473389,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      }
+     }
+    },
+    {
+     "name": "pool2",
+     "keras_name": "max_pooling2d_5",
+     "type": "MaxPooling2D",
+     "input": [
+      28,
+      4,
+      16
+     ],
+     "output": [
+      14,
+      4,
+      16
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "flatten",
+     "keras_name": "flatten",
+     "type": "Flatten",
+     "input": [
+      14,
+      4,
+      16
+     ],
+     "output": [
+      896
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense1",
+     "keras_name": "q_dense_2",
+     "type": "QDense",
+     "input": [
+      896
+     ],
+     "output": [
+      32
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 32,
+     "weights_and_biases": 28704,
+     "macs": 28672,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 6.323681831359863,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 6.2073750495910645,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 3.996389389038086,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "relu_hidden",
+     "keras_name": "relu_hidden",
+     "type": "ReLU",
+     "input": [
+      32
+     ],
+     "output": [
+      32
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense2",
+     "keras_name": "q_dense_3",
+     "type": "QDense",
+     "input": [
+      32
+     ],
+     "output": [
+      1
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 1,
+     "weights_and_biases": 33,
+     "macs": 32,
+     "bit_widths": {
+      "iq": {
+       "i": 4.688877582550049,
+       "f": 6.162327289581299,
+       "k": 1.0,
+       "total_rounded": 12,
+       "ap_fixed": "ap_fixed<12,6>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.513893127441406,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.203429222106934,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    }
+   ],
+   "total_weights_and_biases": 29137,
+   "total_macs": 101616,
+   "heaviest_layer": {
+    "name": "conv1",
+    "macs": 42000
+   },
+   "version": "main",
+   "file": "run_17_k7s2_depthwise_dense32.keras",
+   "input_description": "(256, 4, 1): 1 GSa/s, time x antenna x 1"
+  }
+ }
+}

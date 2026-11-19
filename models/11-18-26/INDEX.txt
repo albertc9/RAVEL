@@ -1,0 +1,18 @@
+CNN trigger models, 2026-11-18. V_eff = change vs model 01 (average of 3 trained runs), same simulated events,
+every trigger at 1 Hz on noise, at 10^16 / 10^18.5 eV. Heaviest = MACs of the largest layer relative to model 01
+(37,440 MACs). RAVEL = RAVEL main (2026-09-17) as exported.
+
+  #  folder                             V_eff 1e16  1e18.5  heaviest  RAVEL
+  1  17_k7s2_depthwise_dense32                +51%    +16%     1.12x  needs a depthwise conv + 1x1 conv stage and a hidden dense layer  [V_eff from 1 training run]
+  2  15_k7s2_f8_depthwise                     +20%    +11%     0.75x  needs a depthwise conv + 1x1 conv stage
+  3  16_k7s2_f12_depthwise                    +21%    +13%     1.12x  needs a depthwise conv + 1x1 conv stage
+  4  18_halfrate_lp150_k5s1_depthwise         +14%    +15%     0.79x  needs a depthwise conv + 1x1 conv stage; firmware 150 MHz low-pass + decimation, 128-sample window
+
+folder                                    input      w+b      MACs       heaviest layer 1 Hz thr x16 up  alt versions
+15_k7s2_f8_depthwise                (256, 4, 1)      649    41,888         conv1 28,000    5.167     83  -
+16_k7s2_f12_depthwise               (256, 4, 1)    1,021    68,208         conv1 42,000    5.606     90  -
+17_k7s2_depthwise_dense32           (256, 4, 1)   29,137   101,616         conv1 42,000    9.169    147  -
+18_halfrate_lp150_k5s1_depthwise    (128, 4, 1)      973    54,096         conv1 29,760    5.351     86  -
+
+Available on request (same layers, other trained runs):
+  17_k7s2_depthwise_dense32: 7 more runs with these layers (3 plain-trained, 4 other training methods)

@@ -1,0 +1,4 @@
+# 150 MHz digital low-pass used for the low-pass models: scipy.signal.butter(4, 0.150, fs=1.0, output='sos')
+# rows: b0 b1 b2 a0 a1 a2 (second-order sections, applied in order, 1 GSa/s)
+0.018563010626897171 0.037126021253794342 0.018563010626897171 1 -0.67274091119152735 0.14453519983312102
+1 2 1 1 -0.89765794003664445 0.52718690463159723
