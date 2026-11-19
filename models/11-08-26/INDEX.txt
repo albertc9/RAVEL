@@ -1,0 +1,24 @@
+v6 CNN models, one per architecture (14), exported 2026-11-08
+All trained on prod_p2_v6 through the amp + high-pass chain (12: + 150 MHz low-pass). MACs per 256 ns window.
+
+folder                                  input      w+b      MACs         heaviest layer 1 Hz thr  alt versions / new for the converter
+01_current_k5s3_f12               (256, 4, 1)    1,093    57,888           conv2 37,440    4.953  the current CNN (reference; same checkpoint as the 2026-10-11 package v6_2cv_k5s3_f12_amphp)
+02_filters_8                      (256, 4, 1)      569    30,272           conv2 16,640    4.987  8 filters per conv layer instead of 12
+03_conv1_kernel7_step3            (256, 4, 1)    1,117    65,952           conv2 37,440    4.889  first-layer kernel 7 with step 3 (K+S = 10); rest as 01
+04_conv1_kernel5_step2            (256, 4, 1)    1,285    88,320           conv2 57,600    4.506  first-layer step 2 (more positions downstream); rest as 01
+05_kernel7_step2_both             (256, 4, 1)    1,789   155,568          conv2 112,896    4.995  kernel 7, step 2 in both conv layers (the geometry already in conversion)
+06_conv2_kernel3_step1            (256, 4, 1)    1,477    90,240           conv2 69,120    5.024  second conv layer with kernel 3, step 1
+07_hidden_dense16                 (256, 4, 1)    5,445    62,224           conv2 37,440    7.618  a hidden dense layer (16 units, ReLU) before the output
+08_three_conv_layers              (256, 4, 1)      837    59,424           conv2 30,720    5.318  three conv layers (8/8/12 filters), pooling after layers 1 and 3 only
+09_depthwise_conv2                (256, 4, 1)      589    31,056           conv1 20,160    5.521  [dense_equivalent] depthwise-separable second layer: grouped conv (groups = 12, no activation) then a 1x1 conv
+10_antennas_mixed_after_conv1     (256, 4, 1)    1,465    53,784           conv2 24,192    8.035  a (1 x 4) kernel that combines the 4 antennas after the first layer
+11_antennas_as_channels           (256, 4, 1)    1,057    29,592           conv1 20,160    8.326  [channels_input] the 4 antennas as input channels of the first layer
+12_halfrate_lp150_k5s1_k5s2       (128, 4, 1)    1,477   113,952           conv2 83,520    5.611  [decimate_in_model] 0.5 GSa/s input (128 samples) after a 150 MHz digital low-pass; conv steps 1 and 2
+13_halfrate_current_layers        (128, 4, 1)      949    27,504           conv2 17,280    5.465  [decimate_in_model] 0.5 GSa/s input (128 samples, no low-pass) with the current layer settings
+14_run4_not_fpga_sized            (256, 4, 1)  119,489   686,512          conv2 501,760    8.176  the large research CNN (not FPGA-sized): 20 / 32 filters, kernel 7 step 2, Dense(64), 10-bit start
+
+Other trained models that duplicate an architecture above (not included; available on request):
+  01_current_k5s3_f12: 2cv_k5s3_f12_amphp_seed1, _seed2: same layers, retrained from a different random start
+  01_current_k5s3_f12: 2cv_k5s3_f12_amphp_lp150: same layers, trained on input with the 150 MHz digital low-pass
+  01_current_k5s3_f12: 2cv_k5s3_f12_amp: same layers, amp chain WITHOUT the high-pass (older chain)
+  12_halfrate_lp150_k5s1_k5s2: dec2_k5s1k5s2_f12_amphp: same layers, trained WITHOUT the low-pass (every 2nd sample only)

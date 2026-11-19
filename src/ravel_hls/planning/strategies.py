@@ -9,8 +9,8 @@ from ..domain.temporal import Finding, LayoutView, TemporalBlock
 from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
-from .windows import arithmetic_schedules, window_schedules
-from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE
+from .windows import arithmetic_schedules, dense_schedules, window_schedules
+from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE, DENSE_MATRIX_OVERHEAD_CYCLES
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,7 @@ class StageContext:
 
 @dataclass(frozen=True)
 class StageRequest:
-    semantic: TemporalBlock | LayoutView | OperationFacts
+    semantic: TemporalBlock | LayoutView | OperationFacts | tuple[OperationFacts, ...]
     context: StageContext
     previous: StreamContract | None = None
     layout: LayoutView | None = None
@@ -68,7 +68,9 @@ def _temporal(request, strategy, version):
     specialized = strategy != "hls4ml-temporal-block"
     if external != specialized or (specialized and strategy != context.input_strategy):
         return Capability()
-    convolution, pooled = block.convolution, block.pooling.outputs[0]
+    if specialized and (block.activation is None or block.pooling is None):
+        return Capability()
+    convolution, pooled = block.convolution, block.output
     input_lanes = int(convolution.attribute("n_chan"))
     output_lanes = int(convolution.attribute("n_filt"))
     if specialized:
@@ -79,14 +81,14 @@ def _temporal(request, strategy, version):
     weight = next((parameter for parameter in convolution.parameters if parameter.role == "weight"), None)
     multipliers = prod(weight.shape) if weight is not None else 0
     for operation in (block.convolution, block.pooling):
-        if any(operation.attribute(name, 0) != 0 for name in ("pad_top", "pad_bottom", "pad_left", "pad_right")):
+        if operation is not None and any(operation.attribute(name, 0) != 0 for name in ("pad_top", "pad_bottom", "pad_left", "pad_right")):
             return Capability(findings=(Finding("strategy.geometry.padding", "The qualified temporal schedule requires valid unpadded windows", operation.id),))
     try:
         schedule = temporal_schedule(block, input_lanes, output_lanes)
     except ValueError as error:
         return Capability(findings=(Finding("strategy.schedule.event_bound", str(error), convolution.id),))
     lower_bound = max(source.words, target.words)
-    base = Candidate(strategy, version, (convolution.id, block.activation.id, block.pooling.id), source, target,
+    base = Candidate(strategy, version, tuple(operation.id for operation in block.operations), source, target,
                                 Cost(context.input_cycles if specialized else lower_bound, multipliers, lower_bound), specialized,
                                 "analytical" if specialized else "uncalibrated-native", schedule)
     variants = tuple(replace(base, arithmetic=arithmetic,
@@ -117,7 +119,7 @@ def _scheduled(request, strategy, version):
     findings = []
     for implementation in window_schedules(block):
         calibrated = WINDOW_COST_PROFILE.covers(block, implementation, request.context.part, request.context.clock_period)
-        pooled = block.pooling.outputs[0]
+        pooled = block.output
         source = StreamContract(block.input.id, block.input.shape, block.input.numeric_type,
                                 implementation.positions * implementation.channels)
         target = StreamContract(pooled.id, pooled.shape, pooled.numeric_type,
@@ -129,7 +131,7 @@ def _scheduled(request, strategy, version):
             continue
         candidates.append(Candidate(
             strategy, version,
-            (block.convolution.id, block.activation.id, block.pooling.id), source, target,
+            tuple(operation.id for operation in block.operations), source, target,
             Cost(WINDOW_COST_PROFILE.window_cycles(implementation) if calibrated else implementation.input_words,
                  implementation.products, implementation.input_words),
             True, "calibrated" if calibrated else "uncalibrated", schedule, implementation,
@@ -139,7 +141,7 @@ def _scheduled(request, strategy, version):
 
 def _dense(request, strategy, version):
     head, layout, context = request.semantic, request.layout, request.context
-    if not isinstance(head, OperationFacts) or head.kind != "dense" or layout is None:
+    if not isinstance(head, OperationFacts) or head.kind != "dense" or layout is None or head.attribute("n_out") != 1:
         return Capability()
     lanes = layout.input.shape[-1] * layout.input.shape[-2]
     source = StreamContract(layout.output.id, layout.output.shape, layout.output.numeric_type, lanes)
@@ -148,6 +150,48 @@ def _dense(request, strategy, version):
     return Capability((Candidate(strategy, version, (head.id,), source, target,
                                 Cost(context.dense_cycles, layout.input.shape[-1] * context.dense_parallelism, context.dense_cycles), True,
                                 schedule=TokenSchedule(source.words, target.words, (source.words,) * target.words)),))
+
+
+MAX_ROM_WORD_BITS = 1024  # default width limit of the vendor arbitrary-precision integer
+
+
+def _dense_matrix(request, strategy, version):
+    """A Dense with several outputs: sequential over input groups, some outputs per step."""
+    head, layout, context = request.semantic, request.layout, request.context
+    if not isinstance(head, OperationFacts) or head.kind != "dense" or layout is None or head.attribute("n_out") == 1:
+        return Capability()
+    lanes = layout.input.shape[-1] * layout.input.shape[-2]
+    weight = next(parameter for parameter in head.parameters if parameter.role == "weight")
+    # Use the requested parallelism, or the largest smaller one whose input
+    # group still fits one ROM word.
+    groups = [layout.input.shape[-1] * factor for factor in range(context.dense_parallelism, 0, -1)
+              if context.dense_parallelism % factor == 0]
+    mac_lanes = next((group for group in groups if lanes % group == 0
+                      and group * weight.numeric_type.width <= MAX_ROM_WORD_BITS), 0)
+    schedules = dense_schedules(head.attribute("n_in"), head.attribute("n_out"), mac_lanes) if mac_lanes else ()
+    if not schedules:
+        return Capability(findings=(Finding("strategy.geometry.dense_stream",
+                                            "Dense input groups must divide the stream word and the Dense input", head.id),))
+    source = StreamContract(layout.output.id, layout.output.shape, layout.output.numeric_type, lanes)
+    output = head.outputs[0]
+    target = StreamContract(output.id, output.shape, output.numeric_type, head.attribute("n_out"))
+    return Capability(tuple(Candidate(
+        strategy, version, (head.id,), source, target,
+        Cost(schedule.steps + DENSE_MATRIX_OVERHEAD_CYCLES, schedule.multipliers, schedule.steps + DENSE_MATRIX_OVERHEAD_CYCLES), True,
+        schedule=TokenSchedule(source.words, target.words, (source.words,) * target.words), dense=schedule)
+        for schedule in schedules))
+
+
+def _head_tail(request, strategy, version):
+    """The ReLU and Dense layers after a hidden Dense stay native: one word in, one word out."""
+    tail = request.semantic
+    if not isinstance(tail, tuple) or not tail or request.previous is None:
+        return Capability()
+    output = tail[-1].outputs[0]
+    target = StreamContract(output.id, output.shape, output.numeric_type, prod(output.shape))
+    return Capability((Candidate(strategy, version, tuple(operation.id for operation in tail), request.previous, target,
+                                Cost(1, 0, len(tail)), False,
+                                schedule=TokenSchedule(request.previous.words, target.words, (request.previous.words,) * target.words)),))
 
 
 def _affine(request, strategy, version):
@@ -175,4 +219,6 @@ TEMPORAL_STRATEGIES = (
     StageStrategy("aria-affine-window", 1, _affine),
     StageStrategy("identity-layout-view", 1, _layout),
     StageStrategy("aria-dense-wide", 1, _dense),
+    StageStrategy("aria-dense-matrix", 1, _dense_matrix),
+    StageStrategy("hls4ml-head-tail", 1, _head_tail),
 )

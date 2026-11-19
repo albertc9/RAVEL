@@ -115,11 +115,17 @@ PoolWords:
 '''
 
 
+_FUNCTIONS = {"conv2d": "ravel::scheduled_conv", "relu": "nnet::relu", "max_pool2d": "ravel::scheduled_pool"}
+
+
 def emit_window(stage, native, payload, current_symbol, current_type, stream, observe, calls, typedefs, *, convolution_call=None):
     positions = stage["implementation"]["positions"]
-    convolution, activation, pooling = stage["operation_ids"]
-    for operation, function in ((convolution, "ravel::scheduled_conv"),
-                                (activation, "nnet::relu"), (pooling, "ravel::scheduled_pool")):
+    owned = [(operation, operation.rsplit("_", 1)[0]) for operation in stage["operation_ids"]]
+    convolution = next(operation for operation, kind in owned if kind == "conv2d")
+    activation = next((operation for operation, kind in owned if kind == "relu"), None)
+    final = owned[-1][0]
+    for operation, kind in owned:
+        function = _FUNCTIONS[kind]
         binding = native[operation]
         output_type = f"ravel_{operation}_window_t"
         output_symbol = binding["output_symbol"]
@@ -136,7 +142,7 @@ def emit_window(stage, native, payload, current_symbol, current_type, stream, ob
             arguments += f", {payload[f'{operation}:weight'].symbol}, {payload[f'{operation}:bias'].symbol}"
         calls.append(convolution_call(stage, binding, payload, current_symbol, current_type, output_symbol, output_type)
                      if operation == convolution and convolution_call else f"    {function}<{template}>({arguments});")
-        if operation != pooling:
+        if operation != final:
             observe(f"{operation}:out0", output_symbol, binding["output_shape"])
         current_symbol, current_type = output_symbol, output_type
     return current_symbol, current_type

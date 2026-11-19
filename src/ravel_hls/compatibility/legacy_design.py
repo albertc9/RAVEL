@@ -41,7 +41,7 @@ def _rendering_contract(
     operations = {}
     for operation_id, binding in native.items():
         operation = {key: binding[key] for key in ("output_symbol", "output_type", "output_precision_cpp")}
-        if operation_id in {"conv2d_0", "relu_0", "max_pool2d_0", "dense_0"}:
+        if operation_id in {"conv2d_0", "relu_0", "max_pool2d_0"} or operation_id.startswith("dense_"):
             operation["config_symbol"] = binding["config_symbol"].replace("config", "relu_config") if operation_id == "relu_0" else binding["config_symbol"]
         operations[operation_id] = operation
     temporal_pack = implementation_plan["temporal_pack"]
@@ -77,8 +77,9 @@ def _rendering_contract(
     }
     if "phara" in implementation_plan:
         realization = implementation_plan["phara"]["realization"]
+        scheduled = implementation_plan["phara"].get("scheduler", {}).get("version") == 2
         contract["phara_fused_function"] = (
-            f"phara_pool_aligned_{realization}_p{temporal_pack}_cl"
+            f"phara_pool_aligned_{realization}_p{temporal_pack}{'_scheduled' if scheduled else ''}_cl"
         )
         contract["dense_function"] = "dense_wide_stream"
     return contract

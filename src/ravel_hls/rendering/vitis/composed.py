@@ -12,6 +12,7 @@ from ..ownership import SourceStep
 from .renderer import render_aria_project
 from .windows import LOWERINGS, SOURCE as WINDOW_SOURCE
 from .affine import SOURCE as AFFINE_SOURCE, matrix_struct
+from . import dense as dense_matrix
 
 
 def render_project(path: Path, name: str, design: Mapping[str, Any], parameters: ParameterPayload) -> tuple[SourceStep, ...]:
@@ -88,10 +89,15 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
                     f"    nnet::maxpool2d_wide_nonoverlap_cl<{relu_type}, {pool_type}, {pool['config_symbol']}>({relu_symbol}, {pool_symbol});",
                 ])
             current_symbol, current_type = pool_symbol, pool_type
-        elif strategy == "hls4ml-temporal-block":
+        elif strategy == "aria-dense-matrix":
+            call, current_symbol, current_type = dense_matrix.emit_matrix(
+                stage, native, payload, current_symbol, current_type, stream)
+            calls.append(call)
+        elif strategy in {"hls4ml-temporal-block", "hls4ml-head-tail"}:
             for operation_id in stage["operation_ids"]:
                 binding = native[operation_id]
-                stream(binding["output_type"], binding["output_symbol"])
+                if binding is not output_binding:
+                    stream(binding["output_type"], binding["output_symbol"])
                 native_call = binding["native_call"]
                 if not isinstance(native_call, str):
                     raise ProjectGenerationError("Delegated operation has no qualified native call")
@@ -115,7 +121,10 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
         current_contract = stage["output"]
         observe(current_contract["tensor_id"], current_symbol, current_contract["shape"])
 
-    dense_weight = payload[f"{design['stages'][-1]['operation_ids'][0]}:weight"]
+    wide = next((stage for stage in design["stages"] if stage["strategy"]["id"] == "aria-dense-wide"), None)
+    matrices_dense = [stage for stage in design["stages"] if stage["strategy"]["id"] == "aria-dense-matrix"]
+    dense_weight = payload[f"{wide['operation_ids'][0]}:weight"] if wide else None
+    matrix_weights = [payload[f"{stage['operation_ids'][0]}:weight"] for stage in matrices_dense]
     loads = [f'        nnet::load_weights_from_txt<{tensor.type_name}, {tensor.values.size}>({tensor.symbol}, "{tensor.symbol}.txt");'
              for tensor in parameters.tensors]
     window_header = "firmware/nnet_utils/ravel_windows.h"
@@ -124,7 +133,10 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
     affine_header = "firmware/nnet_utils/ravel_affine.h"
     text = '\n'.join([
         f'#include "{name}.h"', '#include "parameters.h"', '#include "nnet_utils/nnet_aria.h"',
-        '#include "nnet_utils/ravel_bridges.h"', f'#include "weights/{dense_weight.symbol}_ravel_packed.h"',
+        '#include "nnet_utils/ravel_bridges.h"',
+        *([f'#include "weights/{dense_weight.symbol}_ravel_packed.h"'] if wide else []),
+        *(['#include "nnet_utils/ravel_dense.h"'] if matrices_dense else []),
+        *(f'#include "weights/{weight.symbol}_ravel_matrix.h"' for weight in matrix_weights),
         *(['#include "nnet_utils/ravel_windows.h"'] if generated_windows else []),
         *(['#include "nnet_utils/ravel_affine.h"'] if matrices else []),
         f'void {name}(hls::stream<{rendering["types"]["input_wide"]}> &{input_binding["output_symbol"]}, hls::stream<{output_binding["output_type"]}> &{output_binding["output_symbol"]}) {{',
@@ -149,12 +161,22 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
             *(matrix_struct(stage["arithmetic"], f"ravel_matrix_{stage['operation_ids'][0]}") for stage in matrices),
             AFFINE_SOURCE, "#endif", ""]))
     top_paths = (f"firmware/{name}.cpp", "firmware/defines.h")
-    dense_path = f"firmware/weights/{dense_weight.symbol}_ravel_packed.h"
+    dense_paths = (f"firmware/weights/{dense_weight.symbol}_ravel_packed.h",) if wide else ()
+    matrix_paths = []
+    if matrices_dense:
+        (path / dense_matrix.HEADER).write_text(dense_matrix.SOURCE)
+        matrix_paths.append(dense_matrix.HEADER)
+        for stage, weight in zip(matrices_dense, matrix_weights):
+            relative = dense_matrix.weights_path(weight)
+            (path / relative).parent.mkdir(parents=True, exist_ok=True)
+            (path / relative).write_text(dense_matrix.weights_header(weight, stage["dense"]))
+            matrix_paths.append(relative)
     return (
-        SourceStep("legacy-template-adapter", 1, tuple(sorted(set(managed) - {*top_paths, dense_path}))),
+        SourceStep("legacy-template-adapter", 1, tuple(sorted(set(managed) - {*top_paths, *dense_paths}))),
         SourceStep("compose-top-and-contracts", 1, top_paths),
         SourceStep("lossless-stream-repack", 2, (bridge_header,)),
-        SourceStep("dense-rom-packing", 1, (dense_path,)),
+        *((SourceStep("dense-rom-packing", 1, dense_paths),) if wide else ()),
+        *((SourceStep("dense-matrix-rom-and-accumulators", 1, tuple(matrix_paths)),) if matrix_paths else ()),
         *((SourceStep("captured-window-positions", 1, (window_header,)),) if generated_windows else ()),
         *((SourceStep("constant-matrix-csd-cse-dsp", 1, (affine_header,)),) if matrices else ()),
     )

@@ -1,0 +1,90 @@
+{
+  "completed_samples": 99,
+  "consecutive_samples": 96,
+  "input_gap_cycles": 584,
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 8,
+      "input_scalar_bits": 10,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 21,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 32
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 10,
+        "input_tdata_bits": 512,
+        "input_tdata_port": "waveform_TDATA",
+        "output_scalar_bits": 21,
+        "output_tdata_bits": 32,
+        "output_tdata_port": "layer14_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "log_sha256": "3e83a537fc9deb4823209302044b20fa295e5f2e81a22018f39ec86eb772125e",
+  "manifest_sha256": "5f36bcbe5416446863743cc393cb965f869098b872b715c47b55a4b6f3b5b921",
+  "output_stall_cycles": 82,
+  "reset_aborts": 1,
+  "reset_between_epochs": 1,
+  "rtl_files": {
+    "final_m09de.v": "e73c19e969b0e7d6abba37a48b154686e04adff99f790876f43529324e9ca50b",
+    "final_m09de_dense_wide_stream_array_array_ap_fixed_1u_config14_Pipeline_DenseValues.v": "03276dc74e330f70fb34947e20508802fd11cf747cab7664e560d7a1ab834e64",
+    "final_m09de_dense_wide_stream_array_array_ap_fixed_1u_config14_Pipeline_DenseValues_w14_rbkb.v": "404bdfd795892427228749641778436ffc45aa277210be60fa888f27a61d4e4e",
+    "final_m09de_dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config14_s.v": "e6f4236be80f941ae36b8c2a96ac493e55a57a1df2efa3310dfcd496eb14af20",
+    "final_m09de_fifo_w480_d4_A.v": "1af47bad9e3d9a026934e529f69b894193c0319ff9a45f647f65e90af8464c2b",
+    "final_m09de_fifo_w528_d4_A.v": "fea21b80225a6f80098aacbabf9ee10c81c610c33d73db007bb23798fcd61e6d",
+    "final_m09de_fifo_w864_d4_A.v": "78f6fca102f9a35518e82c8a8cd093a0ef233d4a1e955fd899d2a2cb7aff6e39",
+    "final_m09de_fifo_w912_d4_A.v": "b26d40965ee87aa9e7e361d5b75d9464473c82122faed7ad80738cef2a1d5f61",
+    "final_m09de_flow_control_loop_pipe.v": "d317444d933372ab6e9e3a7166bd77e6b57cc0e1a9b5d473aa467e022e01e7f6",
+    "final_m09de_flow_control_loop_pipe_sequential_init.v": "8dd484645ceb44dca29aa1aa409c5777e767c7695314e8a78056a73b50526c6d",
+    "final_m09de_frp_fifoout.v": "b5a1af7d4e8f616e784c89f5416d0c60fa791c45d1f068c976468d93689763cf",
+    "final_m09de_frp_pipeline_valid.v": "ae97dd56174731d6d9b27708b575c950f9cf093fb7de213384c45e084959a74d",
+    "final_m09de_mac_muladd_10s_3s_16s_16_1_1.v": "dbe25c51545c4c86e34744dcb1c79e519587c8809b9d4f8f6f8aac3b487cbb6e",
+    "final_m09de_mac_muladd_10s_6s_16s_17_1_1.v": "e94f866aaffc9503d87fdf219610a5a8532ade4c2d64bb6e83c11cd9fc09850f",
+    "final_m09de_mac_muladd_10s_6s_17s_17_1_1.v": "2d31c082c2d90300b2ca852bc8c1a909be8e760682fcddc91a6611d8e3d97524",
+    "final_m09de_mul_10s_6s_16_1_1.v": "f95a82fe698aff1b8e94a33e1bb1f847ae38977f0203f239c2832293ca93acfa",
+    "final_m09de_phara_pool_aligned_hybrid_p8_cl_array_array_array_array_config3_config5_s.v": "6259949f27b3e77f620c58c90a7fa053945dbdd1e2e07482f7da555f10f66517",
+    "final_m09de_regslice_both.v": "8e6fdd3702df5a2bb1337307458ee7191b81ae56b6c549c727aaf50fd7659781",
+    "final_m09de_relu_array_ap_fixed_48u_array_ap_ufixed_18_7_5_3_0_48u_relu_config10_s.v": "b709c0a694cd547a61cb98f5de5da88c03995ac8fa906ae07120711dd7ba62dc",
+    "final_m09de_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s.v": "94dceb867e0ec5c7947ffa2c9a95d143d224d795b0a40adcefaf841df42e24ca",
+    "final_m09de_scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config11_4u_s.v": "327fe155127f6721cb0d4316343686ddb7d622ae0189f844507ad6a7cbe54953",
+    "final_m09de_shared_conv_array_array_config15_4u_ravel_matrix_conv2d_2_2u_s.v": "962bd0e479d105a33a02416d85fee88327c0da659ce26ca1aca9dcbf5ff7d6b2",
+    "final_m09de_sparsemux_17_3_10_1_1.v": "1614622d1a9ae807dd1377cdbf5797dbae8944116a2d452753892cf101b1abe1",
+    "final_m09de_start_for_dense_wide_stream_array_array_ap_fixed_21_11_5_3_0_1u_config14_U0.v": "e13a47547762f8c6ae57c67379963dc9c9786a012f3a2074eda93ddc31e46309",
+    "final_m09de_start_for_relu_array_ap_fixed_48u_array_ap_ufixed_18_7_5_3_0_48u_relu_config1cud.v": "10b605bb73d25e2b1aa136b281154cc800b667f32a5f9300f7aab42a54d1f197",
+    "final_m09de_start_for_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_U0.v": "b58d17b3848107991f724d4449fc9d7bad719b2d6d9c30831deac6dd60c5de9b",
+    "final_m09de_start_for_scheduled_pool_array_array_ap_fixed_10_5_0_2_0_48u_config11_4u_U0.v": "f09742ff2505c20d62b9317b327466e132c7884fc81e206379983b6f4472cf0d",
+    "final_m09de_start_for_shared_conv_array_array_config15_4u_ravel_matrix_conv2d_2_2u_U0.v": "1d1f97a05fdf9e4a6ba503712261381c80f87a6d2bfa3f554a54a75109e83713"
+  },
+  "schema_version": 1,
+  "simulator": {
+    "name": "xsim",
+    "version": "Vivado Simulator v2023.2"
+  },
+  "source_closure_sha256": "963825c0922136111232a9badc8d4826c56d00d53516bcdf12548ea6926dd609",
+  "status": "passed",
+  "testbench_sha256": "b74a261d4c51ec032e1794a8cd6f70b0aafd3dee9107161c36613a0f8a93355b",
+  "top": "final_m09de",
+  "vector_files": {
+    "rtl_expected_words.hex": "b9ac5220d9524b9b3f11cbfef9ff487741bad4b6b054e018e14ff7fab0ff3ce5",
+    "rtl_input_words.hex": "5817e1b960e576751f9309079959055945966d1949570e7809fce467761380ae"
+  }
+}

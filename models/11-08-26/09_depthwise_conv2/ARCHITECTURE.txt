@@ -1,0 +1,62 @@
+09_depthwise_conv2 [main]  run_09_depthwise_conv2.keras
+=======================================================
+input (256, 4, 1) -> output (1,) (raw score; trigger when score > threshold)
+
+layer                          type             filters/units  kernel   step groups     act     input shape    output shape      w+b      MACs
+conv1                          QConv2D                     12     5,1    3,1      1    relu     (256, 4, 1)     (84, 4, 12)       72    20,160
+pool1                          MaxPooling2D                 -     2,1    2,1      -       -     (84, 4, 12)     (42, 4, 12)        0         0
+conv2                          QConv2D                     12     5,1    3,1     12  linear     (42, 4, 12)     (13, 4, 12)       72     3,120
+conv3                          QConv2D                     12     1,1    1,1      1    relu     (13, 4, 12)     (13, 4, 12)      156     7,488
+pool3                          MaxPooling2D                 -     2,1    2,1      -       -     (13, 4, 12)      (6, 4, 12)        0         0
+flatten                        Flatten                      -       -      -      -       -      (6, 4, 12)          (288,)        0         0
+dense1                         QDense                       1       -      -      -  linear          (288,)            (1,)      289       288
+
+total weights+biases 589   total MACs per window 31,056   heaviest layer conv1 (20,160 MACs)
+
+Learned bit widths (HGQ kif fixed point, one width per tensor; iq = layer input, kq = kernel, bq = bias;
+k = sign bit, i = integer bits, f = fractional bits; values as stored in the .keras file;
+width = k + round(i) + round(f), i.e. ap_fixed<k+i+f, k+i>; the .keras file is authoritative):
+  conv1                          iq: k 1  i   3.999  f   4.760   -> 10 bits  ap_fixed<10,5>
+  conv1                          kq: k 1  i   4.000  f   5.592   -> 11 bits  ap_fixed<11,5>
+  conv1                          bq: k 1  i   4.000  f   4.228   ->  9 bits  ap_fixed<9,5>
+  conv2                          iq: k 1  i   4.000  f   4.817   -> 10 bits  ap_fixed<10,5>
+  conv2                          kq: k 1  i   4.000  f   5.042   -> 10 bits  ap_fixed<10,5>
+  conv2                          bq: k 1  i   4.000  f   4.306   ->  9 bits  ap_fixed<9,5>
+  conv3                          iq: k 1  i   4.000  f   5.571   -> 11 bits  ap_fixed<11,5>
+  conv3                          kq: k 1  i   4.000  f   4.541   -> 10 bits  ap_fixed<10,5>
+  conv3                          bq: k 1  i   4.000  f   4.581   -> 10 bits  ap_fixed<10,5>
+  dense1                         iq: k 1  i   4.000  f   5.322   -> 10 bits  ap_fixed<10,5>
+  dense1                         kq: k 1  i   4.000  f   4.889   -> 10 bits  ap_fixed<10,5>
+  dense1                         bq: k 1  i   4.000  f   3.996   ->  9 bits  ap_fixed<9,5>
+
+
+09_depthwise_conv2 [dense_equivalent]  run_09_depthwise_conv2__dense_equivalent.keras
+=====================================================================================
+input (256, 4, 1) -> output (1,) (raw score; trigger when score > threshold)
+
+layer                          type             filters/units  kernel   step groups     act     input shape    output shape      w+b      MACs
+conv1                          QConv2D                     12     5,1    3,1      1    relu     (256, 4, 1)     (84, 4, 12)       72    20,160
+pool1                          MaxPooling2D                 -     2,1    2,1      -       -     (84, 4, 12)     (42, 4, 12)        0         0
+conv2_dense_equivalent         QConv2D                     12     5,1    3,1      1  linear     (42, 4, 12)     (13, 4, 12)      732    37,440
+conv3                          QConv2D                     12     1,1    1,1      1    relu     (13, 4, 12)     (13, 4, 12)      156     7,488
+pool3                          MaxPooling2D                 -     2,1    2,1      -       -     (13, 4, 12)      (6, 4, 12)        0         0
+flatten                        Flatten                      -       -      -      -       -      (6, 4, 12)          (288,)        0         0
+dense1                         QDense                       1       -      -      -  linear          (288,)            (1,)      289       288
+
+total weights+biases 1,249   total MACs per window 65,376   heaviest layer conv2_dense_equivalent (37,440 MACs)
+
+Learned bit widths (HGQ kif fixed point, one width per tensor; iq = layer input, kq = kernel, bq = bias;
+k = sign bit, i = integer bits, f = fractional bits; values as stored in the .keras file;
+width = k + round(i) + round(f), i.e. ap_fixed<k+i+f, k+i>; the .keras file is authoritative):
+  conv1                          iq: k 1  i   3.999  f   4.760   -> 10 bits  ap_fixed<10,5>
+  conv1                          kq: k 1  i   4.000  f   5.592   -> 11 bits  ap_fixed<11,5>
+  conv1                          bq: k 1  i   4.000  f   4.228   ->  9 bits  ap_fixed<9,5>
+  conv2_dense_equivalent         iq: k 1  i   4.000  f   4.817   -> 10 bits  ap_fixed<10,5>
+  conv2_dense_equivalent         kq: k 1  i   4.000  f   5.042   -> 10 bits  ap_fixed<10,5>
+  conv2_dense_equivalent         bq: k 1  i   4.000  f   4.306   ->  9 bits  ap_fixed<9,5>
+  conv3                          iq: k 1  i   4.000  f   5.571   -> 11 bits  ap_fixed<11,5>
+  conv3                          kq: k 1  i   4.000  f   4.541   -> 10 bits  ap_fixed<10,5>
+  conv3                          bq: k 1  i   4.000  f   4.581   -> 10 bits  ap_fixed<10,5>
+  dense1                         iq: k 1  i   4.000  f   5.322   -> 10 bits  ap_fixed<10,5>
+  dense1                         kq: k 1  i   4.000  f   4.889   -> 10 bits  ap_fixed<10,5>
+  dense1                         bq: k 1  i   4.000  f   3.996   ->  9 bits  ap_fixed<9,5>

@@ -1,0 +1,295 @@
+{
+ "model": "07_hidden_dense16",
+ "trained_key": "2cv_k5s3_f12_d16_amphp",
+ "architecture_class": "2cv_k5s3_f12_d16",
+ "chain": "amphp",
+ "threshold_1Hz": 7.6181640625,
+ "versions": {
+  "main": {
+   "model": "v6_07_hidden_dense16",
+   "input": [
+    256,
+    4,
+    1
+   ],
+   "output": [
+    1
+   ],
+   "layers": [
+    {
+     "name": "conv1",
+     "keras_name": "q_conv2d_12",
+     "type": "QConv2D",
+     "input": [
+      256,
+      4,
+      1
+     ],
+     "output": [
+      84,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      3,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 72,
+     "macs": 20160,
+     "bit_widths": {
+      "iq": {
+       "i": 3.9952642917633057,
+       "f": 4.60931396484375,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.844854354858398,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.681016445159912,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      }
+     }
+    },
+    {
+     "name": "pool1",
+     "keras_name": "max_pooling2d_12",
+     "type": "MaxPooling2D",
+     "input": [
+      84,
+      4,
+      12
+     ],
+     "output": [
+      42,
+      4,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "conv2",
+     "keras_name": "q_conv2d_13",
+     "type": "QConv2D",
+     "input": [
+      42,
+      4,
+      12
+     ],
+     "output": [
+      13,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      3,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 732,
+     "macs": 37440,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.305725574493408,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.326562881469727,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.218169212341309,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool2",
+     "keras_name": "max_pooling2d_13",
+     "type": "MaxPooling2D",
+     "input": [
+      13,
+      4,
+      12
+     ],
+     "output": [
+      6,
+      4,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "flatten",
+     "keras_name": "flatten",
+     "type": "Flatten",
+     "input": [
+      6,
+      4,
+      12
+     ],
+     "output": [
+      288
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense1",
+     "keras_name": "q_dense_7",
+     "type": "QDense",
+     "input": [
+      288
+     ],
+     "output": [
+      16
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 16,
+     "weights_and_biases": 4624,
+     "macs": 4608,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.309568405151367,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.801779747009277,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.174208164215088,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "relu_hidden",
+     "keras_name": "relu_hidden",
+     "type": "ReLU",
+     "input": [
+      16
+     ],
+     "output": [
+      16
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense2",
+     "keras_name": "q_dense_8",
+     "type": "QDense",
+     "input": [
+      16
+     ],
+     "output": [
+      1
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 1,
+     "weights_and_biases": 17,
+     "macs": 16,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.11896276473999,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.732605457305908,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.661747455596924,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      }
+     }
+    }
+   ],
+   "total_weights_and_biases": 5445,
+   "total_macs": 62224,
+   "heaviest_layer": {
+    "name": "conv2",
+    "macs": 37440
+   },
+   "version": "main",
+   "file": "run_07_hidden_dense16.keras",
+   "input_description": "(256, 4, 1): 1 GSa/s, time x antenna x 1"
+  }
+ }
+}

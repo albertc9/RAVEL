@@ -577,7 +577,94 @@ ProduceP8Words:
         res.write(output);
     }
 }
-{% endif %}
+{% if phara_schedule %}
+template <
+    class data_T,
+    class conv_T,
+    class activation_T,
+    class res_T,
+    typename CONV_CONFIG_T,
+    typename POOL_CONFIG_T>
+void phara_pool_aligned_{{ phara_realization }}_p8_scheduled_cl(
+    hls::stream<data_T> &data,
+    hls::stream<res_T> &res,
+    typename CONV_CONFIG_T::weight_t weights[
+        CONV_CONFIG_T::filt_height * CONV_CONFIG_T::filt_width *
+        CONV_CONFIG_T::n_chan * CONV_CONFIG_T::n_filt],
+    typename CONV_CONFIG_T::bias_t biases[CONV_CONFIG_T::n_filt]
+) {
+    static_assert(CONV_CONFIG_T::n_chan == 1,
+                  "PHARA P8 requires one input channel");
+    static_assert(CONV_CONFIG_T::filt_width == 1 &&
+                  CONV_CONFIG_T::stride_width == 1,
+                  "PHARA P8 requires a temporal convolution");
+    static_assert(CONV_CONFIG_T::in_width * 8 == data_T::size,
+                  "PHARA P8 input word must contain eight rows");
+    static_assert(POOL_CONFIG_T::pool_height == 2 &&
+                  POOL_CONFIG_T::stride_height == 2 &&
+                  POOL_CONFIG_T::pool_width == 1 &&
+                  POOL_CONFIG_T::stride_width == 1,
+                  "PHARA P8 requires non-overlapping 2x1 pooling");
+    static_assert(POOL_CONFIG_T::pool_op == nnet::Max,
+                  "PHARA P8 requires MaxPool");
+    static_assert(res_T::size == CONV_CONFIG_T::out_width *
+                                  CONV_CONFIG_T::n_filt,
+                  "PHARA P8 pooled output packing mismatch");
+
+    constexpr unsigned TEMPORAL_PACK = 8;
+    constexpr unsigned BUFFER_ROWS = {{ phara_schedule.buffer_rows }};
+    constexpr unsigned INPUT_WORDS = CONV_CONFIG_T::in_height / TEMPORAL_PACK;
+    constexpr unsigned OUTPUT_WORDS = POOL_CONFIG_T::out_height;
+    constexpr unsigned CYCLES = {{ phara_schedule.cycles }};
+    static_assert(BUFFER_ROWS % TEMPORAL_PACK == 0,
+                  "PHARA P8 row buffer must hold whole input words");
+    typename data_T::value_type row_buffer[BUFFER_ROWS][CONV_CONFIG_T::in_width];
+    #pragma HLS ARRAY_PARTITION variable=row_buffer complete dim=0
+    unsigned input_words = 0;
+    unsigned pool = 0;
+
+ScheduleP8Words:
+    for (unsigned cycle = 0; cycle < CYCLES; cycle++) {
+        #pragma HLS PIPELINE II=1 rewind=false
+        const bool producing = pool < OUTPUT_WORDS;
+        const unsigned supertile_start =
+            pool * POOL_CONFIG_T::pool_height *
+            CONV_CONFIG_T::stride_height;
+        const unsigned required_words =
+            (supertile_start +
+             (POOL_CONFIG_T::pool_height - 1) *
+                 CONV_CONFIG_T::stride_height +
+             CONV_CONFIG_T::filt_height - 1) / TEMPORAL_PACK + 1;
+        if (input_words < INPUT_WORDS &&
+            (!producing || input_words < required_words)) {
+            data_T input_word = data.read();
+            for (unsigned row = 0; row < TEMPORAL_PACK; row++) {
+                #pragma HLS UNROLL
+                const unsigned absolute_row =
+                    input_words * TEMPORAL_PACK + row;
+                const unsigned buffer_row = absolute_row % BUFFER_ROWS;
+                for (unsigned column = 0;
+                     column < CONV_CONFIG_T::in_width;
+                     column++) {
+                    #pragma HLS UNROLL
+                    row_buffer[buffer_row][column] =
+                        input_word[row * CONV_CONFIG_T::in_width + column];
+                }
+            }
+            input_words++;
+        }
+        if (producing && input_words >= required_words) {
+            res_T output;
+            phara_pool_aligned_{{ phara_realization }}_compute<
+                BUFFER_ROWS, data_T, conv_T, activation_T, res_T,
+                CONV_CONFIG_T>(
+                    row_buffer, supertile_start, output, weights, biases);
+            res.write(output);
+            pool++;
+        }
+    }
+}
+{% endif %}{% endif %}
 
 template <class data_T, class res_T, typename CONFIG_T>
 void dense_wide_stream(

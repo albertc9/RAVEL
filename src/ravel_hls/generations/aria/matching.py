@@ -28,7 +28,7 @@ def match_hgq_conv_pool_dense(
         return None, {"status": "unsupported", "findings": [f.to_dict() for f in recognition.findings]}
     chain = recognition.chain
     findings = []
-    for class_name, count in (("QConv2D", len(chain.blocks)), ("QDense", 1)):
+    for class_name, count in (("QConv2D", len(chain.blocks)), ("QDense", 1 + len(chain.tail) // 2)):
         observed = sum(source["class_name"] == class_name and source["module"].startswith("hgq.layers")
                        for source in provenance["source_layers"])
         if observed != count:
@@ -40,7 +40,7 @@ def match_hgq_conv_pool_dense(
                              "operation_id": None, "message": "Aria requires tensor-wide HGQ2 KIF/RND/SAT_SYM quantization"})
     if findings:
         return None, {"status": "unsupported", "findings": findings}
-    family_id = "hgq-conv-pool-dense" if len(chain.blocks) == 1 else "hgq-temporal-block-chain"
+    family_id = "hgq-conv-pool-dense" if len(chain.blocks) == 1 and not chain.tail else "hgq-temporal-block-chain"
     return {"id": family_id, "version": 1}, {"status": "applicable", "findings": []}
 
 
@@ -253,16 +253,14 @@ def evaluate_aria_wide_stream(
             observed=convolution[field],
             message=f"Aria streaming convolution does not support {field}={convolution[field]}",
         )
-    if temporal_pack in {4, 8}:
-        geometry_code = (
-            "strategy.geometry.phara"
-            if temporal_pack == 8
-            else "strategy.geometry.p4"
-        )
+    if temporal_pack == 8:
+        # The row schedule is derived from kernel, stride and pool; see the plan.
+        pass
+    elif temporal_pack == 4:
         for field, expected in {"filt_height": 5, "stride_height": 3}.items():
             require(
                 convolution[field] == expected,
-                code=geometry_code,
+                code="strategy.geometry.p4",
                 operation_id="conv2d_0",
                 field=field,
                 expected=expected,
@@ -320,12 +318,18 @@ def evaluate_aria_wide_stream(
             observed=pooling[field],
             message=f"Aria streaming pooling requires {field}={expected}",
         )
+    # The Dense head consumes the last block's stream, whose width a later
+    # convolution may have reduced.
+    shapes = {tensor["id"]: tensor["shape"] for operation in operations for tensor in operation["outputs"]}
+    layout_inputs = [shapes[operation["inputs"][0]] for operation in operations
+                     if operation["kind"] == "reshape" and operation["inputs"] and len(shapes.get(operation["inputs"][0], ())) == 3]
+    final_width = layout_inputs[-1][1] if layout_inputs else convolution["out_width"]
     require(
-        convolution["out_width"] % dense_parallelism == 0,
+        final_width % dense_parallelism == 0,
         code="strategy.geometry.dense_stream",
         operation_id="dense_0",
         field="DenseParallelism",
-        expected=f"divisor of output width {convolution['out_width']}",
+        expected=f"divisor of output width {final_width}",
         observed=dense_parallelism,
         message="Dense parallelism must divide each streamed width group",
     )

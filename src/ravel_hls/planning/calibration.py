@@ -28,7 +28,7 @@ class WindowCostProfile:
             and block.input.numeric_type.kind == "fixed"
             and block.input.numeric_type.width <= 10
             and weight.numeric_type.kind == "fixed" and weight.numeric_type.width <= 8
-            and max(t.numeric_type.width for op in (block.convolution, block.activation, block.pooling)
+            and max(t.numeric_type.width for op in block.operations
                     for t in op.outputs) <= 24
         )
 
@@ -55,16 +55,19 @@ class ConstantMatrixCostProfile:
     """Offline-qualified counter schedules with modular shared arithmetic."""
 
     id: str = "ku5p-constant-matrix-counter-2023.2"
-    version: int = 2
+    version: int = 3
 
     def covers(self, block, arithmetic, part, clock, schedule=None):
+        # Version 3 adds measured points for kernels of one to seven rows,
+        # strides of one to three rows, blocks without a pool, 11-bit inputs
+        # and up to 16 filters.
         conv = block.convolution
         return (part == "xcku5p-ffvb676-2-e" and clock == 5
-                and conv.attribute("filt_height") == 5 and conv.attribute("stride_height") == 3
+                and 1 <= conv.attribute("filt_height") <= 7 and 1 <= conv.attribute("stride_height") <= 3
                 and conv.attribute("in_width") == 4 and conv.attribute("in_height") <= 256
-                and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 12
-                and block.pooling.attribute("pool_height") == 2
-                and arithmetic.input_numeric.width <= 10
+                and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 16
+                and block.pool_rows in (1, 2)
+                and arithmetic.input_numeric.width <= 11
                 and arithmetic.accumulator_numeric.width <= 24
                 and arithmetic.dsp_product_budget in (0, 16)
                 and (arithmetic.dsp_product_budget == 0 or (arithmetic.paired and arithmetic.count("multiply_nodes") <= 4))
@@ -79,7 +82,13 @@ class ConstantMatrixCostProfile:
         return {"id": self.id, "version": self.version, "status": "predicted",
                 "tool": "Vitis HLS 2023.2", "part": "xcku5p-ffvb676-2-e",
                 "clock_period_ns": 5,
-                "evidence": "references/qualification/aria_1_7_2_search/calibration.json"}
+                "evidence": "references/qualification/aria_1_8_0_separable/calibration.json"}
 
 
 CONSTANT_MATRIX_COST_PROFILE = ConstantMatrixCostProfile()
+
+# Cycles a sequential Dense matrix stage needs beyond its steps: bias load,
+# product and reduction pipeline, accumulation, output cast and process
+# restart. Measured on KU5P at 5 ns as 9 cycles for 48 input lanes and 12 for
+# 64; the estimate uses the larger. See references/qualification/aria_1_8_0_separable.
+DENSE_MATRIX_OVERHEAD_CYCLES = 12

@@ -80,7 +80,7 @@ def import_vitis_reports(
     """Parse a completed Vitis report tree and atomically attach its measurements."""
 
     project_view = project if isinstance(project, RavelProject) else open_project(project)
-    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5, 6, 7, 8}:
+    if project_view.manifest.get("schema_version") not in {2, 3, 4, 5, 6, 7, 8, 9}:
         raise ProjectGenerationError(
             "Vitis evidence can only be recorded for a schema-v2 through "
             "schema-v7 project"
@@ -470,7 +470,8 @@ def _composed_stage_evidence(report_root, design, version, part, clock):
         functions = []
         for selector in binding["functions"]:
             matches = [(path, root) for path, root in reports
-                       if (top := root.findtext("./UserAssignments/TopModelName", "")).startswith(selector["name"] + "_")
+                       if ((top := root.findtext("./UserAssignments/TopModelName", "").strip()) == selector["name"]
+                           or top.startswith(selector["name"] + "_"))
                        and ("config" not in selector or re.search(r"(?:^|_)" + re.escape(selector["config"]) + r"(?:_|$)", top))]
             if not matches:
                 raise ProjectGenerationError(f"No Vitis report for selected stage {binding['stage_id']}: {selector}")

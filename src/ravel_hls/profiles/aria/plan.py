@@ -4,8 +4,10 @@ from collections.abc import Mapping
 from typing import Any
 
 from ...analysis.phara import (
+    build_fill_cycle_schedule,
     build_pool_aligned_schedule,
     build_row_credit_schedule,
+    canonical_row_credit,
 )
 from ...analysis.streaming import build_two_row_convolution_schedule
 
@@ -67,8 +69,14 @@ def build_implementation_plan(
         }
     if dense_parallelism == 4:
         pooling = operations["max_pool2d_0"]["attributes"]
+        filled = temporal_pack == 8 and not canonical_row_credit(
+            kernel_rows=convolution["filt_height"],
+            convolution_stride=convolution["stride_height"],
+        )
         schedule_builder = (
-            build_row_credit_schedule
+            build_fill_cycle_schedule
+            if filled
+            else build_row_credit_schedule
             if temporal_pack == 8
             else build_pool_aligned_schedule
         )
@@ -132,6 +140,27 @@ def build_implementation_plan(
             "reasons": applicability_reasons,
         },
     }
+    if dense_outputs != 1:
+        # The search decides how many outputs share one step; the plan records
+        # the input grouping and the bound with every output in parallel.
+        dense_steps = (dense_inputs + mac_lanes - 1) // mac_lanes
+        matrix_reasons = [reason.replace("wide-sequential-v1", "matrix-sequential-v1")
+                          for reason in applicability_reasons if "one Dense output" not in reason]
+        if dense_inputs % mac_lanes:
+            matrix_reasons.append("matrix-sequential-v1 requires complete input groups")
+        weight_delivery = {
+            "id": "matrix-sequential",
+            "version": 1,
+            "lane_bits": dense_facts["numeric"]["weight"]["width"],
+            "outputs": dense_outputs,
+            "storage": {"type": "rom_1p", "implementation": "bram"},
+            "multipliers": {"implementation": "dsp"},
+            "accumulation": {"policy": "ordered"},
+            "applicability": {
+                "status": "applicable" if not matrix_reasons else "inapplicable",
+                "reasons": matrix_reasons,
+            },
+        }
     plan = {
         "template_profile": (
             f"aria-phara-p{temporal_pack}-q1-d4-v1"
@@ -179,7 +208,18 @@ def build_implementation_plan(
             ),
             "realization": "hybrid" if temporal_pack == 8 else "direct",
         }
-        if temporal_pack == 8:
+        if filled:
+            phara_plan["scheduler"] = {
+                "id": "row-credit",
+                "version": 2,
+                "buffer_rows": schedule.buffer_rows,
+                "max_live_rows": schedule.max_live_rows,
+                "read_cycles": schedule.input_words,
+                "cycles": schedule.cycles,
+                "fill_cycles": schedule.fill_cycles,
+                "drain_cycles": schedule.drain_cycles,
+            }
+        elif temporal_pack == 8:
             phara_plan["scheduler"] = {
                 "id": "row-credit",
                 "version": 1,

@@ -44,7 +44,7 @@ def test_user_can_analyze_the_canonical_model_without_publishing_a_project(
     )
 
     report = analysis.to_dict()
-    assert report["generation"] == {"id": "aria", "version": "1.7.2"}
+    assert report["generation"] == {"id": "aria", "version": "1.8.0"}
     assert report["resolved_design"]["generation"] == report["generation"]
     assert report["model_family"] == {
         "id": "hgq-conv-pool-dense",
@@ -281,7 +281,8 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
 ) -> None:
     report = analyze(
         noncanonical_geometry_model,
-        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"}},
+        {"HLS": {"Backend": "Vitis", "IOType": "io_stream"},
+         "Optimization": {"TemporalPacking": 4, "DenseParallelism": 1}},
     ).to_dict()
 
     assert report["model_family"] == {
@@ -290,7 +291,7 @@ def test_same_family_reports_an_unsupported_strategy_before_rendering(
     }
     assert report["applicability"]["status"] == "unsupported"
     assert report["resolved_design"] is None
-    assert "strategy.geometry.phara" in {
+    assert "strategy.geometry.p4" in {
         finding["code"] for finding in report["applicability"]["findings"]
     }
 

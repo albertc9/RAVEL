@@ -6,7 +6,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Any
 from ..compatibility.legacy_frontend import _normalize_singleton_channel_input
-from ..exceptions import CompatibilityError
+from ..exceptions import CompatibilityError, RavelError
 from .provenance import _frontend_provenance
 _HLS4ML_CONVERSION_LOCK = RLock()
 
@@ -54,6 +54,102 @@ def _homogeneous_stream_quantizer_compatibility():
         finally:
             ProcessFixedPointQuantizerLayer.transform = original_transform
 
+def _normalize_plain_relu_layers(model: Any) -> Any:
+    """Express a plain Keras ReLU layer as a ReLU activation.
+
+    The pinned hls4ml converts a standalone ReLU layer as a thresholded ReLU
+    whose zero threshold gets a degenerate fixed-point type; its C model then
+    passes negative values. An Activation("relu") layer converts correctly and
+    computes the same function.
+    """
+    def plain(layer):
+        return (type(layer).__name__ == "ReLU" and type(layer).__module__.startswith("keras")
+                and not getattr(layer, "negative_slope", 0) and not getattr(layer, "threshold", 0)
+                and getattr(layer, "max_value", None) is None)
+
+    if not any(plain(layer) for layer in getattr(model, "layers", ())):
+        return model
+    import keras
+
+    return keras.models.clone_model(
+        model, clone_function=lambda layer: keras.layers.Activation("relu", name=layer.name) if plain(layer) else layer)
+
+
+def _normalize_grouped_convolutions(model: Any) -> Any:
+    """Express a grouped HGQ2 convolution as an ordinary one with a block-diagonal kernel.
+
+    The pinned hls4ml does not convert `groups > 1`. A filter of a grouped
+    convolution reads only the channels of its group; the same function is an
+    ordinary convolution whose kernel is zero outside those channels. Zero
+    stays zero under the kernel quantizer, and every other variable is copied.
+    A layer whose variables do not map one to one is left for the unsupported
+    finding.
+    """
+    grouped = [layer for layer in getattr(model, "layers", ())
+               if type(layer).__name__ == "QConv2D" and type(layer).__module__.startswith("hgq.layers")
+               and isinstance(getattr(layer, "groups", 1), int) and layer.groups != 1]
+    if not grouped:
+        return model
+    import keras
+
+    replacements = {id(layer): _block_diagonal_convolution(layer) for layer in grouped}
+    if any(replacement is None for replacement in replacements.values()):
+        return model
+    return keras.models.clone_model(model, clone_function=lambda layer: replacements.get(id(layer), layer))
+
+
+def _block_diagonal_convolution(layer: Any) -> Any | None:
+    import keras
+    import numpy as np
+
+    config = layer.get_config()
+    groups, filters = int(config["groups"]), int(config["filters"])
+    kernel = np.asarray(keras.ops.convert_to_numpy(layer._kernel))
+    group_channels = kernel.shape[2]
+    channels = group_channels * groups
+    if filters % groups or kernel.shape[3] != filters:
+        return None
+    replacement = type(layer).from_config({**config, "groups": 1})
+    replacement.build(tuple(layer.input.shape))
+    expanded = np.zeros((*kernel.shape[:2], channels, filters), kernel.dtype)
+    group_filters = filters // groups
+    for group in range(groups):
+        columns = slice(group * group_filters, (group + 1) * group_filters)
+        expanded[:, :, group * group_channels:(group + 1) * group_channels, columns] = kernel[:, :, :, columns]
+    # Quantizer sublayers carry generated names; a variable is identified by
+    # the quantizer that owns it and by its own name.
+    def role(variable):
+        parts = variable.path.split("/")
+        return (parts[1] if len(parts) > 2 else None, parts[-1])
+
+    sources = {role(variable): variable for variable in layer.weights}
+    if len(sources) != len(layer.weights):
+        return None
+    for variable in replacement.weights:
+        if variable is replacement._kernel:
+            variable.assign(expanded)
+            continue
+        source = sources.get(role(variable))
+        if source is None or tuple(source.shape) != tuple(variable.shape):
+            return None
+        variable.assign(source)
+    return replacement
+
+
+def _require_convertible_operations(model: Any) -> None:
+    """Report source operations the pinned hls4ml cannot convert, before it fails."""
+    findings = [
+        {"code": "frontend.operation.grouped_convolution", "severity": "error", "operation_id": None,
+         "source_layer": layer.name,
+         "message": "Grouped convolution is not converted by the pinned hls4ml; "
+                    "export it as an ordinary convolution with a block-diagonal kernel"}
+        for layer in getattr(model, "layers", ())
+        if isinstance(getattr(layer, "groups", 1), int) and getattr(layer, "groups", 1) != 1
+    ]
+    if findings:
+        raise CompatibilityError("; ".join(finding["message"] for finding in findings), findings=findings)
+
+
 def convert_model(model, hls_values):
     backend = hls_values.get("Backend", "Vitis")
     io_type = hls_values.get("IOType", "io_stream")
@@ -72,25 +168,38 @@ def convert_model(model, hls_values):
             custom_objects={"QConv2D": QConv2D, "QDense": QDense},
         )
     normalized_model = _normalize_singleton_channel_input(normalized_model)
+    normalized_model = _normalize_plain_relu_layers(normalized_model)
+    normalized_model = _normalize_grouped_convolutions(normalized_model)
+    _require_convertible_operations(normalized_model)
 
     frontend_provenance = _frontend_provenance(normalized_model)
 
-    hls_config = hls4ml.utils.config_from_keras_model(
-        normalized_model, granularity="name", backend=backend
-    )
-    hls_config["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
-    conversion: dict[str, Any] = {
-        "model": normalized_model,
-        "output_dir": str(Path.cwd() / "ravel_analysis"),
-        "project_name": "ravel_analysis",
-        "hls_config": hls_config,
-        "backend": backend,
-        "io_type": io_type,
-    }
-    if hls_values.get("Part") is not None:
-        conversion["part"] = hls_values["Part"]
-    if hls_values.get("ClockPeriod") is not None:
-        conversion["clock_period"] = hls_values["ClockPeriod"]
-    with _homogeneous_stream_quantizer_compatibility():
-        graph = hls4ml.converters.convert_from_keras_model(**conversion)
+    try:
+        hls_config = hls4ml.utils.config_from_keras_model(
+            normalized_model, granularity="name", backend=backend
+        )
+        hls_config["Model"].update({"Strategy": "Latency", "ReuseFactor": 1})
+        conversion: dict[str, Any] = {
+            "model": normalized_model,
+            "output_dir": str(Path.cwd() / "ravel_analysis"),
+            "project_name": "ravel_analysis",
+            "hls_config": hls_config,
+            "backend": backend,
+            "io_type": io_type,
+        }
+        if hls_values.get("Part") is not None:
+            conversion["part"] = hls_values["Part"]
+        if hls_values.get("ClockPeriod") is not None:
+            conversion["clock_period"] = hls_values["ClockPeriod"]
+        with _homogeneous_stream_quantizer_compatibility():
+            graph = hls4ml.converters.convert_from_keras_model(**conversion)
+    except RavelError:
+        raise
+    except Exception as error:
+        # The compiler owns generic conversion; its refusal is a compatibility
+        # result, not an internal failure.
+        message = f"hls4ml could not convert the model: {error}"
+        raise CompatibilityError(message, findings=[{
+            "code": "frontend.conversion.hls4ml", "severity": "error", "operation_id": None,
+            "message": message}]) from error
     return graph, normalized_model, frontend_provenance

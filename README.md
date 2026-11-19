@@ -2,12 +2,17 @@
 # RAVEL
 
 RAVEL (Rate-Aware Vectorized Engine for Low-latency) generates a specialized,
-hls4ml-compatible FPGA inference project. Aria 1.7.2 supports one or two
-Conv/ReLU/Pool blocks followed by Flatten and one Dense output. It composes
+hls4ml-compatible FPGA inference project. Aria 1.8.0 supports a chain of
+temporal blocks followed by Flatten and a Dense head. A block is a convolution
+with an optional ReLU and an optional MaxPool; the head has one output and may
+have one hidden layer. Up to two pooled blocks and one block without a pool are
+qualified, which includes a depthwise-separable second layer. RAVEL composes
 PHARA or a wide first-convolution stage, qualified channel-mixing implementations,
-lossless stream bridges, and RAVEL's packed Dense stage.
+lossless stream bridges, and its packed Dense stages.
+[Aria 1.8.0](docs/design/aria-1.8.0-block-forms.md) adds these block and head
+forms and derives the P8 row schedule from the extracted kernel, stride, and pool.
 [Aria 1.7.2](docs/design/aria-1.7.2-optimization.md) searches shared arithmetic and
-finite reuse across both convolutions, with an optional per-core II target.
+finite reuse across the convolutions, with an optional per-core II target.
 New conversions default to P8/D4. P2 and P4 remain available through explicit
 configuration. [Compatibility](docs/compatibility.md) describes the supported
 geometry and [architecture](docs/architecture.md) describes the typed planner.
@@ -80,6 +85,33 @@ The [Aria 1.7 qualification snapshot](references/qualification/aria_1_7_0_multi_
 contains the measured resource tradeoff, a non-F12 two-block check, immutable
 source/report bindings, and reproduction commands. These results apply to those
 qualified models; board integration and model-accuracy evaluation are separate.
+
+## Aria 1.8 block-form qualification
+
+The table lists single-core results at a 5 ns KU5P constraint with P8/D4 and
+ordinary automatic selection. II and latency are Vitis HLS 2023.2 synthesis
+results. Resources and WNS are Vivado 2023.2 post-route results, followed by
+KU5P utilization.
+
+| Model | II | Latency (cycles) | BRAM tile | DSP | registers | LUTs | WNS (ns) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Depthwise-separable second layer (K5/S3), trained | 48 | 59 | 0 | 48 (2.63%) | 22130 (5.10%) | 30080 (13.86%) | +0.582 |
+| Three convolutions (8/8/12 filters), trained | 49 | 63 | 0 | 48 (2.63%) | 24134 (5.56%) | 41914 (19.32%) | +0.427 |
+| Hidden Dense of 16 units, trained | 51 | 58 | 14.5 (3.02%) | 200 (10.96%) | 31916 (7.36%) | 50125 (23.10%) | +0.077 |
+| Hidden Dense of 16 units, trained, `TargetII=85` | 65 | 73 | 8.0 (1.67%) | 100 (5.48%) | 22645 (5.22%) | 34669 (15.98%) | +0.300 |
+| 8x7 step 2, depthwise 7 step 2, 1x1 to 8; random weights | 67 | 77 | 0 | 32 (1.75%) | 12809 (2.95%) | 14172 (6.53%) | +0.343 |
+| 12x7 step 2, depthwise 7 step 2, 1x1 to 16, Dense 32; random weights | 69 | 81 | 16.0 (3.33%) | 525 (28.78%) | 25446 (5.86%) | 27340 (12.60%) | +0.413 |
+
+Every listed project passes exact C verification against the clean hls4ml
+baseline, RTL CoSim, and reset/backpressure protocol checks. The last two rows
+have the layer shapes of designs under study and random weights, so their
+resources are not results for trained weights. With the delegated hls4ml second
+stage, the first of them measures II 1492.
+
+The [Aria 1.8 qualification snapshot](references/qualification/aria_1_8_0_separable/README.md)
+contains the remaining models, the calibration measurements, and the source and
+report bindings. These results apply to those models; board integration and
+model-accuracy evaluation are separate.
 
 ## Install
 

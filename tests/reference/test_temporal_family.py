@@ -314,6 +314,24 @@ def test_refresh_retains_the_generation_and_schedule_of_a_real_aria171_project(t
     assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
 
 
+def test_refresh_retains_the_generation_and_arithmetic_schedule_of_a_real_aria172_project(tmp_path):
+    from zipfile import ZipFile
+    from ravel_hls import Project, refresh
+
+    path = tmp_path / "aria172_fixture"
+    with ZipFile(Path(__file__).parent / "fixtures/aria172_refresh.zip") as archive:
+        archive.extractall(path)
+    original = Project.open(path)
+    assert original.manifest["schema_version"] == 8
+    assert original.status["source_integrity"] == "clean"
+    renewed = refresh(original, Path(__file__).parent / "fixtures/two_block_k5s3_c3.keras")
+    assert renewed.manifest["profile"]["generation"]["version"] == "1.7.2"
+    stages = renewed.manifest["resolved_design"]["stages"]
+    assert [stage["strategy"] for stage in stages] == [stage["strategy"] for stage in original.manifest["resolved_design"]["stages"]]
+    assert stages[1]["arithmetic_schedule"] == original.manifest["resolved_design"]["stages"][1]["arithmetic_schedule"]
+    assert renewed.manifest["architecture_envelope_sha256"] == original.manifest["architecture_envelope_sha256"]
+
+
 def test_supplied_vectors_augment_the_mandatory_corpus_and_rtl_uses_the_builtin_vectors(tmp_path):
     import numpy as np
 

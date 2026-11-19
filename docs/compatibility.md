@@ -2,20 +2,42 @@
 
 ## Model profile
 
-Aria 1.7.0 recognizes a single-input, single-output homogeneous HGQ2
-family with one or more repeated temporal blocks. One and two blocks are
-qualified; three or more are recognized and reported as unsupported. The
-single-block compatibility form is: Dimensions are symbols extracted from the
-converted `ModelGraph`, not constants copied from one training archive:
+Aria 1.8.0 recognizes a single-input, single-output homogeneous HGQ2
+family: a chain of temporal blocks, a Flatten, and a Dense head. Dimensions are
+symbols extracted from the converted `ModelGraph`, not constants copied from
+one training archive:
 
 ```text
 Input [H, W]
   -> Reshape [H, W, 1], channels last
-  -> QConv2D(F filters, Khx1 kernel, Shx1 stride, valid, ReLU)
-  -> MaxPool2D(2x1 pool, 2x1 stride, valid)
+  -> one or more temporal blocks:
+       QConv2D(F filters, KhxKw kernel, ShxSw stride, valid)
+       [-> ReLU]
+       [-> MaxPool2D(valid)]
   -> Flatten [N]
-  -> QDense(1, linear)
+  -> QDense(M, linear)
+  [-> ReLU -> QDense(1, linear)]
 ```
+
+A temporal block is one convolution with an optional ReLU and an optional
+MaxPool, in that order. A MaxPool requires the ReLU before it, and the last
+block of the chain ends in a MaxPool. The Dense head is one Dense that consumes
+the Flatten, optionally followed by ReLU and Dense pairs; the final Dense has
+one output. The single-block form `Conv, ReLU, MaxPool, Flatten, Dense(1)` is
+unchanged.
+
+Recognition and qualification are separate. Aria 1.8.0 qualifies chains that
+
+- start with a block that ends in ReLU and MaxPool;
+- contain at most two blocks with a MaxPool;
+- contain at most one block without a MaxPool, with or without a ReLU;
+- have at most one hidden Dense layer.
+
+A depthwise-separable layer falls under these rules: an activation-free
+convolution without a pool, followed by a 1x1 convolution with ReLU and
+MaxPool. Other recognized chains are reported as unsupported with a local
+finding (`family.support.block_count`, `family.support.block_form`, or
+`family.support.head_form`).
 
 Weights, biases, legal learned fixed-point types, sparsity, and layer names may
 vary. Geometry is extracted rather than compared with a single archive, while
@@ -25,22 +47,53 @@ quantizer semantics remain compatibility requirements. Recognition is not a
 performance target.
 
 Family recognition and strategy applicability are separate. P2 currently
-requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 and P8 require `H`
-divisible by their packing factor and the qualified `Kh=5`, `Sh=3` schedule.
+requires `H` divisible by 2, `Kh >= 3`, and `Sh >= 2`; P4 requires `H`
+divisible by 4 and the qualified `Kh=5`, `Sh=3` schedule. P8 requires `H`
+divisible by 8 and derives its row schedule from the extracted kernel, stride,
+and pool. The `Kh=5`, `Sh=3` geometry keeps its original P8 schedule and
+sources. Other geometries use a fill-cycle schedule: it still emits at most one
+pooled row per cycle and reads without producing when the next pooled row needs
+rows that have not arrived.
 P2 analysis derives a next-window-end schedule and accepts it only when the
 calculated output count agrees with the extracted convolution geometry and no
 two outputs require the same two-row input word.
 The first-block specializations require one input channel, width-one
-convolution, valid padding, and the shown non-overlapping MaxPool. The later
-block accepts channel mixing through the pinned native hls4ml Latency/ReuseFactor
-1 implementation. Dense parallelism must divide the final streamed filter
-group, and the graph must have one Dense output. An unsupported strategy returns structured findings before
+convolution, valid padding, and a 2x1 MaxPool with stride 2x1. Later blocks
+accept channel mixing. Inside calibrated coverage they use RAVEL's
+captured-window or shared-arithmetic stage, with or without ReLU and a
+non-overlapping MaxPool; otherwise they use the pinned native hls4ml
+Latency/ReuseFactor 1 implementation. A convolution whose kernel spans the stream width always uses
+the native implementation. Dense parallelism must divide the stream width that
+reaches the Dense head, and the final Dense must have one output. A hidden
+Dense uses RAVEL's sequential matrix stage; the ReLU and Dense after it use the
+native implementation. An unsupported strategy returns structured findings before
 rendering. The regression suite includes a P2 case with `[128,4]`, five filters,
 a 3x1/stride-2 convolution, and `N=620`, in addition to the 12 retrained
 canonical-geometry models.
 Position-sensitive P2 regression coverage includes `Kh=7`, `Sh=2`, leading and
 trailing row impulses, and schedule-property checks across `Kh=3..8` and
-`Sh=2..5`.
+`Sh=2..5`. Aria 1.8.0 adds P8 schedule-property checks across `Kh=1..11` and
+`Sh=1..6`, and bit-exact chains with separable, unpooled, grouped, and
+hidden-Dense forms.
+
+## Source-model normalization
+
+hls4ml 1.2.0 does not convert two layer forms of supported models correctly.
+RAVEL expresses them in an equivalent form before conversion. The supplied
+model file is not edited.
+
+- A plain Keras `ReLU` layer, without slope, threshold, or maximum, becomes
+  `Activation("relu")`. hls4ml converts the standalone layer as a thresholded
+  ReLU whose C model passes negative values.
+- An HGQ2 `QConv2D` with `groups > 1` becomes an ordinary convolution whose
+  kernel is zero outside each filter's group. Quantizer state is copied
+  unchanged. A grouped convolution that cannot be mapped this way is reported
+  as `frontend.operation.grouped_convolution`.
+
+A model that hls4ml refuses to convert is a compatibility result with the
+finding `frontend.conversion.hls4ml`, not an internal error. This includes an
+unquantized layer directly after the input, such as decimation inside the
+model.
 
 ## hls4ml and host profile
 
@@ -54,8 +107,10 @@ P2/D1, P2/D2, P4/D1, P4/D2, and P8/D4. Omission resolves to P8/D4. For the
 canonical model, P2/P4/P8 use 128-/256-/512-bit input `TDATA`. Refresh preserves
 the recorded selection.
 
-Aria 1.7 derives a sequential packed Dense weight ROM from the converted
-hls4ml graph. Word width, depth, MAC lanes, and tail handling are internal plan
+Aria derives a sequential packed Dense weight ROM from the converted hls4ml
+graph. A Dense with several outputs uses one ROM per output lane and computes a
+searched number of outputs per step. Word width, depth, MAC lanes, outputs per
+step, and tail handling are internal plan
 properties; they are not additional public configuration fields. Refresh may
 change parameter values but rejects changes to the recorded structural plan.
 

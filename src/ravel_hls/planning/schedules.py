@@ -30,8 +30,9 @@ class TokenSchedule:
 
 
 def temporal_schedule(block: TemporalBlock, input_lanes: int, output_lanes: int) -> TokenSchedule:
-    conv, pool = block.convolution.attribute, block.pooling.attribute
-    shape = block.pooling.outputs[0].shape
+    conv = block.convolution.attribute
+    pool = block.pooling.attribute if block.pooling else (lambda name: 1)
+    shape = block.output.shape
     output_words = (prod(shape) + output_lanes - 1) // output_lanes
     if output_words > MAX_PRODUCTION_EVENTS:
         raise ValueError("Complete production trace exceeds the declared 4096-event bound")

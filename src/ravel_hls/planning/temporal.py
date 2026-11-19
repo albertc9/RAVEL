@@ -9,7 +9,7 @@ from math import prod
 from .arithmetic import constant_arithmetic
 from .bridges import LOSSLESS_BRIDGES
 from .strategies import StageContext, StageRequest, TEMPORAL_STRATEGIES
-from .search import SearchReport, SEARCH_CANDIDATE_LIMIT, plan_identity
+from .search import SearchReport, plan_identity, search_candidate_limit
 from .resources import constraint_report, estimate_resources, rejection_reasons
 
 
@@ -61,21 +61,30 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
             return SearchReport((), failed, target_ii=target_ii)
         domains.append(domain)
     plans = []
+    # A head with one candidate stays inside the resolver. A head with several
+    # schedules is enumerated here, so that the ranking below can weigh them.
+    heads = candidates(StageRequest(chain.head, context, layout=chain.layout))
+    enumerated_head = len(heads) > 1
+    if enumerated_head:
+        domains.append(heads)
     # Always evaluate the legal incumbent before bounded alternatives. Bounds
     # never authorize selecting an illegal or uncalibrated replacement.
     generated = prod(len(domain) for domain in domains)
-    explored = tuple(bounded_combinations(domains, SEARCH_CANDIDATE_LIMIT))
+    limit = search_candidate_limit(len(chain.blocks) + enumerated_head)
+    explored = tuple(bounded_combinations(domains, limit))
     bound_reasons = ["search.candidate_bound"] if len(explored) < generated else []
-    for stages in explored:
+    for combination in explored:
+        stages = combination[:len(chain.blocks)]
+        head = combination[len(chain.blocks):] or heads
         downstream = stages[-1]
         layouts = candidates(StageRequest(chain.layout, context, previous=downstream.output))
-        head = candidates(StageRequest(chain.head, context, layout=chain.layout))
-        domain = (*((stage,) for stage in stages), layouts, head)
+        tail = (candidates(StageRequest(chain.tail, context, previous=head[0].output)),) if chain.tail and head else ()
+        domain = (*((stage,) for stage in stages), layouts, head, *tail)
         plan = resolver.resolve(domain, bridge_strategies=bridges)
         bound_reasons.extend(finding.code for finding in plan.findings if finding.code.endswith("_bound"))
         if not plan.findings:
             if downstream.confidence == "calibrated":
-                cycles = max([stage.cost.cycles + (0 if stage.implementation or stage.arithmetic else 16)
+                cycles = max([stage.cost.cycles + (0 if stage.implementation or stage.arithmetic or stage.dense else 16)
                               for stage in plan.stages]
                              + [WINDOW_COST_PROFILE.bridge_cycles(bridge) for bridge in plan.bridges]) + 1
                 plan = replace(plan, cost=Cost(cycles, plan.cost.resource, plan.cost.latency))
@@ -99,4 +108,5 @@ def plan_temporal_chain(chain: TemporalChain, *, temporal_packing: int,
     bound_reasons.extend(finding.code for finding in findings if finding.code.endswith("_bound"))
     return SearchReport(tuple(plans), selected, complete=not bound_reasons,
                         resources=resources, constraints=constraints,
-                        generated=generated, evaluated=len(explored), bound_reasons=tuple(bound_reasons), target_ii=target_ii)
+                        generated=generated, evaluated=len(explored), bound_reasons=tuple(bound_reasons), target_ii=target_ii,
+                        limit=limit)

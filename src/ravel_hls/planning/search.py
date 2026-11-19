@@ -11,6 +11,11 @@ from .resources import ResourceEstimate, rejection_reasons
 SEARCH_CANDIDATE_LIMIT = 64
 
 
+def search_candidate_limit(block_count: int) -> int:
+    """Bound complete-chain enumeration by the number of downstream blocks."""
+    return SEARCH_CANDIDATE_LIMIT ** max(1, block_count - 1)
+
+
 def plan_identity(plan: ChainPlan) -> str:
     payload = {
         "stages": [stage.to_dict() for stage in plan.stages],
@@ -33,6 +38,7 @@ class SearchReport:
     evaluated: int = 0
     bound_reasons: tuple[str, ...] = ()
     target_ii: int | None = None
+    limit: int = SEARCH_CANDIDATE_LIMIT
 
     def to_dict(self) -> dict:
         def exclusions(plan, resource):
@@ -60,7 +66,7 @@ class SearchReport:
             "status": "complete" if self.complete else "incomplete",
             "candidate_count": len(self.candidates),
             "exploration": {"generated": self.generated, "evaluated": self.evaluated,
-                            "limit": SEARCH_CANDIDATE_LIMIT, "bound_reasons": list(self.bound_reasons)},
+                            "limit": self.limit, "bound_reasons": list(self.bound_reasons)},
             "optimality": "within-enumerated-calibrated-domain" if self.complete and self.selected.stages and any(
                 stage.confidence == "calibrated" for stage in self.selected.stages) else "not-claimed",
             "selected_candidate": plan_identity(self.selected) if self.selected.stages else None,

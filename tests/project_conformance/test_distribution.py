@@ -148,7 +148,7 @@ def test_config_schema_describes_the_unified_aria_1_5_mapping() -> None:
         )
     )
 
-    assert schema["title"] == "RAVEL Aria 1.7.2 configuration"
+    assert schema["title"] == "RAVEL Aria 1.8.0 configuration"
     assert schema["required"] == ["HLS"]
     assert set(schema["properties"]) == {
         "Project",
@@ -173,9 +173,9 @@ def test_manifest_schema_describes_the_v5_envelope_and_realization() -> None:
         )
     )
 
-    assert schema["properties"]["schema_version"] == {"const": 8}
+    assert schema["properties"]["schema_version"] == {"const": 9}
     assert schema["properties"]["ravel"]["properties"]["release"] == {
-        "const": "1.7.2"
+        "const": "1.8.0"
     }
     assert "source_closure" in schema["required"]
     assert "source_closure_sha256" in schema["required"]

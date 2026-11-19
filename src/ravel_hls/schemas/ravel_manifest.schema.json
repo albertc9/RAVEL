@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/albertc9/RAVEL/schemas/ravel_manifest.schema.json",
-  "title": "RAVEL Aria generation manifest schema v8",
+  "title": "RAVEL Aria generation manifest schema v9",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -31,14 +31,14 @@
     "coefficient_realization_sha256"
   ],
   "properties": {
-    "schema_version": {"const": 8},
+    "schema_version": {"const": 9},
     "ravel": {
       "type": "object",
       "required": ["product", "generation", "release", "package_version"],
       "properties": {
         "product": {"const": "RAVEL"},
         "generation": {"const": "Aria"},
-        "release": {"const": "1.7.2"},
+        "release": {"const": "1.8.0"},
         "package_version": {"type": "string"}
       }
     },

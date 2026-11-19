@@ -1,0 +1,109 @@
+{
+  "completed_samples": 91,
+  "consecutive_samples": 88,
+  "input_gap_cycles": 415,
+  "interfaces": {
+    "hls_stream_interface": {
+      "block_control": "ap_ctrl_hs",
+      "channels_per_row": 4,
+      "input_rows_per_word": 8,
+      "input_scalar_bits": 9,
+      "input_words_per_inference": 32,
+      "optional_axis_sidebands": [],
+      "ordering": "row-major; time before channel",
+      "output_scalar_bits": 16,
+      "output_words_per_inference": 1,
+      "protocol": "axis",
+      "values_per_input_word": 32
+    },
+    "logical_model_interface": {
+      "input_shape": [
+        256,
+        4,
+        1
+      ],
+      "output_shape": [
+        1
+      ]
+    },
+    "rtl_interface": {
+      "expected": {
+        "input_scalar_bits": 9,
+        "input_tdata_bits": 512,
+        "input_tdata_port": "dense32_input_TDATA",
+        "output_scalar_bits": 16,
+        "output_tdata_bits": 16,
+        "output_tdata_port": "layer17_out_TDATA",
+        "qualification_profile": "hls4ml-1.2.0-vitis-2023.2-axis-packing-v1"
+      },
+      "measured": null
+    }
+  },
+  "log_sha256": "adf8cfbdb0232106cd5b0c6a63705c04a40b236e15f9a42886c4efd897a79092",
+  "manifest_sha256": "31afbe129b0a36ecd0f54aaad168cdccd0963c44e7012ec843d2a815375bc938",
+  "output_stall_cycles": 81,
+  "reset_aborts": 1,
+  "reset_between_epochs": 1,
+  "rtl_files": {
+    "final2_dense32.v": "8fc3275bb89cdb2c59a8e4c2e5bf2e194618a048cf1e6f53e43d30b9a61442c4",
+    "final2_dense32_dense_array_ap_fixed_32u_array_ap_fixed_16_8_5_3_0_1u_config17_s.v": "d94c7a8dadfb46382f46ed4f5f450a02e24c64be14f992a9fd9f9b2bb866bc6c",
+    "final2_dense32_dense_latency_wrapper_ap_fixed_ap_fixed_16_8_5_3_0_config17_s.v": "b96b5d14935b1ffbe24c1a556949b319d378e34ad0701b8af1541591b4e8fa21",
+    "final2_dense32_dense_matrix_stream_array_array_ap_fixed_32u_config14_64u_8u_5u_56u_s.v": "8a92874ccecd0ee7e4035b268a6f7523be3cebd2c474d27e53314895a38b97c6",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix.v": "9371296ec5b93e4fbe09833d47c485d212b695335374956aa0314e7d93d37894",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_pbkb.v": "021e322135dd3b005520613db5c32738b217fdb873e5d54b216f3f179acd8b56",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_pcud.v": "9b28600cd090947f26086a69f2385803310b0f58b96124967f96cc96c1da2b14",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_pdEe.v": "accdf7a4c5ad8cd23b302310ed8d560be9dbf9d13c94ac0c2e33741a0497acda",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_peOg.v": "95f381564c21b058abdd4d368a3e386d2811191ea0677fd12187ba37c4c792d9",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_pfYi.v": "cac9b51ab3e951332f72d7cf1582481af0de968ec0ecddde6929936fe264a584",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_pg8j.v": "504836d87b119efdb00f9d7b27e5a69dfec24707ab1a6aad622d380d0c295d56",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_phbi.v": "c510e4b616e6d313dea4ab384d23578cddad5702540a0303501f82633614c365",
+    "final2_dense32_dense_matrix_stream_array_array_config14_64u_8u_5u_56u_Pipeline_DenseMatrix_pibs.v": "179d629b1c34ffaf16aabb2303557415aad06e09e70300775f25c1a169b0fef4",
+    "final2_dense32_fifo_w288_d4_A.v": "8a41ff7f299373e180bbaa40ed9c2eabdf2ac6ae770d91ba0315ddaea0833288",
+    "final2_dense32_fifo_w432_d4_A.v": "6f5b49ea40a9cdae99cf52cc9aba65b49d60c4f80c463c78a56a794871a23ecb",
+    "final2_dense32_fifo_w512_d4_A.v": "23fcb0a0a7e297528c02f20bd9c75340866034241b9d083f4d46646f33c351d8",
+    "final2_dense32_fifo_w576_d4_A.v": "ef1c2cf3a167ad2951d0901e22c1320e9ef68d9a4f8fd6bf1ff05f15ccb86946",
+    "final2_dense32_fifo_w896_d4_A.v": "06c773abcfa0b1cba1664b623dee1d8be62e34486609d622634df9de06b9a1d8",
+    "final2_dense32_fifo_w960_d4_A.v": "f4c7a4caaba94fd14da3f0f030f0922aaad95ec766c7728bdb720c2c86e4c60c",
+    "final2_dense32_flow_control_loop_pipe.v": "0df935b3d26e84b48cd7f9256dc43145c52e24782d50b7f2d8961ac10387a48b",
+    "final2_dense32_flow_control_loop_pipe_sequential_init.v": "0787a4dba85afa73d065246f30ac2da8234d3ff575ac1f624dd406f52c216315",
+    "final2_dense32_frp_fifoout.v": "f70351c3f9dd12b22e719308c0b71680d50c86a938b2c3b88d0ca5ac5ac02dbd",
+    "final2_dense32_frp_pipeline_valid.v": "07b061d701909fc6986852a60304345d5432562a96ec1d7ad6f553a9e5671a03",
+    "final2_dense32_mac_muladd_9s_2s_14s_14_1_1.v": "00640bf0f354708c3509580d53cbd1c01ac670764b6c5acba593ebedfa692b46",
+    "final2_dense32_mac_muladd_9s_5s_14s_15_1_1.v": "e466d3b9444c794bc3f21ef07308a4f1bbae7133d105f0dbf93534e14f42d198",
+    "final2_dense32_mac_muladd_9s_5s_15s_15_1_1.v": "ea23a7de6288cba905312e5205a7840bd00eb4e8947a5e0ba2a9a73c32f273e8",
+    "final2_dense32_mac_muladd_9s_5s_15s_16_1_1.v": "e1d6cdb53fc5c8941438a950e7eeddf8173856493a487fe3acfc302b8f752fd4",
+    "final2_dense32_mac_muladd_9s_5s_16s_17_1_1.v": "165333ca662e16ba5497404a031a002c290c187e3a5eba9a32d8740bc98b5147",
+    "final2_dense32_mac_muladd_9s_5s_17s_18_1_1.v": "638e1b905764141f1e9c5736baff6351b3bd735b29a1c4f5f280b517968fb5ac",
+    "final2_dense32_mac_muladd_9s_5s_18s_19_1_1.v": "7cbef5026b5ba09ed3235a1f289e743d5a68e21c4df838693fddc53d94aa2267",
+    "final2_dense32_mul_9s_5s_14_1_1.v": "c1b5ebe9de35ac530d3e3a85d3484d2dd133472289e53b07b67dfab873ebeaf6",
+    "final2_dense32_phara_pool_aligned_hybrid_p8_scheduled_cl.v": "5b5891e96f1e2eff8e2b83998ae9c96d549d493a9ce8fe48682bd267322e74db",
+    "final2_dense32_regslice_both.v": "da1a4878d9ca3ec48fa2c1071389d01c6a3752b58c28dbfc0e3296a9a15583cf",
+    "final2_dense32_relu_array_ap_fixed_32u_array_ap_fixed_9_5_0_2_0_32u_relu_config15_s.v": "68ddbca072c4864150cb4a12d2189e4f7ec660baf4a2ecec1a2b0dccbd7b5628",
+    "final2_dense32_relu_array_ap_fixed_64u_array_ap_ufixed_14_6_5_3_0_64u_relu_config10_s.v": "d1e6c91ad0ab257dc21452f1cb5510e29e7c0e8ee795425713042a5b35e99030",
+    "final2_dense32_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s.v": "02c97b34cacb421d6dad5a488c7872dfec216026cda48014d59dc393c7213299",
+    "final2_dense32_scheduled_pool_array_array_ap_fixed_9_5_0_2_0_64u_config11_4u_s.v": "87c804b1d43a28e0c0487e4e04e74847aaaa06304bf812cbc9d20f2e18f7ad80",
+    "final2_dense32_shared_conv_array_array_config18_4u_ravel_matrix_conv2d_2_2u_s.v": "add81259fe2f7e5233445d15b5b7324069fe1c3397c28e4c74e9014e73e705e5",
+    "final2_dense32_sparsemux_9_2_19_1_1.v": "4957530a4fa4964027cbe9f2c093b814e4044b3f2d2b5a356c673ebf92e51386",
+    "final2_dense32_sparsemux_9_2_9_1_1.v": "df8c372d25be49a1b01cc3d1d34893df7386bb23d1e9f07651a610e12120e217",
+    "final2_dense32_start_for_dense_array_ap_fixed_32u_array_ap_fixed_16_8_5_3_0_1u_config17_U0.v": "a45ab06f45b8efb9d33b9fb034220c35e2ab70977ed1a692dd0a84004fae6a2f",
+    "final2_dense32_start_for_dense_matrix_stream_array_array_ap_fixed_32u_config14_64u_8u_5u_56ukbM.v": "ff523d89a2141dd4df32b27fa42a852c614399032a837d36e8aaab34fcd1d4d4",
+    "final2_dense32_start_for_relu_array_ap_fixed_32u_array_ap_fixed_9_5_0_2_0_32u_relu_config15_U0.v": "e8ca4f9be645132a164797254485eab83a801efb527c4d5a07be8ea60e74e9de",
+    "final2_dense32_start_for_relu_array_ap_fixed_64u_array_ap_ufixed_14_6_5_3_0_64u_relu_config1jbC.v": "8c33f897cd419a9004ccebf76e568fcab838b309efd126cc44ef59e7e25f2103",
+    "final2_dense32_start_for_scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_U0.v": "ace073918e09e4b0afa73d84fa4f95d0dfb9106d26c522c8b9d139b61ffb7108",
+    "final2_dense32_start_for_scheduled_pool_array_array_ap_fixed_9_5_0_2_0_64u_config11_4u_U0.v": "5130ebf0d4f33c4feeef5715713e1d09814a09b70c1cf9a18c5067f234834ebe",
+    "final2_dense32_start_for_shared_conv_array_array_config18_4u_ravel_matrix_conv2d_2_2u_U0.v": "2182d73f40e43aceadfeb4e5b5b3675ae0fe76418d921b3e8a96a226447dc49a"
+  },
+  "schema_version": 1,
+  "simulator": {
+    "name": "xsim",
+    "version": "Vivado Simulator v2023.2"
+  },
+  "source_closure_sha256": "3ef07cc8f08b056fc0bed7bd65cdce119196ff3a0bd72243c665ed8b7f0d3a92",
+  "status": "passed",
+  "testbench_sha256": "c05bce74742466ca35aef54b227313e256a9b8e5167b0973ca28ca6207866823",
+  "top": "final2_dense32",
+  "vector_files": {
+    "rtl_expected_words.hex": "5eccfea0ac362511d044c6706d5c3baa259d33adbb4160b8e0493164b19771b9",
+    "rtl_input_words.hex": "3260f4e008597ed27944bd87a9e4633196e0f8b2567ef5255e8893ad08eca9aa"
+  }
+}
