@@ -37,6 +37,24 @@ def test_a_hidden_dense_project_converts_bit_exactly_through_every_boundary(tmp_
     assert {"dense_0:out0", "relu_2:out0"} <= observed
 
 
+def test_two_products_of_a_step_share_one_multiplier_where_the_device_ports_are_known(tmp_path):
+    dense = lambda design: next(stage["dense"] for stage in design["stages"] if stage["strategy"]["id"] == "aria-dense-matrix")
+    known = dense(analyze(hidden_chain(), {"HLS": KU5P}).to_dict()["resolved_design"])
+    unknown = dense(analyze(hidden_chain(), {"HLS": {}}).to_dict()["resolved_design"])
+
+    assert known["packing"]["products_per_multiplier"] == 2
+    assert known["products"] == known["mac_lanes"] * known["output_lanes"] == 2 * known["multipliers"]
+    assert "packing" not in unknown
+    assert unknown["products"] == unknown["multipliers"] == unknown["mac_lanes"] * unknown["output_lanes"]
+
+    project = convert(hidden_chain(), tmp_path / "shared", {"HLS": KU5P, **VERIFIED})
+
+    assert dense(project.manifest["resolved_design"])["packing"] == known["packing"]
+    assert project.manifest["verification"]["transformation_equivalence"] == "passed"
+    assert project.manifest["verification"]["stage_boundaries"]["status"] == "passed"
+    assert "dense_matrix_shared_stream" in (project.path / "firmware/nnet_utils/ravel_dense.h").read_text()
+
+
 def test_the_output_lanes_of_the_hidden_dense_follow_the_interval_target():
     relaxed = analyze(hidden_chain(), {"HLS": KU5P, "Optimization": {"TargetII": 400}}).to_dict()["resolved_design"]
     fastest = analyze(hidden_chain(), {"HLS": KU5P}).to_dict()["resolved_design"]

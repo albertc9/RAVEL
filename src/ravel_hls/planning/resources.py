@@ -35,7 +35,8 @@ def estimate_resources(plan, chain) -> ResourceEstimate:
     first_products = prod(next(p.shape for p in first.parameters if p.role == "weight")) * chain.blocks[0].input.shape[1]
     dense_stage = next(s for s in plan.stages[len(chain.blocks):] if s.operation_ids[0].startswith("dense_"))
     dense_lanes = dense_stage.cost.resource
-    matrix = dense_stage.dense.multipliers if dense_stage.dense else 0
+    matrix = dense_stage.dense.products if dense_stage.dense else 0
+    matrix_multipliers = dense_stage.dense.multipliers if dense_stage.dense else 0
     history_bits = sum(s.implementation.kernel_rows * s.implementation.width * s.implementation.channels
                        * s.input.numeric.width for s in windows)
     window_products = sum(s.implementation.products for s in windows)
@@ -55,7 +56,7 @@ def estimate_resources(plan, chain) -> ResourceEstimate:
                 lut += 96 * products
                 ff += 32 * products
                 dsp += products
-        return ResourceEstimate(lut + 32 * matrix, ff + 32 * matrix, dsp + matrix,
+        return ResourceEstimate(lut + 32 * matrix, ff + 32 * matrix, dsp + matrix_multipliers,
                                 24 + ceil(dense_lanes / 12), "constant-matrix-structural-envelope-v1")
     # Deliberately reserve independent envelopes: no LUT/DSP interchange is used
     # to waive a limit. Native constant folding may consume considerably less.

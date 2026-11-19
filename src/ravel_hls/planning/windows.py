@@ -71,26 +71,40 @@ class DenseSchedule:
     outputs: int
     mac_lanes: int
     output_lanes: int
+    # Field width when two outputs of a step share one multiplier per input
+    # value; zero keeps one multiplier per product.
+    shared_field: int = 0
 
     @property
     def steps(self) -> int:
         return self.inputs // self.mac_lanes * (self.outputs // self.output_lanes)
 
     @property
-    def multipliers(self) -> int:
+    def products(self) -> int:
         return self.mac_lanes * self.output_lanes
 
+    @property
+    def multipliers(self) -> int:
+        return self.products // 2 if self.shared_field else self.products
+
     def to_dict(self) -> dict:
-        return {"id": "matrix-sequential", "version": 1, **asdict(self),
-                "steps": self.steps, "multipliers": self.multipliers,
+        return {"id": "matrix-sequential", "version": 1, "inputs": self.inputs, "outputs": self.outputs,
+                "mac_lanes": self.mac_lanes, "output_lanes": self.output_lanes,
+                "steps": self.steps, "products": self.products, "multipliers": self.multipliers,
+                **({"packing": {"id": "shared-input-multiplier", "version": 1, "products_per_multiplier": 2,
+                                "field_bits": self.shared_field}} if self.shared_field else {}),
                 "accumulation": "ordered", "target_loop_ii": 1}
 
 
-def dense_schedules(inputs: int, outputs: int, mac_lanes: int) -> tuple[DenseSchedule, ...]:
-    """Every way to share the outputs evenly across steps."""
+def dense_schedules(inputs: int, outputs: int, mac_lanes: int, shared_field: int | None = None) -> tuple[DenseSchedule, ...]:
+    """Every way to share the outputs evenly across steps.
+
+    The outputs of a step meet the same input values. When `shared_field` is
+    given and they come in pairs, each pair uses one multiplier per input value.
+    """
     if inputs % mac_lanes:
         return ()
-    return tuple(DenseSchedule(inputs, outputs, mac_lanes, lanes)
+    return tuple(DenseSchedule(inputs, outputs, mac_lanes, lanes, shared_field if shared_field and lanes % 2 == 0 else 0)
                  for lanes in range(1, outputs + 1) if outputs % lanes == 0)
 
 

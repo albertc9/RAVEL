@@ -90,6 +90,16 @@ class ConstantMatrixCostProfile:
 
 CONSTANT_MATRIX_COST_PROFILE = ConstantMatrixCostProfile()
 
+# Signed input ports of one hardware multiplier, by device family. A packed
+# multiplication stays in one multiplier only when both operands fit.
+MULTIPLIER_PORTS = {"xcku5p": (27, 18)}
+
+
+def multiplier_ports(part):
+    """Multiplier port widths of the device of `part`, or None when they are not known."""
+    return MULTIPLIER_PORTS.get(part.split("-")[0].lower()) if part else None
+
+
 # Cycles a sequential Dense matrix stage needs beyond its steps: bias load,
 # product and reduction pipeline, accumulation, output cast and process
 # restart. Measured on KU5P at 5 ns as 9 cycles for 48 input lanes and 12 to

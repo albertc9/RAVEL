@@ -164,7 +164,7 @@ def render_project(path: Path, name: str, design: Mapping[str, Any], parameters:
     dense_paths = (f"firmware/weights/{dense_weight.symbol}_ravel_packed.h",) if wide else ()
     matrix_paths = []
     if matrices_dense:
-        (path / dense_matrix.HEADER).write_text(dense_matrix.SOURCE)
+        (path / dense_matrix.HEADER).write_text(dense_matrix.source([stage["dense"] for stage in matrices_dense]))
         matrix_paths.append(dense_matrix.HEADER)
         for stage, weight in zip(matrices_dense, matrix_weights):
             relative = dense_matrix.weights_path(weight)
