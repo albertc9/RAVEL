@@ -23,12 +23,24 @@ def test_calibration_record_matches_the_profile_and_its_frozen_reports():
 
     assert (calibration["profile"], calibration["version"]) == (profile["id"], profile["version"])
     assert profile["evidence"] == "references/qualification/aria_1_8_0_separable/calibration.json"
-    assert len(calibration["measurements"]) >= 13
+    assert len(calibration["measurements"]) >= 16
     for item in calibration["measurements"]:
         assert digest(ROOT / item["hls_report_file"]) == item["hls_report_sha256"]
         assert item["c_verification"] == "passed"
         assert item["rtl_cosimulation"] == "passed"
         assert item["rtl_protocol"] == "passed"
+
+
+def test_declared_coverage_reaches_exactly_the_widest_measured_arithmetic():
+    calibration = read(ROOT / "calibration.json")
+    arithmetic = [stage["arithmetic"] for item in calibration["measurements"]
+                  for stage in item["stages"] if stage.get("arithmetic")]
+    widest_input = max(item["input_width"] for item in arithmetic)
+    widest_fanout = max(item["summary"]["max_fanout"] for item in arithmetic)
+
+    assert (widest_input, widest_fanout) == (12, 17)
+    assert calibration["coverage"]["input_width_bits_max"] == CONSTANT_MATRIX_COST_PROFILE.max_input_bits == widest_input
+    assert calibration["coverage"]["fanout_max"] == CONSTANT_MATRIX_COST_PROFILE.max_fanout == widest_fanout
 
 
 def test_shared_arithmetic_predictions_stay_close_to_the_measured_intervals():
@@ -64,10 +76,23 @@ def test_final_projects_bind_their_frozen_files_and_pass_every_recorded_layer():
         assert item["rtl_protocol"]["status"] == "passed" and item["rtl_protocol"]["output_stall_cycles"] > 0
         assert item["search_status"] == "complete"
     routed = {item["project"]: item["ooc"]["timing"] for item in final if "ooc" in item}
-    assert set(routed) >= {"final_target", "final_m09de", "final_m13", "final_m08", "final2_m07", "final2_dense32"}
+    assert set(routed) >= {"final_target", "final_m09de", "final_m13", "final_m08", "final2_m07", "final2_dense32",
+                           "final3_m17", "final3_m17_t90", "final4_m17_t90"}
     # The Dense-32 shape missed timing before the accumulator loop carried one addition.
     assert routed.pop("final_dense32")["wns_ns"] < 0
     assert all(timing["wns_ns"] >= 0 and timing["tns_ns"] == 0 for timing in routed.values())
+
+
+def test_sharing_multipliers_halves_the_dense_dsp_of_the_trained_dense_32_model():
+    final = {item["project"]: item for item in read(ROOT / "final.json")}
+    separate, shared = final["final3_m17_t90"], final["final4_m17_t90"]
+
+    assert separate["target_ii"] == shared["target_ii"] == 90
+    assert [stage["strategy"] for stage in shared["stages"]] == [stage["strategy"] for stage in separate["stages"]]
+    assert shared["ii"] <= separate["ii"] <= 90
+    dense_multipliers = 256
+    assert separate["ooc"]["resources"]["DSP"] - shared["ooc"]["resources"]["DSP"] >= dense_multipliers
+    assert shared["ooc"]["timing"]["wns_ns"] >= 0 and separate["ooc"]["timing"]["wns_ns"] >= 0
 
 
 def test_the_target_shape_is_selected_with_shared_arithmetic_in_its_separable_group():

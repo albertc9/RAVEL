@@ -1,0 +1,35 @@
+17_k7s2_depthwise_dense32 [main]  run_17_k7s2_depthwise_dense32.keras
+=====================================================================
+input (256, 4, 1) -> output (1,) (raw score; trigger when score > threshold)
+
+layer                          type             filters/units  kernel   step groups     act     input shape    output shape      w+b      MACs
+conv1                          QConv2D                     12     7,1    2,1      1    relu     (256, 4, 1)    (125, 4, 12)       96    42,000
+pool1                          MaxPooling2D                 -     2,1    2,1      -       -    (125, 4, 12)     (62, 4, 12)        0         0
+conv2                          QConv2D                     12     7,1    2,1     12  linear     (62, 4, 12)     (28, 4, 12)       96     9,408
+conv3                          QConv2D                     16     1,1    1,1      1    relu     (28, 4, 12)     (28, 4, 16)      208    21,504
+pool2                          MaxPooling2D                 -     2,1    2,1      -       -     (28, 4, 16)     (14, 4, 16)        0         0
+flatten                        Flatten                      -       -      -      -       -     (14, 4, 16)          (896,)        0         0
+dense1                         QDense                      32       -      -      -  linear          (896,)           (32,)   28,704    28,672
+relu_hidden                    ReLU                         -       -      -      -       -           (32,)           (32,)        0         0
+dense2                         QDense                       1       -      -      -  linear           (32,)            (1,)       33        32
+
+total weights+biases 29,137   total MACs per window 101,616   heaviest layer conv1 (42,000 MACs)
+
+Learned bit widths (HGQ kif fixed point, one width per tensor; iq = layer input, kq = kernel, bq = bias;
+k = sign bit, i = integer bits, f = fractional bits; values as stored in the .keras file;
+width = k + round(i) + round(f), i.e. ap_fixed<k+i+f, k+i>; the .keras file is authoritative):
+  conv1                          iq: k 1  i   3.945  f   5.666   -> 11 bits  ap_fixed<11,5>
+  conv1                          kq: k 1  i   4.000  f   6.362   -> 11 bits  ap_fixed<11,5>
+  conv1                          bq: k 1  i   4.000  f   4.607   -> 10 bits  ap_fixed<10,5>
+  conv2                          iq: k 1  i   4.000  f   5.682   -> 11 bits  ap_fixed<11,5>
+  conv2                          kq: k 1  i   4.000  f   5.991   -> 11 bits  ap_fixed<11,5>
+  conv2                          bq: k 1  i   4.000  f   4.451   ->  9 bits  ap_fixed<9,5>
+  conv3                          iq: k 1  i   4.000  f   6.615   -> 12 bits  ap_fixed<12,5>
+  conv3                          kq: k 1  i   4.000  f   4.691   -> 10 bits  ap_fixed<10,5>
+  conv3                          bq: k 1  i   4.000  f   4.609   -> 10 bits  ap_fixed<10,5>
+  dense1                         iq: k 1  i   4.000  f   6.324   -> 11 bits  ap_fixed<11,5>
+  dense1                         kq: k 1  i   4.000  f   6.207   -> 11 bits  ap_fixed<11,5>
+  dense1                         bq: k 1  i   4.000  f   3.996   ->  9 bits  ap_fixed<9,5>
+  dense2                         iq: k 1  i   4.689  f   6.162   -> 12 bits  ap_fixed<12,6>
+  dense2                         kq: k 1  i   4.000  f   5.514   -> 11 bits  ap_fixed<11,5>
+  dense2                         bq: k 1  i   4.000  f   4.203   ->  9 bits  ap_fixed<9,5>

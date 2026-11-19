@@ -1,0 +1,296 @@
+{
+ "model": "18_halfrate_lp150_k5s1_depthwise",
+ "trained_key": "dec2_k5s1k5s2_dw12_amphp_lp150",
+ "architecture_class": "dec2_k5s1k5s2_dw12",
+ "chain": "amphp_lp150",
+ "threshold_1Hz": 5.35107421875,
+ "versions": {
+  "main": {
+   "model": "v6_18_halfrate_lp150_k5s1_depthwise",
+   "input": [
+    128,
+    4,
+    1
+   ],
+   "output": [
+    1
+   ],
+   "layers": [
+    {
+     "name": "conv1",
+     "keras_name": "q_conv2d_9",
+     "type": "QConv2D",
+     "input": [
+      128,
+      4,
+      1
+     ],
+     "output": [
+      124,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      1,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 72,
+     "macs": 29760,
+     "bit_widths": {
+      "iq": {
+       "i": 4.004745960235596,
+       "f": 4.965704917907715,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.401920318603516,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.301655292510986,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool1",
+     "keras_name": "max_pooling2d_6",
+     "type": "MaxPooling2D",
+     "input": [
+      124,
+      4,
+      12
+     ],
+     "output": [
+      62,
+      4,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "conv2",
+     "keras_name": "q_conv2d_10",
+     "type": "QConv2D",
+     "input": [
+      62,
+      4,
+      12
+     ],
+     "output": [
+      29,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      5,
+      1
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "groups": 12,
+     "activation": "linear",
+     "use_bias": true,
+     "weights_and_biases": 72,
+     "macs": 6960,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 4.966456413269043,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 4.822280406951904,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.356614112854004,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "conv3",
+     "keras_name": "q_conv2d_11",
+     "type": "QConv2D",
+     "input": [
+      29,
+      4,
+      12
+     ],
+     "output": [
+      29,
+      4,
+      12
+     ],
+     "filters": 12,
+     "kernel_size": [
+      1,
+      1
+     ],
+     "strides": [
+      1,
+      1
+     ],
+     "padding": "valid",
+     "groups": 1,
+     "activation": "relu",
+     "use_bias": true,
+     "weights_and_biases": 156,
+     "macs": 16704,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.623879909515381,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 4.591944694519043,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 4.248115062713623,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    },
+    {
+     "name": "pool2",
+     "keras_name": "max_pooling2d_7",
+     "type": "MaxPooling2D",
+     "input": [
+      29,
+      4,
+      12
+     ],
+     "output": [
+      14,
+      4,
+      12
+     ],
+     "strides": [
+      2,
+      1
+     ],
+     "padding": "valid",
+     "pool_size": [
+      2,
+      1
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "flatten",
+     "keras_name": "flatten",
+     "type": "Flatten",
+     "input": [
+      14,
+      4,
+      12
+     ],
+     "output": [
+      672
+     ],
+     "weights_and_biases": 0,
+     "macs": 0
+    },
+    {
+     "name": "dense1",
+     "keras_name": "q_dense_4",
+     "type": "QDense",
+     "input": [
+      672
+     ],
+     "output": [
+      1
+     ],
+     "activation": "linear",
+     "use_bias": true,
+     "units": 1,
+     "weights_and_biases": 673,
+     "macs": 672,
+     "bit_widths": {
+      "iq": {
+       "i": 4.0,
+       "f": 5.535241603851318,
+       "k": 1.0,
+       "total_rounded": 11,
+       "ap_fixed": "ap_fixed<11,5>"
+      },
+      "kq": {
+       "i": 4.0,
+       "f": 5.447060585021973,
+       "k": 1.0,
+       "total_rounded": 10,
+       "ap_fixed": "ap_fixed<10,5>"
+      },
+      "bq": {
+       "i": 4.0,
+       "f": 3.9332351684570312,
+       "k": 1.0,
+       "total_rounded": 9,
+       "ap_fixed": "ap_fixed<9,5>"
+      }
+     }
+    }
+   ],
+   "total_weights_and_biases": 973,
+   "total_macs": 54096,
+   "heaviest_layer": {
+    "name": "conv1",
+    "macs": 29760
+   },
+   "version": "main",
+   "file": "run_18_halfrate_lp150_k5s1_depthwise.keras",
+   "input_description": "(128, 4, 1): 0.5 GSa/s, every 2nd sample of the 1 GSa/s trace, taken outside the CNN"
+  }
+ }
+}

@@ -129,8 +129,10 @@ Manifest schema 9 adds the records of the Aria 1.8.0 block and head forms.
   stride-3 geometry still records version 1.
 - A Dense with several outputs records `matrix-sequential` weight delivery and
   a stage schedule with `inputs`, `outputs`, `mac_lanes`, `output_lanes`,
-  `steps`, and `multipliers`. Its stage is `aria-dense-matrix`; the ReLU and
-  Dense after it form the `hls4ml-head-tail` stage.
+  `steps`, `products`, and `multipliers`. A `packing` record with its
+  `field_bits` is present when two products share one multiplier; a schedule
+  without it uses one multiplier per product. Its stage is `aria-dense-matrix`;
+  the ReLU and Dense after it form the `hls4ml-head-tail` stage.
 
 These records belong to the architecture envelope. Refresh preserves them and
 regenerates only the coefficient-dependent arithmetic. A project of an earlier

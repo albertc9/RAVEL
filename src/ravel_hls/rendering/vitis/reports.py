@@ -25,7 +25,8 @@ def report_bindings(design: Mapping[str, Any]) -> list[dict[str, Any]]:
                 functions.append({"name": "relu", "config": config.replace("config", "relu_config")}
                                  if operation.startswith("relu_") else {"name": "scheduled_pool", "config": config})
         elif strategy == "aria-dense-matrix":
-            functions = [{"name": "dense_matrix_stream", "config": native[operation_ids[0]]["config_symbol"]}]
+            functions = [{"name": "dense_matrix_shared_stream" if stage["dense"].get("packing") else "dense_matrix_stream",
+                          "config": native[operation_ids[0]]["config_symbol"]}]
         elif strategy in {"hls4ml-temporal-block", "hls4ml-head-tail"}:
             functions = []
             for operation in operation_ids:

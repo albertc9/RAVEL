@@ -1,6 +1,6 @@
 {
  "profile": "ku5p-constant-matrix-counter-2023.2",
- "version": 3,
+ "version": 4,
  "part": "xcku5p-ffvb676-2-e",
  "clock_ns": 5,
  "tool_version": "2023.2",
@@ -2768,6 +2768,415 @@
    "selection": "coverage opened for measurement",
    "implementation_commit": "b2bcda9",
    "prediction_error_cycles": -6
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.8.0"
+   },
+   "hls_report_file": "calibration_reports/dev_m17_engines_csynth.xml",
+   "hls_report_sha256": "b5034c3cb4759e8889c24e9ea615c509508588f1d879fd059a4b374296cda700",
+   "ii": 70,
+   "implementation_commit": "dffaf8c",
+   "latency": 85,
+   "manifest_sha256": "12cb223f935a3cd81b59f4df602828e71c849777f5cd80b620a2d6fb051fb414",
+   "model": "package model 17 (K7/S2, depthwise K7/S2, 1x1 to 16, Dense 32), trained",
+   "model_sha256": "c357b2dd2796b8d2c5f6ae735ee7f94395661c3aed541c44ea91a846e968f424",
+   "predicted_frame_cycles": 69,
+   "prediction_error_cycles": 1,
+   "project": "dev_m17_engines",
+   "protocol_output_stall_cycles": 83,
+   "protocol_report_sha256": "7df63ee00cef0a4af06ea4eebd3c341b75c0984e6446de542f96d94434a27746",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection": "coverage opened for measurement",
+   "selection_reason": "calibrated-predicted-frame-interval",
+   "source_closure_sha256": "4a170de5f4d8248194043ac9f518066ac3097e27cef77f377e73ab3bea0d5744",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "arithmetic": {
+      "accumulator_width": 18,
+      "dsp_product_budget": 0,
+      "input_width": 11,
+      "paired": true,
+      "summary": {
+       "add_nodes": 179,
+       "constant_nodes": 11,
+       "convolution_rows": 2,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 9,
+       "max_fanout": 17,
+       "negate_nodes": 46,
+       "output_values": 24,
+       "shared_pair_uses": 11,
+       "shared_product_uses": 33,
+       "shift_nodes": 38,
+       "subtract_nodes": 93
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 68,
+     "measured_functions": [
+      {
+       "ii": 67,
+       "latency": 67,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 18,
+      "dsp_product_budget": 0,
+      "input_width": 11,
+      "paired": false,
+      "summary": {
+       "add_nodes": 99,
+       "constant_nodes": 6,
+       "convolution_rows": 1,
+       "depth": 6,
+       "filter_lanes": 12,
+       "input_rows": 84,
+       "max_fanout": 4,
+       "negate_nodes": 14,
+       "output_values": 12,
+       "shared_pair_uses": 0,
+       "shared_product_uses": 0,
+       "shift_nodes": 121,
+       "subtract_nodes": 61
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 67,
+     "measured_functions": [
+      {
+       "ii": 67,
+       "latency": 67,
+       "top": "scheduled_affine_conv_array_array_config7_4u_ravel_matrix_conv2d_1_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 1,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "arithmetic": {
+      "accumulator_width": 20,
+      "dsp_product_budget": 0,
+      "input_width": 12,
+      "paired": false,
+      "summary": {
+       "add_nodes": 209,
+       "constant_nodes": 10,
+       "convolution_rows": 1,
+       "depth": 7,
+       "filter_lanes": 16,
+       "input_rows": 12,
+       "max_fanout": 12,
+       "negate_nodes": 48,
+       "output_values": 16,
+       "shared_pair_uses": 8,
+       "shared_product_uses": 28,
+       "shift_nodes": 52,
+       "subtract_nodes": 91
+      }
+     },
+     "confidence": "calibrated",
+     "estimated_cycles": 62,
+     "measured_functions": [
+      {
+       "ii": 62,
+       "latency": 62,
+       "top": "shared_conv_array_array_config18_4u_ravel_matrix_conv2d_2_2u_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "relu_array_ap_fixed_64u_array_ap_ufixed_19_7_5_3_0_64u_relu_config10_s"
+      },
+      {
+       "ii": 31,
+       "latency": 31,
+       "top": "scheduled_pool_array_array_ap_fixed_11_5_0_2_0_64u_config11_4u_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "positions": 4,
+     "reuse_factor": 2,
+     "strategy": {
+      "id": "aria-affine-window",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 68,
+     "measured_functions": [
+      {
+       "ii": 69,
+       "latency": 69,
+       "top": "dense_matrix_stream_array_array_ap_fixed_32u_config14_64u_8u_7u_56u_s"
+      },
+      {
+       "ii": 67,
+       "latency": 67,
+       "top": "dense_matrix_stream_array_array_config14_64u_8u_7u_56u_Pipeline_DenseMatrix"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-matrix",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 1,
+     "measured_functions": [
+      {
+       "ii": 1,
+       "latency": 1,
+       "top": "relu_array_ap_fixed_32u_array_ap_fixed_12_6_0_2_0_32u_relu_config15_s"
+      },
+      {
+       "ii": 6,
+       "latency": 6,
+       "top": "dense_array_ap_fixed_32u_array_ap_fixed_23_11_5_3_0_1u_config17_s"
+      },
+      {
+       "ii": 1,
+       "latency": 2,
+       "top": "dense_latency_wrapper_ap_fixed_ap_fixed_23_11_5_3_0_config17_s"
+      }
+     ],
+     "operation_ids": [
+      "relu_2",
+      "dense_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-head-tail",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null
+  },
+  {
+   "c_verification": "passed",
+   "first_stage_scheduler": {
+    "buffer_rows": 16,
+    "cycles": 63,
+    "drain_cycles": 0,
+    "fill_cycles": 1,
+    "id": "row-credit",
+    "max_live_rows": 16,
+    "read_cycles": 32,
+    "version": 2
+   },
+   "generation": {
+    "id": "aria",
+    "version": "1.8.0"
+   },
+   "hls_report_file": "calibration_reports/m17_p8d4_csynth.xml",
+   "hls_report_sha256": "1b3664b36f65efd63ca62734e753b901f815128508e0ff8e659ed12d3fd17aa1",
+   "ii": 1740,
+   "implementation_commit": "dffaf8c",
+   "latency": 1767,
+   "manifest_sha256": "d7026f4e5992f039a71f59a49199410ab83efa4aa43e5f444c4ac6882d74c587",
+   "model": "package model 17 (K7/S2, depthwise K7/S2, 1x1 to 16, Dense 32), trained",
+   "model_sha256": "c357b2dd2796b8d2c5f6ae735ee7f94395661c3aed541c44ea91a846e968f424",
+   "predicted_frame_cycles": 460,
+   "prediction_error_cycles": 1280,
+   "project": "m17_p8d4",
+   "protocol_output_stall_cycles": 96,
+   "protocol_report_sha256": "e85559627cf7b27cd7d53c75d91f630a72cb698acfea0a7876184e92a6b13e5a",
+   "rtl_cosimulation": "passed",
+   "rtl_protocol": "passed",
+   "selection": "ordinary selection under version 3 coverage; native second group",
+   "selection_reason": "retain-incumbent-without-calibrated-coverage",
+   "source_closure_sha256": "c0287068b6ca6f262057a7b9760cbeb7b75a2c2c644ade048fd7b44a476f0c02",
+   "stage_boundaries": "passed",
+   "stages": [
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 63,
+     "measured_functions": [
+      {
+       "ii": 67,
+       "latency": 67,
+       "top": "phara_pool_aligned_hybrid_p8_scheduled_cl"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_0",
+      "relu_0",
+      "max_pool2d_0"
+     ],
+     "strategy": {
+      "id": "phara",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "uncalibrated-native",
+     "estimated_cycles": 248,
+     "measured_functions": [
+      {
+       "ii": 1739,
+       "latency": 1739,
+       "top": "conv_2d_cl_array_ap_fixed_12u_array_ap_fixed_12_5_0_2_0_12u_config7_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-temporal-block",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "uncalibrated-native",
+     "estimated_cycles": 112,
+     "measured_functions": [
+      {
+       "ii": 117,
+       "latency": 117,
+       "top": "pointwise_conv_2d_cl_array_array_ap_fixed_20_8_5_3_0_16u_config18_s"
+      },
+      {
+       "ii": 115,
+       "latency": 115,
+       "top": "relu_array_ap_fixed_16u_array_ap_ufixed_19_7_5_3_0_16u_relu_config10_s"
+      },
+      {
+       "ii": 227,
+       "latency": 227,
+       "top": "pooling2d_cl_array_array_ap_fixed_11_5_0_2_0_16u_config11_s"
+      }
+     ],
+     "operation_ids": [
+      "conv2d_2",
+      "relu_1",
+      "max_pool2d_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-temporal-block",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 0,
+     "measured_functions": [],
+     "operation_ids": [
+      "reshape_0"
+     ],
+     "strategy": {
+      "id": "identity-layout-view",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 460,
+     "measured_functions": [
+      {
+       "ii": 461,
+       "latency": 461,
+       "top": "dense_matrix_stream_array_array_ap_fixed_32u_config14_64u_1u_7u_448u_s"
+      },
+      {
+       "ii": 459,
+       "latency": 459,
+       "top": "dense_matrix_stream_array_array_config14_64u_1u_7u_448u_Pipeline_DenseMatrix"
+      }
+     ],
+     "operation_ids": [
+      "dense_0"
+     ],
+     "strategy": {
+      "id": "aria-dense-matrix",
+      "version": 1
+     }
+    },
+    {
+     "confidence": "analytical",
+     "estimated_cycles": 1,
+     "measured_functions": [
+      {
+       "ii": 1,
+       "latency": 1,
+       "top": "relu_array_ap_fixed_32u_array_ap_fixed_12_6_0_2_0_32u_relu_config15_s"
+      },
+      {
+       "ii": 6,
+       "latency": 6,
+       "top": "dense_array_ap_fixed_32u_array_ap_fixed_23_11_5_3_0_1u_config17_s"
+      },
+      {
+       "ii": 1,
+       "latency": 2,
+       "top": "dense_latency_wrapper_ap_fixed_ap_fixed_23_11_5_3_0_config17_s"
+      }
+     ],
+     "operation_ids": [
+      "relu_2",
+      "dense_1"
+     ],
+     "strategy": {
+      "id": "hls4ml-head-tail",
+      "version": 1
+     }
+    }
+   ],
+   "target_ii": null
   }
  ],
  "coverage": {
@@ -2795,15 +3204,17 @@
    1,
    2
   ],
-  "input_width_bits_max": 11,
+  "input_width_bits_max": 12,
   "width": 4,
   "channels_max": 12,
   "filters_max": 16,
-  "added_in_version_3": "kernels of one to seven rows, strides of one to three rows, blocks without a pool, 11-bit inputs, up to 16 filters, first stages with a fill-cycle row schedule"
+  "added_in_version_3": "kernels of one to seven rows, strides of one to three rows, blocks without a pool, 11-bit inputs, up to 16 filters, first stages with a fill-cycle row schedule",
+  "fanout_max": 17,
+  "added_in_version_4": "12-bit inputs and a graph fanout of 17, both from packaged model 17 (dev_m17_engines); the widest values measured before were 11 bits and a fanout of 15"
  },
- "notes": "Development measurements made with coverage opened, plus ordinary conversions under version 2 coverage. prediction_error_cycles is measured II minus predicted frame cycles; observed range -9 to +3, and -2 to +3 for plans whose every convolution stage uses shared arithmetic. Native-stage estimates are uncalibrated lower bounds and are not compared. Ordinary conversion reports predictions, not timing or fit certificates.",
+ "notes": "Development measurements made with coverage opened, plus ordinary conversions under version 2 coverage. prediction_error_cycles is measured II minus predicted frame cycles; observed range -9 to +3, and -2 to +3 for plans whose every convolution stage uses shared arithmetic. Native-stage estimates are uncalibrated lower bounds and are not compared. dev_m17_engines was also routed out of context (one core: LUT 46,659, FF 37,259, DSP 539, BRAM 35 tiles, WNS +0.310 ns); that routed result is a development comparison. Ordinary conversion reports predictions, not timing or fit certificates.",
  "dense_matrix_overhead": {
-  "cycles": 12,
+  "cycles": 13,
   "meaning": "interval of a sequential Dense matrix stage minus its steps; the estimate uses the largest measured value",
   "implementation_commit": "6e546ec",
   "measurements": [
@@ -2827,8 +3238,41 @@
     "output_lanes": 8,
     "steps": 56,
     "stage_ii": 68
+   },
+   {
+    "project": "dev_m17_engines",
+    "mac_lanes": 64,
+    "output_lanes": 8,
+    "steps": 56,
+    "stage_ii": 69,
+    "implementation_commit": "dffaf8c"
+   },
+   {
+    "project": "final3_m17",
+    "mac_lanes": 64,
+    "output_lanes": 16,
+    "steps": 28,
+    "stage_ii": 41,
+    "implementation_commit": "66e67d2"
+   },
+   {
+    "project": "final3_m17_t90",
+    "mac_lanes": 64,
+    "output_lanes": 8,
+    "steps": 56,
+    "stage_ii": 69,
+    "implementation_commit": "66e67d2"
+   },
+   {
+    "project": "final4_m17_t90",
+    "mac_lanes": 64,
+    "output_lanes": 8,
+    "steps": 56,
+    "stage_ii": 65,
+    "implementation_commit": "b46d580",
+    "multipliers": "two products per multiplier"
    }
   ],
-  "note": "Measured after the product reduction was moved out of the accumulator loop. Before that change the 512-multiplier stage of the Dense-32 shape missed routed timing at 5 ns by 0.253 ns (final_dense32)."
+  "note": "Measured after the product reduction was moved out of the accumulator loop. Before that change the 512-multiplier stage of the Dense-32 shape missed routed timing at 5 ns by 0.253 ns (final_dense32). With two products per multiplier the 64-lane stage measures 9 cycles more than its steps; the estimate keeps the largest value."
  }
 }

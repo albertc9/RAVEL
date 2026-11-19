@@ -10,7 +10,8 @@ from ..domain.graph import OperationFacts
 from .chain import Candidate, Cost, StreamContract
 from .schedules import TokenSchedule, temporal_schedule
 from .windows import arithmetic_schedules, dense_schedules, window_schedules
-from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE, DENSE_MATRIX_OVERHEAD_CYCLES
+from .calibration import WINDOW_COST_PROFILE, CONSTANT_MATRIX_COST_PROFILE, DENSE_MATRIX_OVERHEAD_CYCLES, multiplier_ports
+from ..analysis.multipliers import shared_operand_field, signed_width
 
 
 @dataclass(frozen=True)
@@ -168,7 +169,11 @@ def _dense_matrix(request, strategy, version):
               if context.dense_parallelism % factor == 0]
     mac_lanes = next((group for group in groups if lanes % group == 0
                       and group * weight.numeric_type.width <= MAX_ROM_WORD_BITS), 0)
-    schedules = dense_schedules(head.attribute("n_in"), head.attribute("n_out"), mac_lanes) if mac_lanes else ()
+    # Outputs of one step meet the same input values, so two of them can share
+    # a multiplier when the packed operand fits the device.
+    ports = multiplier_ports(context.part)
+    shared = shared_operand_field(signed_width(layout.output.numeric_type), signed_width(weight.numeric_type), ports) if ports else None
+    schedules = dense_schedules(head.attribute("n_in"), head.attribute("n_out"), mac_lanes, shared) if mac_lanes else ()
     if not schedules:
         return Capability(findings=(Finding("strategy.geometry.dense_stream",
                                             "Dense input groups must divide the stream word and the Dense input", head.id),))
