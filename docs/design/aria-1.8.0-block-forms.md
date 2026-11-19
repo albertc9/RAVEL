@@ -67,6 +67,17 @@ can trade multipliers for steps. The following ReLU and the final Dense use the
 native hls4ml implementation (`hls4ml-head-tail`); they carry one word per
 inference.
 
+The outputs of one step meet the same input values, so two of them can share
+one multiplier per input value: `(a * 2^F + b) * x = a * x * 2^F + b * x`.
+With `F` equal to the signed width of one product, the low field holds `b * x`
+exactly and `a * x` is the remaining field plus the sign bit of the low field.
+The stage uses this form when the outputs of a step come in pairs and the
+packed operand fits the signed multiplier ports of the device, 27 and 18 bits
+on UltraScale+. Each product is recovered individually and takes the unchanged
+product type and accumulator cast, so the result is the same code. Where the
+device ports are not known, or the operands do not fit, the stage keeps one
+multiplier per product.
+
 hls4ml 1.2.0 converts a standalone Keras `ReLU` layer as a thresholded ReLU
 whose C model passes negative values. The frontend expresses a plain `ReLU`
 layer as `Activation("relu")`, which computes the same function and converts
@@ -126,10 +137,14 @@ verification against the clean hls4ml baseline, RTL CoSim and the protocol test.
 | Hidden Dense of 16 units, trained, `TargetII=85` | 65 | 73 | 34,669 (15.98%) | 22,645 (5.22%) | 100 (5.48%) | 8 | +0.300 ns |
 | 8x7 step 2, depthwise 7 step 2, 1x1 to 8; random weights | 67 | 77 | 14,172 (6.53%) | 12,809 (2.95%) | 32 (1.75%) | 0 | +0.343 ns |
 | 12x7 step 2, depthwise 7 step 2, 1x1 to 16, Dense 32; random weights | 69 | 81 | 27,340 (12.60%) | 25,446 (5.86%) | 525 (28.78%) | 16 | +0.413 ns |
+| The same structure, trained, `TargetII=90`, one multiplier per product | 70 | 85 | 46,658 (21.51%) | 37,259 (8.59%) | 539 (29.55%) | 35 | +0.112 ns |
+| The same structure, trained, `TargetII=90`, two products per multiplier | 68 | 81 | 53,027 (24.44%) | 35,677 (8.22%) | 275 (15.08%) | 40 | +0.297 ns |
 
-The last two models have the layer shapes of designs under study and random
-weights; their resources are not results for trained weights. With the
-delegated hls4ml second stage the first of them measures II 1492. The grouped
+The two random-weight models have the layer shapes of designs under study;
+their resources are not results for trained weights. With the delegated hls4ml
+second stage the first of them measures II 1492. Without `TargetII` the trained
+Dense-32 model takes 16 outputs per step: II 68 with 1,066 DSP, so a target is
+the practical setting for it. The grouped
 form of the depthwise model gives the same II and latency as its
 block-diagonal export. These are source-bound reference results, not
 predictions for arbitrary models. System integration, replicated cores, board

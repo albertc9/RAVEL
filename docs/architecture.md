@@ -199,7 +199,10 @@ one ROM per output lane, and each output accumulates its products in input
 order, as the native Dense does. The products of one step are reduced before
 the accumulator, so the accumulator loop carries one addition. The number of
 outputs per step is enumerated by the search together with the convolution
-stages; a throughput target can therefore trade multipliers for steps. The
+stages; a throughput target can therefore trade multipliers for steps. Two
+outputs of a step share one multiplier per input value when the packed operand
+`a * 2^F + b` fits the multiplier ports of the device; both products are
+recovered exactly from the one result. The
 ReLU and final Dense after a hidden Dense stay native as `hls4ml-head-tail`
 and carry one word per inference.
 

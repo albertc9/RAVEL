@@ -60,6 +60,32 @@ parallelism 4 is not legal after the width collapses to one.
 The Dense matrix stage measures 9 cycles more than its steps with 48 input
 lanes and 12 to 13 with 64 (13 on packaged model 17); the estimate uses 13.
 
+## Packaged model 17, the trained Dense-32 design
+
+Model 17 (K7/S2 to 12 filters, depthwise K7/S2, 1x1 to 16, Dense 32) arrived
+with the package of 2026-11-18. Its 1x1 convolution has a 12-bit input and its
+first-stage graph a fanout of 17, both outside coverage version 3, so ordinary
+selection kept the native second group: `m17_p8d4` measures II 1740. Coverage
+version 4 admits both values from the measurement `dev_m17_engines`. The
+projects below use ordinary selection; same tools, part, clock and evidence
+layers as above, one core.
+
+| Project | Commit | Selection | Predicted | HLS II | Latency | LUT | FF | DSP | BRAM tiles | Routed WNS |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `final3_m17` | `66e67d2` | Throughput-first, 16 outputs per step | 69 | 68 | 80 | 48,834 (22.51%) | 39,028 (8.99%) | 1,066 (58.44%) | 76.5 | +0.134 ns |
+| `final3_m17_t90` | `66e67d2` | `TargetII` 90, 8 outputs per step | 70 | 70 | 85 | 46,658 (21.51%) | 37,259 (8.59%) | 539 (29.55%) | 35 | +0.112 ns |
+| `final4_m17_t90` | `b46d580` | `TargetII` 90, two Dense products per multiplier | 70 | 68 | 81 | 53,027 (24.44%) | 35,677 (8.22%) | 275 (15.08%) | 40 | +0.297 ns |
+
+Without a target the search takes the fastest prediction: 16 outputs per step
+save two cycles and double the Dense multipliers. With `TargetII` 90 it takes
+the plan with the fewest LUT inside the target. From `b46d580` two outputs of a
+step share one multiplier per input value (11-bit input, 7-bit weights, 26-bit
+packed operand): the 512 products of a step use 256 multipliers. Against
+`final3_m17_t90` this removes 264 DSP and adds 6,369 LUT; the Dense stage
+interval falls from 69 to 65 cycles, so the first stage sets the top interval.
+All three passed C verification with the 1,000 supplied windows, RTL CoSim and
+the protocol test.
+
 ## Calibration measurements
 
 Development measurements for constant-matrix coverage version 3, made at

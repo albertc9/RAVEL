@@ -9,8 +9,8 @@ existing configurations generate the same sources as 1.7.2.
   depthwise-separable layers and three-convolution chains.
 - P8 derives its schedule from the kernel, stride and pool of the first layer
   and is no longer limited to K5/S3.
-- One hidden Dense layer is supported, and `TargetII` trades its multipliers
-  for interval.
+- One hidden Dense layer is supported. `TargetII` trades its multipliers for
+  interval, and two of its products share one DSP multiplier where they fit.
 - A standalone Keras `ReLU` layer, which hls4ml 1.2.0 converts incorrectly, is
   now handled.
 

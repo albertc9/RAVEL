@@ -76,10 +76,23 @@ def test_final_projects_bind_their_frozen_files_and_pass_every_recorded_layer():
         assert item["rtl_protocol"]["status"] == "passed" and item["rtl_protocol"]["output_stall_cycles"] > 0
         assert item["search_status"] == "complete"
     routed = {item["project"]: item["ooc"]["timing"] for item in final if "ooc" in item}
-    assert set(routed) >= {"final_target", "final_m09de", "final_m13", "final_m08", "final2_m07", "final2_dense32"}
+    assert set(routed) >= {"final_target", "final_m09de", "final_m13", "final_m08", "final2_m07", "final2_dense32",
+                           "final3_m17", "final3_m17_t90", "final4_m17_t90"}
     # The Dense-32 shape missed timing before the accumulator loop carried one addition.
     assert routed.pop("final_dense32")["wns_ns"] < 0
     assert all(timing["wns_ns"] >= 0 and timing["tns_ns"] == 0 for timing in routed.values())
+
+
+def test_sharing_multipliers_halves_the_dense_dsp_of_the_trained_dense_32_model():
+    final = {item["project"]: item for item in read(ROOT / "final.json")}
+    separate, shared = final["final3_m17_t90"], final["final4_m17_t90"]
+
+    assert separate["target_ii"] == shared["target_ii"] == 90
+    assert [stage["strategy"] for stage in shared["stages"]] == [stage["strategy"] for stage in separate["stages"]]
+    assert shared["ii"] <= separate["ii"] <= 90
+    dense_multipliers = 256
+    assert separate["ooc"]["resources"]["DSP"] - shared["ooc"]["resources"]["DSP"] >= dense_multipliers
+    assert shared["ooc"]["timing"]["wns_ns"] >= 0 and separate["ooc"]["timing"]["wns_ns"] >= 0
 
 
 def test_the_target_shape_is_selected_with_shared_arithmetic_in_its_separable_group():

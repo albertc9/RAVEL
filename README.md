@@ -101,12 +101,15 @@ KU5P utilization.
 | Hidden Dense of 16 units, trained, `TargetII=85` | 65 | 73 | 8.0 (1.67%) | 100 (5.48%) | 22645 (5.22%) | 34669 (15.98%) | +0.300 |
 | 8x7 step 2, depthwise 7 step 2, 1x1 to 8; random weights | 67 | 77 | 0 | 32 (1.75%) | 12809 (2.95%) | 14172 (6.53%) | +0.343 |
 | 12x7 step 2, depthwise 7 step 2, 1x1 to 16, Dense 32; random weights | 69 | 81 | 16.0 (3.33%) | 525 (28.78%) | 25446 (5.86%) | 27340 (12.60%) | +0.413 |
+| The same structure, trained, `TargetII=90`, two Dense products per multiplier | 68 | 81 | 40.0 (8.33%) | 275 (15.08%) | 35677 (8.22%) | 53027 (24.44%) | +0.297 |
 
 Every listed project passes exact C verification against the clean hls4ml
-baseline, RTL CoSim, and reset/backpressure protocol checks. The last two rows
-have the layer shapes of designs under study and random weights, so their
+baseline, RTL CoSim, and reset/backpressure protocol checks. The two
+random-weight rows have the layer shapes of designs under study, so their
 resources are not results for trained weights. With the delegated hls4ml second
-stage, the first of them measures II 1492.
+stage, the first of them measures II 1492. The last row shares one multiplier
+between two Dense products with a common input; without it the same model
+measures II 70 with 539 DSP.
 
 The [Aria 1.8 qualification snapshot](references/qualification/aria_1_8_0_separable/README.md)
 contains the remaining models, the calibration measurements, and the source and

@@ -3246,8 +3246,33 @@
     "steps": 56,
     "stage_ii": 69,
     "implementation_commit": "dffaf8c"
+   },
+   {
+    "project": "final3_m17",
+    "mac_lanes": 64,
+    "output_lanes": 16,
+    "steps": 28,
+    "stage_ii": 41,
+    "implementation_commit": "66e67d2"
+   },
+   {
+    "project": "final3_m17_t90",
+    "mac_lanes": 64,
+    "output_lanes": 8,
+    "steps": 56,
+    "stage_ii": 69,
+    "implementation_commit": "66e67d2"
+   },
+   {
+    "project": "final4_m17_t90",
+    "mac_lanes": 64,
+    "output_lanes": 8,
+    "steps": 56,
+    "stage_ii": 65,
+    "implementation_commit": "b46d580",
+    "multipliers": "two products per multiplier"
    }
   ],
-  "note": "Measured after the product reduction was moved out of the accumulator loop. Before that change the 512-multiplier stage of the Dense-32 shape missed routed timing at 5 ns by 0.253 ns (final_dense32)."
+  "note": "Measured after the product reduction was moved out of the accumulator loop. Before that change the 512-multiplier stage of the Dense-32 shape missed routed timing at 5 ns by 0.253 ns (final_dense32). With two products per multiplier the 64-lane stage measures 9 cycles more than its steps; the estimate keeps the largest value."
  }
 }
