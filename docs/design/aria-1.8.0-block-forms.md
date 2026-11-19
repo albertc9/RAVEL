@@ -80,15 +80,16 @@ of 64 for each further searched stage. The qualified chains are searched
 completely. Hitting the bound still produces an incomplete-search
 report, not a global-optimum claim.
 
-Constant-matrix coverage version 3 targets KU5P at 5 ns with four position
+Constant-matrix coverage version 4 targets KU5P at 5 ns with four position
 lanes on streams of width four and up to 256 rows. It covers kernels of one to
 seven rows, strides of one to three rows, blocks with or without a two-row
-pool, inputs up to 11 bits, accumulators up to 24 bits, up to 12 input channels
-and 16 filters. Reuse factors 1 and 2 are calibrated. Legal variants outside
+pool, inputs up to 12 bits, accumulators up to 24 bits, up to 12 input channels
+and 16 filters, and arithmetic graphs with a fanout up to 17. Each limit is the
+widest measured value. Reuse factors 1 and 2 are calibrated. Legal variants outside
 coverage stay visible without automatic promotion. A convolution whose kernel
 spans the stream width has no specialized stage and uses the delegated hls4ml
 stage. The interval estimate of the Dense matrix stage is its step count plus a
-measured overhead of 12 cycles. Resource estimates remain analytical
+measured overhead of 13 cycles. Resource estimates remain analytical
 predictions, not placement or timing certificates.
 
 ## Records and refresh

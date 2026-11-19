@@ -23,12 +23,24 @@ def test_calibration_record_matches_the_profile_and_its_frozen_reports():
 
     assert (calibration["profile"], calibration["version"]) == (profile["id"], profile["version"])
     assert profile["evidence"] == "references/qualification/aria_1_8_0_separable/calibration.json"
-    assert len(calibration["measurements"]) >= 13
+    assert len(calibration["measurements"]) >= 16
     for item in calibration["measurements"]:
         assert digest(ROOT / item["hls_report_file"]) == item["hls_report_sha256"]
         assert item["c_verification"] == "passed"
         assert item["rtl_cosimulation"] == "passed"
         assert item["rtl_protocol"] == "passed"
+
+
+def test_declared_coverage_reaches_exactly_the_widest_measured_arithmetic():
+    calibration = read(ROOT / "calibration.json")
+    arithmetic = [stage["arithmetic"] for item in calibration["measurements"]
+                  for stage in item["stages"] if stage.get("arithmetic")]
+    widest_input = max(item["input_width"] for item in arithmetic)
+    widest_fanout = max(item["summary"]["max_fanout"] for item in arithmetic)
+
+    assert (widest_input, widest_fanout) == (12, 17)
+    assert calibration["coverage"]["input_width_bits_max"] == CONSTANT_MATRIX_COST_PROFILE.max_input_bits == widest_input
+    assert calibration["coverage"]["fanout_max"] == CONSTANT_MATRIX_COST_PROFILE.max_fanout == widest_fanout
 
 
 def test_shared_arithmetic_predictions_stay_close_to_the_measured_intervals():

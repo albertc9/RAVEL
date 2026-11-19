@@ -10,15 +10,16 @@ from ravel_hls.exceptions import CompatibilityError
 PACKING = {"HLS": {}, "Optimization": {"TemporalPacking": 2, "DenseParallelism": 1}}
 
 
-def conv(filters, kernel=3, stride=2, *, relu=True, pool=True, diagonal=False, groups=1, across=1):
+def conv(filters, kernel=3, stride=2, *, relu=True, pool=True, diagonal=False, groups=1, across=1, input_bits=None):
     return {"filters": filters, "kernel": kernel, "stride": stride, "relu": relu,
-            "pool": pool, "diagonal": diagonal, "groups": groups, "across": across}
+            "pool": pool, "diagonal": diagonal, "groups": groups, "across": across, "input_bits": input_bits}
 
 
 def make_block_chain(blocks, *, height=64, width=2, prefix="renamed", hidden=()):
     """Build an HGQ2 chain of convolutions with optional ReLU, pool and block-diagonal kernels.
 
     `hidden` lists the units of Dense layers, each followed by ReLU, before the single output.
+    A block's `input_bits` sets the total width of its input quantizer.
     """
     import keras
     from hgq.layers import QConv2D, QDense
@@ -30,7 +31,7 @@ def make_block_chain(blocks, *, height=64, width=2, prefix="renamed", hidden=())
     dense = next(layer for layer in base.layers if isinstance(layer, QDense)).get_config()
     inputs = keras.Input((height, width, 1), name=f"{prefix}_input")
     value = inputs
-    diagonal = []
+    diagonal, widened = [], []
     for index, block in enumerate(blocks):
         layer = QConv2D.from_config({
             **convolution, "name": f"{prefix}_conv_{index}", "filters": block["filters"],
@@ -39,6 +40,8 @@ def make_block_chain(blocks, *, height=64, width=2, prefix="renamed", hidden=())
         value = layer(value)
         if block["diagonal"]:
             diagonal.append(layer)
+        if block["input_bits"]:
+            widened.append((layer, block["input_bits"]))
         if block["pool"]:
             value = keras.layers.MaxPool2D((2, 1), strides=(2, 1), name=f"{prefix}_pool_{index}")(value)
     value = keras.layers.Flatten(name=f"{prefix}_view")(value)
@@ -53,6 +56,10 @@ def make_block_chain(blocks, *, height=64, width=2, prefix="renamed", hidden=())
         channels, filters = kernel.shape[2], kernel.shape[3]
         mask = np.eye(channels, filters, dtype=bool)[None, None]
         layer._kernel.assign(np.where(mask, kernel, 0.0).astype(kernel.dtype))
+    for layer, bits in widened:
+        quantizer = {variable.path.rsplit("/", 1)[-1]: variable for variable in layer.weights if "_iq/" in variable.path}
+        fixed = sum(float(np.asarray(keras.ops.convert_to_numpy(quantizer[name])).reshape(-1)[0]) for name in ("k", "i"))
+        quantizer["f"].assign(np.full(quantizer["f"].shape, bits - fixed, dtype="float32"))
     return model
 
 
@@ -190,9 +197,22 @@ def test_new_block_forms_use_shared_arithmetic_inside_calibrated_coverage_only()
     assert [stage["strategy"]["id"] for stage in covered["stages"][1:3]] == ["aria-affine-window", "aria-affine-window"]
     assert covered["optimization_search"]["selection_reason"] == "calibrated-predicted-frame-interval"
     assert covered["optimization_search"]["status"] == "complete"
-    assert covered["components"]["cost_policy"]["calibration_profile"]["version"] == 3
+    assert covered["components"]["cost_policy"]["calibration_profile"]["version"] == 4
     assert [stage["strategy"]["id"] for stage in uncovered["stages"][1:3]] == ["hls4ml-temporal-block", "hls4ml-temporal-block"]
     assert uncovered["optimization_search"]["selection_reason"] == "retain-incumbent-without-calibrated-coverage"
+
+
+@pytest.mark.parametrize("input_bits, stage", [(12, "aria-affine-window"), (13, "hls4ml-temporal-block")])
+def test_shared_arithmetic_coverage_ends_at_the_measured_input_width(input_bits, stage):
+    model = make_block_chain([conv(3, kernel=5, stride=3), conv(3, kernel=5, stride=2, relu=False, pool=False, diagonal=True),
+                              conv(4, kernel=1, stride=1, input_bits=input_bits)], height=128, width=4)
+
+    design = analyze(model, {"HLS": KU5P}).to_dict()["resolved_design"]
+
+    assert [stage_["strategy"]["id"] for stage_ in design["stages"][1:3]] == [stage, stage]
+    pointwise = next(item for item in design["stages"] if item["operation_ids"][0] == "conv2d_2")
+    if pointwise.get("arithmetic"):
+        assert pointwise["arithmetic"]["input_numeric"]["width"] == input_bits
 
 
 def test_refresh_preserves_the_plan_and_rebuilds_the_arithmetic_of_a_separable_project(tmp_path):

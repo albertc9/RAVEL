@@ -58,7 +58,7 @@ has a kernel across the four antennas; no RAVEL stage lowers it, and Dense
 parallelism 4 is not legal after the width collapses to one.
 
 The Dense matrix stage measures 9 cycles more than its steps with 48 input
-lanes and 12 with 64; the estimate uses 12.
+lanes and 12 to 13 with 64 (13 on packaged model 17); the estimate uses 13.
 
 ## Calibration measurements
 
@@ -97,7 +97,25 @@ native-stage estimates are uncalibrated lower bounds.
 Kernels of one to seven rows, strides of one to three rows, blocks without a
 pool, 11-bit inputs and first stages with a fill-cycle row schedule. Width 4,
 at most 12 channels, four position lanes and reuse factors 1 and 2 are
-unchanged; filters reach 16 with the Dense-32 shape as evidence. `calibration.json` records every measurement with its manifest,
+unchanged; filters reach 16 with the Dense-32 shape as evidence.
+
+### Coverage added in version 4
+
+Inputs of 12 bits and arithmetic graphs with a fanout of 17, measured at
+`dffaf8c` on packaged model 17 (trained, K7/S2, depthwise K7/S2, 1x1 to 16,
+Dense 32). The widest values measured before were 11 bits and a fanout of 15.
+
+| Project | Selection | Predicted | HLS II | Latency |
+|---|---|---:|---:|---:|
+| `m17_p8d4` | Ordinary selection under version 3: the 12-bit input of the 1x1 convolution is outside coverage, so the second group stays native | 460 (uncalibrated) | 1740 | 1767 |
+| `dev_m17_engines` | Coverage opened | 69 | 70 | 85 |
+
+`dev_m17_engines` was also routed out of context for one core: LUT 46,659
+(21.51%), FF 37,259 (8.59%), DSP 539 (29.55%), BRAM 35 tiles (7.29%), WNS
++0.310 ns. It is a development comparison; the project made by ordinary
+selection under version 4 is recorded with the final projects.
+
+`calibration.json` records every measurement with its manifest,
 source-closure and report hashes; `calibration_reports/` holds the top-level
 HLS reports.
 

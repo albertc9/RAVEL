@@ -55,23 +55,26 @@ class ConstantMatrixCostProfile:
     """Offline-qualified counter schedules with modular shared arithmetic."""
 
     id: str = "ku5p-constant-matrix-counter-2023.2"
-    version: int = 3
+    version: int = 4
+    max_input_bits: int = 12
+    max_fanout: int = 17
 
     def covers(self, block, arithmetic, part, clock, schedule=None):
         # Version 3 adds measured points for kernels of one to seven rows,
         # strides of one to three rows, blocks without a pool, 11-bit inputs
-        # and up to 16 filters.
+        # and up to 16 filters. Version 4 adds the widest measured input, 12
+        # bits, and the widest measured graph fanout, 17.
         conv = block.convolution
         return (part == "xcku5p-ffvb676-2-e" and clock == 5
                 and 1 <= conv.attribute("filt_height") <= 7 and 1 <= conv.attribute("stride_height") <= 3
                 and conv.attribute("in_width") == 4 and conv.attribute("in_height") <= 256
                 and conv.attribute("n_chan") <= 12 and conv.attribute("n_filt") <= 16
                 and block.pool_rows in (1, 2)
-                and arithmetic.input_numeric.width <= 11
+                and arithmetic.input_numeric.width <= self.max_input_bits
                 and arithmetic.accumulator_numeric.width <= 24
                 and arithmetic.dsp_product_budget in (0, 16)
                 and (arithmetic.dsp_product_budget == 0 or (arithmetic.paired and arithmetic.count("multiply_nodes") <= 4))
-                and arithmetic.count("depth") <= 16 and arithmetic.count("max_fanout") <= 16
+                and arithmetic.count("depth") <= 16 and arithmetic.count("max_fanout") <= self.max_fanout
                 and (schedule is None or schedule.positions == 4))
 
     def cycles(self, arithmetic, schedule, reuse=1):
@@ -89,6 +92,7 @@ CONSTANT_MATRIX_COST_PROFILE = ConstantMatrixCostProfile()
 
 # Cycles a sequential Dense matrix stage needs beyond its steps: bias load,
 # product and reduction pipeline, accumulation, output cast and process
-# restart. Measured on KU5P at 5 ns as 9 cycles for 48 input lanes and 12 for
-# 64; the estimate uses the larger. See references/qualification/aria_1_8_0_separable.
-DENSE_MATRIX_OVERHEAD_CYCLES = 12
+# restart. Measured on KU5P at 5 ns as 9 cycles for 48 input lanes and 12 to
+# 13 for 64; the estimate uses the largest. See
+# references/qualification/aria_1_8_0_separable.
+DENSE_MATRIX_OVERHEAD_CYCLES = 13
